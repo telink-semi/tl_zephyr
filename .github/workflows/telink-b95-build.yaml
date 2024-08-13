@@ -115,6 +115,7 @@ jobs:
         cp ../build_ot_echo_client_b95/zephyr/zephyr.bin            telink_build_artifacts/b95_ot_echo_client.bin
         cp ../build_usb_console_b95/zephyr/zephyr.bin               telink_build_artifacts/b95_usb_console.bin
         cp ../build_crypto_mbedtls_b95/zephyr/zephyr.bin            telink_build_artifacts/b95_mbedtls.bin
+        cp ../modules/hal/telink/zephyr/blobs/lib_zephyr_b95.a      telink_build_artifacts/lib_zephyr_b95.a
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v3

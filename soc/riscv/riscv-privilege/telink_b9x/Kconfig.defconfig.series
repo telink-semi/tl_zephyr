@@ -65,7 +65,7 @@ config MBEDTLS_USER_CONFIG_ENABLE
 	default y
 
 config MBEDTLS_USER_CONFIG_FILE
-	default "telink_b9x_mbedtls_user_config.h"
+	default "telink_soc_mbedtls_user_config.h"
 
 config COMMON_LIBC_MALLOC
 	default y

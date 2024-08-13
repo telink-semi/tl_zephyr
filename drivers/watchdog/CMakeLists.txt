@@ -34,6 +34,7 @@ zephyr_library_sources_ifdef(CONFIG_WDT_SMARTBOND wdt_smartbond.c)
 zephyr_library_sources_ifdef(CONFIG_WDT_TI_TPS382X wdt_ti_tps382x.c)
 zephyr_library_sources_ifdef(CONFIG_WDT_TELINK_B9X wdt_b9x.c)
 zephyr_library_sources_ifdef(CONFIG_WDT_TELINK_W91 wdt_w91.c)
+zephyr_library_sources_ifdef(CONFIG_WDT_TELINK_TLX wdt_tlx.c)
 
 zephyr_library_sources_ifdef(CONFIG_WDT_DW wdt_dw.c wdt_dw_common.c)
 zephyr_library_sources_ifdef(CONFIG_WDT_INTEL_ADSP wdt_intel_adsp.c wdt_dw_common.c)

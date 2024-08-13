@@ -4,6 +4,7 @@ zephyr_library()
 
 zephyr_library_sources_ifdef(CONFIG_ADC			adc_common.c)
 zephyr_library_sources_ifdef(CONFIG_ADC_TELINK_B9X	adc_b9x.c)
+zephyr_library_sources_ifdef(CONFIG_ADC_TELINK_TLX	adc_tlx.c)
 zephyr_library_sources_ifdef(CONFIG_ADC_ITE_IT8XXX2	adc_ite_it8xxx2.c)
 zephyr_library_sources_ifdef(CONFIG_ADC_SHELL		adc_shell.c)
 zephyr_library_sources_ifdef(CONFIG_ADC_MCUX_ADC12	adc_mcux_adc12.c)
