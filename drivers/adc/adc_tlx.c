@@ -152,6 +152,17 @@ static signed short adc_tlx_get_code(void)
 {
 	signed short adc_code;
 
+#if  CONFIG_SOC_RISCV_TELINK_TL321X
+	static unsigned char g_adc_rx_fifo_index;
+
+	if (g_adc_rx_fifo_index == 0) {
+		adc_code = reg_adc_rxfifo_dat(g_adc_rx_fifo_index);
+		g_adc_rx_fifo_index = 1;
+	} else {
+		adc_code = reg_adc_rxfifo_dat(g_adc_rx_fifo_index);
+		g_adc_rx_fifo_index = 0;
+	}
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
 	analog_write_reg8(areg_adc_data_sample_control,
 		analog_read_reg8(areg_adc_data_sample_control) | FLD_NOT_SAMPLE_ADC_DATA);
 
@@ -159,7 +170,7 @@ static signed short adc_tlx_get_code(void)
 
 	analog_write_reg8(areg_adc_data_sample_control,
 		analog_read_reg8(areg_adc_data_sample_control) & (~FLD_NOT_SAMPLE_ADC_DATA));
-
+#endif
 	return adc_code;
 }
 
@@ -230,20 +241,24 @@ static int adc_tlx_adc_start_read(const struct device *dev, const struct adc_seq
 /* Main ADC Acquisition thread */
 static void adc_tlx_acquisition_thread(const struct device *dev)
 {
-	int16_t adc_code;
+	int16_t adc_code = 0;
 	struct tlx_adc_data *data = dev->data;
 
 	while (true) {
 		/* Wait for Acquisition semaphore */
 		k_sem_take(&data->acq_sem, K_FOREVER);
-
+#if  CONFIG_SOC_RISCV_TELINK_TL321X
+		adc_start_sample_nodma();
+		while (((reg_adc_rxfifo_trig_num & FLD_BUF_CNT) >> 4)
+				== 0){
+		}
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
 		/* Wait for ADC data ready */
 		while ((analog_read_reg8(AREG_ADC_DATA_STATUS) & ADC_DATA_READY)
 				!= ADC_DATA_READY) {
 		}
-
+#endif
 		/* Perform read */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_code = adc_tlx_get_code();
 		if (!data->differential) {
 			/* Sign bit is not used in case of single-ended configuration */
@@ -254,8 +269,6 @@ static void adc_tlx_acquisition_thread(const struct device *dev)
 				adc_code = 0;
 			}
 		}
-#endif
-
 		*data->buffer++ = adc_code;
 
 		/* Power off ADC */
@@ -348,6 +361,11 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	case ADC_GAIN_1:
 		pre_scale = ADC_PRESCALE_1;
 		break;
+	#if CONFIG_SOC_RISCV_TELINK_TL321X
+	case ADC_GAIN_1_4:
+		pre_scale = ADC_PRESCALE_1F4;
+		break;
+	#endif
 
 	default:
 		LOG_ERR("Selected ADC gain is not supported.");

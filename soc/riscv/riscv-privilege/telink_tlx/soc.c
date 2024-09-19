@@ -8,7 +8,7 @@
 #include <clock.h>
 #include <gpio.h>
 #include <ext_driver/ext_pm.h>
-
+#include "rf_common.h"
 #include "flash.h"
 #include <watchdog.h>
 #include <zephyr/kernel.h>
@@ -103,7 +103,7 @@ static int soc_b9x_init(void)
 #endif /* CONFIG_PM  */
 
 	/* system init */
-	sys_init(VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
@@ -156,7 +156,7 @@ void soc_b9x_restore(void)
 	unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 
 	/* system init */
-	sys_init(VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
