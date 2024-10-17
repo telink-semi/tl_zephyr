@@ -1,0 +1,45 @@
+# Copyright (c) 2024, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  This allows you to define a group of TIMER inputs and outputs. Each node in the
+  group is controlled by a GPIO. Each NODE is defined in a child node of the
+  timer-gpio node.
+
+  Here is an example which defines two timer trigger outs in the node /tim_outs:
+
+  / {
+    tim_outs {
+      compatible = "timer-gpio";
+
+      tim_out_0 {
+        gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>;
+        label = "TIM0 Trigger Out";
+      };
+      tim_out_1 {
+        gpios = <&gpioa 1 GPIO_ACTIVE_HIGH>;
+        label = "TIM1 Trigger Out";
+      };
+    };
+
+  Above:
+
+  - tim_out_0 is pin 0 on gpioa. The GPIO is active when the pin is high,
+    and off when the pin is high.
+  - tim_out_1 is pin 1 on gpioa. The GPIO is active when the pin is high,
+    and off when it is low.
+
+compatible: "timer-gpio"
+
+child-binding:
+  description: GPIO TIMER child node
+  properties:
+    gpios:
+      type: phandle-array
+      required: true
+    label:
+      type: string
+      description: |
+        Human readable string describing the TIM GPIO NODE. It can be used by an
+        application to identify this NODE or to retrieve its number/index
+        (i.e. child node number) on the parent device.

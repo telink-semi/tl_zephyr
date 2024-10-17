@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) 2024 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	aliases {
+		tim0-trig-out = &tim0_trig;
+		tim1-trig-out = &tim1_trig;
+		tim0-capt-in = &tim0_capt_in;
+		tim1-capt-in = &tim1_capt_in;
+	};
+
+	tim_outs {
+		compatible = "timer-gpio";
+
+		tim0_trig: tim_out_0 {
+			gpios = <&gpioe 4 GPIO_ACTIVE_HIGH>;
+			label = "TIM0 Trigger Out";
+		};
+		tim1_trig: tim_out_1 {
+			gpios = <&gpioe 5 GPIO_ACTIVE_HIGH>;
+			label = "TIM1 Trigger Out";
+		};
+	};
+	tim_in {
+		compatible = "timer-gpio";
+
+		tim0_capt_in: tim_in_0 {
+			gpios = <&gpioe 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "TIM0 Input";
+		};
+		tim1_capt_in: tim_in_1 {
+			gpios = <&gpioe 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "TIM1 Input";
+		};
+	};
+	timer_settings {
+        compatible = "timer-config";
+        timer-trigger-mode = <0x1>;
+        timer-width-mode = <0x2>;
+        timer-tick-mode = <0x3>;
+        timer-gpio-trigger-tick = <0xA>;
+    };
+};

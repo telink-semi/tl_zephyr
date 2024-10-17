@@ -1,0 +1,7 @@
+sample:
+  name: TIMER usage sample
+tests:
+  samples.boards.tlsr9x.timer:
+    tags: timer tim
+    depends_on: gpio
+    harness: tim_outs

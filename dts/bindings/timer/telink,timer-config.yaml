@@ -1,0 +1,41 @@
+# Copyright (c) 2024, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  This binding is used to configure the timer trigger mode,
+  width mode, tick mode and input trigger capture tick value.
+
+  Here is an example which defines timer modes and trigger tick value:
+
+  / {
+    timer_settings {
+      compatible = "timer-config";
+      timer-trigger-mode = <0x1>;
+      timer-width-mode = <0x2>;
+      timer-tick-mode = <0x3>;
+      timer-gpio-trigger-tick = <0xA>;
+    };
+  }
+
+compatible: "timer-config"
+
+properties:
+  timer-trigger-mode:
+    type: int
+    description: "Timer Trigger Mode"
+    required: true
+
+  timer-width-mode:
+    type: int
+    description: "Timer Width Mode"
+    required: true
+
+  timer-tick-mode:
+    type: int
+    description: "Timer Tick Mode"
+    required: true
+
+  timer-gpio-trigger-tick:
+    type: int
+    description: "Special trigger tick mode"
+    required: true

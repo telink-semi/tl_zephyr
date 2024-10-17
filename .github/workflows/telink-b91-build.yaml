@@ -130,6 +130,11 @@ jobs:
         cd ..
         west build -b tlsr9518adk80d             -d build_crypto_mbedtls_b91            zephyr/tests/crypto/mbedtls                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
 
+    - name: Build B91 boards/tlsr9x/timer for TIMER usage
+      run: |
+        cd ..
+        west build -b tlsr9518adk80d             -d build_timer_usage_b91               zephyr/samples/boards/tlsr9x/basic                       -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -151,6 +156,7 @@ jobs:
         cp ../build_blinky_usb_dfu_b91/zephyr/zephyr.signed.bin     telink_build_artifacts/b91_blinky_usb_dfu.signed.bin
         cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
         cp ../build_crypto_mbedtls_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_mbedtls.bin
+        cp ../build_timer_usage_b91/zephyr/zephyr.bin               telink_build_artifacts/b91_timer_usage.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v3
