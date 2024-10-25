@@ -7,10 +7,186 @@
 #include "bootutil/bootutil.h"
 #include "bootutil_priv.h"
 #include "bootutil/bootutil_log.h"
+#include "../../../../bootloader/mcuboot/ext/xz/src/liblzma/api/lzma.h" // TODO use from Zephyr lib
 
 BOOT_LOG_MODULE_DECLARE(mcuboot);
 
+#if BOOT_MAX_ALIGN > 1024
+#define BUF_SZ BOOT_MAX_ALIGN
+#else
+#define BUF_SZ 1024
+#endif
+
+#define LZMA_PROPS_SIZE 5               // Size of the LZMA properties
+
+/**
+ * Hook function to perform the image update, including LZMA decompression.
+ *
+ * @param img_index   Index of the current image.
+ * @param img_head    Pointer to the image header of the secondary slot.
+ * @param area        Pointer to the flash area of the secondary slot.
+ *
+ * @return            0 on success; nonzero on failure.
+ */
+int boot_perform_update_hook(int img_index, struct image_header *img_head,
+                             const struct flash_area *area)
+{
+    int rc;
+    const struct flash_area *fap_primary_slot;
+    uint32_t img_size = img_head->ih_hdr_size + img_head->ih_img_size; // image size to be processed (without trailer)
+
+    static uint8_t buf_in[BUF_SZ] __attribute__((aligned(4)));
+    static uint8_t buf_out[BUF_SZ] __attribute__((aligned(4)));
+    int chunk_sz_in;
+    int chunk_sz_out = sizeof buf_out;
+    uint32_t bytes_copied = 0;
+    uint32_t bytes_written = 0;
+
+    lzma_stream strm = LZMA_STREAM_INIT;
+    lzma_ret rc_lzma;
+
+    BOOT_LOG_INF("Image upgrade secondary slot -> primary slot");
+    BOOT_LOG_INF("Erasing the primary slot");
+
+    rc = flash_area_open(FLASH_AREA_IMAGE_PRIMARY(img_index), &fap_primary_slot);
+    assert(rc == 0);
+
+    // Erase whole primiry slot (don't need to erase trailer separetely)
+    rc = boot_erase_region(fap_primary_slot, 0, flash_area_get_size(fap_primary_slot));
+    assert(rc == 0);
+
+    BOOT_LOG_INF("Copying with decompression the secondary slot to the primary slot: 0x%zx bytes", img_size);
+
+    while (bytes_copied < img_size) {
+        if (img_size - bytes_copied > sizeof buf_in) {
+            chunk_sz_in = sizeof buf_in;
+        } else {
+            chunk_sz_in = img_size - bytes_copied;
+        }
+
+        rc = flash_area_read(area, bytes_copied, buf_in, chunk_sz_in);
+        if (rc != 0) {
+            return BOOT_EFLASH;
+        }
+
+        if (bytes_copied == 0) { // Start of image, need to process header/properties and initialize the raw decoder
+            // Set up the LZMA filter chain
+            lzma_filter filters[2];
+            filters[0].id      = LZMA_FILTER_LZMA1;
+            filters[1].id      = LZMA_VLI_UNKNOWN;
+
+            // Extract LZMA properties
+            rc_lzma = lzma_properties_decode(&filters[0], NULL, buf_in + img_head->ih_hdr_size, LZMA_PROPS_SIZE);
+            if (rc_lzma != LZMA_OK) {
+                BOOT_LOG_ERR("Failed to decode properties: %d", rc_lzma);
+                return rc_lzma;
+            }
+
+            lzma_options_lzma *options = filters[0].options;
+            // Check that the values match the expected ones: lc=1, lp=2, pb=0
+            if (options->lc != 1 || options->lp != 2 || options->pb != 0) {
+                BOOT_LOG_ERR("Unexpected LZMA properties: lc=%u, lp=%u, pb=%u", options->lc, options->lp, options->pb);
+                return LZMA_OPTIONS_ERROR;
+            }
+
+            // Check if the dictionary size exceeds the maximum size
+            if (options->dict_size > CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE) {
+                BOOT_LOG_ERR("Dictionary size (%u bytes) exceeds maximum (%u bytes)", options->dict_size, CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE);
+                return LZMA_OPTIONS_ERROR;
+            }
+
+            // Initialize the raw decoder
+            rc_lzma = lzma_raw_decoder(&strm, filters);
+            if (rc_lzma != LZMA_OK) {
+                BOOT_LOG_ERR("Failed to init LZMA raw decoder: %d", rc_lzma);
+                return rc_lzma;
+            }
+
+            bytes_copied += img_head->ih_hdr_size;      // Skip image header (compressed data contains its own)
+            bytes_copied += LZMA_PROPS_SIZE;            // Skip LZMA properties bytes
+            strm.avail_in = chunk_sz_in - bytes_copied; // buffer size to decompress
+            strm.next_in = buf_in + bytes_copied;       // buffer pointer to decompress
+        } else {
+            strm.avail_in = chunk_sz_in;                // buffer size to decompress
+            strm.next_in = buf_in;                      // buffer pointer to decompress
+        }
+
+        bytes_copied += strm.avail_in;                  // Increase number of read data (compressed)
+
+        while (strm.avail_in > 0) {
+            // Set up the output buffer and run the LZMA decompression for this chunk
+            strm.avail_out = chunk_sz_out;
+            strm.next_out = buf_out;
+            rc_lzma = lzma_code(&strm, LZMA_RUN);
+            if (rc_lzma != LZMA_OK && rc_lzma != LZMA_STREAM_END) {
+                BOOT_LOG_ERR("Decompression error: %d", rc_lzma);
+                return rc_lzma;
+            }
+
+            // Calculate write size and write data into flash
+            size_t write_size = chunk_sz_out - strm.avail_out;
+            BOOT_LOG_INF("Decompressed chunk size = %zu bytes (remaining compressed size = %zu bytes)", write_size, strm.avail_in);
+            rc = flash_area_write(fap_primary_slot, bytes_written, buf_out, write_size);
+            if (rc != 0) {
+                return BOOT_EFLASH;
+            }
+
+            bytes_written += write_size;
+
+            if (rc_lzma == LZMA_STREAM_END) { // End of the LZMA stream reached
+                break;
+            }
+        }
+
+        BOOT_LOG_INF("Processed %zu from %zu compressed bytes into %zu decompressed bytes", bytes_copied, img_size, bytes_written);
+
+        if (rc_lzma == LZMA_STREAM_END) { // End of the LZMA stream reached
+            lzma_end(&strm);
+            break;
+        }
+    }
+
+    // Clean up: erase the header and trailer of the secondary slot
+    BOOT_LOG_DBG("Erasing secondary header");
+    rc = boot_erase_region(area, 0, img_head->ih_hdr_size);
+    assert(rc == 0);
+
+    BOOT_LOG_DBG("Erasing secondary trailer");
+    rc = boot_erase_region(area, img_size, area->fa_size - img_size);
+    assert(rc == 0);
+
+    return 0;
+}
+
+
+// Placeholder hooks added to ensure successful compilation.
+
+int boot_read_image_header_hook(int img_index, int slot,
+                                struct image_header *img_hed)
+{
+    return BOOT_HOOK_REGULAR;
+}
+
+fih_ret boot_image_check_hook(int img_index, int slot)
+{
+    FIH_RET(FIH_BOOT_HOOK_REGULAR);
+}
+
+
+int boot_read_swap_state_primary_slot_hook(int image_index,
+                                           struct boot_swap_state *state)
+{
+    return BOOT_HOOK_REGULAR;
+}
+
+int boot_copy_region_post_hook(int img_index, const struct flash_area *area,
+                               size_t size)
+{
+    return 0;
+}
+
 // Modified version of the original function with the check for equal slot sizes removed.
+
 /*
  * Slots are compatible when all sectors that store up to to size of the image
  * round up to sector size, in both slot's are able to fit in the scratch
