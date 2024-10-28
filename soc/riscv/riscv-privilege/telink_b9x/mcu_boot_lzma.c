@@ -17,8 +17,6 @@ BOOT_LOG_MODULE_DECLARE(mcuboot);
 #define BUF_SZ 1024
 #endif
 
-#define LZMA_PROPS_SIZE 5               // Size of the LZMA properties
-
 /**
  * Hook function to perform the image update, including LZMA decompression.
  *
@@ -70,30 +68,17 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
         }
 
         if (bytes_copied == 0) { // Start of image, need to process header/properties and initialize the raw decoder
+            // Set the options (lc, lp, pb and dictionary size)
+            lzma_options_lzma options;
+            options.lc = 1;     // Literal context bits
+            options.lp = 2;     // Literal position bits
+            options.pb = 0;     // Position bits
+            options.dict_size = CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE;
             // Set up the LZMA filter chain
             lzma_filter filters[2];
             filters[0].id      = LZMA_FILTER_LZMA1;
+            filters[0].options = &options;
             filters[1].id      = LZMA_VLI_UNKNOWN;
-
-            // Extract LZMA properties
-            rc_lzma = lzma_properties_decode(&filters[0], NULL, buf_in + img_head->ih_hdr_size, LZMA_PROPS_SIZE);
-            if (rc_lzma != LZMA_OK) {
-                BOOT_LOG_ERR("Failed to decode properties: %d", rc_lzma);
-                return rc_lzma;
-            }
-
-            lzma_options_lzma *options = filters[0].options;
-            // Check that the values match the expected ones: lc=1, lp=2, pb=0
-            if (options->lc != 1 || options->lp != 2 || options->pb != 0) {
-                BOOT_LOG_ERR("Unexpected LZMA properties: lc=%u, lp=%u, pb=%u", options->lc, options->lp, options->pb);
-                return LZMA_OPTIONS_ERROR;
-            }
-
-            // Check if the dictionary size exceeds the maximum size
-            if (options->dict_size > CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE) {
-                BOOT_LOG_ERR("Dictionary size (%u bytes) exceeds maximum (%u bytes)", options->dict_size, CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE);
-                return LZMA_OPTIONS_ERROR;
-            }
 
             // Initialize the raw decoder
             rc_lzma = lzma_raw_decoder(&strm, filters);
@@ -102,16 +87,13 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
                 return rc_lzma;
             }
 
-            bytes_copied += img_head->ih_hdr_size;      // Skip image header (compressed data contains its own)
-            bytes_copied += LZMA_PROPS_SIZE;            // Skip LZMA properties bytes
-            strm.avail_in = chunk_sz_in - bytes_copied; // buffer size to decompress
-            strm.next_in = buf_in + bytes_copied;       // buffer pointer to decompress
+            // Skip image header (compressed data contains its own)
+            strm.avail_in = chunk_sz_in - img_head->ih_hdr_size; // buffer size to decompress
+            strm.next_in = buf_in + img_head->ih_hdr_size;       // buffer pointer to decompress
         } else {
             strm.avail_in = chunk_sz_in;                // buffer size to decompress
             strm.next_in = buf_in;                      // buffer pointer to decompress
         }
-
-        bytes_copied += strm.avail_in;                  // Increase number of read data (compressed)
 
         while (strm.avail_in > 0) {
             // Set up the output buffer and run the LZMA decompression for this chunk
@@ -138,6 +120,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
             }
         }
 
+        bytes_copied += chunk_sz_in;    // Increase number of read data (compressed)
         BOOT_LOG_INF("Processed %zu from %zu compressed bytes into %zu decompressed bytes", bytes_copied, img_size, bytes_written);
 
         if (rc_lzma == LZMA_STREAM_END) { // End of the LZMA stream reached
