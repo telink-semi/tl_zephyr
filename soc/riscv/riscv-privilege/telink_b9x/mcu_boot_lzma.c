@@ -34,8 +34,8 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 	/* image size to be processed (without trailer) */
 	uint32_t img_size = img_head->ih_hdr_size + img_head->ih_img_size;
 
-	static uint8_t buf_in[BUF_SZ] __attribute__((aligned(4)));
-	static uint8_t buf_out[BUF_SZ] __attribute__((aligned(4)));
+	static uint8_t buf_in[BUF_SZ] __aligned(4);
+	static uint8_t buf_out[BUF_SZ] __aligned(4);
 	int chunk_sz_in;
 	int chunk_sz_out = sizeof(buf_out);
 	uint32_t bytes_copied = 0;
@@ -54,7 +54,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 	rc = boot_erase_region(fap_primary_slot, 0, flash_area_get_size(fap_primary_slot));
 	assert(rc == 0);
 
-	BOOT_LOG_INF("Copying with decompression the secondary slot to the primary slot: 0x%zx bytes", img_size);
+	BOOT_LOG_INF("Copying with decompression: 0x%zx bytes", img_size);
 
 	while (bytes_copied < img_size) {
 		if (img_size - bytes_copied > sizeof(buf_in)) {
@@ -72,7 +72,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 			lzma_filter filters[2];
 			lzma_options_lzma options;
 
-			/* Set ut the options (lc, lp, pb and dictionary size) and LZMA filter chain */
+			/* Set up the options (lc, lp, pb, dictionary size) and LZMA filter chain */
 			options.lc = 1;     /* Literal context bits */
 			options.lp = 2;     /* Literal position bits */
 			options.pb = 0;     /* Position bits */
@@ -108,7 +108,9 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 
 			/* Calculate write size and write data into flash */
 			size_t write_size = chunk_sz_out - strm.avail_out;
-			BOOT_LOG_INF("Decompressed chunk size = %zu bytes (remaining compressed size = %zu bytes)", write_size, strm.avail_in);
+
+			BOOT_LOG_INF("Decompressed chunk size = %zu bytes \
+				(remaining compressed size = %zu bytes)", write_size, strm.avail_in);
 			rc = flash_area_write(fap_primary_slot, bytes_written, buf_out, write_size);
 			if (rc != 0) {
 				return BOOT_EFLASH;
@@ -122,7 +124,8 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 		}
 
 		bytes_copied += chunk_sz_in;
-		BOOT_LOG_INF("Processed %zu from %zu compressed bytes into %zu decompressed bytes", bytes_copied, img_size, bytes_written);
+		BOOT_LOG_INF("Processed %zu from %zu compressed bytes \
+			into %zu decompressed bytes", bytes_copied, img_size, bytes_written);
 
 		if (rc_lzma == LZMA_STREAM_END) {
 			lzma_end(&strm);
@@ -146,7 +149,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 /* Placeholder hooks added to ensure successful compilation. */
 
 int boot_read_image_header_hook(int img_index, int slot,
-								struct image_header *img_hed)
+						struct image_header *img_hed)
 {
 	return BOOT_HOOK_REGULAR;
 }
@@ -156,15 +159,14 @@ fih_ret boot_image_check_hook(int img_index, int slot)
 	FIH_RET(FIH_BOOT_HOOK_REGULAR);
 }
 
-
 int boot_read_swap_state_primary_slot_hook(int image_index,
-										   struct boot_swap_state *state)
+						struct boot_swap_state *state)
 {
 	return BOOT_HOOK_REGULAR;
 }
 
-int boot_copy_region_post_hook(int img_index, const struct flash_area *area,
-							   size_t size)
+int boot_copy_region_post_hook(int img_index,
+						const struct flash_area *area, size_t size)
 {
 	return 0;
 }
