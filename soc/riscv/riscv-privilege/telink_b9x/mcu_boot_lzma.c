@@ -31,12 +31,13 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 {
 	int rc;
 	const struct flash_area *fap_primary_slot;
-	uint32_t img_size = img_head->ih_hdr_size + img_head->ih_img_size; // image size to be processed (without trailer)
+	/* image size to be processed (without trailer) */
+	uint32_t img_size = img_head->ih_hdr_size + img_head->ih_img_size;
 
 	static uint8_t buf_in[BUF_SZ] __attribute__((aligned(4)));
 	static uint8_t buf_out[BUF_SZ] __attribute__((aligned(4)));
 	int chunk_sz_in;
-	int chunk_sz_out = sizeof buf_out;
+	int chunk_sz_out = sizeof(buf_out);
 	uint32_t bytes_copied = 0;
 	uint32_t bytes_written = 0;
 
@@ -49,15 +50,15 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 	rc = flash_area_open(FLASH_AREA_IMAGE_PRIMARY(img_index), &fap_primary_slot);
 	assert(rc == 0);
 
-	// Erase whole primiry slot (don't need to erase trailer separetely)
+	/* Erase whole primiry slot (don't need to erase trailer separetely) */
 	rc = boot_erase_region(fap_primary_slot, 0, flash_area_get_size(fap_primary_slot));
 	assert(rc == 0);
 
 	BOOT_LOG_INF("Copying with decompression the secondary slot to the primary slot: 0x%zx bytes", img_size);
 
 	while (bytes_copied < img_size) {
-		if (img_size - bytes_copied > sizeof buf_in) {
-			chunk_sz_in = sizeof buf_in;
+		if (img_size - bytes_copied > sizeof(buf_in)) {
+			chunk_sz_in = sizeof(buf_in);
 		} else {
 			chunk_sz_in = img_size - bytes_copied;
 		}
@@ -67,36 +68,36 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 			return BOOT_EFLASH;
 		}
 
-		if (bytes_copied == 0) { // Start of image, need to process header/properties and initialize the raw decoder
-			// Set the options (lc, lp, pb and dictionary size)
-			lzma_options_lzma options;
-			options.lc = 1;     // Literal context bits
-			options.lp = 2;     // Literal position bits
-			options.pb = 0;     // Position bits
-			options.dict_size = CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE;
-			// Set up the LZMA filter chain
+		if (bytes_copied == 0) {
 			lzma_filter filters[2];
+			lzma_options_lzma options;
+
+			/* Set ut the options (lc, lp, pb and dictionary size) and LZMA filter chain */
+			options.lc = 1;     /* Literal context bits */
+			options.lp = 2;     /* Literal position bits */
+			options.pb = 0;     /* Position bits */
+			options.dict_size = CONFIG_COMPRESS_LZMA_DICTIONARY_SIZE;
 			filters[0].id      = LZMA_FILTER_LZMA1;
 			filters[0].options = &options;
 			filters[1].id      = LZMA_VLI_UNKNOWN;
 
-			// Initialize the raw decoder
+			/* Initialize the raw decoder */
 			rc_lzma = lzma_raw_decoder(&strm, filters);
 			if (rc_lzma != LZMA_OK) {
 				BOOT_LOG_ERR("Failed to init LZMA raw decoder: %d", rc_lzma);
 				return rc_lzma;
 			}
 
-			// Skip image header (compressed data contains its own)
-			strm.avail_in = chunk_sz_in - img_head->ih_hdr_size; // buffer size to decompress
-			strm.next_in = buf_in + img_head->ih_hdr_size;       // buffer pointer to decompress
+			/* Skip image header (compressed data contains its own) */
+			strm.avail_in = chunk_sz_in - img_head->ih_hdr_size;
+			strm.next_in = buf_in + img_head->ih_hdr_size;
 		} else {
-			strm.avail_in = chunk_sz_in;                // buffer size to decompress
-			strm.next_in = buf_in;                      // buffer pointer to decompress
+			strm.avail_in = chunk_sz_in;
+			strm.next_in = buf_in;
 		}
 
 		while (strm.avail_in > 0) {
-			// Set up the output buffer and run the LZMA decompression for this chunk
+			/* Set up the output buffer and run the LZMA decompression for this chunk */
 			strm.avail_out = chunk_sz_out;
 			strm.next_out = buf_out;
 			rc_lzma = lzma_code(&strm, LZMA_RUN);
@@ -105,7 +106,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 				return rc_lzma;
 			}
 
-			// Calculate write size and write data into flash
+			/* Calculate write size and write data into flash */
 			size_t write_size = chunk_sz_out - strm.avail_out;
 			BOOT_LOG_INF("Decompressed chunk size = %zu bytes (remaining compressed size = %zu bytes)", write_size, strm.avail_in);
 			rc = flash_area_write(fap_primary_slot, bytes_written, buf_out, write_size);
@@ -115,21 +116,21 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 
 			bytes_written += write_size;
 
-			if (rc_lzma == LZMA_STREAM_END) { // End of the LZMA stream reached
+			if (rc_lzma == LZMA_STREAM_END) {
 				break;
 			}
 		}
 
-		bytes_copied += chunk_sz_in;    // Increase number of read data (compressed)
+		bytes_copied += chunk_sz_in;
 		BOOT_LOG_INF("Processed %zu from %zu compressed bytes into %zu decompressed bytes", bytes_copied, img_size, bytes_written);
 
-		if (rc_lzma == LZMA_STREAM_END) { // End of the LZMA stream reached
+		if (rc_lzma == LZMA_STREAM_END) {
 			lzma_end(&strm);
 			break;
 		}
 	}
 
-	// Clean up: erase the header and trailer of the secondary slot
+	/* Clean up: erase the header and trailer of the secondary slot */
 	BOOT_LOG_DBG("Erasing secondary header");
 	rc = boot_erase_region(area, 0, img_head->ih_hdr_size);
 	assert(rc == 0);
@@ -142,7 +143,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 }
 
 
-// Placeholder hooks added to ensure successful compilation.
+/* Placeholder hooks added to ensure successful compilation. */
 
 int boot_read_image_header_hook(int img_index, int slot,
 								struct image_header *img_hed)
@@ -168,7 +169,7 @@ int boot_copy_region_post_hook(int img_index, const struct flash_area *area,
 	return 0;
 }
 
-// Modified version of the original function with the check for equal slot sizes removed.
+/* Modified version of the original function with the check for equal slot sizes removed. */
 
 /*
  * Slots are compatible when all sectors that store up to to size of the image
