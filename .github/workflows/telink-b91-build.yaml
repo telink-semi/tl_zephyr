@@ -85,6 +85,11 @@ jobs:
         cd ..
         west build -b tlsr9518adk80d             -d build_mcuboot_b91                   bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3
 
+    - name: Build B91 bootloader/mcuboot/boot for compressed LZMA image
+      run: |
+        cd ..
+        west build -b tlsr9518adk80d             -d build_mcuboot_b91_lzma              bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_BOOT_UPGRADE_ONLY=y
+
     - name: Build B91 subsys/mgmt/mcumgr/smp_svr for Bluetooth
       run: |
         cd ..
