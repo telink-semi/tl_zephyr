@@ -110,7 +110,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 			size_t write_size = chunk_sz_out - strm.avail_out;
 
 			BOOT_LOG_INF("Decompressed chunk size = %zu bytes "
-						"(remaining compressed size = %zu bytes)", 
+						"(remaining compressed size = %zu bytes)",
 						write_size, strm.avail_in);
 			rc = flash_area_write(fap_primary_slot, bytes_written, buf_out, write_size);
 			if (rc != 0) {
@@ -126,7 +126,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 
 		bytes_copied += chunk_sz_in;
 		BOOT_LOG_INF("Processed %zu from %zu compressed bytes "
-					"into %zu decompressed bytes", 
+					"into %zu decompressed bytes",
 					bytes_copied, img_size, bytes_written);
 
 		if (rc_lzma == LZMA_STREAM_END) {
