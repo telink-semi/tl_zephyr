@@ -2999,6 +2999,15 @@ West:
   labels:
     - manifest-lz4
 
+"West project: lzma":
+  status: odd fixes
+  collaborators:
+    - JiaT75
+  files:
+    - modules/lzma/
+  labels:
+    - manifest-lzma
+
 "West project: mbedtls":
   status: maintained
   maintainers:

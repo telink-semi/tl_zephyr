@@ -124,3 +124,19 @@ config TELINK_B9X_MATTER_RETENTION_LAYOUT
 	default n
 	help
 		This option enables support Matter retention layout
+
+config COMPRESS_LZMA
+	bool "Support LZMA compression"
+	default n
+	select LZMA
+	select BOOT_IMAGE_ACCESS_HOOKS
+	depends on BOOTLOADER_MCUBOOT || MCUBOOT
+	help
+	  This option enables LZMA compression with MCUBoot
+
+config COMPRESS_LZMA_DICTIONARY_SIZE
+	int "Set LZMA compression dictionary size"
+	default 32768
+	depends on COMPRESS_LZMA
+	help
+	  This option sets LZMA compression dictionary size

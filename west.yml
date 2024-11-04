@@ -183,6 +183,10 @@ manifest:
     - name: lz4
       revision: 8e303c264fc21c2116dc612658003a22e933124d
       path: modules/lib/lz4
+    - name: lzma
+      url: https://github.com/xz-mirror/xz.git
+      revision: 74c3449d8b816a724b12ebce7417e00fb597309a
+      path: zephyr/modules/lzma/lib
     - name: mbedtls
       revision: 4e1f66df894dc622da7bcd3884016a6ace08e9ea
       path: modules/crypto/mbedtls
