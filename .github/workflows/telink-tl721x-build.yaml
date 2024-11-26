@@ -43,12 +43,12 @@ jobs:
     - name: Build TL721X basic/blinky
       run: |
         cd ..
-        west build -b tl7218x                  -d build_blinky_tl721x                    zephyr/samples/basic/blinky                          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl7218x                  -d build_blinky_tl721x                    zephyr/samples/basic/blinky                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL721x samples/basic/button
       run: |
         cd ..
-        west build -b tl7218x                  -d build_button_tl721x                     zephyr/samples/basic/button                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl7218x                  -d build_button_tl721x                    zephyr/samples/basic/button                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL721X basic/blinky_pwm
       run: |
@@ -68,12 +68,12 @@ jobs:
     - name: Build TL721X tests/drivers/hwinfo/api
       run: |
         cd ..
-        west build -b tl7218x                  -d build_hwinfo_tl721x                     zephyr/tests/drivers/hwinfo/api                          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl7218x                  -d build_hwinfo_tl721x                    zephyr/tests/drivers/hwinfo/api                          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    # - name: Build TL721X sensor/sht3xd
-    #   run: |
-    #     cd ..
-    #     west build -b tl7218x                  -d build_sht3xd_tl721x                    zephyr/samples/sensor/sht3xd                             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+    - name: Build TL721X sensor/sht3xd
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_sht3xd_tl721x                    zephyr/samples/sensor/sht3xd                             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL721X bluetooth/peripheral_ht
       run: |
@@ -118,6 +118,7 @@ jobs:
         cp ../build_hello_tl721x/zephyr/zephyr.bin                     telink_build_artifacts/tl721x_hello.bin
         cp ../build_button_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_button.bin
         cp ../build_watchdog_tl721x/zephyr/zephyr.bin                  telink_build_artifacts/tl721x_watchdog.bin
+        cp ../build_sht3xd_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_sht3xd.bin
         cp ../build_hwinfo_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_hwinfo.bin
         cp ../build_peripheral_ht_tl721x/zephyr/zephyr.bin             telink_build_artifacts/tl721x_peripheral_ht.bin
         cp ../modules/hal/telink/zephyr/blobs/lib_zephyr_tl721x.a      telink_build_artifacts/lib_zephyr_tl721x.a
