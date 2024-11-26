@@ -65,6 +65,11 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_watchdog_tl721x                  zephyr/samples/drivers/watchdog                          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL721X tests/drivers/hwinfo/api
+      run: |
+        cd ..
+        west build -b tl7218x -d build_hwinfo_tl721x zephyr/tests/drivers/hwinfo/api
+
     # - name: Build TL721X sensor/sht3xd
     #   run: |
     #     cd ..
@@ -111,8 +116,9 @@ jobs:
         cp ../build_blinky_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_blinky.bin
         cp ../build_blinky_pwm_tl721x/zephyr/zephyr.bin                telink_build_artifacts/tl721x_blinky_pwm.bin
         cp ../build_hello_tl721x/zephyr/zephyr.bin                     telink_build_artifacts/tl721x_hello.bin
-        cp ../build_button_tl721x/zephyr/zephyr.bin                     telink_build_artifacts/tl721x_button.bin
+        cp ../build_button_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_button.bin
         cp ../build_watchdog_tl721x/zephyr/zephyr.bin                  telink_build_artifacts/tl721x_watchdog.bin
+        cp ../build_hwinfo_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_hwinfo.bin
         cp ../modules/hal/telink/zephyr/blobs/lib_zephyr_tl721x.a      telink_build_artifacts/lib_zephyr_tl721x.a
 
     - name: Publish artifacts
