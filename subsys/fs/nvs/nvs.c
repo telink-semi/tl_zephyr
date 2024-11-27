@@ -40,6 +40,71 @@ static inline size_t nvs_lookup_cache_pos(uint16_t id)
 	return pos % CONFIG_NVS_LOOKUP_CACHE_SIZE;
 }
 
+#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+static inline struct nvs_lookup *nvs_lookup_cache_location(struct nvs_fs *fs, size_t pos)
+{
+	uint16_t idx = 0;
+	struct nvs_lookup *cache_entry = fs->lookup_cache;
+	struct nvs_lookup *const cache_end = &fs->lookup_cache[fs->lookup_idx];
+
+	for (; cache_entry < cache_end; ++cache_entry) {
+		if (cache_entry->flags.bf.id == pos) {
+			return cache_entry;
+		}
+		idx++;
+	}
+
+	return  (struct nvs_lookup *) NVS_LOOKUP_CACHE_NO_ADDR;
+}
+#endif
+
+#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+static int nvs_lookup_cache_rebuild(struct nvs_fs *fs)
+{
+	int rc;
+	uint32_t addr, ate_addr;
+	struct nvs_lookup *cache_entry;
+	struct nvs_ate ate;
+
+	memset(fs->lookup_cache, 0xff, sizeof(fs->lookup_cache));
+	addr = fs->ate_wra;
+	fs->lookup_idx = 0;
+	while (true) {
+		/* Make a copy of 'addr' as it will be advanced by nvs_pref_ate() */
+		ate_addr = addr;
+		rc = nvs_prev_ate(fs, &addr, &ate);
+
+		if (rc) {
+			return rc;
+		}
+		cache_entry = nvs_lookup_cache_location(fs, nvs_lookup_cache_pos(ate.id));
+		if (ate.id != 0xFFFF && (unsigned int)cache_entry == NVS_LOOKUP_CACHE_NO_ADDR &&
+		    nvs_ate_valid(fs, &ate)) {
+			cache_entry  = &fs->lookup_cache[fs->lookup_idx++];
+			cache_entry->flags.bf.addr = ate_addr;
+			cache_entry->flags.bf.id = nvs_lookup_cache_pos(ate.id);
+		}
+
+		if (addr == fs->ate_wra) {
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static void nvs_lookup_cache_invalidate(struct nvs_fs *fs, uint32_t sector)
+{
+	uint32_t *cache_entry = (uint32_t *)fs->lookup_cache;
+	uint32_t *const cache_end = (uint32_t *)&fs->lookup_cache[fs->lookup_idx];
+
+	for (; cache_entry < cache_end; ++cache_entry) {
+		if (((*cache_entry >> ADDR_SECT_SHIFT)&0xf) == sector) {
+			*cache_entry = NVS_LOOKUP_CACHE_NO_ADDR;
+		}
+	}
+}
+#else
 static int nvs_lookup_cache_rebuild(struct nvs_fs *fs)
 {
 	int rc;
@@ -85,6 +150,7 @@ static void nvs_lookup_cache_invalidate(struct nvs_fs *fs, uint32_t sector)
 		}
 	}
 }
+#endif
 
 #endif /* CONFIG_NVS_LOOKUP_CACHE */
 
@@ -170,7 +236,22 @@ static int nvs_flash_ate_wrt(struct nvs_fs *fs, const struct nvs_ate *entry)
 #ifdef CONFIG_NVS_LOOKUP_CACHE
 	/* 0xFFFF is a special-purpose identifier. Exclude it from the cache */
 	if (entry->id != 0xFFFF) {
+		#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+		struct nvs_lookup *cache_entry = nvs_lookup_cache_location(fs,
+						nvs_lookup_cache_pos(entry->id));
+
+		if ((unsigned int)(cache_entry) == NVS_LOOKUP_CACHE_NO_ADDR) {
+
+			cache_entry  = &fs->lookup_cache[fs->lookup_idx++];
+		}
+
+		cache_entry->flags.bf.addr = fs->ate_wra;
+		cache_entry->flags.bf.id = nvs_lookup_cache_pos(entry->id);
+		LOG_DBG("kp_idx2 %d %x %x %x\n", fs->lookup_idx, fs->ate_wra,
+			nvs_lookup_cache_pos(entry->id), *(int *)cache_entry);
+		#else
 		fs->lookup_cache[nvs_lookup_cache_pos(entry->id)] = fs->ate_wra;
+		#endif
 	}
 #endif
 	fs->ate_wra -= nvs_al_size(fs, sizeof(struct nvs_ate));
@@ -630,11 +711,26 @@ static int nvs_gc(struct nvs_fs *fs)
 		}
 
 #ifdef CONFIG_NVS_LOOKUP_CACHE
+		#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+		struct nvs_lookup *cache_entry = nvs_lookup_cache_location(fs,
+						nvs_lookup_cache_pos(gc_ate.id));
+		if ((unsigned int)cache_entry == NVS_LOOKUP_CACHE_NO_ADDR) {
+			cache_entry  = &fs->lookup_cache[fs->lookup_idx++];
+			LOG_DBG("kp_idx1 %d %x %x\n", fs->lookup_idx, fs->ate_wra,
+						nvs_lookup_cache_pos(gc_ate.id));
+			wlk_addr = fs->ate_wra;
+			cache_entry->flags.bf.addr = fs->ate_wra;
+			cache_entry->flags.bf.id = nvs_lookup_cache_pos(gc_ate.id);
+		} else {
+			wlk_addr = cache_entry->flags.bf.addr;
+		}
+		#else
 		wlk_addr = fs->lookup_cache[nvs_lookup_cache_pos(gc_ate.id)];
 
 		if (wlk_addr == NVS_LOOKUP_CACHE_NO_ADDR) {
 			wlk_addr = fs->ate_wra;
 		}
+		#endif
 #else
 		wlk_addr = fs->ate_wra;
 #endif
@@ -868,9 +964,15 @@ static int nvs_startup(struct nvs_fs *fs)
 		 * So, temporarily, we set the lookup cache to the end of the fs.
 		 * The cache will be rebuilt afterwards
 		 **/
+		#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+		for (int i = 0; i < CONFIG_NVS_LOOKUP_CACHE_ARRAY_SIZE; i++) {
+			fs->lookup_cache[i].flags.bf.addr = fs->ate_wra;
+		}
+		#else
 		for (int i = 0; i < CONFIG_NVS_LOOKUP_CACHE_SIZE; i++) {
 			fs->lookup_cache[i] = fs->ate_wra;
 		}
+		#endif
 #endif
 		rc = nvs_gc(fs);
 		goto end;
@@ -1035,11 +1137,22 @@ ssize_t nvs_write(struct nvs_fs *fs, uint16_t id, const void *data, size_t len)
 
 	/* find latest entry with same id */
 #ifdef CONFIG_NVS_LOOKUP_CACHE
+	#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+	struct nvs_lookup *cache_entry = nvs_lookup_cache_location(fs, nvs_lookup_cache_pos(id));
+
+	if ((unsigned int)cache_entry == NVS_LOOKUP_CACHE_NO_ADDR) {
+		wlk_addr = NVS_LOOKUP_CACHE_NO_ADDR;
+		goto no_cached_entry;
+	} else {
+		wlk_addr = cache_entry->flags.bf.addr;
+	}
+	#else
 	wlk_addr = fs->lookup_cache[nvs_lookup_cache_pos(id)];
 
 	if (wlk_addr == NVS_LOOKUP_CACHE_NO_ADDR) {
 		goto no_cached_entry;
 	}
+	#endif
 #else
 	wlk_addr = fs->ate_wra;
 #endif
@@ -1165,12 +1278,24 @@ ssize_t nvs_read_hist(struct nvs_fs *fs, uint16_t id, void *data, size_t len,
 	cnt_his = 0U;
 
 #ifdef CONFIG_NVS_LOOKUP_CACHE
+	#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+	struct nvs_lookup *cache_entry = nvs_lookup_cache_location(fs, nvs_lookup_cache_pos(id));
+
+	if ((unsigned int)cache_entry == NVS_LOOKUP_CACHE_NO_ADDR) {
+		wlk_addr = NVS_LOOKUP_CACHE_NO_ADDR;
+		rc = -ENOENT;
+		goto err;
+	} else {
+		wlk_addr = cache_entry->flags.bf.addr;
+	}
+	#else
 	wlk_addr = fs->lookup_cache[nvs_lookup_cache_pos(id)];
 
 	if (wlk_addr == NVS_LOOKUP_CACHE_NO_ADDR) {
 		rc = -ENOENT;
 		goto err;
 	}
+	#endif
 #else
 	wlk_addr = fs->ate_wra;
 #endif
