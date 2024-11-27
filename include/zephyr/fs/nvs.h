@@ -23,6 +23,16 @@ extern "C" {
  * @{
  * @}
  */
+struct nvs_lookup {
+	union {
+	struct {
+		uint32_t addr:20;
+		uint32_t id:12;
+	} bf;
+	uint32_t byte;
+	} flags;
+};
+
 
 /**
  * @brief Non-volatile Storage Data Structures
@@ -56,7 +66,12 @@ struct nvs_fs {
 	const struct device *flash_device;
 	const struct flash_parameters *flash_parameters;
 #if CONFIG_NVS_LOOKUP_CACHE
+	#ifdef CONFIG_NVS_RAM_OPTIMIZATION
+	struct nvs_lookup lookup_cache[CONFIG_NVS_LOOKUP_CACHE_ARRAY_SIZE];
+	uint32_t lookup_idx;
+	#else
 	uint32_t lookup_cache[CONFIG_NVS_LOOKUP_CACHE_SIZE];
+	#endif
 #endif
 };
 
