@@ -34,7 +34,7 @@
 #define TLX_TRX_LENGTH                      (256)
 #define TLX_RSSI_TO_LQI_SCALE               (3)
 #define TLX_RSSI_TO_LQI_MIN                 (-87)
-#define TLX_CCA_TIME_MAX_US                 (200)
+#define TLX_CCA_TIME_MAX_US                 (120)
 #define TLX_LOGIC_CHANNEL_TO_PHYSICAL(p)    (((p) - 10) * 5)
 #define TLX_ACK_IE_MAX_SIZE                 (16)
 #define TLX_MAC_KEYS_ITEMS                  (3)
