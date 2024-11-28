@@ -80,6 +80,11 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_peripheral_ht_tl721x             zephyr/samples/bluetooth/peripheral_ht                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL721X drivers/adc
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_adc_tl721x                       zephyr/samples/drivers/adc                               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     # - name: Build TL721X net/openthread/cli
     #   run: |
     #     cd ..
@@ -100,10 +105,10 @@ jobs:
     #     cd ..
     #     west build -b tl7218x                  -d build_ot_echo_client_tl721x            zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"
 
-    # - name: Build TL721X subsys/usb/console for USB driver
-    #   run: |
-    #     cd ..
-    #     west build -b tl7218x                  -d build_usb_console_tl721x              zephyr/samples/subsys/usb/console                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+    - name: Build TL721X subsys/usb/console for USB driver
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_usb_console_tl721x              zephyr/samples/subsys/usb/console                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     # - name: Build TL721X crypto/mbedtls
     #   run: |
@@ -121,6 +126,8 @@ jobs:
         cp ../build_sht3xd_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_sht3xd.bin
         cp ../build_hwinfo_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_hwinfo.bin
         cp ../build_peripheral_ht_tl721x/zephyr/zephyr.bin             telink_build_artifacts/tl721x_peripheral_ht.bin
+        cp ../build_adc_tl721x/zephyr/zephyr.bin                       telink_build_artifacts/tl721x_adc.bin
+        cp ../build_usb_console_tl721x/zephyr/zephyr.bin               telink_build_artifacts/tl721x_usb_console.bin
         cp ../modules/hal/telink/zephyr/blobs/lib_zephyr_tl721x.a      telink_build_artifacts/lib_zephyr_tl721x.a
 
     - name: Publish artifacts
