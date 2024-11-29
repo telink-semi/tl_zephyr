@@ -110,10 +110,10 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_usb_console_tl721x              zephyr/samples/subsys/usb/console                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    # - name: Build TL721X crypto/mbedtls
-    #   run: |
-    #     cd ..
-    #     west build -b tl7218x                  -d build_crypto_mbedtls_tl721x           zephyr/tests/crypto/mbedtls                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
+    - name: Build TL721X crypto/mbedtls
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_crypto_mbedtls_tl721x           zephyr/tests/crypto/mbedtls                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
 
     - name: Collect artifacts
       run: |
@@ -128,6 +128,7 @@ jobs:
         cp ../build_peripheral_ht_tl721x/zephyr/zephyr.bin             telink_build_artifacts/tl721x_peripheral_ht.bin
         cp ../build_adc_tl721x/zephyr/zephyr.bin                       telink_build_artifacts/tl721x_adc.bin
         cp ../build_usb_console_tl721x/zephyr/zephyr.bin               telink_build_artifacts/tl721x_usb_console.bin
+        cp ../build_crypto_mbedtls_tl721x/zephyr/zephyr.bin            telink_build_artifacts/tl721x_mbedtls.bin
         cp ../modules/hal/telink/zephyr/blobs/lib_zephyr_tl721x.a      telink_build_artifacts/lib_zephyr_tl721x.a
 
     - name: Publish artifacts
