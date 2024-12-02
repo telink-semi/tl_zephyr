@@ -42,72 +42,72 @@ jobs:
     - name: Build TL321x samples/basic/blinky
       run: |
         cd ..
-        west build -b tl3218x     -d build_blinky_tl321x                      zephyr/samples/basic/blinky
+        west build -b tl3218x     -d build_blinky_tl321x                      zephyr/samples/basic/blinky                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/hello_world
       run: |
         cd ..
-        west build -b tl3218x     -d build_hello_tl321x                       zephyr/samples/hello_world
+        west build -b tl3218x     -d build_hello_tl321x                       zephyr/samples/hello_world                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/basic/button
       run: |
         cd ..
-        west build -b tl3218x     -d build_button_tl321x                      zephyr/samples/basic/button
+        west build -b tl3218x     -d build_button_tl321x                      zephyr/samples/basic/button                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/sensor/sht3xd
       run: |
         cd ..
-        west build -b tl3218x     -d build_sht3xd_tl321x                      zephyr/samples/sensor/sht3xd
+        west build -b tl3218x     -d build_sht3xd_tl321x                      zephyr/samples/sensor/sht3xd                  -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/drivers/adc
       run: |
         cd ..
-        west build -b tl3218x     -d build_adc_tl321x                         zephyr/samples/drivers/adc
+        west build -b tl3218x     -d build_adc_tl321x                         zephyr/samples/drivers/adc                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/drivers/watchdog
       run: |
         cd ..
-        west build -b tl3218x     -d build_watchdog_tl321x                    zephyr/samples/drivers/watchdog
+        west build -b tl3218x     -d build_watchdog_tl321x                    zephyr/samples/drivers/watchdog               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x tests/drivers/flash/common
       run: |
         cd ..
-        west build -b tl3218x     -d build_tests_flash_tl321x                 zephyr/tests/drivers/flash/common
+        west build -b tl3218x     -d build_tests_flash_tl321x                 zephyr/tests/drivers/flash/common             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/drivers/spi_flash
       run: |
         cd ..
-        west build -b tl3218x     -d build_spi_flash_tl321x                    zephyr/samples/drivers/spi_flash
+        west build -b tl3218x     -d build_spi_flash_tl321x                    zephyr/samples/drivers/spi_flash             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x samples/basic/fade_led/
       run: |
         cd ..
-        west build -b tl3218x     -d build_fade_tl321x                        zephyr/samples/basic/fade_led/
+        west build -b tl3218x     -d build_fade_tl321x                        zephyr/samples/basic/fade_led/                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x bluetooth/peripheral_ht
       run: |
         cd ..
-        west build -b tl3218x     -d build_peripheral_ht_tl321x               zephyr/samples/bluetooth/peripheral_ht
+        west build -b tl3218x     -d build_peripheral_ht_tl321x               zephyr/samples/bluetooth/peripheral_ht        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x net/openthread/cli
       run: |
         cd ..
-        west build -b tl3218x     -d build_ot_cli_tl321x                      zephyr/samples/net/openthread/cli
+        west build -b tl3218x     -d build_ot_cli_tl321x                      zephyr/samples/net/openthread/cli             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x net/openthread/coprocessor in RCP configuration with UART interface
       run: |
         cd ..
-        west build -b tl3218x     -d build_ot_coprocessor_rcp_uart_tl321x     zephyr/samples/net/openthread/coprocessor     -- -DOVERLAY_CONFIG=overlay-rcp.conf
+        west build -b tl3218x     -d build_ot_coprocessor_rcp_uart_tl321x     zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-rcp.conf
 
     - name: Build TL321x subsys/usb/console for USB driver
       run: |
         cd ..
-        west build -b tl3218x     -d build_usb_console_tl321x                 zephyr/samples/subsys/usb/console
+        west build -b tl3218x     -d build_usb_console_tl321x                 zephyr/samples/subsys/usb/console             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321X net/openthread/coprocessor in RCP configuration with USB interface
       run: |
         cd ..
-        west build -b tl3218x     -d build_ot_coprocessor_rcp_usb_tl321x      zephyr/samples/net/openthread/coprocessor     -- -DDTC_OVERLAY_FILE="usb.overlay boards/tl3218x-dongle.overlay" -DOVERLAY_CONFIG=overlay-rcp-usb-telink.conf
+        west build -b tl3218x     -d build_ot_coprocessor_rcp_usb_tl321x      zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DDTC_OVERLAY_FILE="usb.overlay boards/tl3218x-dongle.overlay" -DOVERLAY_CONFIG=overlay-rcp-usb-telink.conf
 
     - name: Build TL321X crypto/mbedtls
       run: |
