@@ -4899,7 +4899,7 @@ West:
   collaborators:
     - JiaT75
   files:
-    - modules/lzma/
+    - modules/Kconfig.telink
   labels:
     - "area: Compression"
 
