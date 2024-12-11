@@ -53,12 +53,26 @@ SECTION_DATA_PROLOGUE(ram_code,,)
 	. = ALIGN(4);
 	*(.ram_code)
 	*(".ram_code.*")
-	*(.ram_code_ble)
-	*(".ram_code_ble.*")
+
 
 	PROVIDE (_RAMCODE_VMA_END = .);
 	PROVIDE (_RAMCODE_VMA_START = ADDR(ram_code));
 	PROVIDE (_RAMCODE_LMA_START = LOADADDR(ram_code));
+} GROUP_DATA_LINK_IN(TELINK_RAM_CODE_REGION, ROMABLE_REGION)
+
+/*
+ * Moving BLE relative ramcode to special section
+ */
+SECTION_DATA_PROLOGUE(ram_code_ble,,)
+{
+	. = ALIGN(4);
+	*(.ram_code_ble)
+	*(".ram_code_ble.*")
+	"*b9x_bt.c.obj*"(.ram_code)
+
+	PROVIDE (_RAMCODE_BLE_VMA_END = .);
+	PROVIDE (_RAMCODE_BLE_VMA_START = ADDR(ram_code_ble));
+	PROVIDE (_RAMCODE_BLE_LMA_START = LOADADDR(ram_code_ble));
 } GROUP_DATA_LINK_IN(TELINK_RAM_CODE_REGION, ROMABLE_REGION)
 
 SECTION_DATA_PROLOGUE(noinit_ilm, (NOLOAD),)
