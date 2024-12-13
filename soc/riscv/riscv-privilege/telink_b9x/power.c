@@ -28,6 +28,9 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 #define SYSTICKS_MAX_SLEEP 0xe0000000
 #endif /* CONFIG_BT */
 
+#define SUSPEND_EXIT_LATENCY_US		(300U)
+#define DEEPRETN_EXIT_LATENCY_US	(1000U)
+
 /**
  * @brief This define converts Machine Timer ticks to B9x System Timer ticks.
  */
@@ -81,8 +84,11 @@ static void set_mtime(uint64_t time)
 	*rl = (uint32_t)time;
 }
 
+_attribute_data_retention_sec_ uint32_t b9x_suspend_exit_latency_us = 0;
+
 #if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
 volatile bool b9x_deep_sleep_retention;
+_attribute_data_retention_sec_ uint32_t b9x_deepret_exit_latency_us = 0;
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
 
 /**
@@ -102,6 +108,25 @@ __weak void pm_state_set(enum pm_state state, uint8_t substate_id)
 	}
 
 	uint64_t stimer_sleep_ticks = mticks_to_systicks(wakeup_time - current_time);
+
+    /* init OS's low power exist latency us */
+#if (defined(CONFIG_BT_B9X) && CONFIG_PM)
+	bool update_os_exist_latency =false;
+	/* Get OS's low power exist latency us */
+	if (b9x_suspend_exit_latency_us == 0) { 
+		b9x_suspend_exit_latency_us = SUSPEND_EXIT_LATENCY_US;
+		#if defined(CONFIG_BOARD_TLSR9518ADK80D_RETENTION) || defined(CONFIG_BOARD_TLSR9528A_RETENTION)
+			b9x_deepret_exit_latency_us = DEEPRETN_EXIT_LATENCY_US;
+		#endif
+		update_os_exist_latency =  true;
+	}
+
+	if (update_os_exist_latency) {
+		/* Set OS exist latency for low power exit latency timing compensation */
+		extern void	blc_ll_setOsLowPowerExitLatencyUs(uint32_t suspendUs, uint32_t deepretUs);
+		blc_ll_setOsLowPowerExitLatencyUs(b9x_suspend_exit_latency_us, b9x_deepret_exit_latency_us);
+	}
+#endif
 
 	switch (state) {
 	case PM_STATE_SUSPEND_TO_IDLE:
