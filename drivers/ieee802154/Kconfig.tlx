@@ -48,6 +48,13 @@ config IEEE802154_TLX_DELAY_TRX_ACC
 	  Accuracy of the clock used for scheduling radio delayed operations (delayed transmission
 	  or delayed reception), in ppm.
 
+config IEEE802154_TLX_OPTIMIZATION
+	bool "optimize the rf performance for tlx"
+	default y if SOC_SERIES_RISCV_TELINK_TLX_RETENTION || SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+	default n
+	help
+	  optimize the rf performance for tlx.
+
 if IEEE802154_TLX_MAC_STATIC
 
 config IEEE802154_TLX_MAC4
