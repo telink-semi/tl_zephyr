@@ -5000,6 +5000,19 @@ struct k_mem_slab {
 		Z_MEM_SLAB_INITIALIZER(name, _k_mem_slab_buf_##name, \
 					WB_UP(slab_block_size), slab_num_blocks)
 
+
+#if CONFIG_ZEPHYR_NETBUFFER_OPTIMIZATION
+#define K_MEM_SLAB_DEFINE_BSS(name, slab_block_size, slab_num_blocks, slab_align) \
+	char __attribute__((section(".noinit"))) \
+	   __aligned(WB_UP(slab_align)) \
+	   _k_mem_slab_buf_##name[(slab_num_blocks) * WB_UP(slab_block_size)]; \
+
+#define K_MEM_SLAB_DEFINE_SET(name, slab_block_size, slab_num_blocks, slab_align) \
+	STRUCT_SECTION_ITERABLE(k_mem_slab, name) = \
+		Z_MEM_SLAB_INITIALIZER(name, _k_mem_slab_buf_##name, \
+					WB_UP(slab_block_size), slab_num_blocks)
+#endif /* CONFIG_ZEPHYR_NETBUFFER_OPTIMIZATION */
+
 /**
  * @brief Initialize a memory slab.
  *
