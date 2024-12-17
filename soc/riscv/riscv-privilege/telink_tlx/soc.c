@@ -31,6 +31,8 @@
 /* Power Mode value */
 #if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
 	#define POWER_MODE      LDO_1P25_LDO_1P8
+#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
+	#define POWER_MODE      DCDC_1P25_LDO_1P8
 #else
 #error "Wrong value for power-mode parameter"
 #endif
@@ -124,7 +126,7 @@ static int soc_tlx_init(void)
 		break;
 
 	case CLK_96MHZ:
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
 		break;
 	}
 
@@ -177,7 +179,7 @@ void soc_tlx_restore(void)
 		break;
 
 	case CLK_96MHZ:
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
 		break;
 	}
 }
