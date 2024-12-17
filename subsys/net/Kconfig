@@ -62,6 +62,13 @@ config NETWORKING
 	  This option enables generic link layer and networking support
 	  and is the basis for higher level protocols (e.g. IP protocols).
 
+
+config ZEPHYR_NETBUFFER_OPTIMIZATION
+	bool "Move the net buffer from iram to dram"
+	help
+	  This option enables the net buffer from iram to dram.
+
+
 if NETWORKING
 
 # Such option should not be configured manually but by device drivers

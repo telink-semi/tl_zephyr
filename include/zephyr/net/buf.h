@@ -1136,6 +1136,28 @@ extern const struct net_buf_data_cb net_buf_fixed_cb;
 					 _net_buf_##_name, _count, _ud_size,   \
 					 _destroy)
 
+
+#if CONFIG_ZEPHYR_NETBUFFER_OPTIMIZATION
+#define NET_BUF_POOL_FIXED_DEFINE_BSS(_name, _count, _data_size, _ud_size, _destroy)	\
+	_NET_BUF_ARRAY_DEFINE(_name, _count, _ud_size);			\
+	uint8_t	__attribute__((section(".bss")))			\
+	net_buf_data_##_name[_count][_data_size] __net_buf_align;	\
+
+#define NET_BUF_POOL_FIXED_DEFINE_SET(_name, _count, _data_size, _ud_size, _destroy)	\
+	static const struct net_buf_pool_fixed net_buf_fixed_##_name = {       \
+		.data_size = _data_size,                                       \
+		.data_pool = (uint8_t *)net_buf_data_##_name,                  \
+	};                                                                     \
+	static const struct net_buf_data_alloc net_buf_fixed_alloc_##_name = { \
+		.cb = &net_buf_fixed_cb,                                       \
+		.alloc_data = (void *)&net_buf_fixed_##_name,                  \
+	};                                                                     \
+	static STRUCT_SECTION_ITERABLE(net_buf_pool, _name) =                  \
+		NET_BUF_POOL_INITIALIZER(_name, &net_buf_fixed_alloc_##_name,  \
+					_net_buf_##_name, _count, _ud_size,   \
+					_destroy)
+#endif /* CONFIG_ZEPHYR_NETBUFFER_OPTIMIZATION */
+
 /** @cond INTERNAL_HIDDEN */
 extern const struct net_buf_data_cb net_buf_var_cb;
 /** @endcond */
