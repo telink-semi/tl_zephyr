@@ -81,6 +81,12 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 * which is essential for the kernel's scheduling
 		 * logic.
 		 */
+		#if defined(CONFIG_BT_B9X)
+			extern uint32_t blc_ll_checkBleRfFsmIsIdle(void);
+			if(blc_ll_checkBleRfFsmIsIdle())
+				k_cpu_idle();
+			else
+		#endif
 		if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
 			k_cpu_idle();
 		}
