@@ -979,3 +979,7 @@ config COMPAT_INCLUDES
 	  deprecated header files.
 
 endmenu
+
+config OPENTHREAD_CSMABACKOFF_OPTIMIZATION
+	bool "Skip the initial CSMA-CA backoff for data requests"
+	default n
