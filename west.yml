@@ -185,7 +185,7 @@ manifest:
       path: modules/lib/lz4
     - name: lzma
       url: https://github.com/telink-semi/xz.git
-      revision: 9bcf4753c4ba6450e009635fed3d8f6715530e12
+      revision: 1e5c7c3f93ebdc5f353076b1267a498923a2887a
       path: modules/lib/lzma
     - name: mbedtls
       revision: 4e1f66df894dc622da7bcd3884016a6ace08e9ea
