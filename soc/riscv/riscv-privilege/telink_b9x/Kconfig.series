@@ -32,6 +32,8 @@ config SOC_SERIES_RISCV_TELINK_B9X_NON_RETENTION_RAM_CODE
 config TELINK_B9X_MCUBOOT_STARTUP
 	bool "Telink B9x MCUBoot startup handler"
 	depends on SOC_SERIES_RISCV_TELINK_B9X && MCUBOOT
+	select CRC
+	select UART_DRV_CMD
 	help
 	  Run Telink specific vendor code before MCUBoot
 	  main process
