@@ -3,6 +3,11 @@
 
 if SOC_SERIES_RISCV_TELINK_B9X
 
+# compatibility with new Zephyr
+config SOC_RISCV_TELINK_B9X
+	bool
+	default y
+
 config SOC_SERIES
 	string
 	default "telink_b9x"
