@@ -50,7 +50,7 @@ config IEEE802154_TLX_DELAY_TRX_ACC
 
 config IEEE802154_TLX_OPTIMIZATION
 	bool "optimize the rf performance for tlx"
-	default y if SOC_SERIES_RISCV_TELINK_TLX_RETENTION || SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+	default y if SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	default n
 	help
 	  optimize the rf performance for tlx.

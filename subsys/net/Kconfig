@@ -64,9 +64,10 @@ config NETWORKING
 
 
 config ZEPHYR_NETBUFFER_OPTIMIZATION
-	bool "Move the net buffer from iram to dram"
+	bool "Place net buffer in DLM instead of ILM"
+	default n
 	help
-	  This option enables the net buffer from iram to dram.
+	  This option enables storing the net buffer in DLM rather than ILM.
 
 
 if NETWORKING
