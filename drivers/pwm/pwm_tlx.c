@@ -25,18 +25,6 @@ struct pwm_tlx_data {
 /* API implementation: init */
 static int pwm_tlx_init(const struct device *dev)
 {
-	const struct pwm_tlx_config *config = dev->config;
-
-	uint32_t pwm_clk_div;
-
-	/* Calculate and check PWM clock divider */
-	pwm_clk_div = sys_clk.pclk * 1000 * 1000 / config->clock_frequency - 1;
-	if (pwm_clk_div > 255) {
-		return -EINVAL;
-	}
-
-	/* Set PWM Peripheral clock */
-	pwm_set_clk((unsigned char) (pwm_clk_div & 0xFF));
 
 	return 0;
 }

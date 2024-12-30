@@ -53,7 +53,11 @@ static int i2c_tlx_configure(const struct device *dev, uint32_t dev_config)
 		break;
 
 	case I2C_SPEED_FAST:
+		#if CONFIG_I2C_LED
+		i2c_speed = 200000U;
+		#else
 		i2c_speed = 400000U;
+		#endif
 		break;
 
 	case I2C_SPEED_FAST_PLUS:
@@ -101,7 +105,11 @@ static int i2c_tlx_transfer(const struct device *dev,
 		if (msgs[i].flags & I2C_MSG_READ) {
 			status = i2c_master_read(addr << 1, msgs[i].buf, msgs[i].len);
 		} else {
+			#if CONFIG_I2C_LED
+			status = i2c_master_write(addr, msgs[i].buf, msgs[i].len);
+			#else
 			status = i2c_master_write(addr << 1, msgs[i].buf, msgs[i].len);
+			#endif
 		}
 
 		/* check status */
