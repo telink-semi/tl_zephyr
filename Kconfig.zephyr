@@ -979,3 +979,13 @@ config COMPAT_INCLUDES
 	  deprecated header files.
 
 endmenu
+
+menu "i2c-setting"
+
+config I2C_LED
+	bool "Control i2c raw data mode"
+	default n
+	help
+	  Transfer any address to adopt different i2c slave
+
+endmenu

@@ -540,6 +540,17 @@ FUNC_NORETURN void z_cstart(void)
 	z_sys_init_run_level(INIT_LEVEL_PRE_KERNEL_1);
 	z_sys_init_run_level(INIT_LEVEL_PRE_KERNEL_2);
 
+#if CONFIG_STARTUP_OPTIMIZATION
+	#ifndef CONFIG_MCUBOOT
+	typedef void (*p_early_proc)(void);
+	extern p_early_proc early_proc_cluster_f;
+
+	if (early_proc_cluster_f != NULL) {
+		early_proc_cluster_f();
+	}
+	#endif
+#endif
+
 #ifdef CONFIG_STACK_CANARIES
 	uintptr_t stack_guard;
 

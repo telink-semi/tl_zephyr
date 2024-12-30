@@ -46,6 +46,8 @@ extern "C" {
 #define RESET_USER				BIT(13)
 #define RESET_TEMPERATURE			BIT(14)
 
+extern unsigned char efuse_get_chip_id(unsigned char *chip_id_buff);
+
 /**
  * @brief Copy the device id to a buffer
  *

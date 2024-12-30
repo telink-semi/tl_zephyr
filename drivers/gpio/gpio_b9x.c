@@ -864,7 +864,7 @@ static void gpio_b9x_irq_connect_4(void)
 }
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_B95
+#if CONFIG_SOC_RISCV_TELINK_B92 || CONFIG_SOC_RISCV_TELINK_B95
 /* If instance 5 is present and has interrupt enabled, connect IRQ */
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 5
 static void gpio_b9x_irq_connect_5(void)
@@ -877,6 +877,7 @@ static void gpio_b9x_irq_connect_5(void)
 }
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_B95
 /* If instance 6 is present and has interrupt enabled, connect IRQ */
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 6
 static void gpio_b9x_irq_connect_6(void)
@@ -887,6 +888,7 @@ static void gpio_b9x_irq_connect_6(void)
 		    DEVICE_DT_INST_GET(6), 0);
 	#endif
 }
+#endif
 #endif
 
 #endif
