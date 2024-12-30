@@ -1,0 +1,10 @@
+# Copyright (c) 2024 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_TL7218X
+	bool "Telink TL721X Platform"
+	depends on SOC_RISCV_TELINK_TL721X
+
+config BOARD_TL7218X_RETENTION
+	bool "Telink TL721X Platform with retention"
+	depends on SOC_RISCV_TELINK_TL721X

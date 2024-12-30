@@ -54,7 +54,7 @@ struct __packed uart_tlx_t {
 	uint8_t status;
 	uint8_t txrx_status;
 	uint8_t state;
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uint8_t ctrl4;
 #endif
 };
@@ -187,12 +187,12 @@ static void uart_tlx_cal_div_and_bwpc(uint32_t baudrate, uint32_t pclk,
 static void uart_tlx_init(volatile struct uart_tlx_t *uart, uint16_t divider,
 			  uint8_t bwpc, uint8_t parity, uint8_t stop_bit)
 {
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->ctrl0 = ((uart->ctrl0 & (~FLD_UART_BPWC_O)) | bwpc);
 #endif
 	/* config clock */
 	divider = divider | FLD_UART_CLK_DIV_EN;
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->ctrl0 &= ~(FLD_UART_RX_CLR_EN | FLD_UART_NDMA_RXDONE_EN |
 		FLD_UART_RXTIMEOUT_RTS_EN | FLD_UART_S7816_EN);
 	uart->ctrl4 &= ~FLD_UART_RXDONE_RTS_EN;
@@ -316,7 +316,7 @@ static int uart_tlx_driver_init(const struct device *dev)
 	struct uart_tlx_data *data = dev->data;
 
 	/* Reset Tx, Rx status before usage */
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->txrx_status |= FLD_UART_RX_BUF_IRQ | FLD_UART_TX_BUF_IRQ;
 #endif
 	data->rx_byte_index = 0;
@@ -367,7 +367,7 @@ static void uart_tlx_poll_out(const struct device *dev, uint8_t c)
 	uart->data_buf[data->tx_byte_index] = c;
 	data->tx_byte_index = (data->tx_byte_index + 1) % ARRAY_SIZE(uart->data_buf);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	while (!(uart->txrx_status & FLD_UART_TXDONE_IRQ)) {
 	}
 #endif
@@ -394,7 +394,7 @@ static int uart_tlx_err_check(const struct device *dev)
 {
 	volatile struct uart_tlx_t *uart = GET_UART(dev);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	return ((uart->txrx_status & FLD_UART_RX_ERR_IRQ) != 0) ? 1 : 0;
 #endif
 }
@@ -458,7 +458,7 @@ static void uart_tlx_irq_tx_enable(const struct device *dev)
 	uart->ctrl3 = (uart->ctrl3 & (~FLD_UART_TX_IRQ_TRIQ_LEV)) |
 		      BIT(FLD_UART_TX_IRQ_TRIQ_LEV_OFFSET);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->rxtimeoutH |= FLD_UART_MASK_TX_IRQ;
 #endif
 }
@@ -468,7 +468,7 @@ static void uart_tlx_irq_tx_disable(const struct device *dev)
 {
 	volatile struct uart_tlx_t *uart = GET_UART(dev);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->rxtimeoutH &= ~FLD_UART_MASK_TX_IRQ;
 #endif
 }
@@ -478,7 +478,7 @@ static int uart_tlx_irq_tx_ready(const struct device *dev)
 {
 	volatile struct uart_tlx_t *uart = GET_UART(dev);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	return ((uart_tlx_get_tx_bufcnt(uart) < UART_TX_BUF_CNT) &&
 		((uart->rxtimeoutH & FLD_UART_MASK_TX_IRQ) != 0)) ? 1 : 0;
 #endif
@@ -500,7 +500,7 @@ static void uart_tlx_irq_rx_enable(const struct device *dev)
 	uart->ctrl3 = (uart->ctrl3 & (~FLD_UART_RX_IRQ_TRIQ_LEV)) |
 		      BIT(FLD_UART_RX_IRQ_TRIQ_LEV_OFFSET);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->rxtimeoutH |= FLD_UART_MASK_RX_IRQ;
 #endif
 }
@@ -510,7 +510,7 @@ static void uart_tlx_irq_rx_disable(const struct device *dev)
 {
 	volatile struct uart_tlx_t *uart = GET_UART(dev);
 
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	uart->rxtimeoutH &= ~FLD_UART_MASK_RX_IRQ;
 #endif
 }
@@ -590,7 +590,7 @@ static int uart_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 		/* reset TX/RX byte index */
 		data->tx_byte_index = 0;
 		data->rx_byte_index = 0;
-#if CONFIG_SOC_RISCV_TELINK_B95 || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 		uart->txrx_status |= FLD_UART_RX_BUF_IRQ | FLD_UART_TX_BUF_IRQ;
 #endif
 		break;
