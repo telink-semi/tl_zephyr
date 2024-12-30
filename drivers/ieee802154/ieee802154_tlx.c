@@ -648,7 +648,7 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 	struct tlx_data *tlx = dev->data;
 	int status = -EINVAL;
 	struct net_pkt *pkt = NULL;
-	struct ieee802154_frame frame;
+	struct ieee802154_frame frame = {};
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
@@ -826,15 +826,15 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 	if (status < 0 && pkt != NULL) {
 		net_pkt_unref(pkt);
 	}
-#if defined(CONFIG_IEEE802154_TLX_OPTIMIZATION) && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (frame.general.fp_bit == true) {
 		dma_chn_en(DMA1);
 	} else {
 		rf_set_tx_rx_off();
 	}
-#else  /* !CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#else /* !CONFIG_IEEE802154_TLX_OPTIMIZATION */
 		dma_chn_en(DMA1);
-#endif  /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 }
 
 /* TX IRQ handler */
@@ -938,7 +938,6 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 }
 
 /* API implementation: cca */
-/* API implementation: cca */
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
@@ -1033,8 +1032,9 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 }
 
 volatile bool tlx_rf_zigbee_250K_mode;
-#if defined(CONFIG_IEEE802154_TLX_OPTIMIZATION) && CONFIG_IEEE802154_TLX_OPTIMIZATION
-extern char packetBufferThreadFlag;
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+extern bool isThreadCommissioned;
+
 _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 {
 	(void)param;
@@ -1042,7 +1042,7 @@ _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 	}
 }
-#endif  /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 
 /* API implementation: start */
 static int tlx_start(const struct device *dev)
@@ -1330,8 +1330,8 @@ static int tlx_tx(const struct device *dev,
 	if (tlx->event_handler) {
 		tlx->event_handler(dev, IEEE802154_EVENT_TX_STARTED, (void *)frag);
 	}
-#if defined(CONFIG_IEEE802154_TLX_OPTIMIZATION) && CONFIG_IEEE802154_TLX_OPTIMIZATION
-	if (packetBufferThreadFlag == 2) {
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	if (isThreadCommissioned == true) {
 		irq_connect_dynamic(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
 				stimer_rf_handler, 0, 0);
 		plic_interrupt_disable(IRQ_SYSTIMER);
@@ -1342,7 +1342,7 @@ static int tlx_tx(const struct device *dev,
 		plic_interrupt_enable(IRQ_SYSTIMER);
 		core_entry_wfi_mode();
 	}
-#endif  /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
 		rf_set_rxmode();
 		status = -EIO;
@@ -1353,8 +1353,8 @@ static int tlx_tx(const struct device *dev,
 		IEEE802154_FRAME_FCF_ACK_REQ_ON) {
 		tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
 		tlx->ack_handler_en = true;
-#if defined(CONFIG_IEEE802154_TLX_OPTIMIZATION) && CONFIG_IEEE802154_TLX_OPTIMIZATION
-	if (packetBufferThreadFlag == 2) {
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	if (isThreadCommissioned == true) {
 		plic_interrupt_disable(IRQ_SYSTIMER);
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 		stimer_set_irq_capture(stimer_get_tick()
@@ -1365,7 +1365,7 @@ static int tlx_tx(const struct device *dev,
 			status = -ENOMSG;
 		}
 	} else
-#endif  /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 	{
 		if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
 			status = -ENOMSG;
