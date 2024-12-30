@@ -961,4 +961,9 @@ config HAS_DYNAMIC_DEVICE_HANDLES
 
 endmenu
 
+config STARTUP_OPTIMIZATION
+	bool "Optimize startup procedure"
+	default n
+	help
+	The option enables kernel-level optimizations to improve the efficiency of the startup process.
 rsource "Kconfig.vm"
