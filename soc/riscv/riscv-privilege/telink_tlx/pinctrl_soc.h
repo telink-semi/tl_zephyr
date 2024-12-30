@@ -9,8 +9,8 @@
 
 #include <stdint.h>
 #include <zephyr/devicetree.h>
-#if CONFIG_SOC_RISCV_TELINK_B95
-#include <zephyr/dt-bindings/pinctrl/b95-pinctrl.h>
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+#include <zephyr/dt-bindings/pinctrl/tl721x-pinctrl.h>
 #elif CONFIG_SOC_RISCV_TELINK_TL321X
 #include <zephyr/dt-bindings/pinctrl/tl321x-pinctrl.h>
 #endif
