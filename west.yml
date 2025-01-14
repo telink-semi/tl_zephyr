@@ -142,7 +142,7 @@ manifest:
         - hal
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 2a999d970883ce294dc1c60479b9ddc90b880bfe
+      revision: 288044318e37210623b3fb4998bb30fcd5182e29
       path: modules/hal/telink
       groups:
         - hal
@@ -194,7 +194,7 @@ manifest:
         - crypto
     - name: mcuboot
       url: https://github.com/telink-semi/mcuboot
-      revision: a07bc815e9484a8921e115f94d4f1121585494ce
+      revision: d9cf800ec1d939a51b918d10d2f2b5e2a27b7f88
       path: bootloader/mcuboot
     - name: mipi-sys-t
       path: modules/debug/mipi-sys-t
