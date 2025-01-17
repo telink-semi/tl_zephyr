@@ -112,6 +112,7 @@ _ZERO_AES_BEGIN:
 	addi   t2, t2, 4
 	j      _ZERO_AES_BEGIN
 
+#if !CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 _RETENTION_DATA_INIT:
 	la     t1, _RETENTION_DATA_LMA_START
 	la     t2, _RETENTION_DATA_VMA_START
@@ -145,6 +146,19 @@ _ILM_DATA_BEGAIN:
 	addi   t1, t1, 4
 	addi   t2, t2, 4
 	j      _ILM_DATA_BEGAIN
+#else
+_RETENTION_DATA_INIT:
+	la     t1, _RETENTION_DATA_LMA_START
+	la     t2, _RETENTION_DATA_VMA_START
+	la     t3, _RETENTION_DATA_VMA_END
+_RETENTION_DATA_INIT_BEGIN:
+	bleu   t3, t2, _RAMCODE_RET_INIT
+	lw     t0, 0(t1)
+	sw     t0, 0(t2)
+	addi   t1, t1, 4
+	addi   t2, t2, 4
+	j      _RETENTION_DATA_INIT_BEGIN
+#endif
 
 _RAMCODE_RET_INIT:
 	la     t1, _RAMCODE_RET_LMA_START
