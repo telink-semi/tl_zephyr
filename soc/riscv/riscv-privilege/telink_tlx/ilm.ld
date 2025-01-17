@@ -81,3 +81,35 @@ SECTION_DATA_PROLOGUE(noinit_ilm, (NOLOAD),)
 	*(.noinit)
 	*(".noinit.*")
 } GROUP_DATA_LINK_IN(TELINK_RAM_REGION, TELINK_RAM_REGION)
+
+/*
+ * Moving BLE relative ramcode to special section
+ */
+SECTION_DATA_PROLOGUE(data_ilm,,)
+{
+	. = ALIGN(4);
+	*(.data)
+	*(".data.*")
+	*(.sdata .sdata.* .gnu.linkonce.s.*)
+
+	PROVIDE (_DATA_ILM_VMA_END = .);
+	PROVIDE (_DATA_ILM_VMA_START = ADDR(data_ilm));
+	PROVIDE (_DATA_ILM_LMA_START = LOADADDR(data_ilm));
+} GROUP_DATA_LINK_IN(TELINK_RAM_DATA_ILM_REGION, ROMABLE_REGION)
+
+/*
+ * Moving BLE relative ramcode to special section
+ */
+SECTION_DATA_PROLOGUE(bss_ilm,,)
+{
+	. = ALIGN(4);
+	*(.sbss)
+	*(".sbss.*")
+	*(.bss)
+	*(".bss.*")
+	COMMON_SYMBOLS
+
+	PROVIDE (_BSS_ILM_VMA_END = .);
+	PROVIDE (_BSS_ILM_VMA_START = ADDR(bss_ilm));
+	PROVIDE (_BSS_ILM_LMA_START = LOADADDR(bss_ilm));
+} GROUP_DATA_LINK_IN(TELINK_RAM_BSS_ILM_REGION, ROMABLE_REGION)

@@ -114,7 +114,7 @@
 	chosen {
 		zephyr,console = &uart0;
 		zephyr,shell-uart = &uart0;
-		zephyr,sram = &ram_ilm;
+		zephyr,sram = &ram_dlm;
 		zephyr,flash = &flash;
 		zephyr,flash-controller = &flash_mspi;
 		zephyr,entropy = &trng0;
@@ -128,7 +128,11 @@
 };
 
 &ram_ilm {
-	reg = <0x00068000 0x00020000>;
+	reg = <0x00068000 0x00018000>;
+};
+
+&ram_dlm {
+	reg = <0x00080000 0x00008000>;
 };
 
 &flash {

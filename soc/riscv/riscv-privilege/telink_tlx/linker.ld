@@ -12,7 +12,10 @@
 #include <zephyr/linker/linker-tool.h>
 
 #if !CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-
+MEMORY
+{
+    RAM_ILM    (rwx) : ORIGIN = DT_REG_ADDR(DT_NODELABEL(ram_ilm)), LENGTH = DT_REG_SIZE(DT_NODELABEL(ram_ilm))
+}
 #else
 MEMORY
 {

@@ -27,6 +27,7 @@ zephyr_sources_ifdef(CONFIG_PM
 
 # Force using BFD-LD
 zephyr_ld_options(-fuse-ld=bfd)
+zephyr_ld_options(-Wl,--enable-non-contiguous-regions)
 
 # Set compile options
 zephyr_compile_options_ifdef(CONFIG_TELINK_TLX_HWDSP -mext-dsp)

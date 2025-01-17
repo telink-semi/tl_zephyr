@@ -117,12 +117,34 @@ _RETENTION_DATA_INIT:
 	la     t2, _RETENTION_DATA_VMA_START
 	la     t3, _RETENTION_DATA_VMA_END
 _RETENTION_DATA_INIT_BEGIN:
-	bleu   t3, t2, _RAMCODE_RET_INIT
+	bleu   t3, t2, _ILM_BSS_INIT
 	lw     t0, 0(t1)
 	sw     t0, 0(t2)
 	addi   t1, t1, 4
 	addi   t2, t2, 4
 	j      _RETENTION_DATA_INIT_BEGIN
+
+_ILM_BSS_INIT:
+	lui    t0, 0
+	la     t2, _BSS_ILM_VMA_START
+	la     t3, _BSS_ILM_VMA_END
+_ILM_BSS_BEGIN:
+	bleu   t3, t2, _ILM_DATA_INIT
+	sw     t0, 0(t2)
+	addi   t2, t2, 4
+	j      _ILM_BSS_BEGIN
+
+_ILM_DATA_INIT:
+	la     t1, _DATA_ILM_LMA_START
+	la     t2, _DATA_ILM_VMA_START
+	la     t3, _DATA_ILM_VMA_END
+_ILM_DATA_BEGAIN:
+	bleu   t3, t2, _RAMCODE_RET_INIT
+	lw     t0, 0(t1)
+	sw     t0, 0(t2)
+	addi   t1, t1, 4
+	addi   t2, t2, 4
+	j      _ILM_DATA_BEGAIN
 
 _RAMCODE_RET_INIT:
 	la     t1, _RAMCODE_RET_LMA_START
