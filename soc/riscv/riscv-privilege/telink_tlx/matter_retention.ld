@@ -41,3 +41,19 @@ SECTION_DATA_PROLOGUE(ram_dlm_bss,(NOLOAD),)
 	PROVIDE (_RAM_DLM_BSS_VMA_START = ADDR(ram_dlm_bss));
 	PROVIDE (_RAM_DLM_BSS_LMA_START = LOADADDR(ram_dlm_bss));
 } GROUP_DATA_LINK_IN(TELINK_RAM_DATA_REGION, TELINK_RAM_DATA_REGION)
+
+/*
+ * Moving BLE relative ramcode to special section
+ * For buteo , ble ram code can put into dlm part
+ */
+SECTION_DATA_PROLOGUE(ram_code_ble,,)
+{
+	. = ALIGN(4);
+	*(.ram_code_ble)
+	*(".ram_code_ble.*")
+	"*b9x_bt.c.obj*"(.ram_code)
+
+	PROVIDE (_RAMCODE_BLE_VMA_END = .);
+	PROVIDE (_RAMCODE_BLE_VMA_START = ADDR(ram_code_ble));
+	PROVIDE (_RAMCODE_BLE_LMA_START = LOADADDR(ram_code_ble));
+} GROUP_DATA_LINK_IN(TELINK_RAM_CODE_BLE_REGION, ROMABLE_REGION)
