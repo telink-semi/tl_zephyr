@@ -10,6 +10,10 @@
 #include "stimer.h"
 #include "tl_rf_power.h"
 
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+#include "clock.h"
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
+
 #define LOG_MODULE_NAME ieee802154_b9x
 #if defined(CONFIG_IEEE802154_DRIVER_LOG_LEVEL)
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
@@ -638,7 +642,7 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 	struct b9x_data *b9x = dev->data;
 	int status = -EINVAL;
 	struct net_pkt *pkt = NULL;
-
+	struct ieee802154_frame frame = {};
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(b9x->rx_buffer)) /
@@ -675,7 +679,10 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 			break;
 		}
 		uint8_t *payload = (b9x->rx_buffer + B9X_PAYLOAD_OFFSET);
-		struct ieee802154_frame frame;
+
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+		cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_96M_HCLK_48M_PCLK_24M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
 
 		if (IS_ENABLED(CONFIG_IEEE802154_RAW_MODE) ||
 			IS_ENABLED(CONFIG_NET_L2_OPENTHREAD)) {
@@ -962,8 +969,6 @@ static int b9x_set_channel(const struct device *dev, uint16_t channel)
 		b9x->current_channel = channel;
 		if (b9x->is_started) {
 			rf_set_chn(B9X_LOGIC_CHANNEL_TO_PHYSICAL(channel));
-			rf_set_txmode();
-			rf_set_rxmode();
 		}
 	}
 
@@ -1024,6 +1029,11 @@ static int b9x_start(const struct device *dev)
 	b9x_disable_pm(dev);
 	/* check if RF is already started */
 	if (!b9x->is_started) {
+
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+		cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_96M_HCLK_48M_PCLK_24M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
+
 #ifdef CONFIG_DYNAMIC_INTERRUPTS
 		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
 			(void (*)(const void *))b9x_rf_isr, DEVICE_DT_INST_GET(0), 0);
@@ -1045,8 +1055,6 @@ static int b9x_start(const struct device *dev)
 		}
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
 		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
-		rf_set_txmode();
-		rf_set_rxmode();
 		b9x->is_started = true;
 	}
 
@@ -1060,6 +1068,9 @@ static int b9x_stop(const struct device *dev)
 
 	/* check if RF is already stopped */
 	if (b9x->is_started) {
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+		cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_96M_HCLK_48M_PCLK_24M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
 		if (b9x->ack_sending) {
 			if (k_sem_take(&b9x->tx_wait, K_MSEC(B9X_TX_WAIT_TIME_MS)) != 0) {
 				b9x->ack_sending = false;
@@ -1092,6 +1103,11 @@ static int b9x_tx(const struct device *dev,
 
 	int status = 0;
 	struct b9x_data *b9x = dev->data;
+
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+	cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_96M_HCLK_48M_PCLK_24M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
+
 
 	/* check for supported mode */
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
@@ -1302,11 +1318,19 @@ static int b9x_tx(const struct device *dev,
 		b9x->event_handler(dev, IEEE802154_EVENT_TX_STARTED, (void *)frag);
 	}
 
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+	cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_16M_HCLK_16M_PCLK_16M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
+
 	/* wait for tx done */
 	if (k_sem_take(&b9x->tx_wait, K_MSEC(B9X_TX_WAIT_TIME_MS)) != 0) {
 		rf_set_rxmode();
 		status = -EIO;
 	}
+
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+	cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_16M_HCLK_16M_PCLK_16M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
 
 	/* wait for ACK if requested */
 	if (!status && (frag->data[0] & IEEE802154_FRAME_FCF_ACK_REQ_MASK) ==
@@ -1319,6 +1343,9 @@ static int b9x_tx(const struct device *dev,
 		b9x->ack_handler_en = false;
 	}
 
+#if defined(CONFIG_IEEE802154_B9X_OPTIMIZATION)
+	cclk_hclk_pclk_config(PLL_192M_DIV_CCLK_96M_HCLK_48M_PCLK_24M);
+#endif /* CONFIG_IEEE802154_B9X_OPTIMIZATION */
 	return status;
 }
 
