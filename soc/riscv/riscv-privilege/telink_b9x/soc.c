@@ -170,9 +170,15 @@ static int soc_b9x_init(void)
 		break;
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_B91
 	case CLK_96MHZ:
 		CCLK_96M_HCLK_48M_PCLK_24M;
 		break;
+#elif CONFIG_SOC_RISCV_TELINK_B92
+	case CLK_96MHZ:
+		CCLK_96M_HCLK_48M_PCLK_24M_MSPI_64M;
+		break;
+#endif
 	}
 
 	/* Init Machine Timer source clock: 32 KHz RC */
@@ -242,9 +248,15 @@ void soc_b9x_restore(void)
 		break;
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_B91
 	case CLK_96MHZ:
 		CCLK_96M_HCLK_48M_PCLK_24M;
 		break;
+#elif CONFIG_SOC_RISCV_TELINK_B92
+	case CLK_96MHZ:
+		CCLK_96M_HCLK_48M_PCLK_24M_MSPI_64M;
+		break;
+#endif
 	}
 }
 
