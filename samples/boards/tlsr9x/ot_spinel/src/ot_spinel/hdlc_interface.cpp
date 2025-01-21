@@ -13,14 +13,20 @@ LOG_MODULE_REGISTER(HDLC, LOG_LEVEL_INF); /* TODO: use level from config? */
 namespace ot {
 namespace Spinel {
 
-const struct device *const HdlcInterface::m_uart_dev =
-	DEVICE_DT_GET_OR_NULL(DT_CHOSEN(zephyr_ot_uart));
+const size_t HdlcInterface::k_uart_buffer_size = 128; /* TODO: set from kConfig */
 
-const size_t HdlcInterface::m_uart_buffer_size = 128; /* TODO: set from kConfig */
-
-HdlcInterface::HdlcInterface() : m_uart_open(false), m_receive_frame_callback(nullptr),
-    m_receive_frame_context(nullptr), m_receive_frame_buffer(nullptr)
+HdlcInterface::HdlcInterface(const struct device *const uart_dev) :
+	m_uart_open(false),
+	m_uart_dev(uart_dev),
+	m_msgq(nullptr),
+	m_hdlc_decoder(),
+	m_receive_frame_callback(nullptr),
+	m_receive_frame_context(nullptr),
+	m_receive_frame_buffer(nullptr),
+	m_rcp_interface_metrics()
 {
+	memset(&m_rcp_interface_metrics, 0, sizeof(m_rcp_interface_metrics));
+	m_rcp_interface_metrics.mRcpInterfaceType = kSpinelInterfaceTypeHdlc;
 	LOG_INF("Created");
 }
 
@@ -40,12 +46,18 @@ void HdlcInterface::serial_cb(const struct device *dev, void *user_data)
 	}
 
 	uint8_t bt;
+	struct k_msgq *msgq = (struct k_msgq *)user_data;
 
 	while (uart_fifo_read(dev, &bt, sizeof(bt)) == sizeof(bt)) {
-		if (k_msgq_put(m_msgq, &bt, K_NO_WAIT)) {
+		if (k_msgq_put(msgq, &bt, K_NO_WAIT)) {
 			LOG_ERR("OT Spinel UART data lost");
 		}
 	}
+}
+
+void HdlcInterface::handle_hdlc_frame(void *aContext, otError aError)
+{
+	/* TODO: Implement */
 }
 
 otError HdlcInterface::Init(ReceiveFrameCallback aCallback,
@@ -65,13 +77,13 @@ otError HdlcInterface::Init(ReceiveFrameCallback aCallback,
 			LOG_ERR("OT Spinel UART not ready");
 			break;
 		}
-		if (k_msgq_alloc_init(m_msgq, sizeof(uint8_t), m_uart_buffer_size)) {
+		if (k_msgq_alloc_init(m_msgq, sizeof(uint8_t), k_uart_buffer_size)) {
 			LOG_ERR("OT Spinel can't allocate ISR buffer");
 			break;
 		}
-		if (uart_irq_callback_user_data_set(m_uart_dev, serial_cb, nullptr)) {
+		if (uart_irq_callback_user_data_set(m_uart_dev, serial_cb, m_msgq)) {
 			LOG_ERR("OT Spinel can't register ISR callback");
-			k_msgq_cleanup(m_msgq);
+			(void)k_msgq_cleanup(m_msgq);
 			break;
 		}
 		uart_irq_rx_enable(m_uart_dev);
@@ -79,6 +91,7 @@ otError HdlcInterface::Init(ReceiveFrameCallback aCallback,
 	} while (0);
 
 	if (m_uart_open) {
+		m_hdlc_decoder.Init(aFrameBuffer, handle_hdlc_frame, this);
 		m_receive_frame_callback = aCallback;
 		m_receive_frame_context = aCallbackContext;
 		m_receive_frame_buffer = &aFrameBuffer;
@@ -96,7 +109,9 @@ void HdlcInterface::Deinit(void)
 		k_msgq_purge(m_msgq);
 		(void)k_msgq_cleanup(m_msgq);
 		m_uart_open = false;
+		m_msgq = nullptr;
 	}
+	m_hdlc_decoder.Reset();
 	m_receive_frame_callback = nullptr;
 	m_receive_frame_context = nullptr;
 	m_receive_frame_buffer = nullptr;
@@ -104,7 +119,54 @@ void HdlcInterface::Deinit(void)
 
 otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 {
-	return OT_ERROR_NOT_IMPLEMENTED;
+	otError result = OT_ERROR_FAILED;
+	FrameBuffer<kMaxFrameSize> *tx_buf = new FrameBuffer<kMaxFrameSize>;
+
+	do {
+		if (!m_uart_open) {
+			break;
+		}
+		if (!tx_buf) {
+			break;
+		}
+		Hdlc::Encoder encoder(*tx_buf);
+
+		if ((result = encoder.BeginFrame()) != OT_ERROR_NONE) {
+			LOG_ERR("OT Spinel can't begin encode");
+			break;
+		}
+		if ((result = encoder.Encode(aFrame, aLength)) != OT_ERROR_NONE) {
+			LOG_ERR("OT Spinel can't encode");
+			break;
+		}
+		if ((result = encoder.EndFrame()) != OT_ERROR_NONE) {
+			LOG_ERR("OT Spinel can't finish encode");
+			break;
+		}
+		uint8_t *data = tx_buf->GetFrame();
+		uint16_t data_length = tx_buf->GetLength();
+
+		for(uint16_t i = 0; i < data_length; i++) {
+			uart_poll_out(m_uart_dev, data[i]);
+		}
+		if (IsSpinelResetCommand(aFrame, aLength)) {
+			result = HardwareReset();
+		}
+	} while (0);
+
+	if (tx_buf) {
+		delete tx_buf;
+	}
+	m_rcp_interface_metrics.mTransferredFrameCount++;
+	if (result == OT_ERROR_NONE) {
+		m_rcp_interface_metrics.mTxFrameCount++;
+		m_rcp_interface_metrics.mTxFrameByteCount += aLength;
+		m_rcp_interface_metrics.mTransferredValidFrameCount++;
+	} else {
+		m_rcp_interface_metrics.mTransferredGarbageFrameCount++;
+	}
+
+	return result;
 }
 
 otError HdlcInterface::WaitForFrame(uint64_t aTimeoutUs)
@@ -122,17 +184,29 @@ void HdlcInterface::Process(const void *aMainloopContext)
 
 uint32_t HdlcInterface::GetBusSpeed(void) const
 {
-	return 0;
+	uint32_t result = 0;
+
+	if (m_uart_open) {
+		struct uart_config cfg;
+
+		if (!uart_config_get(m_uart_dev, &cfg)) {
+			result = cfg.baudrate;
+		}
+	}
+
+	return result;
 }
 
 otError HdlcInterface::HardwareReset(void)
 {
-	return OT_ERROR_NOT_IMPLEMENTED;
+	k_msgq_purge(m_msgq);
+	m_hdlc_decoder.Reset();
+	return OT_ERROR_NONE;
 }
 
 const otRcpInterfaceMetrics *HdlcInterface::GetRcpInterfaceMetrics(void) const
 {
-	return 0;
+	return &m_rcp_interface_metrics;
 }
 
 } // namespace Spinel

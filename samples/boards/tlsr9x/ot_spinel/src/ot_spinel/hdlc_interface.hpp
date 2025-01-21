@@ -11,6 +11,7 @@
 
 #include <lib/spinel/openthread-spinel-config.h>
 #include <lib/spinel/spinel_interface.hpp>
+#include <lib/hdlc/hdlc.hpp>
 
 namespace ot {
 namespace Spinel {
@@ -18,7 +19,7 @@ namespace Spinel {
 class HdlcInterface : public SpinelInterface
 {
 public:
-	HdlcInterface();
+	explicit HdlcInterface(const struct device *const uart_dev);
 	~HdlcInterface() override;
 
 	otError Init(ReceiveFrameCallback aCallback,
@@ -33,19 +34,22 @@ public:
 	const otRcpInterfaceMetrics *GetRcpInterfaceMetrics(void) const override;
 
 private:
-	static const struct device *const m_uart_dev;
-	static struct k_msgq *m_msgq;
-	static const size_t m_uart_buffer_size;
+	static const size_t  k_uart_buffer_size;
 
 	static void serial_cb(const struct device *dev, void *user_data);
+	static void handle_hdlc_frame(void *aContext, otError aError);
 
-	bool                 m_uart_open;
-	ReceiveFrameCallback m_receive_frame_callback;
-    void                *m_receive_frame_context;
-    RxFrameBuffer       *m_receive_frame_buffer;
+	bool                            m_uart_open;
+	const struct device *const      m_uart_dev;
+	struct k_msgq                  *m_msgq;
+	Hdlc::Decoder                   m_hdlc_decoder;
+	ReceiveFrameCallback            m_receive_frame_callback;
+	void                           *m_receive_frame_context;
+	RxFrameBuffer                  *m_receive_frame_buffer;
+	otRcpInterfaceMetrics           m_rcp_interface_metrics;
 
-    HdlcInterface(const HdlcInterface &) = delete;
-    HdlcInterface &operator=(const HdlcInterface &) = delete;
+	HdlcInterface(const HdlcInterface &) = delete;
+	HdlcInterface &operator=(const HdlcInterface &) = delete;
 };
 
 } // namespace Spinel
