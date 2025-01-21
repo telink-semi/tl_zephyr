@@ -21,10 +21,6 @@ LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_LOG_LEVEL);
 #include <adc.h>
 #include <zephyr/drivers/pinctrl.h>
 
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-#define adc_input_pin_def_e     adc_input_pin_e
-#endif
-
 /* Set ADC resolution value */
 static inline void adc_set_resolution(adc_res_e res)
 {

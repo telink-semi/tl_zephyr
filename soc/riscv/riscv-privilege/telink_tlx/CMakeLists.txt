@@ -28,6 +28,11 @@ zephyr_sources_ifdef(CONFIG_PM
 # Force using BFD-LD
 zephyr_ld_options(-fuse-ld=bfd)
 
+# Add math lib into link stage because SW_DCOC_EN needs round func
+if (CONFIG_SOC_RISCV_TELINK_TL321X)
+	zephyr_ld_options(-lm)
+endif()
+
 # Set compile options
 zephyr_compile_options_ifdef(CONFIG_TELINK_TLX_HWDSP -mext-dsp)
 zephyr_compile_options_ifndef(CONFIG_RISCV_GP -mno-relax)
