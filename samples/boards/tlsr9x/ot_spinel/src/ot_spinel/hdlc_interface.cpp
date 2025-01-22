@@ -31,7 +31,12 @@ HdlcInterface::HdlcInterface(const struct device *const uart_dev) :
 
 HdlcInterface::~HdlcInterface()
 {
-	Deinit();
+	if (m_uart_open) {
+		uart_irq_rx_disable(m_uart_dev);
+		(void)uart_irq_callback_user_data_set(m_uart_dev, nullptr, nullptr);
+		k_msgq_purge(&m_msgq);
+		(void)k_msgq_cleanup(&m_msgq);
+	}
 }
 
 void HdlcInterface::serial_cb(const struct device *dev, void *user_data)
@@ -44,7 +49,7 @@ void HdlcInterface::serial_cb(const struct device *dev, void *user_data)
 	}
 
 	uint8_t bt;
-	struct k_msgq *msgq = (struct k_msgq *)user_data;
+	struct k_msgq *msgq = static_cast<struct k_msgq *>(user_data);
 
 	while (uart_fifo_read(dev, &bt, sizeof(bt)) == sizeof(bt)) {
 		if (k_msgq_put(msgq, &bt, K_NO_WAIT)) {
@@ -55,7 +60,7 @@ void HdlcInterface::serial_cb(const struct device *dev, void *user_data)
 
 void HdlcInterface::handle_hdlc_frame(void *aContext, otError aError)
 {
-	HdlcInterface *interface = (HdlcInterface *)aContext;
+	HdlcInterface *interface = static_cast<HdlcInterface *>(aContext);
 
 	interface->m_rcp_interface_metrics.mTransferredFrameCount++;
 	if (aError == OT_ERROR_NONE) {
@@ -210,11 +215,13 @@ otError HdlcInterface::WaitForFrame(uint64_t aTimeoutUs)
 void HdlcInterface::UpdateFdSet(void *aMainloopContext)
 {
 	// Nothing to do here for this platform
+	ARG_UNUSED(aMainloopContext);
 }
 
 void HdlcInterface::Process(const void *aMainloopContext)
 {
 	// Nothing to do here for this platform
+	ARG_UNUSED(aMainloopContext);
 }
 
 uint32_t HdlcInterface::GetBusSpeed(void) const
