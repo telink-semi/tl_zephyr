@@ -8,11 +8,13 @@ zephyr_library_named("${OT_SPINEL_LIB}")
 zephyr_library_sources(
 	hdlc_interface.cpp
 	spinel_manager.cpp
+	spinel_radio_interface.cpp
 )
 
 target_include_directories("${OT_SPINEL_LIB}" PUBLIC
 	"${ZEPHYR_OPENTHREAD_MODULE_DIR}/include"
 	"${ZEPHYR_OPENTHREAD_MODULE_DIR}/src"
+	"${ZEPHYR_OPENTHREAD_MODULE_DIR}/src/core"
 )
 
 zephyr_include_directories(
