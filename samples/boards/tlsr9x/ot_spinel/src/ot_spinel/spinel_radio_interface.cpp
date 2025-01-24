@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "spinel_radio_interface.h"
+#include "spinel_manager.hpp"
 #include <lib/spinel/radio_spinel.hpp>
 
 using namespace ot::Spinel;
@@ -15,7 +17,10 @@ void spinel_radio_interface_init(void)
 {
 	if (!spinel_radio_interface) {
 		spinel_radio_interface = new RadioSpinel;
-		/* TODO: continue init */
+		if (spinel_radio_interface) {
+			spinel_radio_interface->Init(true, false,
+				&SpinelManager::GetInstance()->GetSpinelDriver());
+		}
 	}
 }
 
@@ -23,8 +28,8 @@ extern "C"
 void spinel_radio_interface_deinit(void)
 {
 	if (spinel_radio_interface) {
-		/* TODO: deinit radio actions */
 		delete spinel_radio_interface;
+		SpinelManager::DestroyInstance();
 	}
 }
 
