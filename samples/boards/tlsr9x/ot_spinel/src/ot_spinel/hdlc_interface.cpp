@@ -167,7 +167,8 @@ otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 			uart_poll_out(m_uart_dev, data[i]);
 		}
 		if (IsSpinelResetCommand(aFrame, aLength)) {
-			result = HardwareReset();
+			k_msgq_purge(&m_msgq);
+			m_hdlc_decoder.Reset();
 		}
 	} while (0);
 
@@ -243,17 +244,7 @@ uint32_t HdlcInterface::GetBusSpeed(void) const
 
 otError HdlcInterface::HardwareReset(void)
 {
-	otError result = OT_ERROR_FAILED;
-
-	if (m_uart_open) {
-		k_msgq_purge(&m_msgq);
-		m_hdlc_decoder.Reset();
-		result = OT_ERROR_NONE;
-	} else {
-		LOG_ERR("OT Spinel UART not opened");
-	}
-
-	return result;
+	return OT_ERROR_NOT_IMPLEMENTED;
 }
 
 const otRcpInterfaceMetrics *HdlcInterface::GetRcpInterfaceMetrics(void) const
