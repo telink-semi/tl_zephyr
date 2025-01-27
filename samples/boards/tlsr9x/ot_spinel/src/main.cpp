@@ -103,6 +103,18 @@ static void radio_caps_show(otRadioCaps radio_caps)
 	LOG_INF("radio capabilities end.");
 }
 
+static const char *radio_state_string(otRadioState state)
+{
+	static const char *radio_state_str[] = {
+		"DISABLED", "SLEEP", "RECEIVE", "TRANSMIT", "INVALID" };
+
+	if (state <= OT_RADIO_STATE_TRANSMIT) {
+		return radio_state_str[state];
+	} else {
+		return radio_state_str[ARRAY_SIZE(radio_state_str) - 1];
+	}
+}
+
 int main(void)
 {
 	LOG_INF("main started");
@@ -111,6 +123,15 @@ int main(void)
 	LOG_INF("RCP bus speed: %u bps", spinel_radio_interface_get_bus_speed());
 	LOG_INF("RCP version: %s", spinel_radio_interface_get_version());
 	radio_caps_show(spinel_radio_interface_get_radio_caps());
+	LOG_INF("radio state: %s", radio_state_string(spinel_radio_interface_get_state()));
+
+	uint8_t ieee_eui64[8];
+
+	if (spinel_radio_interface_get_ieee_eui64(ieee_eui64) == OT_ERROR_NONE) {
+		LOG_HEXDUMP_INF(ieee_eui64, sizeof(ieee_eui64), "IEEE EUI-64");
+	} else {
+		LOG_ERR("read IEEE EUI-64 failed");
+	}
 
 	spinel_radio_interface_deinit();
 	LOG_INF("main finished");

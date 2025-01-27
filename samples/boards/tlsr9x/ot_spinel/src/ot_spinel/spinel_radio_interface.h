@@ -16,9 +16,11 @@ void spinel_radio_interface_deinit(void);
 uint32_t spinel_radio_interface_get_bus_speed(void);
 const char *spinel_radio_interface_get_version(void);
 otRadioCaps spinel_radio_interface_get_radio_caps(void);
-otError spinel_radio_interface_set_short_address(uint16_t aAddress);
-otError spinel_radio_interface_set_extended_address(const otExtAddress *aExtAddress);
-otError spinel_radio_interface_set_pan_id(uint16_t aPanId);
+otRadioState spinel_radio_interface_get_state(void);
+otError spinel_radio_interface_get_ieee_eui64(uint8_t *ieee_eui64);
+otError spinel_radio_interface_set_short_address(uint16_t short_address);
+otError spinel_radio_interface_set_extended_address(const otExtAddress *extended_address);
+otError spinel_radio_interface_set_pan_id(uint16_t pan_id);
 
 } /* extern "C" */
 
