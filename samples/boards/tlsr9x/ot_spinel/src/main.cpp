@@ -133,6 +133,88 @@ int main(void)
 		LOG_ERR("read IEEE EUI-64 failed");
 	}
 
+	LOG_INF("radio channel: %u", spinel_radio_interface_get_channel());
+
+	otError err = spinel_radio_interface_energy_scan(16, 10000);
+
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("energy scan failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("energy scan done");
+	}
+
+	err = spinel_radio_interface_set_cca_energy_detect_threshold(-60);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set cca energy detect threshold failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set cca energy detect threshold done");
+	}
+
+	LOG_INF("RSSI: %u", spinel_radio_interface_get_rssi());
+
+	LOG_INF("radio is %s", spinel_radio_interface_radio_is_enabled() ? "enabled" : "disabled");
+
+#if 0
+	err = spinel_radio_interface_disable();
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("disable failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("disable done");
+	}
+#endif
+
+	err = spinel_radio_interface_set_ch_max_transmit_power(16, 4);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set channel max transmit power: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set channel max transmit power done");
+	}
+
+	err = spinel_radio_interface_set_transmit_power(2);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set transmit power: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set transmit power done");
+	}
+
+	int8_t power;
+	err = spinel_radio_interface_get_transmit_power(&power);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("get transmit power: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("get transmit power done %d", power);
+	}
+
+	err = spinel_radio_interface_enable(nullptr);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("enable failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("enable done");
+	}
+
+	LOG_INF("radio is %s", spinel_radio_interface_radio_is_enabled() ? "enabled" : "disabled");
+
+	err = spinel_radio_interface_receive(16);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("receive failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("receive done");
+	}
+
+	uint8_t data[] = {0,1,2,3,4};
+	otRadioFrame frame = {
+		.mPsdu = data,
+		.mLength = sizeof(data),
+		.mChannel = 16
+	};
+
+	err = spinel_radio_interface_transmit(&frame);
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("transmit failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("transmit done");
+	}
+
 	spinel_radio_interface_deinit();
 	LOG_INF("main finished");
 	return 0;
