@@ -34,7 +34,6 @@ config RISCV_GP
 
 config NUM_IRQS
 	int
-	default 64 if SOC_RISCV_TELINK_B95
 	default 59
 
 config 2ND_LVL_ISR_TBL_OFFSET
@@ -109,11 +108,5 @@ config TELINK_B9X_2_WIRE_SPI_ENABLE
 	bool
 	default n
 endif # SOC_RISCV_TELINK_B92
-
-if SOC_RISCV_TELINK_B95
-config TELINK_B9X_2_WIRE_SPI_ENABLE
-	bool
-	default n
-endif # SOC_RISCV_TELINK_B95
 
 endif # SOC_SERIES_RISCV_TELINK_B9X

@@ -235,8 +235,6 @@ static int hci_b9x_open(void)
 	LOG_DBG("B91 BT started");
 #elif CONFIG_SOC_RISCV_TELINK_B92
 	LOG_DBG("B92 BT started");
-#elif CONFIG_SOC_RISCV_TELINK_B95
-	LOG_DBG("B95 BT started");
 #endif
 
 	return 0;
@@ -261,8 +259,6 @@ static const struct bt_hci_driver drv = {
 	.name   = "BT B91",
 #elif CONFIG_SOC_RISCV_TELINK_B92
 	.name   = "BT B92",
-#elif CONFIG_SOC_RISCV_TELINK_B95
-	.name   = "BT B95",
 #endif
 	.open   = hci_b9x_open,
 	.close	= hci_b9x_close,

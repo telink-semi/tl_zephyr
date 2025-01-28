@@ -54,9 +54,6 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         if 'CONFIG_SOC_RISCV_TELINK_TL321X' in build_conf:
             if build_conf['CONFIG_SOC_RISCV_TELINK_TL321X']:
                 soc_type = 'TL321X'
-        if 'CONFIG_SOC_RISCV_TELINK_B95' in build_conf:
-            if build_conf['CONFIG_SOC_RISCV_TELINK_B95']:
-                soc_type = 'B95'
         if 'CONFIG_SOC_RISCV_TELINK_B92' in build_conf:
             if build_conf['CONFIG_SOC_RISCV_TELINK_B92']:
                 soc_type = 'B92'
