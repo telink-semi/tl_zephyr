@@ -6,11 +6,7 @@
 
 #define DT_DRV_COMPAT telink_b9x_zb
 
-#if CONFIG_SOC_RISCV_TELINK_B91 || CONFIG_SOC_RISCV_TELINK_B92
 #include "rf.h"
-#elif CONFIG_SOC_RISCV_TELINK_B95
-#include "rf_common.h"
-#endif
 #include "stimer.h"
 #include "tl_rf_power.h"
 
@@ -1031,9 +1027,6 @@ static int b9x_start(const struct device *dev)
 			DT_INST_IRQ(0, priority));
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
 		if (!b9x_rf_zigbee_250K_mode) {
-#if CONFIG_SOC_RISCV_TELINK_B95 && CONFIG_IEEE802154_2015
-			ske_dig_en();
-#endif
 			rf_mode_init();
 			rf_set_zigbee_250K_mode();
 			b9x_rf_zigbee_250K_mode = true;
@@ -1071,12 +1064,8 @@ static int b9x_stop(const struct device *dev)
 		riscv_plic_irq_disable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
 		rf_set_tx_rx_off();
 #ifdef CONFIG_PM_DEVICE
-#if  CONFIG_SOC_RISCV_TELINK_B91 || CONFIG_SOC_RISCV_TELINK_B92
 		rf_baseband_reset();
 		rf_reset_dma();
-#elif CONFIG_SOC_RISCV_TELINK_B95
-		rf_radio_reset();
-#endif
 		b9x_rf_zigbee_250K_mode = false;
 #endif /* CONFIG_PM_DEVICE */
 		b9x->is_started = false;
