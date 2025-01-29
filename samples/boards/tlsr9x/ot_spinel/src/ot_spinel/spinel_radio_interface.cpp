@@ -24,7 +24,8 @@ static void spinel_radio_interface_rx_done(otInstance *aInstance,
 static void spinel_radio_interface_tx_done(otInstance *aInstance,
 	otRadioFrame *aFrame, otRadioFrame *aAckFrame, ot::Error aError)
 {
-	LOG_INF("%s", __func__);
+	LOG_INF("%s inst: %p, ch: %u", __func__, aInstance, aFrame->mChannel);
+	LOG_HEXDUMP_INF(aFrame->mPsdu, aFrame->mLength, "TX");
 }
 
 static void spinel_radio_interface_escan_done(otInstance *aInstance,
@@ -36,7 +37,8 @@ static void spinel_radio_interface_escan_done(otInstance *aInstance,
 static void spinel_radio_interface_tx_started(otInstance *aInstance,
 	otRadioFrame *aFrame)
 {
-	LOG_INF("%s", __func__);
+	LOG_INF("%s inst: %p, ch: %u", __func__, aInstance, aFrame->mChannel);
+	LOG_HEXDUMP_INF(aFrame->mPsdu, aFrame->mLength, "TX");
 }
 
 static void spinel_radio_interface_sw_done(otInstance *aInstance,
@@ -324,4 +326,35 @@ otError spinel_radio_interface_transmit(otRadioFrame *frame)
 		result = spinel_radio_interface->Transmit(*frame);
 	}
 	return result;
+}
+
+extern "C"
+bool spinel_radio_interface_is_transmitting(void)
+{
+	bool result = false;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->IsTransmitting();
+	}
+	return result;
+}
+
+extern "C"
+bool spinel_radio_interface_is_transmit_done(void)
+{
+	bool result = false;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->IsTransmitDone();
+	}
+	return result;
+}
+
+extern "C"
+void spinel_radio_interface_process(void)
+{
+	while (spinel_radio_interface) {
+		spinel_radio_interface->Process(nullptr);
+		SpinelManager::GetInstance()->GetSpinelDriver().Process(nullptr);
+	}
 }
