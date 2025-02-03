@@ -30,6 +30,8 @@ public:
 		return m_spinel_driver;
 	}
 
+	void BindInterfaceToDriver(void);
+
 private:
 	static const struct device *const k_uart_dev;
 	static SpinelManager *m_instance;

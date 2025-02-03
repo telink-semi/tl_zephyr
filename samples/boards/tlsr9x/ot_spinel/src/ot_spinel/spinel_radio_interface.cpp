@@ -8,11 +8,16 @@
 #include "spinel_manager.hpp"
 #include <lib/spinel/radio_spinel.hpp>
 
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(SpinelRadio, LOG_LEVEL_INF); // TODO: use level from config?
 
 using namespace ot::Spinel;
 
+static void spinel_radio_thread(void);
+static K_THREAD_DEFINE(spinel_radio, 4096,
+	spinel_radio_thread, NULL, NULL, NULL,
+	K_LOWEST_APPLICATION_THREAD_PRIO, 0, 0);
 static RadioSpinel *spinel_radio_interface = nullptr;
 
 static void spinel_radio_interface_rx_done(otInstance *aInstance,
@@ -80,8 +85,10 @@ void spinel_radio_interface_init(void)
 		spinel_radio_interface = new RadioSpinel;
 		if (spinel_radio_interface) {
 			spinel_radio_interface->SetCallbacks(radio_callbacks);
+			SpinelManager *spin_man = SpinelManager::GetInstance();
+			spin_man->BindInterfaceToDriver();
 			spinel_radio_interface->Init(false, true,
-				&SpinelManager::GetInstance()->GetSpinelDriver());
+				&spin_man->GetSpinelDriver());
 		}
 	}
 }
@@ -350,11 +357,14 @@ bool spinel_radio_interface_is_transmit_done(void)
 	return result;
 }
 
-extern "C"
-void spinel_radio_interface_process(void)
+static void spinel_radio_thread(void)
 {
-	while (spinel_radio_interface) {
-		spinel_radio_interface->Process(nullptr);
+	LOG_INF("spinel_radio_thread start");
+	for(;;) {
+
+		if (spinel_radio_interface) {
+			spinel_radio_interface->Process(nullptr);
+		}
 		SpinelManager::GetInstance()->GetSpinelDriver().Process(nullptr);
 	}
 }

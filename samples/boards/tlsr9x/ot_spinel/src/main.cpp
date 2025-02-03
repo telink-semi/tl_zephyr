@@ -213,13 +213,12 @@ int main(void)
 	if (err != OT_ERROR_NONE) {
 		LOG_ERR("transmit failed: %s", otThreadErrorToString(err));
 	} else {
-		LOG_INF("transmit done");
+		LOG_INF("transmit started");
 	}
 
 	if (spinel_radio_interface_is_transmitting())
 	{
 		while (!spinel_radio_interface_is_transmit_done()) {
-			spinel_radio_interface_process();
 			k_msleep(5);
 		}
 	}
