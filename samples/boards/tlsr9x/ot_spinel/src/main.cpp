@@ -195,6 +195,34 @@ int main(void)
 
 	LOG_INF("radio is %s", spinel_radio_interface_radio_is_enabled() ? "enabled" : "disabled");
 
+	err = spinel_radio_interface_set_pan_id(0x1418);
+
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set panid failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set panid done");
+	}
+
+	err = spinel_radio_interface_set_short_address(0x5555);
+
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set short address failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set short address done");
+	}
+
+	otExtAddress ext_addr = {
+		.m8 = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+	};
+
+	err = spinel_radio_interface_set_extended_address(&ext_addr);
+
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set extended address failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set extended address done");
+	}
+
 	err = spinel_radio_interface_receive(16);
 	if (err != OT_ERROR_NONE) {
 		LOG_ERR("receive failed: %s", otThreadErrorToString(err));
@@ -206,7 +234,23 @@ int main(void)
 	otRadioFrame frame = {
 		.mPsdu = data,
 		.mLength = sizeof(data),
-		.mChannel = 16
+		.mChannel = 16,
+		.mInfo = {
+			.mTxInfo = {
+				.mAesKey = nullptr,
+				.mIeInfo = nullptr,
+				.mTxDelayBaseTime = 0,
+				.mTxDelay = 0,
+				.mMaxCsmaBackoffs = 1,
+				.mMaxFrameRetries = 1,
+				.mRxChannelAfterTxDone = 16,
+				.mIsHeaderUpdated = true,
+				.mIsARetx = false,
+				.mCsmaCaEnabled = false,
+				.mCslPresent = false,
+				.mIsSecurityProcessed = true,
+			},
+		},
 	};
 
 	err = spinel_radio_interface_transmit(&frame);
