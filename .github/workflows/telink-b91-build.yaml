@@ -159,7 +159,7 @@ jobs:
         cp ../build_timer_usage_b91/zephyr/zephyr.bin               telink_build_artifacts/b91_timer_usage.bin
 
     - name: Publish artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: |
           telink_build_artifacts/*
