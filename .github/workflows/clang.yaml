@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload Unit Test Results
         if: always() && steps.twister.outputs.report_needed != 0
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results (Subset ${{ matrix.platform }})
           path: twister-out/twister.xml
@@ -145,7 +145,7 @@ jobs:
 
       - name: Upload Unit Test Results in HTML
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: HTML Unit Test Results
           if-no-files-found: ignore

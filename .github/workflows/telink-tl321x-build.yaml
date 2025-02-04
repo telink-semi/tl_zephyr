@@ -139,7 +139,7 @@ jobs:
         cp ../build_crypto_mbedtls_tl321x/zephyr/zephyr.bin             telink_build_artifacts/tl321x_mbedtls.bin
 
     - name: Publish artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: |
           telink_build_artifacts/*

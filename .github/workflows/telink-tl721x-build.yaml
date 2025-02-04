@@ -148,7 +148,7 @@ jobs:
         cp ../modules/hal/telink/zephyr/blobs/lib_zephyr_tl721x.a      telink_build_artifacts/lib_zephyr_tl721x.a
 
     - name: Publish artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: |
           telink_build_artifacts/*
