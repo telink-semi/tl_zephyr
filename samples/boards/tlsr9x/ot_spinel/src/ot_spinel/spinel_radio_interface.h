@@ -23,6 +23,11 @@ otError spinel_radio_interface_set_short_address(uint16_t short_address);
 otError spinel_radio_interface_set_extended_address(const otExtAddress *extended_address);
 otError spinel_radio_interface_set_pan_id(uint16_t pan_id);
 uint32_t spinel_radio_interface_get_radio_channel_mask(bool preffered);
+otError spinel_radio_interface_set_mac_frame_counter(uint32_t counter, bool set_if_larger);
+otError spinel_radio_interface_set_mac_key(uint8_t key_id_mode, uint8_t key_id,
+	const otMacKeyMaterial *prev_key,
+	const otMacKeyMaterial *curr_key,
+	const otMacKeyMaterial *next_key);
 otError spinel_radio_interface_energy_scan(uint8_t channel, uint16_t duration_us);
 otError spinel_radio_interface_set_cca_energy_detect_threshold(int8_t threshold);
 int8_t spinel_radio_interface_get_rssi(void);
