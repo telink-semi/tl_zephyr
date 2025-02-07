@@ -112,12 +112,17 @@ jobs:
     - name: Build TL321X crypto/mbedtls
       run: |
         cd ..
-        west build -b tl3218x     -d build_crypto_mbedtls_tl321x            zephyr/tests/crypto/mbedtls                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
+        west build -b tl3218x     -d build_crypto_mbedtls_tl321x              zephyr/tests/crypto/mbedtls                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
 
     - name: Build TL321X bootloader/mcuboot/boot for compressed LZMA image
       run: |
         cd ..
-        west build -b tl3218x     -d build_mcuboot_tl321x_lzma               bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_BOOT_UPGRADE_ONLY=y
+        west build -b tl3218x     -d build_mcuboot_tl321x_lzma                bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y
+
+    - name: Build TL321X net/sockets/echo_client for OpenThread with PM deep-sleep
+      run: |
+        cd ..
+        west build -b tl3218x_retention        -d build_ot_echo_client_pm_deep_tl3218x    zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y -DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y -DCONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE=y
 
     - name: Collect artifacts
       run: |
@@ -137,6 +142,7 @@ jobs:
         cp ../build_usb_console_tl321x/zephyr/zephyr.bin                telink_build_artifacts/tl321x_usb_console.bin
         cp ../build_ot_coprocessor_rcp_usb_tl321x/zephyr/zephyr.bin     telink_build_artifacts/tl321x_ot_coprocessor_rcp_usb.bin
         cp ../build_crypto_mbedtls_tl321x/zephyr/zephyr.bin             telink_build_artifacts/tl321x_mbedtls.bin
+        cp ../build_ot_echo_client_pm_deep_tl3218x/zephyr/zephyr.bin    telink_build_artifacts/tl321x_ot_echo_client_pm_retention.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
