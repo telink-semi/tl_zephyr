@@ -421,8 +421,10 @@ static void spinel_radio_thread(void)
 	LOG_INF("spinel_radio_thread start");
 	for(;;) {
 		if (spinel_radio_interface) {
+			k_sched_lock();
 			spinel_radio_interface->Process(nullptr);
 			SpinelManager::GetInstance()->GetSpinelDriver().Process(nullptr);
+			k_sched_unlock();
 		}
 	}
 }
