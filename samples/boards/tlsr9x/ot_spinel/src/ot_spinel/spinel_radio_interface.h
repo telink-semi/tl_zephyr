@@ -42,6 +42,8 @@ otError spinel_radio_interface_set_transmit_power(int8_t power);
 otError spinel_radio_interface_transmit(otRadioFrame *frame);
 bool spinel_radio_interface_is_transmitting(void);
 bool spinel_radio_interface_is_transmit_done(void);
+otError spinel_radio_interface_clear_src_match_short_entries(void);
+otError spinel_radio_interface_clear_src_match_ext_entries(void);
 
 } /* extern "C" */
 
