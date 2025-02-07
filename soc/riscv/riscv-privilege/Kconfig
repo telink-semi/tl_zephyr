@@ -30,4 +30,12 @@ config RISCV_MTVEC_VECTORED_MODE
 	help
 	  Should the SOC use mtvec in vectored mode
 
+# Fix ram overflow during bootloader compilation after config LZMA
+config TELINK_TLX_MATTER_RETENTION_LAYOUT
+	bool "link mcu_boot_tlx.ld for tl3218x"
+	default y if BOARD_TL3218X
+	default n
+	help
+	  link mcu_boot_tlx.ld for tl3218x
+
 source "soc/riscv/riscv-privilege/*/Kconfig.soc"
