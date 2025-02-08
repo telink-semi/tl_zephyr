@@ -87,7 +87,7 @@ jobs:
     - name: Build TL321x bluetooth/peripheral_ht
       run: |
         cd ..
-        west build -b tl3218x     -d build_peripheral_ht_tl321x               zephyr/samples/bluetooth/peripheral_ht        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MAIN_STACK_SIZE=5120
+        west build -b tl3218x     -d build_peripheral_ht_tl321x               zephyr/samples/bluetooth/peripheral_ht        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL321x net/openthread/cli
       run: |
