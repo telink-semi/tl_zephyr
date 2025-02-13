@@ -29,3 +29,14 @@ zephyr_link_libraries(
 	openthread-spinel-rcp
 	openthread-platform
 )
+
+# Add openthread defines
+target_link_libraries("${OT_SPINEL_LIB}" PRIVATE
+	ot-config
+)
+
+# Other openthread options
+add_definitions(
+    -DOPENTHREAD_CONFIG_LOG_LEVEL=${CONFIG_OPENTHREAD_LOG_LEVEL}
+    -DOPENTHREAD_PROJECT_CORE_CONFIG_FILE="openthread-core-zephyr-config.h"
+)
