@@ -19,25 +19,173 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <zephyr/net/ieee802154_radio.h>
 #include <zephyr/net/net_l2.h>
 #include <zephyr/net/openthread.h>
+#include <zephyr/drivers/uart.h>
 
 struct w91_zb_config {
+	const struct device *uart_dev;
+	const char *uart_pins_str;
 };
 
 struct w91_zb_data {
 };
 
-static int w91_zb_init(const struct device *dev)
+static void w91_zb_iface_init(struct net_if *iface)
+{
+	LOG_INF("%s", __func__);
+}
+
+static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
 {
 	LOG_INF("%s", __func__);
 	return 0;
 }
 
+static int w91_zb_cca(const struct device *dev)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_filter(const struct device *dev, bool set,
+	enum ieee802154_filter_type type, const struct ieee802154_filter *filter)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_set_txpower(const struct device *dev, int16_t dbm)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
+	struct net_pkt *pkt, struct net_buf *frag)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_start(const struct device *dev)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_stop(const struct device *dev)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_continuous_carrier(const struct device *dev)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_configure(const struct device *dev, enum ieee802154_config_type type,
+	const struct ieee802154_config *config)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_ed_scan(const struct device *dev, uint16_t duration,
+	energy_scan_done_cb_t done_cb)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static net_time_t w91_zb_get_time(const struct device *dev)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static uint8_t w91_zb_get_sch_acc(const struct device *dev)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_attr_get(const struct device *dev, enum ieee802154_attr attr,
+	struct ieee802154_attr_value *value)
+{
+	LOG_INF("%s", __func__);
+	return 0;
+}
+
+static int w91_zb_init(const struct device *dev)
+{
+	LOG_DBG("%s", __func__);
+
+	const struct w91_zb_config *cfg = (const struct w91_zb_config *)dev->config;
+
+	if (!device_is_ready(cfg->uart_dev)) {
+		LOG_ERR("spinel serial not ready");
+		return -EIO;
+	}
+	LOG_INF("spinel on %s", cfg->uart_dev->name);
+	struct uart_config uart_cfg;
+
+	if (!uart_config_get(cfg->uart_dev, &uart_cfg)) {
+		static const char *uart_data_bits_str[] = {"5", "6", "7", "8", "9"};
+		static const char *uart_parity_bits_str[] = {"none", "odd", "even", "mark", "space"};
+		static const char *uart_stop_bits_str[] = {"0.5", "1", "1.5", "2"};
+		static const char *uart_flow_ctrl_str[] = {"none", "rts-cts", "dtr-dsr", "rs-485"};
+
+		LOG_INF("uart: %u %s %s %s %s", uart_cfg.baudrate,
+			uart_cfg.data_bits < ARRAY_SIZE(uart_data_bits_str) ?
+				uart_data_bits_str[uart_cfg.data_bits] : "invalid",
+			uart_cfg.parity < ARRAY_SIZE(uart_parity_bits_str) ?
+				uart_parity_bits_str[uart_cfg.parity] : "invalid",
+			uart_cfg.stop_bits < ARRAY_SIZE(uart_stop_bits_str) ?
+				uart_stop_bits_str[uart_cfg.stop_bits] : "invalid",
+			uart_cfg.flow_ctrl < ARRAY_SIZE(uart_flow_ctrl_str) ?
+				uart_flow_ctrl_str[uart_cfg.flow_ctrl] : "invalid");
+		LOG_INF("pins: %s", cfg->uart_pins_str);
+	} else {
+		LOG_ERR("spinel serial config fail");
+		return -EIO;
+	}
+
+	return 0;
+}
+
 static const struct ieee802154_radio_api w91_zb_drv_api = {
+	.iface_api.init = w91_zb_iface_init,
+	.get_capabilities = w91_zb_get_capabilities,
+	.cca = w91_zb_cca,
+	.set_channel = w91_zb_set_channel,
+	.filter = w91_zb_filter,
+	.set_txpower = w91_zb_set_txpower,
+	.tx = w91_zb_tx,
+	.start = w91_zb_start,
+	.stop = w91_zb_stop,
+	.continuous_carrier = w91_zb_continuous_carrier,
+	.configure = w91_zb_configure,
+	.ed_scan = w91_zb_ed_scan,
+	.get_time = w91_zb_get_time,
+	.get_sch_acc = w91_zb_get_sch_acc,
+	.attr_get = w91_zb_attr_get,
 };
+
+#define DT_PROP_BY_IDX_DT_NODE_FULL_NAME(node_id, prop, idx)    \
+	DT_NODE_FULL_NAME(DT_PROP_BY_IDX(node_id, prop, idx))
 
 #if CONFIG_NET_L2_IEEE802154 || CONFIG_NET_L2_OPENTHREAD
 
-#if CONFIG_NET_L2_IEEE802154
+#if CONFIG_NET_L2_IEEE802154 && CONFIG_NET_L2_OPENTHREAD
+#error Networks IEEE802.15.4 & openthread are not supported at the same time
+#elif CONFIG_NET_L2_IEEE802154
 #define W91_ZB_L2 IEEE802154_L2
 #define W91_ZB_L2_CTX_TYPE NET_L2_GET_CTX_TYPE(IEEE802154_L2)
 #define W91_ZB_MTU 125
@@ -50,6 +198,10 @@ static const struct ieee802154_radio_api w91_zb_drv_api = {
 #define W91_ZB_DEFINE(n)                                        \
                                                                 \
 	static const struct w91_zb_config w91_zb_config_##n = {     \
+		.uart_dev = DEVICE_DT_GET(DT_INST_PROP(n, serial)),     \
+		.uart_pins_str = "[" DT_FOREACH_PROP_ELEM_SEP(          \
+			DT_INST_PROP(n, serial), pinctrl_0,                 \
+				DT_PROP_BY_IDX_DT_NODE_FULL_NAME, (", ")) "]"   \
 	};                                                          \
                                                                 \
 	static struct w91_zb_data w91_zb_data_##n;                  \
@@ -65,6 +217,10 @@ static const struct ieee802154_radio_api w91_zb_drv_api = {
 #define W91_ZB_DEFINE(n)                                        \
                                                                 \
 	static const struct w91_zb_config w91_zb_config_##n = {     \
+		.uart_dev = DEVICE_DT_GET(DT_INST_PROP(n, serial)),     \
+		.uart_pins_str = "[" DT_FOREACH_PROP_ELEM_SEP(          \
+			DT_INST_PROP(n, serial), pinctrl_0,                 \
+				DT_PROP_BY_IDX_DT_NODE_FULL_NAME, (", ")) "]"   \
 	};                                                          \
                                                                 \
 	static struct w91_zb_data w91_zb_data_##n;                  \

@@ -626,12 +626,13 @@ static int uart_w91_driver_init(const struct device *dev)
 	const struct uart_w91_config *cfg = dev->config;
 	struct uart_w91_data *data = dev->data;
 	struct uart_config *config = &data->cfg;
-	uint8_t inst = ((struct uart_w91_config *)dev->config)->instance_id;
 
 	ipc_based_driver_init(&data->ipc);
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	/* once for all UART instances */
+	uint8_t inst = ((struct uart_w91_config *)dev->config)->instance_id;
+
 	if (!uart_irq_thread_initialized) {
 		k_tid_t thread_id = k_thread_create(&uart_irq_thread_data,
 			uart_irq_thread_stack, K_THREAD_STACK_SIZEOF(uart_irq_thread_stack),
