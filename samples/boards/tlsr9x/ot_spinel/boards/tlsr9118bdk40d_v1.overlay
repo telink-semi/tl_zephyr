@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
- &ieee802154 {
+&ieee802154 {
 	status = "okay";
 	serial = <&uart2>;
 };

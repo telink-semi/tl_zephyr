@@ -11,7 +11,7 @@ zephyr_library_sources(
 	spinel_radio_interface.cpp
 )
 
-target_include_directories("${OT_SPINEL_LIB}" PUBLIC
+target_include_directories("${OT_SPINEL_LIB}" PRIVATE
 	"${ZEPHYR_OPENTHREAD_MODULE_DIR}/include"
 	"${ZEPHYR_OPENTHREAD_MODULE_DIR}/src"
 	"${ZEPHYR_OPENTHREAD_MODULE_DIR}/src/core"

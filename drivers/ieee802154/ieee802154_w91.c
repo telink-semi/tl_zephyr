@@ -21,105 +21,123 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <zephyr/net/openthread.h>
 #include <zephyr/drivers/uart.h>
 
+#define W91_ZB_MAC_ADDR_MAX_LENGTH 						8
+
 struct w91_zb_config {
 	const struct device *uart_dev;
 	const char *uart_pins_str;
 };
 
 struct w91_zb_data {
+	struct net_if *iface;
 };
 
 static void w91_zb_iface_init(struct net_if *iface)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
+	const struct device *dev = net_if_get_device(iface);
+	struct w91_zb_data *data = dev->data;
+
+	data->iface = iface;
+
+	/* get MAC address from RCP */
+	static uint8_t mac[W91_ZB_MAC_ADDR_MAX_LENGTH];
+
+	/* TODO: get IEEE EUI-64 RCP to mac */
+	if (net_if_set_link_addr(data->iface, mac, sizeof(mac), NET_LINK_IEEE802154)) {
+		LOG_ERR("set MAC failed");
+	}
+	ieee802154_init(data->iface);
 }
 
 static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
-	return 0;
+	LOG_DBG("%s", __func__);
+	enum ieee802154_hw_caps radio_caps = IEEE802154_HW_TX_RX_ACK;   /* required by Zephyr */
+
+	return radio_caps;
 }
 
 static int w91_zb_cca(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_filter(const struct device *dev, bool set,
 	enum ieee802154_filter_type type, const struct ieee802154_filter *filter)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_set_txpower(const struct device *dev, int16_t dbm)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 	struct net_pkt *pkt, struct net_buf *frag)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_start(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_stop(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_continuous_carrier(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_configure(const struct device *dev, enum ieee802154_config_type type,
 	const struct ieee802154_config *config)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_ed_scan(const struct device *dev, uint16_t duration,
 	energy_scan_done_cb_t done_cb)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static net_time_t w91_zb_get_time(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static uint8_t w91_zb_get_sch_acc(const struct device *dev)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
 static int w91_zb_attr_get(const struct device *dev, enum ieee802154_attr attr,
 	struct ieee802154_attr_value *value)
 {
-	LOG_INF("%s", __func__);
+	LOG_DBG("%s", __func__);
 	return 0;
 }
 
@@ -156,6 +174,8 @@ static int w91_zb_init(const struct device *dev)
 		LOG_ERR("spinel serial config fail");
 		return -EIO;
 	}
+
+	/* TODO: reset RCP */
 
 	return 0;
 }
