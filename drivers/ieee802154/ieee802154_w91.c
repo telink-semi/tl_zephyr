@@ -21,6 +21,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <zephyr/net/openthread.h>
 #include <zephyr/drivers/uart.h>
 
+#include <ot_rcp/ot_rcp.h>
+
 #define W91_ZB_MAC_ADDR_MAX_LENGTH 						8
 
 struct w91_zb_config {
@@ -30,7 +32,22 @@ struct w91_zb_config {
 
 struct w91_zb_data {
 	struct net_if *iface;
+	struct openthread_rcp_data ot_rcp;
 };
+
+static void w91_zb_ack(uint8_t *data, size_t data_len, const void *ctx)
+{
+	const struct device *dev = (const struct device *)ctx;
+
+	LOG_DBG("%s (%p)", __func__, dev);
+}
+
+static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
+{
+	const struct device *dev = (const struct device *)ctx;
+
+	LOG_DBG("%s (%p)", __func__, dev);
+}
 
 static void w91_zb_iface_init(struct net_if *iface)
 {
@@ -145,39 +162,62 @@ static int w91_zb_init(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
 
+	int result = 0;
 	const struct w91_zb_config *cfg = (const struct w91_zb_config *)dev->config;
+	struct w91_zb_data *data = (struct w91_zb_data *)dev->data;
 
-	if (!device_is_ready(cfg->uart_dev)) {
-		LOG_ERR("spinel serial not ready");
-		return -EIO;
-	}
-	LOG_INF("spinel on %s", cfg->uart_dev->name);
-	struct uart_config uart_cfg;
+	do {
+		if (!device_is_ready(cfg->uart_dev)) {
+			LOG_ERR("spinel serial not ready");
+			result = -EIO;
+			break;
+		}
+		LOG_INF("spinel on %s", cfg->uart_dev->name);
+		struct uart_config uart_cfg;
 
-	if (!uart_config_get(cfg->uart_dev, &uart_cfg)) {
-		static const char *uart_data_bits_str[] = {"5", "6", "7", "8", "9"};
-		static const char *uart_parity_bits_str[] = {"none", "odd", "even", "mark", "space"};
-		static const char *uart_stop_bits_str[] = {"0.5", "1", "1.5", "2"};
-		static const char *uart_flow_ctrl_str[] = {"none", "rts-cts", "dtr-dsr", "rs-485"};
+		if (!uart_config_get(cfg->uart_dev, &uart_cfg)) {
+			static const char *uart_data_bits_str[] = {"5", "6", "7", "8", "9"};
+			static const char *uart_parity_bits_str[] = {"none", "odd", "even", "mark", "space"};
+			static const char *uart_stop_bits_str[] = {"0.5", "1", "1.5", "2"};
+			static const char *uart_flow_ctrl_str[] = {"none", "rts-cts", "dtr-dsr", "rs-485"};
 
-		LOG_INF("uart: %u %s %s %s %s", uart_cfg.baudrate,
-			uart_cfg.data_bits < ARRAY_SIZE(uart_data_bits_str) ?
-				uart_data_bits_str[uart_cfg.data_bits] : "invalid",
-			uart_cfg.parity < ARRAY_SIZE(uart_parity_bits_str) ?
-				uart_parity_bits_str[uart_cfg.parity] : "invalid",
-			uart_cfg.stop_bits < ARRAY_SIZE(uart_stop_bits_str) ?
-				uart_stop_bits_str[uart_cfg.stop_bits] : "invalid",
-			uart_cfg.flow_ctrl < ARRAY_SIZE(uart_flow_ctrl_str) ?
-				uart_flow_ctrl_str[uart_cfg.flow_ctrl] : "invalid");
-		LOG_INF("pins: %s", cfg->uart_pins_str);
-	} else {
-		LOG_ERR("spinel serial config fail");
-		return -EIO;
-	}
+			LOG_INF("uart: %u %s %s %s %s", uart_cfg.baudrate,
+				uart_cfg.data_bits < ARRAY_SIZE(uart_data_bits_str) ?
+					uart_data_bits_str[uart_cfg.data_bits] : "invalid",
+				uart_cfg.parity < ARRAY_SIZE(uart_parity_bits_str) ?
+					uart_parity_bits_str[uart_cfg.parity] : "invalid",
+				uart_cfg.stop_bits < ARRAY_SIZE(uart_stop_bits_str) ?
+					uart_stop_bits_str[uart_cfg.stop_bits] : "invalid",
+				uart_cfg.flow_ctrl < ARRAY_SIZE(uart_flow_ctrl_str) ?
+					uart_flow_ctrl_str[uart_cfg.flow_ctrl] : "invalid");
+			LOG_INF("pins: %s", cfg->uart_pins_str);
+		} else {
+			LOG_ERR("spinel serial config fail");
+			result = -EIO;
+			break;
+		}
 
-	/* TODO: reset RCP */
+		struct openthread_rcp_data *ot_rcp = &data->ot_rcp;
 
-	return 0;
+		ot_rcp->uart = cfg->uart_dev;
+		k_sem_init(&ot_rcp->response_sem, 0, 1);
+		ot_rcp->ack = w91_zb_ack;
+		ot_rcp->rx = w91_zb_rx;
+		ot_rcp->ctx = dev;
+
+		if (openthread_rcp_init(ot_rcp)) {
+			LOG_ERR("spinel init fail");
+			result = -EIO;
+			break;
+		}
+		if (openthread_rcp_reset(ot_rcp)) {
+			LOG_ERR("rcp reset fail");
+			result = -EIO;
+			break;
+		}
+	} while (0);
+
+	return result;
 }
 
 static const struct ieee802154_radio_api w91_zb_drv_api = {
