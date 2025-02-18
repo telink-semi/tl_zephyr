@@ -6,7 +6,30 @@ if IEEE802154
 config TELINK_W91_OT_RCP
 	bool "Telink W91 Openthread spinel interface"
 	default y
+	select RING_BUFFER
 	help
 		This option enables Telink W91 Openthread RCP interface.
+
+if TELINK_W91_OT_RCP
+
+config TELINK_W91_OT_RCP_RX_BUFFER_SIZE
+	int "Telink W91 Openthread spinel reception buffer size"
+	default 64
+	help
+		This option sets Telink W91 Openthread RCP reception buffer size.
+
+config TELINK_W91_OT_RCP_THREAD_PRIORITY
+	int "Telink W91 Openthread spinel interface reception thread priority"
+	default 0
+	help
+		This option sets Telink W91 Openthread RCP reception thread priority.
+
+config TELINK_W91_OT_RCP_THREAD_STACK_SIZE
+	int "Telink W91 Openthread spinel interface reception thread stack size"
+	default 2048
+	help
+		This option sets Telink W91 Openthread RCP reception thread stack size.
+
+endif # IEEE802154
 
 endif # IEEE802154

@@ -35,6 +35,7 @@ struct w91_zb_data {
 	struct openthread_rcp_data ot_rcp;
 };
 
+#if 0  /* TODO: just to suppress warning for now */
 static void w91_zb_ack(uint8_t *data, size_t data_len, const void *ctx)
 {
 	const struct device *dev = (const struct device *)ctx;
@@ -48,6 +49,7 @@ static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
 
 	LOG_DBG("%s (%p)", __func__, dev);
 }
+#endif
 
 static void w91_zb_iface_init(struct net_if *iface)
 {
@@ -197,20 +199,12 @@ static int w91_zb_init(const struct device *dev)
 			break;
 		}
 
-		struct openthread_rcp_data *ot_rcp = &data->ot_rcp;
-
-		ot_rcp->uart = cfg->uart_dev;
-		k_sem_init(&ot_rcp->response_sem, 0, 1);
-		ot_rcp->ack = w91_zb_ack;
-		ot_rcp->rx = w91_zb_rx;
-		ot_rcp->ctx = dev;
-
-		if (openthread_rcp_init(ot_rcp)) {
+		if (openthread_rcp_init(&data->ot_rcp, cfg->uart_dev, dev)) {
 			LOG_ERR("spinel init fail");
 			result = -EIO;
 			break;
 		}
-		if (openthread_rcp_reset(ot_rcp)) {
+		if (openthread_rcp_reset(&data->ot_rcp)) {
 			LOG_ERR("rcp reset fail");
 			result = -EIO;
 			break;
