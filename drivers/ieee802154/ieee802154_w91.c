@@ -199,7 +199,7 @@ static int w91_zb_init(const struct device *dev)
 			break;
 		}
 
-		if (openthread_rcp_init(&data->ot_rcp, cfg->uart_dev, dev)) {
+		if (openthread_rcp_init(&data->ot_rcp, cfg->uart_dev)) {
 			LOG_ERR("spinel init fail");
 			result = -EIO;
 			break;
