@@ -5,6 +5,7 @@
  */
 
 #include "ot_rcp.h"
+#include "spinel_drv.h"
 
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
 #include <zephyr/logging/log.h>
@@ -74,7 +75,14 @@ static void openthread_rcp_reception_work(struct k_work *item)
 	}
 }
 
-static void openthread_rcp_transmission(uint8_t bt, const void *ctx)
+static void openthread_rcp_spinel_transmission(uint8_t bt, const void *ctx)
+{
+	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
+
+	hdlc_coder_out_poll(&ot_rcp->hdlc, bt);
+}
+
+static void openthread_rcp_hdlc_transmission(uint8_t bt, const void *ctx)
 {
 	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
@@ -118,7 +126,7 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 		k_work_init(&ot_rcp->work, openthread_rcp_reception_work);
 		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data), ot_rcp->rb_data);
 		hdlc_coder_init(&ot_rcp->hdlc, ot_rcp);
-		hdlc_coder_out_data_set(&ot_rcp->hdlc, openthread_rcp_transmission);
+		hdlc_coder_out_data_set(&ot_rcp->hdlc, openthread_rcp_hdlc_transmission);
 		hdlc_coder_inp_data_set(&ot_rcp->hdlc, openthread_rcp_reception);
 		hdlc_coder_inp_finish_set(&ot_rcp->hdlc, openthread_rcp_reception_done);
 
@@ -158,13 +166,63 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 {
 	LOG_INF("%s", __func__);
-	/* TODO: dummy for now pack, using spinel */
-	uint8_t reset_cmd[] = {0x80, 0x01, 0x02};
 
-	for(uint16_t i = 0; i < sizeof(reset_cmd); i++) {
-		hdlc_coder_out_poll(&ot_rcp->hdlc, reset_cmd[i]);
+	int ret = spinel_drv_send_reset(0, openthread_rcp_spinel_transmission, ot_rcp,
+		SPINEL_RESET_STACK);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send spinel reset command (err = %d)", ret);
+		return ret;
 	}
+
 	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
+
+#if 0
+	int8_t t_id = 0;
+
+	// Test semd get protocol version command
+	ret = spinel_drv_send_cmd(0, t_id, openthread_rcp_spinel_transmission, ot_rcp,
+		SPINEL_CMD_PROP_VALUE_GET, SPINEL_PROP_PROTOCOL_VERSION, NULL);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send spinel command (err = %d)", ret);
+		return ret;
+	}
+
+	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
+
+	// Test stream raw command
+	bool test_bool = true;
+	uint8_t test_uint8 = 0x10;
+	uint16_t test_uint16 = 0x3322;
+	uint32_t test_uint32 = 0x77665544;
+	uint64_t test_uint64 = 0xFFEEDDCCBBAA9988;
+	unsigned int test_uint = 128; // 80 01
+	const char *test_utf8 = "Hello"; // 48 65 6C 6C 6F 00
+
+	uint8_t test_data_wlen[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	ret = spinel_drv_send_cmd(0, t_id, openthread_rcp_spinel_transmission, ot_rcp,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_STREAM_RAW,
+		SPINEL_DATATYPE_BOOL_S
+		SPINEL_DATATYPE_UINT8_S
+		SPINEL_DATATYPE_UINT16_S
+		SPINEL_DATATYPE_UINT32_S
+		SPINEL_DATATYPE_UINT64_S
+		SPINEL_DATATYPE_UINT_PACKED_S
+		SPINEL_DATATYPE_UTF8_S
+		SPINEL_DATATYPE_DATA_WLEN_S,
+		test_bool, test_uint8, test_uint16, test_uint32, test_uint64,
+		test_uint, test_utf8, test_data_wlen, sizeof(test_data_wlen));
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send spinel data (err = %d)", ret);
+		return ret;
+	}
+
+	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
+
+#endif
+
 	/* TODO: wait for response */
 
 	return 0;
