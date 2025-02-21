@@ -238,3 +238,41 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 	}
 	return result;
 }
+
+int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_eui64[8])
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_get_ieee_eui64(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp);
+
+	hdlc_coder_out_finish(&ot_rcp->hdlc, result >= 0);
+	if (result >= 0) {
+		result = -ETIMEDOUT;
+		k_timepoint_t t = sys_timepoint_calc(
+			K_MSEC(CONFIG_TELINK_W91_OT_SPINEL_RESPONSE_TIMEOUT_MS));
+
+		while (!sys_timepoint_expired(t)) {
+			struct openthread_rcp_rx_buffer response;
+
+			if (!k_msgq_get(&ot_rcp->spinel_msgq, &response, sys_timepoint_timeout(t))) {
+				LOG_HEXDUMP_INF(response.data, response.data_size, "rx");
+				if (spinel_drv_check_get_ieee_eui64(&ot_rcp->spinel_drv,
+					response.data, response.data_size, ieee_eui64)) {
+					free(response.data);
+					result = 0;
+					break;
+				} else {
+					LOG_WRN("spinel trash received");
+					free(response.data);
+				}
+			}
+		}
+		if (result == -ETIMEDOUT) {
+			LOG_ERR("spinel response timeout");
+		}
+	} else {
+		LOG_ERR("spinel encoding error");
+	}
+	return result;
+}

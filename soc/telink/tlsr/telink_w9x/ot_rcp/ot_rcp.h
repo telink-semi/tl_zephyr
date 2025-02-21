@@ -41,5 +41,6 @@ void openthread_rcp_reception_set(struct openthread_rcp_data *ot_rcp,
 	openthread_rcp_reception reception, const void *ctx);
 int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp);
+int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_eui64[8]);
 
 #endif /* OPENTHREAD_RCP_H */
