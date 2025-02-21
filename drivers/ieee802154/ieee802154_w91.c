@@ -35,21 +35,13 @@ struct w91_zb_data {
 	struct openthread_rcp_data ot_rcp;
 };
 
-#if 0  /* TODO: just to suppress warning for now */
-static void w91_zb_ack(uint8_t *data, size_t data_len, const void *ctx)
-{
-	const struct device *dev = (const struct device *)ctx;
-
-	LOG_DBG("%s (%p)", __func__, dev);
-}
-
 static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
 {
 	const struct device *dev = (const struct device *)ctx;
 
 	LOG_DBG("%s (%p)", __func__, dev);
+	LOG_HEXDUMP_DBG(data, data_len, "rx");
 }
-#endif
 
 static void w91_zb_iface_init(struct net_if *iface)
 {
@@ -204,6 +196,7 @@ static int w91_zb_init(const struct device *dev)
 			result = -EIO;
 			break;
 		}
+		openthread_rcp_reception_set(&data->ot_rcp, w91_zb_rx, dev);
 		if (openthread_rcp_reset(&data->ot_rcp)) {
 			LOG_ERR("rcp reset fail");
 			result = -EIO;

@@ -7,8 +7,6 @@
 #include "ot_rcp.h"
 #include <stdlib.h>
 
-#include "spinel_drv.h"
-
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ot_rcp);
@@ -91,7 +89,7 @@ static void openthread_rcp_hdlc_transmission(uint8_t bt, const void *ctx)
 	uart_poll_out(ot_rcp->uart, bt);
 }
 
-static void openthread_rcp_reception(uint8_t bt, const void *ctx)
+static void openthread_rcp_reception_byte(uint8_t bt, const void *ctx)
 {
 	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
@@ -119,8 +117,16 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
 
 		if (ot_rcp->spinel_rx_buffer.data) {
 			ot_rcp->spinel_rx_buffer.data_size -= HDLC_CODER_LENGTH_CRC;
-			/* TODO: check if response or stream data */
-			k_msgq_put(&ot_rcp->spinel_msgq, &ot_rcp->spinel_rx_buffer, K_FOREVER);
+			if (spinel_drv_reception_data(&ot_rcp->spinel_drv,
+				ot_rcp->spinel_rx_buffer.data, ot_rcp->spinel_rx_buffer.data_size)) {
+				if (ot_rcp->reception) {
+					ot_rcp->reception(&ot_rcp->spinel_rx_buffer.data[3],
+						ot_rcp->spinel_rx_buffer.data_size - 3, ot_rcp->ctx);
+				}
+				free(ot_rcp->spinel_rx_buffer.data);
+			} else {
+				k_msgq_put(&ot_rcp->spinel_msgq, &ot_rcp->spinel_rx_buffer, K_FOREVER);
+			}
 			ot_rcp->spinel_rx_buffer.data = NULL;
 		}
 	}
@@ -146,11 +152,14 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data), ot_rcp->rb_data);
 		hdlc_coder_init(&ot_rcp->hdlc, ot_rcp);
 		hdlc_coder_out_data_set(&ot_rcp->hdlc, openthread_rcp_hdlc_transmission);
-		hdlc_coder_inp_data_set(&ot_rcp->hdlc, openthread_rcp_reception);
+		hdlc_coder_inp_data_set(&ot_rcp->hdlc, openthread_rcp_reception_byte);
 		hdlc_coder_inp_finish_set(&ot_rcp->hdlc, openthread_rcp_reception_done);
 		ot_rcp->spinel_rx_buffer.data = NULL;
 		k_msgq_init(&ot_rcp->spinel_msgq, (char *)&ot_rcp->spinel_msgq_buffer,
 			sizeof(struct openthread_rcp_rx_buffer), ARRAY_SIZE(ot_rcp->spinel_msgq_buffer));
+		spinel_drv_init(&ot_rcp->spinel_drv, 0);
+		ot_rcp->reception = NULL;
+		ot_rcp->ctx = NULL;
 
 		if (uart_irq_callback_user_data_set(ot_rcp->uart,
 			openthread_rcp_reception_isr, ot_rcp)) {
@@ -162,6 +171,13 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 	} while (0);
 
 	return result;
+}
+
+void openthread_rcp_reception_set(struct openthread_rcp_data *ot_rcp,
+	openthread_rcp_reception reception, const void *ctx)
+{
+	ot_rcp->reception = reception;
+	ot_rcp->ctx = ctx;
 }
 
 int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
@@ -190,7 +206,7 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 {
 	LOG_INF("%s", __func__);
 
-	int result = spinel_drv_send_reset(0, openthread_rcp_spinel_transmission, ot_rcp,
+	int result = spinel_drv_send_reset(&ot_rcp->spinel_drv, openthread_rcp_spinel_transmission, ot_rcp,
 		SPINEL_RESET_STACK);
 
 	hdlc_coder_out_finish(&ot_rcp->hdlc, result >= 0);
@@ -204,7 +220,7 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 
 			if (!k_msgq_get(&ot_rcp->spinel_msgq, &response, sys_timepoint_timeout(t))) {
 				LOG_HEXDUMP_INF(response.data, response.data_size, "rx");
-				if (spinel_drv_check_reset(ot_rcp, response.data, response.data_size)) {
+				if (spinel_drv_check_reset(&ot_rcp->spinel_drv, response.data, response.data_size)) {
 					free(response.data);
 					result = 0;
 					break;
