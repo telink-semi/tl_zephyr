@@ -254,3 +254,14 @@ int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_e
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_get_ieee_eui64, ieee_eui64);
 }
+
+int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
+	enum ieee802154_hw_caps *radio_caps)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_get_capabilities(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_get_capabilities, radio_caps);
+}

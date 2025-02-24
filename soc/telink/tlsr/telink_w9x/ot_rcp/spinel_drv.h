@@ -8,6 +8,7 @@
 #define SPINEL_DRV_H
 
 #include <zephyr/kernel.h>
+#include <zephyr/net/ieee802154_radio.h>
 
 #include "spinel.h"
 
@@ -31,5 +32,9 @@ int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx);
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, size_t data_size, uint8_t ieee_eui64[8]);
+int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx);
+bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, size_t data_size, enum ieee802154_hw_caps *radio_caps);
 
 #endif /* SPINEL_DRV_H */

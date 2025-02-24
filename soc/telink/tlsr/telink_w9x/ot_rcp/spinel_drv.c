@@ -116,9 +116,37 @@ int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, size_t data_size, uint8_t ieee_eui64[8])
 {
-	/* TODO: parse reset response, now dummy data */
+	/* TODO: parse eui64 response, now dummy data */
 	for (size_t i = 0; i < 8; i++) {
 		ieee_eui64[i] = i;
 	}
+	return true;
+}
+
+int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx)
+{
+	int ret = 0;
+
+	do {
+		ret = spinel_datatype_pack(tx_cb, ctx, "Cii",
+			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(spinel_drv->inst) | spinel_drv->t_id,
+			SPINEL_CMD_PROP_VALUE_GET, SPINEL_PROP_RADIO_CAPS);
+
+		if (ret < 0) {
+			LOG_ERR("Failed to pack spinel data (inst = %u)", spinel_drv->inst);
+			break;
+		}
+
+	} while(0);
+
+	return ret;
+}
+
+bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, size_t data_size, enum ieee802154_hw_caps *radio_caps)
+{
+	/* TODO: parse caps response, now dummy data */
+	*radio_caps = 0;
 	return true;
 }
