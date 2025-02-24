@@ -56,6 +56,7 @@ static void w91_zb_iface_init(struct net_if *iface)
 	if (openthread_rcp_ieee_eui64(&data->ot_rcp, mac)) {
 		LOG_ERR("read mac failed");
 	}
+	LOG_HEXDUMP_INF(mac, sizeof(mac), "MAC");
 	if (net_if_set_link_addr(data->iface, mac, sizeof(mac), NET_LINK_IEEE802154)) {
 		LOG_ERR("set MAC failed");
 	}

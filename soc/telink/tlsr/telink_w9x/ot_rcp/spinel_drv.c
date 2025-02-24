@@ -13,7 +13,7 @@ LOG_MODULE_REGISTER(spinel_drv);
 void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst)
 {
 	spinel_drv->inst = inst;
-	spinel_drv->t_id = 0;
+	spinel_drv->t_id = 1;
 }
 
 int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv,
@@ -98,7 +98,17 @@ int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 {
 	int ret = 0;
 
-	/* TODO prepare request */
+	do {
+		ret = spinel_datatype_pack(tx_cb, ctx, "Cii",
+			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(spinel_drv->inst) | spinel_drv->t_id,
+			SPINEL_CMD_PROP_VALUE_GET, SPINEL_PROP_HWADDR);
+
+		if (ret < 0) {
+			LOG_ERR("Failed to pack spinel data (inst = %u)", spinel_drv->inst);
+			break;
+		}
+
+	} while(0);
 
 	return ret;
 }
