@@ -82,8 +82,9 @@
 		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
 		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_60MHZ) && \
 		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_80MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_120MHZ))
-		#error "Invalid clock-frequency. Supported values: 24, 40, 48, 60, 80 and 120 MHz"
+		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_120MHZ) && \
+		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_240MHZ))
+		#error "Invalid clock-frequency. Supported values: 24,40,48,60,80,120,240 MHz"
 	#endif
 #endif
 
@@ -139,6 +140,9 @@ static int soc_tlx_init(void)
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
+	if (cclk == CLK_240MHZ) {
+		pm_set_dvdd(CORE_0P9V_SRAM_0P9V_BB_0P9V, DMA1, 1000);
+	}
 	pm_set_ret_ldo_voltage(RET_LDO_TRIM_0P65V);
 #endif
 
@@ -184,10 +188,10 @@ static int soc_tlx_init(void)
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	case CLK_120MHZ:
-		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_60M;
+		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
 		break;
 	case CLK_240MHZ:
-		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_60M;
+		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_48M;
 		break;
 #endif
 
@@ -265,10 +269,10 @@ void soc_tlx_restore(void)
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	case CLK_120MHZ:
-		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_60M;
+		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
 		break;
 	case CLK_240MHZ:
-		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_60M;
+		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_48M;
 		break;
 #endif
 	}
