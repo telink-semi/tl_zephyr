@@ -268,3 +268,63 @@ int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_get_capabilities, radio_caps);
 }
+
+int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool enable)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_enable_src_match(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, enable);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_enable_src_match);
+}
+
+int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bool enable)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_ack_fpb(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, addr, enable);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb);
+}
+
+int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[8], bool enable)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_ack_fpb_ext(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, addr, enable);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb_ext);
+}
+
+static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_ack_fpb_clear(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb_clear);
+}
+
+static int openthread_rcp_ack_fpb_ext_clear(struct openthread_rcp_data *ot_rcp)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_ack_fpb_ext_clear(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb_ext_clear);
+}
+
+int openthread_rcp_ack_fpb_clear(struct openthread_rcp_data *ot_rcp)
+{
+	int result = openthread_rcp_ack_fpb_short_clear(ot_rcp);
+
+	if (!result) {
+		result = openthread_rcp_ack_fpb_ext_clear(ot_rcp);
+	}
+	return result;
+}

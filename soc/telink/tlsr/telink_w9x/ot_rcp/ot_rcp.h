@@ -45,5 +45,9 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_eui64[8]);
 int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 	enum ieee802154_hw_caps *radio_caps);
+int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool enable);
+int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bool enable);
+int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[8], bool enable);
+int openthread_rcp_ack_fpb_clear(struct openthread_rcp_data *ot_rcp);
 
 #endif /* OPENTHREAD_RCP_H */

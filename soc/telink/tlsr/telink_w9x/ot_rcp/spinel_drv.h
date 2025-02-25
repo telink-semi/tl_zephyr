@@ -38,5 +38,25 @@ int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx);
 bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, enum ieee802154_hw_caps *radio_caps);
+int spinel_drv_send_enable_src_match(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, bool enable);
+bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size);
+int spinel_drv_send_ack_fpb(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr, bool enable);
+bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size);
+int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8], bool enable);
+bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size);
+int spinel_drv_send_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx);
+bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size);
+int spinel_drv_send_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx);
+bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size);
 
 #endif /* SPINEL_DRV_H */
