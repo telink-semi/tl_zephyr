@@ -33,6 +33,7 @@ struct w91_zb_config {
 struct w91_zb_data {
 	struct net_if *iface;
 	struct openthread_rcp_data ot_rcp;
+	ieee802154_event_cb_t event_handler;
 };
 
 static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
@@ -161,6 +162,17 @@ static int w91_zb_configure(const struct device *dev, enum ieee802154_config_typ
 			result = openthread_rcp_ack_fpb(&data->ot_rcp,
 				addr, config->ack_fpb.enabled);
 		}
+		break;
+	case IEEE802154_CONFIG_EVENT_HANDLER:
+		data->event_handler = config->event_handler;
+		break;
+	case IEEE802154_CONFIG_FRAME_COUNTER:
+		result = openthread_rcp_mac_frame_counter(&data->ot_rcp,
+			config->frame_counter, false);
+		break;
+	case IEEE802154_CONFIG_FRAME_COUNTER_IF_LARGER:
+		result = openthread_rcp_mac_frame_counter(&data->ot_rcp,
+			config->frame_counter, true);
 		break;
 	default:
 		LOG_WRN("unhandled configuration %u", type);
