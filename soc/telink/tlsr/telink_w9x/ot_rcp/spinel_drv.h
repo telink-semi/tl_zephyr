@@ -65,18 +65,18 @@ bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 int spinel_drv_send_panid(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t pan_id);
 bool spinel_drv_check_panid(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, uint16_t pan_id);
 int spinel_drv_send_short_addr(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr);
 bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, uint16_t addr);
 int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8]);
 bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, uint8_t addr[8]);
 int spinel_drv_send_tx_power(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, int8_t pwr_dbm);
 bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, int8_t pwr_dbm);
 
 #endif /* SPINEL_DRV_H */

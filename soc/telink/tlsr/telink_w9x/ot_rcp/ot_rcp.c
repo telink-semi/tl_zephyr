@@ -347,7 +347,7 @@ int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
 	int result = spinel_drv_send_panid(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, pan_id);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_panid);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_panid, pan_id);
 }
 
 int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
@@ -357,7 +357,7 @@ int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
 	int result = spinel_drv_send_short_addr(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, addr);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_short_addr);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_short_addr, addr);
 }
 
 int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
@@ -367,7 +367,7 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 	int result = spinel_drv_send_ext_addr(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, addr);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_ext_addr);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ext_addr, addr);
 }
 
 int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
@@ -377,5 +377,5 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 	int result = spinel_drv_send_tx_power(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, pwr_dbm);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_tx_power);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_tx_power, pwr_dbm);
 }
