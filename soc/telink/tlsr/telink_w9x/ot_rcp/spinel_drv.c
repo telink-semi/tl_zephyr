@@ -328,7 +328,7 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	uint32_t caps;
+	uint32_t get_caps;
 
 	int ret = spinel_drv_get_cmd(spinel_drv,
 		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RADIO_CAPS,
@@ -344,7 +344,7 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 	}
 
 	ret = spinel_datatype_unpack(param_data, param_size, true,
-		SPINEL_DATATYPE_UINT_PACKED_S, &caps);
+		SPINEL_DATATYPE_UINT_PACKED_S, &get_caps);
 
 	if (ret < 0) {
 		LOG_ERR("Failed to get parameters of get_capabilities (inst = %u, err = %d)",
@@ -352,7 +352,7 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 			return false;
 	}
 
-	*radio_caps = spinel_drv_get_hw_caps(caps);
+	*radio_caps = spinel_drv_get_hw_caps(get_caps);
 	
 	return true;
 }
@@ -377,7 +377,7 @@ bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	bool get_enable_param;
+	bool get_enable;
 
 	int ret = spinel_drv_get_cmd(spinel_drv,
 		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_SRC_MATCH_ENABLED,
@@ -393,7 +393,7 @@ bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
 	}
 
 	ret = spinel_datatype_unpack(param_data, param_size, true,
-		SPINEL_DATATYPE_BOOL_S, &get_enable_param);
+		SPINEL_DATATYPE_BOOL_S, &get_enable);
 
 	if (ret < 0) {
 		LOG_ERR("Failed to get parameters of enable_src_match (inst = %u, err = %d)",
@@ -401,7 +401,7 @@ bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
 		return false;
 	}
 
-	if (get_enable_param != enable) {
+	if (get_enable != enable) {
 		LOG_ERR("Get incorrect parameter in response to enable_src_match (inst = %u)",
 			spinel_drv->inst);
 		return false;
@@ -439,7 +439,7 @@ bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
 	int ret;
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	uint16_t get_addr_param;
+	uint16_t get_addr;
 
 	if (enable) {
 		ret = spinel_drv_get_cmd(spinel_drv,
@@ -461,7 +461,7 @@ bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
 	}
 
 	ret = spinel_datatype_unpack(param_data, param_size, true,
-		SPINEL_DATATYPE_UINT16_S, &get_addr_param);
+		SPINEL_DATATYPE_UINT16_S, &get_addr);
 
 	if (ret < 0) {
 		LOG_ERR("Failed to get parameters of ack_fpb (inst = %u, err = %d)",
@@ -469,7 +469,7 @@ bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
 			return false;
 	}
 
-	if (get_addr_param != addr) {
+	if (get_addr != addr) {
 		LOG_ERR("Get incorrect address in response to ack_fpb (inst = %u)", spinel_drv->inst);
 		return false;
 	}
@@ -506,7 +506,7 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 	int ret;
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	uint8_t (*p_get_addr_param)[8];
+	uint8_t (*p_get_addr)[8];
 
 	if (enable) {
 		ret = spinel_drv_get_cmd(spinel_drv,
@@ -521,14 +521,14 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 	if (ret == -EPERM) {
 		// Skip this frame
 		return false;
-	} else if (ret < 0 || !param_data || param_size != sizeof(uint64_t)) {
+	} else if (ret < 0 || !param_data || param_size != sizeof(*p_get_addr)) {
 		LOG_ERR("Failed to check ack_fpb (inst = %u, err = %d, data = %p, size = %u)",
 			spinel_drv->inst, ret, param_data, param_size);
 		return false;
 	}
 
 	ret = spinel_datatype_unpack(param_data, param_size, false,
-		SPINEL_DATATYPE_EUI64_S, &p_get_addr_param);
+		SPINEL_DATATYPE_EUI64_S, &p_get_addr);
 
 	if (ret < 0) {
 		LOG_ERR("Failed to get parameters of ack_fpb (inst = %u, err = %d)",
@@ -536,13 +536,13 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 			return false;
 	}
 
-	if (!p_get_addr_param || !addr) {
+	if (!p_get_addr || !addr) {
 		ret = -EINVAL;
 		LOG_ERR("Get null pointer in response to ack_fpb (inst = %u)", spinel_drv->inst);
 		return false;
 	}
 
-	if (memcmp(p_get_addr_param, addr, sizeof(uint64_t))) {
+	if (memcmp(p_get_addr, addr, sizeof(*p_get_addr))) {
 		LOG_ERR("Get incorrect address in response to ack_fpb (inst = %u)", spinel_drv->inst);
 		return false;
 	}
@@ -639,7 +639,7 @@ bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	uint32_t get_frame_counter_param;
+	uint32_t get_frame_counter;
 
 	int ret = spinel_drv_get_cmd(spinel_drv,
 		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RCP_MAC_FRAME_COUNTER,
@@ -655,7 +655,7 @@ bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 	}
 
 	ret = spinel_datatype_unpack(param_data, param_size, true,
-		SPINEL_DATATYPE_UINT32_S, &get_frame_counter_param);
+		SPINEL_DATATYPE_UINT32_S, &get_frame_counter);
 
 	if (ret < 0) {
 		LOG_ERR("Failed to get parameters of mac_frame_counter (inst = %u, err = %d)",
@@ -663,7 +663,7 @@ bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 		return false;
 	}
 
-	if (get_frame_counter_param != frame_counter) {
+	if (get_frame_counter != frame_counter) {
 		LOG_ERR("Get incorrect frame counter in response to mac_frame_counter (inst = %u)",
 			spinel_drv->inst);
 		return false;
@@ -675,79 +675,210 @@ bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 int spinel_drv_send_panid(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t pan_id)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetPanId(uint16_t aPanId)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_15_4_PANID,
+		SPINEL_DATATYPE_UINT16_S, pan_id);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send panid (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_panid(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size)
+	const uint8_t *data, uint16_t data_size, uint16_t pan_id)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetPanId(uint16_t aPanId)
-	 */
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	uint16_t get_pan_id;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_PANID,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(uint16_t)) {
+		LOG_ERR("Failed to check panid (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_UINT16_S, &get_pan_id);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of panid (inst = %u, err = %d)", spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (get_pan_id != pan_id) {
+		LOG_ERR("Get incorrect pan id in response to panid (inst = %u)", spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }
 
 int spinel_drv_send_short_addr(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetShortAddress(uint16_t aAddress)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_15_4_SADDR,
+		SPINEL_DATATYPE_UINT16_S, addr);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send short_addr (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size)
+	const uint8_t *data, uint16_t data_size, uint16_t addr)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetShortAddress(uint16_t aAddress)
-	 */
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	uint16_t get_addr;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_SADDR,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(uint16_t)) {
+		LOG_ERR("Failed to check short_addr (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_UINT16_S, &get_addr);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of short_addr (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (get_addr != addr) {
+		LOG_ERR("Get incorrect address in response to short_addr (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }
 
 int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8])
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetExtendedAddress(const otExtAddress &aExtAddress)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_15_4_LADDR,
+		SPINEL_DATATYPE_EUI64_S, addr);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send ext_addr (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size)
+	const uint8_t *data, uint16_t data_size, uint8_t addr[8])
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetExtendedAddress(const otExtAddress &aExtAddress)
-	 */
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	uint8_t (*p_get_addr)[8];
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_LADDR,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(*p_get_addr)) {
+		LOG_ERR("Failed to check ext_addr (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, false,
+		SPINEL_DATATYPE_EUI64_S, &p_get_addr);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of ext_addr (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (!p_get_addr || !addr) {
+		ret = -EINVAL;
+		LOG_ERR("Get null pointer in response to ext_addr (inst = %u)", spinel_drv->inst);
+		return false;
+	}
+
+	if (memcmp(p_get_addr, addr, sizeof(*p_get_addr))) {
+		LOG_ERR("Get incorrect address in response to ext_addr (inst = %u)", spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }
 
 int spinel_drv_send_tx_power(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, int8_t pwr_dbm)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetTransmitPower(int8_t aPower)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_PHY_TX_POWER,
+		SPINEL_DATATYPE_INT8_S, pwr_dbm);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send tx_power (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size)
+	const uint8_t *data, uint16_t data_size, int8_t pwr_dbm)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetTransmitPower(int8_t aPower)
-	 */
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	int8_t get_pwr_dbm;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_PHY_TX_POWER,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(int8_t)) {
+		LOG_ERR("Failed to check tx_power (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_INT8_S, &get_pwr_dbm);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of tx_power (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (get_pwr_dbm != pwr_dbm) {
+		LOG_ERR("Get incorrect tx power in response to tx_power (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }
