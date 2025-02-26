@@ -608,3 +608,23 @@ bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv,
 	 */
 	return true;
 }
+
+int spinel_drv_send_tx_power(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, int8_t pwr_dbm)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetTransmitPower(int8_t aPower)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetTransmitPower(int8_t aPower)
+	 */
+	return true;
+}

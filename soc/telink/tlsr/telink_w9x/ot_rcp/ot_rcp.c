@@ -369,3 +369,13 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_ext_addr);
 }
+
+int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_tx_power(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, pwr_dbm);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_tx_power);
+}

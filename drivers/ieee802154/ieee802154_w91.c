@@ -131,7 +131,11 @@ static int w91_zb_filter(const struct device *dev, bool set,
 static int w91_zb_set_txpower(const struct device *dev, int16_t dbm)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	struct w91_zb_data *data = dev->data;
+
+	dbm = CLAMP(dbm, INT8_MIN, INT8_MAX);
+
+	return openthread_rcp_tx_power(&data->ot_rcp, (int8_t)dbm);
 }
 
 static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
