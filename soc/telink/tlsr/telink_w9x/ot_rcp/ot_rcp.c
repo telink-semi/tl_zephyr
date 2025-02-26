@@ -337,5 +337,5 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp,
 	int result = spinel_drv_send_mac_frame_counter(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, frame_counter, set_if_larger);
 
-	// OPENTHREAD_RCP_HELPER(spinel_drv_check_mac_frame_counter);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_mac_frame_counter);
 }
