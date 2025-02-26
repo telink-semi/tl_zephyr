@@ -106,7 +106,26 @@ static int w91_zb_filter(const struct device *dev, bool set,
 	enum ieee802154_filter_type type, const struct ieee802154_filter *filter)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	int result = -ENOTSUP;
+	struct w91_zb_data *data = dev->data;
+
+	if (set) {
+		switch (type) {
+		case IEEE802154_FILTER_TYPE_PAN_ID:
+			result = openthread_rcp_panid(&data->ot_rcp, filter->pan_id);
+			break;
+		case IEEE802154_FILTER_TYPE_SHORT_ADDR:
+			result = openthread_rcp_short_addr(&data->ot_rcp, filter->short_addr);
+			break;
+		case IEEE802154_FILTER_TYPE_IEEE_ADDR:
+			result = openthread_rcp_ext_addr(&data->ot_rcp, filter->ieee_addr);
+			break;
+		default:
+			LOG_WRN("unhandled filter %u", type);
+			break;
+		}
+	}
+	return result;
 }
 
 static int w91_zb_set_txpower(const struct device *dev, int16_t dbm)
