@@ -34,6 +34,7 @@ struct w91_zb_data {
 	struct net_if *iface;
 	struct openthread_rcp_data ot_rcp;
 	ieee802154_event_cb_t event_handler;
+	uint16_t channel;
 };
 
 static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
@@ -99,6 +100,9 @@ static int w91_zb_cca(const struct device *dev)
 static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
 {
 	LOG_DBG("%s", __func__);
+	struct w91_zb_data *data = dev->data;
+
+	data->channel = channel;
 	return 0;
 }
 
