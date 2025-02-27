@@ -390,22 +390,22 @@ int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_rcp_enable, enable);
 }
 
-int openthread_rcp_receive_on(struct openthread_rcp_data *ot_rcp, uint8_t channel)
+int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 {
 	LOG_INF("%s", __func__);
 
-	int result = spinel_drv_send_receive_on(&ot_rcp->spinel_drv,
-		openthread_rcp_spinel_transmission, ot_rcp, channel);
+	int result = spinel_drv_send_receive_enable(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, enable);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_receive_on, channel);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_receive_enable, enable);
 }
 
-int openthread_rcp_receive_off(struct openthread_rcp_data *ot_rcp)
+int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 {
 	LOG_INF("%s", __func__);
 
-	int result = spinel_drv_send_receive_off(&ot_rcp->spinel_drv,
-		openthread_rcp_spinel_transmission, ot_rcp);
+	int result = spinel_drv_send_channel(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, channel);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_receive_off);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_channel, channel);
 }
