@@ -21,6 +21,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <zephyr/net/openthread.h>
 #include <zephyr/drivers/uart.h>
 
+#include <openthread/platform/radio.h>
+
 #include <ot_rcp/ot_rcp.h>
 
 #define W91_ZB_MAC_ADDR_MAX_LENGTH                      8
@@ -37,6 +39,7 @@ struct w91_zb_data {
 	ieee802154_event_cb_t event_handler;
 	bool reception_on;
 	uint8_t channel;
+	int8_t tx_power;
 };
 
 static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
@@ -111,7 +114,6 @@ static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
 	if (data->channel != (uint8_t)channel) {
 		if (data->reception_on) {
 			result = openthread_rcp_receive_on(&data->ot_rcp, (uint8_t)channel);
-
 			if (!result){
 				data->channel = (uint8_t)channel;
 			}
@@ -151,10 +153,17 @@ static int w91_zb_filter(const struct device *dev, bool set,
 static int w91_zb_set_txpower(const struct device *dev, int16_t dbm)
 {
 	LOG_DBG("%s", __func__);
+	int result = 0;
 	struct w91_zb_data *data = dev->data;
 
 	dbm = CLAMP(dbm, INT8_MIN, INT8_MAX);
-	return openthread_rcp_tx_power(&data->ot_rcp, (int8_t)dbm);
+	if (data->tx_power != dbm) {
+		result = openthread_rcp_tx_power(&data->ot_rcp, (int8_t)dbm);
+		if (!result) {
+			data->tx_power = dbm;
+		}
+	}
+	return result;
 }
 
 static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
@@ -172,7 +181,6 @@ static int w91_zb_start(const struct device *dev)
 
 	if (!data->reception_on) {
 		result = openthread_rcp_receive_on(&data->ot_rcp, data->channel);
-
 		if (!result){
 			data->reception_on = true;
 		}
@@ -188,7 +196,6 @@ static int w91_zb_stop(const struct device *dev)
 
 	if (data->reception_on) {
 		result = openthread_rcp_receive_off(&data->ot_rcp);
-
 		if (!result){
 			data->reception_on = false;
 		}
@@ -320,6 +327,8 @@ static int w91_zb_init(const struct device *dev)
 			result = -EIO;
 			break;
 		}
+		data->channel = (uint8_t)-1;
+		data->tx_power = OT_RADIO_POWER_INVALID;
 	} while (0);
 
 	return result;
