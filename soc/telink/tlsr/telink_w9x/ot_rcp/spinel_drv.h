@@ -86,6 +86,10 @@ int spinel_drv_send_receive_on(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t channel);
 bool spinel_drv_check_receive_on(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, uint8_t channel);
+int spinel_drv_send_receive_off(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx);
+bool spinel_drv_check_receive_off(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size);
 
 
 #endif /* SPINEL_DRV_H */

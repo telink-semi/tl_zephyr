@@ -57,5 +57,6 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm);
 int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable);
 int openthread_rcp_receive_on(struct openthread_rcp_data *ot_rcp, uint8_t channel);
+int openthread_rcp_receive_off(struct openthread_rcp_data *ot_rcp);
 
 #endif /* OPENTHREAD_RCP_H */

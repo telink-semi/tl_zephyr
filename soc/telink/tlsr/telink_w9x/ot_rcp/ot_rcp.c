@@ -399,3 +399,13 @@ int openthread_rcp_receive_on(struct openthread_rcp_data *ot_rcp, uint8_t channe
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_receive_on, channel);
 }
+
+int openthread_rcp_receive_off(struct openthread_rcp_data *ot_rcp)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_receive_off(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_receive_off);
+}

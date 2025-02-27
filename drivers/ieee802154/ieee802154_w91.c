@@ -23,8 +23,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 #include <ot_rcp/ot_rcp.h>
 
-#define W91_ZB_MAC_ADDR_MAX_LENGTH 						8
-#define W91_ZB_RADIO_CAPS_VERBOSE 						0
+#define W91_ZB_MAC_ADDR_MAX_LENGTH                      8
+#define W91_ZB_RADIO_CAPS_VERBOSE                       0
 
 struct w91_zb_config {
 	const struct device *uart_dev;
@@ -35,6 +35,7 @@ struct w91_zb_data {
 	struct net_if *iface;
 	struct openthread_rcp_data ot_rcp;
 	ieee802154_event_cb_t event_handler;
+	bool reception_on;
 	uint8_t channel;
 };
 
@@ -62,6 +63,9 @@ static void w91_zb_iface_init(struct net_if *iface)
 	LOG_HEXDUMP_INF(mac, sizeof(mac), "mac");
 	if (net_if_set_link_addr(data->iface, mac, sizeof(mac), NET_LINK_IEEE802154)) {
 		LOG_ERR("set MAC failed");
+	}
+	if (openthread_rcp_enable(&data->ot_rcp, true)) {
+		LOG_ERR("rcp enabling failed");
 	}
 	ieee802154_init(data->iface);
 }
@@ -100,12 +104,22 @@ static int w91_zb_cca(const struct device *dev)
 static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
 {
 	LOG_DBG("%s", __func__);
+	int result = 0;
 	struct w91_zb_data *data = dev->data;
 
 	channel = MIN(channel, UINT8_MAX);
+	if (data->channel != (uint8_t)channel) {
+		if (data->reception_on) {
+			result = openthread_rcp_receive_on(&data->ot_rcp, (uint8_t)channel);
 
-	data->channel = (uint8_t)channel;
-	return 0;
+			if (!result){
+				data->channel = (uint8_t)channel;
+			}
+		} else {
+			data->channel = (uint8_t)channel;
+		}
+	}
+	return result;
 }
 
 static int w91_zb_filter(const struct device *dev, bool set,
@@ -140,7 +154,6 @@ static int w91_zb_set_txpower(const struct device *dev, int16_t dbm)
 	struct w91_zb_data *data = dev->data;
 
 	dbm = CLAMP(dbm, INT8_MIN, INT8_MAX);
-
 	return openthread_rcp_tx_power(&data->ot_rcp, (int8_t)dbm);
 }
 
@@ -154,25 +167,33 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 static int w91_zb_start(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
+	int result = 0;
 	struct w91_zb_data *data = dev->data;
 
-	int result = openthread_rcp_enable(&data->ot_rcp, true);
-
-	if (!result) {
+	if (!data->reception_on) {
 		result = openthread_rcp_receive_on(&data->ot_rcp, data->channel);
-	} else {
-		LOG_ERR("cant enable rcp");
-	}
 
+		if (!result){
+			data->reception_on = true;
+		}
+	}
 	return result;
 }
 
 static int w91_zb_stop(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
+	int result = 0;
 	struct w91_zb_data *data = dev->data;
 
-	return openthread_rcp_enable(&data->ot_rcp, false);
+	if (data->reception_on) {
+		result = openthread_rcp_receive_off(&data->ot_rcp);
+
+		if (!result){
+			data->reception_on = false;
+		}
+	}
+	return result;
 }
 
 static int w91_zb_continuous_carrier(const struct device *dev)
