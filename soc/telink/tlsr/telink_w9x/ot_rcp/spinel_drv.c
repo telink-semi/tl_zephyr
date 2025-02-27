@@ -538,7 +538,8 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 
 	if (!p_get_addr || !addr) {
 		ret = -EINVAL;
-		LOG_ERR("Get null pointer in response to ack_fpb (inst = %u)", spinel_drv->inst);
+		LOG_ERR("Get null pointer in response to ack_fpb (inst = %u, addr = %p, p_get_addr = %p)",
+			spinel_drv->inst, addr, p_get_addr);
 		return false;
 	}
 
@@ -819,7 +820,8 @@ bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv,
 
 	if (!p_get_addr || !addr) {
 		ret = -EINVAL;
-		LOG_ERR("Get null pointer in response to ext_addr (inst = %u)", spinel_drv->inst);
+		LOG_ERR("Get null pointer in response to ext_addr (inst = %u, addr = %p, p_get_addr = %p)",
+			spinel_drv->inst, addr, p_get_addr);
 		return false;
 	}
 
@@ -886,61 +888,155 @@ bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv,
 int spinel_drv_send_rcp_enable(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, bool enable)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Enable(otInstance *aInstance)
-	 * otError RadioSpinel::Disable(void)
-	 */
-		return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+			SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_PHY_ENABLED,
+			SPINEL_DATATYPE_BOOL_S, enable);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send rcp_enable (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_rcp_enable(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, bool enable)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Enable(otInstance *aInstance)
-	 * otError RadioSpinel::Disable(void)
-	 */
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	bool get_enable;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_PHY_ENABLED,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(bool)) {
+		LOG_ERR("Failed to check rcp_enable (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_BOOL_S, &get_enable);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of rcp_enable (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (get_enable != enable) {
+		LOG_ERR("Get incorrect state in response to rcp_enable (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }
 
-int spinel_drv_send_receive_on(struct spinel_drv_data *spinel_drv,
+int spinel_drv_send_receive_enable(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, bool enable)
+{
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+			SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_RAW_STREAM_ENABLED,
+			SPINEL_DATATYPE_BOOL_S, enable);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send receive_enable (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
+}
+
+bool spinel_drv_check_receive_enable(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, bool enable)
+{
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	bool get_enable;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_RAW_STREAM_ENABLED,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(bool)) {
+		LOG_ERR("Failed to check receive_enable (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_BOOL_S, &get_enable);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of receive_enable (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (get_enable != enable) {
+		LOG_ERR("Get incorrect state in response to receive_enable (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+	
+	return true;
+}
+
+int spinel_drv_send_channel(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t channel)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Receive(uint8_t aChannel)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_PHY_CHAN,
+		SPINEL_DATATYPE_UINT8_S, channel);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send channel (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
-bool spinel_drv_check_receive_on(struct spinel_drv_data *spinel_drv,
+bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, uint8_t channel)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Receive(uint8_t aChannel)
-	 */
-	return true;
-}
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	uint8_t get_channel;
 
-int spinel_drv_send_receive_off(struct spinel_drv_data *spinel_drv,
-	spinel_tx_cb tx_cb, const void *ctx)
-{
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Sleep(void)
-	 */
-	return 0;
-}
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_PHY_CHAN,
+		data, data_size, &param_data, &param_size);
 
-bool spinel_drv_check_receive_off(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size)
-{
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Sleep(void)
-	 */
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || param_size != sizeof(uint8_t)) {
+		LOG_ERR("Failed to check channel (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_UINT8_S, &get_channel);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of channel (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (get_channel != channel) {
+		LOG_ERR("Get incorrect channel in response to send channel (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }

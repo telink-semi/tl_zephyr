@@ -113,7 +113,7 @@ static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
 	channel = MIN(channel, UINT8_MAX);
 	if (data->channel != (uint8_t)channel) {
 		if (data->reception_on) {
-			result = openthread_rcp_receive_on(&data->ot_rcp, (uint8_t)channel);
+			result = openthread_rcp_channel(&data->ot_rcp, (uint8_t)channel);
 			if (!result){
 				data->channel = (uint8_t)channel;
 			}
@@ -180,7 +180,7 @@ static int w91_zb_start(const struct device *dev)
 	struct w91_zb_data *data = dev->data;
 
 	if (!data->reception_on) {
-		result = openthread_rcp_receive_on(&data->ot_rcp, data->channel);
+		result = openthread_rcp_receive_enable(&data->ot_rcp, true);
 		if (!result){
 			data->reception_on = true;
 		}
@@ -195,7 +195,7 @@ static int w91_zb_stop(const struct device *dev)
 	struct w91_zb_data *data = dev->data;
 
 	if (data->reception_on) {
-		result = openthread_rcp_receive_off(&data->ot_rcp);
+		result = openthread_rcp_receive_enable(&data->ot_rcp, false);
 		if (!result){
 			data->reception_on = false;
 		}
