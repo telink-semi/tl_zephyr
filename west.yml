@@ -141,7 +141,7 @@ manifest:
       groups:
         - hal
     - name: hal_telink
-      url: http://192.168.48.36/src/open_platform/telink_hal_zephyr_src.git
+      url: https://github.com/telink-semi/hal_telink.git
       revision: 5a91d26c14c30978dc9e5e77b8cb2dfe1ca9d238
       path: modules/hal/telink
       groups:
@@ -279,10 +279,10 @@ manifest:
     - name: thrift
       path: modules/lib/thrift
       revision: 10023645a0e6cb7ce23fcd7fd3dbac9f18df6234
-    - name: tflite-micro-lib
-      url: https://github.com/telink-semi/tflite-micro-lib
-      revision: 0b8fadf8b2868321d4f8dbaa5655a50c285613d6
-      path: modules/lib/tflite-micro-lib
+    - name: tflite-micro-telink
+      url: https://github.com/telink-semi/tflite-micro-telink.git
+      revision: c89ed44791d592f4435c7fa924d2edaa0aa0e071
+      path: modules/lib/tflite-micro-telink
 
   self:
     path: zephyr
