@@ -34,17 +34,13 @@ static enum ieee802154_hw_caps spinel_drv_get_hw_caps(otRadioCaps caps)
 		radio_caps |= IEEE802154_HW_SLEEP_TO_TX;
 	}
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	if (caps & OT_RADIO_CAPS_TRANSMIT_SEC) {
 		radio_caps |= IEEE802154_HW_TX_SEC;
 	}
-#endif
 
-#if defined(CONFIG_NET_PKT_TXTIME)
 	if (caps & OT_RADIO_CAPS_TRANSMIT_TIMING) {
 		radio_caps |= IEEE802154_HW_TXTIME;
 	}
-#endif
 
 	if (caps & OT_RADIO_CAPS_RECEIVE_TIMING) {
 		radio_caps |= IEEE802154_HW_RXTIME;
@@ -52,6 +48,10 @@ static enum ieee802154_hw_caps spinel_drv_get_hw_caps(otRadioCaps caps)
 
 	if (caps & OT_RADIO_CAPS_RX_ON_WHEN_IDLE) {
 		radio_caps |= IEEE802154_RX_ON_WHEN_IDLE;
+	}
+
+	if (caps & OT_RADIO_CAPS_TRANSMIT_RETRIES) {
+		radio_caps |= IEEE802154_HW_RETRANSMISSION;
 	}
 
 	return radio_caps;

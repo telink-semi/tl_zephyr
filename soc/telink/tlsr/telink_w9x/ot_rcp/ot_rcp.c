@@ -382,7 +382,7 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 
 int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 {
-	LOG_INF("%s", __func__);
+	LOG_INF("%s %u", __func__, enable);
 
 	int result = spinel_drv_send_rcp_enable(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, enable);
