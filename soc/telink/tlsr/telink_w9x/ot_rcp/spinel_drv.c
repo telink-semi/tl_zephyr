@@ -882,3 +882,45 @@ bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv,
 	
 	return true;
 }
+
+int spinel_drv_send_rcp_enable(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, bool enable)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
+	 * otError RadioSpinel::Enable(otInstance *aInstance)
+	 * otError RadioSpinel::Disable(void)
+	 */
+		return 0;
+}
+
+bool spinel_drv_check_rcp_enable(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, bool enable)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
+	 * otError RadioSpinel::Enable(otInstance *aInstance)
+	 * otError RadioSpinel::Disable(void)
+	 */
+	return true;
+}
+
+int spinel_drv_send_receive_on(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint8_t channel)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
+	 * otError RadioSpinel::Receive(uint8_t aChannel)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_receive_on(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, uint8_t channel)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
+	 * otError RadioSpinel::Receive(uint8_t aChannel)
+	 */
+	return true;
+}

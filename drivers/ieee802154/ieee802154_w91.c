@@ -34,7 +34,7 @@ struct w91_zb_data {
 	struct net_if *iface;
 	struct openthread_rcp_data ot_rcp;
 	ieee802154_event_cb_t event_handler;
-	uint16_t channel;
+	uint8_t channel;
 };
 
 static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
@@ -102,7 +102,9 @@ static int w91_zb_set_channel(const struct device *dev, uint16_t channel)
 	LOG_DBG("%s", __func__);
 	struct w91_zb_data *data = dev->data;
 
-	data->channel = channel;
+	channel = MIN(channel, UINT8_MAX);
+
+	data->channel = (uint8_t)channel;
 	return 0;
 }
 
@@ -152,13 +154,25 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 static int w91_zb_start(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	struct w91_zb_data *data = dev->data;
+
+	int result = openthread_rcp_enable(&data->ot_rcp, true);
+
+	if (!result) {
+		result = openthread_rcp_receive_on(&data->ot_rcp, data->channel);
+	} else {
+		LOG_ERR("cant enable rcp");
+	}
+
+	return result;
 }
 
 static int w91_zb_stop(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	struct w91_zb_data *data = dev->data;
+
+	return openthread_rcp_enable(&data->ot_rcp, false);
 }
 
 static int w91_zb_continuous_carrier(const struct device *dev)
