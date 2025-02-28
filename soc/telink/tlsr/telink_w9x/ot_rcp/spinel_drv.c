@@ -1040,3 +1040,31 @@ bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv,
 	
 	return true;
 }
+
+int spinel_drv_send_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, const struct spinel_frame_data *frame)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
+	 * otError RadioSpinel::Transmit(otRadioFrame &aFrame)
+	 * RxChannelAfterTxDone = Channel - always
+	 * MaxCsmaBackoffs = 4 - always (modules/lib/openthread/src/core/config/mac.h)
+	 * MaxFrameRetries = 15 - always (modules/lib/openthread/src/core/config/mac.h)
+	 * IsARetx = 0 ???
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
+	 * otError RadioSpinel::Transmit(otRadioFrame &aFrame)
+	 * see: https://www.silabs.com/documents/public/user-guides/ug235-02-using-connect-with-ieee-802-15-4.pdf
+	 * check if frame type ack
+	 * check sn if same
+	 * fill ack frame into frame
+	 */
+	return true;
+}

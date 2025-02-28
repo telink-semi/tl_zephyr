@@ -409,3 +409,13 @@ int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_channel, channel);
 }
+
+int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_frame_data *frame)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_tramsmit_frame(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, frame);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_tramsmit_frame, frame);
+}

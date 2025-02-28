@@ -58,5 +58,6 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm);
 int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable);
 int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enable);
 int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel);
+int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_frame_data *frame);
 
 #endif /* OPENTHREAD_RCP_H */

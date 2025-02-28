@@ -12,6 +12,32 @@
 
 #include "spinel.h"
 
+struct spinel_frame_data {
+	uint8_t *data;
+	size_t data_length;
+
+	bool time_enabled;
+	uint32_t time_base;
+	uint32_t time_offset;
+
+	union {
+		struct {
+			uint8_t channel;
+
+			bool header_updated;
+			bool security_processed;
+
+			bool csma_ca_enabled;
+		} tx;
+		struct {
+			int8_t rssi;
+			uint8_t lqi;
+
+			bool frame_pending;
+		} rx;
+	};
+};
+
 struct spinel_t_id {
 	uint8_t act_id;
 	uint32_t props[SPINEL_MAX_NUMB_TID];
@@ -90,6 +116,9 @@ int spinel_drv_send_channel(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t channel);
 bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, uint8_t channel);
-
+int spinel_drv_send_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, const struct spinel_frame_data *frame);
+bool spinel_drv_check_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame);
 
 #endif /* SPINEL_DRV_H */
