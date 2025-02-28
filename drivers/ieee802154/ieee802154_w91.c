@@ -188,7 +188,36 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 
 	result = openthread_rcp_transmit(&data->ot_rcp, &frame);
 	if (!result) {
-		/* TODO: handle ack from frame */
+		struct net_pkt *ack_pkt = net_pkt_rx_alloc_with_buffer(data->iface,
+			frame.data_length, AF_UNSPEC, 0, K_NO_WAIT);
+
+		do {
+			if (!ack_pkt) {
+				LOG_ERR("cant allocate ack packet");
+				result = -ENOMEM;
+				break;
+			}
+			result = net_pkt_write(ack_pkt, frame.data, frame.data_length);
+			if (result < 0) {
+				LOG_ERR("Failed to write to a packet.");
+				break;
+			}
+			if (frame.time_enabled) {
+				/* TODO: set reception timestamp */
+			}
+			net_pkt_set_ieee802154_rssi_dbm(ack_pkt, frame.rx.rssi);
+			net_pkt_set_ieee802154_lqi(ack_pkt, frame.rx.lqi);
+			net_pkt_cursor_init(ack_pkt);
+			if (ieee802154_handle_ack(data->iface, ack_pkt) != NET_OK) {
+				LOG_INF("ack packet not handled");
+				result = -ENODATA;
+				break;
+			}
+			result = 0;
+		} while (0);
+		if (ack_pkt) {
+			net_pkt_unref(ack_pkt);
+		}
 	}
 
 	return result;
