@@ -54,10 +54,20 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 
 	do {
 		if (!rx_pkt) {
+			if (data->event_handler) {
+				data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+					(void *)&((enum ieee802154_rx_fail_reason)
+						{IEEE802154_RX_FAIL_NOT_RECEIVED}));
+			}
 			LOG_ERR("cant allocate rx packet");
 			break;
 		}
 		if (net_pkt_write(rx_pkt, frame->data, frame->data_length) < 0) {
+			if (data->event_handler) {
+				data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+					(void *)&((enum ieee802154_rx_fail_reason)
+						{IEEE802154_RX_FAIL_NOT_RECEIVED}));
+			}
 			LOG_ERR("Failed to write rx packet.");
 			break;
 		}
@@ -69,6 +79,11 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 		net_pkt_set_ieee802154_ack_fpb(rx_pkt, frame->rx.frame_pending);
 		net_pkt_cursor_init(rx_pkt);
 		if (net_recv_data(data->iface, rx_pkt) < 0) {
+			if (data->event_handler) {
+				data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+					(void *)&((enum ieee802154_rx_fail_reason)
+						{IEEE802154_RX_FAIL_NOT_RECEIVED}));
+			}
 			LOG_INF("rx packet not handled");
 			break;
 		}
@@ -215,7 +230,9 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 		frame.time_enabled = true;
 		/* TODO: time calculation */
 	}
-
+	if (data->event_handler) {
+		data->event_handler(dev, IEEE802154_EVENT_TX_STARTED, NULL);
+	}
 	result = openthread_rcp_transmit(&data->ot_rcp, &frame);
 	if (!result) {
 		struct net_pkt *ack_pkt = net_pkt_rx_alloc_with_buffer(data->iface,
@@ -223,12 +240,22 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 
 		do {
 			if (!ack_pkt) {
+				if (data->event_handler) {
+					data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+						(void *)&((enum ieee802154_rx_fail_reason)
+							{IEEE802154_RX_FAIL_NOT_RECEIVED}));
+				}
 				LOG_ERR("cant allocate ack packet");
 				result = -ENOMEM;
 				break;
 			}
 			result = net_pkt_write(ack_pkt, frame.data, frame.data_length);
 			if (result < 0) {
+				if (data->event_handler) {
+					data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+						(void *)&((enum ieee802154_rx_fail_reason)
+							{IEEE802154_RX_FAIL_NOT_RECEIVED}));
+				}
 				LOG_ERR("Failed to write ack packet.");
 				break;
 			}
@@ -240,6 +267,11 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 			net_pkt_set_ieee802154_ack_fpb(ack_pkt, frame.rx.frame_pending);
 			net_pkt_cursor_init(ack_pkt);
 			if (ieee802154_handle_ack(data->iface, ack_pkt) != NET_OK) {
+				if (data->event_handler) {
+					data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+						(void *)&((enum ieee802154_rx_fail_reason)
+							{IEEE802154_RX_FAIL_NOT_RECEIVED}));
+				}
 				LOG_INF("ack packet not handled");
 				result = -ENODATA;
 				break;
@@ -248,6 +280,12 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 		} while (0);
 		if (ack_pkt) {
 			net_pkt_unref(ack_pkt);
+		}
+	} else {
+		if (data->event_handler) {
+			data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+				(void *)&((enum ieee802154_rx_fail_reason)
+					{IEEE802154_RX_FAIL_NOT_RECEIVED}));
 		}
 	}
 
@@ -279,6 +317,9 @@ static int w91_zb_stop(const struct device *dev)
 		result = openthread_rcp_receive_enable(&data->ot_rcp, false);
 		if (!result){
 			data->reception_on = false;
+			if (data->event_handler) {
+				data->event_handler(dev, IEEE802154_EVENT_RX_OFF, NULL);
+			}
 		}
 	}
 	return result;
