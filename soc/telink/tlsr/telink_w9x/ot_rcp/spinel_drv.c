@@ -1068,3 +1068,10 @@ bool spinel_drv_check_tramsmit_frame(struct spinel_drv_data *spinel_drv,
 	 */
 	return true;
 }
+
+bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame)
+{
+	/* parse received data & fill into frame */
+	return false;
+}

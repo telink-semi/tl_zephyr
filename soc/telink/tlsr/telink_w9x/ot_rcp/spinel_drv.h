@@ -120,5 +120,7 @@ int spinel_drv_send_tramsmit_frame(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, const struct spinel_frame_data *frame);
 bool spinel_drv_check_tramsmit_frame(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame);
+bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame);
 
 #endif /* SPINEL_DRV_H */

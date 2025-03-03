@@ -124,7 +124,14 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
 				ot_rcp->spinel_rx_buffer.data, ot_rcp->spinel_rx_buffer.data_size,
 				&out_data, &out_data_size)) {
 				if (ot_rcp->reception) {
-					ot_rcp->reception((uint8_t *)out_data, out_data_size, ot_rcp->ctx);
+					struct spinel_frame_data frame;
+
+					if (spinel_drv_check_receive_frame(&ot_rcp->spinel_drv,
+						out_data, out_data_size, &frame)) {
+						ot_rcp->reception(&frame, ot_rcp->ctx);
+					} else {
+						LOG_WRN("spinel rx data corrupted");
+					}
 				}
 				free(ot_rcp->spinel_rx_buffer.data);
 			} else {

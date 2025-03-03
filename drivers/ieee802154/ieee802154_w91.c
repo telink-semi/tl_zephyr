@@ -45,12 +45,38 @@ struct w91_zb_data {
 	int8_t tx_power;
 };
 
-static void w91_zb_rx(uint8_t *data, size_t data_len, const void *ctx)
+static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 {
 	const struct device *dev = (const struct device *)ctx;
+	struct w91_zb_data *data = dev->data;
+	struct net_pkt *rx_pkt = net_pkt_rx_alloc_with_buffer(data->iface,
+		frame->data_length, AF_UNSPEC, 0, K_NO_WAIT);
 
-	LOG_DBG("%s (%p)", __func__, dev);
-	LOG_HEXDUMP_DBG(data, data_len, "rx");
+	do {
+		if (!rx_pkt) {
+			LOG_ERR("cant allocate rx packet");
+			break;
+		}
+		if (net_pkt_write(rx_pkt, frame->data, frame->data_length) < 0) {
+			LOG_ERR("Failed to write rx packet.");
+			break;
+		}
+		if (frame->time_enabled) {
+			/* TODO: set reception timestamp */
+		}
+		net_pkt_set_ieee802154_rssi_dbm(rx_pkt, frame->rx.rssi);
+		net_pkt_set_ieee802154_lqi(rx_pkt, frame->rx.lqi);
+		net_pkt_set_ieee802154_ack_fpb(rx_pkt, frame->rx.frame_pending);
+		net_pkt_cursor_init(rx_pkt);
+		if (net_recv_data(data->iface, rx_pkt) < 0) {
+			LOG_INF("rx packet not handled");
+			break;
+		}
+	} while (0);
+
+	if (rx_pkt) {
+		net_pkt_unref(rx_pkt);
+	}
 }
 
 static void w91_zb_iface_init(struct net_if *iface)
@@ -203,7 +229,7 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 			}
 			result = net_pkt_write(ack_pkt, frame.data, frame.data_length);
 			if (result < 0) {
-				LOG_ERR("Failed to write to a packet.");
+				LOG_ERR("Failed to write ack packet.");
 				break;
 			}
 			if (frame.time_enabled) {
@@ -211,6 +237,7 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 			}
 			net_pkt_set_ieee802154_rssi_dbm(ack_pkt, frame.rx.rssi);
 			net_pkt_set_ieee802154_lqi(ack_pkt, frame.rx.lqi);
+			net_pkt_set_ieee802154_ack_fpb(ack_pkt, frame.rx.frame_pending);
 			net_pkt_cursor_init(ack_pkt);
 			if (ieee802154_handle_ack(data->iface, ack_pkt) != NET_OK) {
 				LOG_INF("ack packet not handled");
