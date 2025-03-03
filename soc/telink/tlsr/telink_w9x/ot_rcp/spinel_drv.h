@@ -26,7 +26,7 @@ struct spinel_frame_data {
 
 			bool header_updated;
 			bool security_processed;
-
+			bool isRet;
 			bool csma_ca_enabled;
 		} tx;
 		struct {
@@ -116,9 +116,9 @@ int spinel_drv_send_channel(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t channel);
 bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, uint8_t channel);
-int spinel_drv_send_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+int spinel_drv_send_transmit_frame(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, const struct spinel_frame_data *frame);
-bool spinel_drv_check_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame);
 bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame);

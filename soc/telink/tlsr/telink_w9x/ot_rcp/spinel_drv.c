@@ -12,7 +12,13 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(spinel_drv);
 
-#define PROP_OFFSET(t_id) ((t_id)-1)
+#define PROP_OFFSET(t_id)         ((t_id)-1)
+
+#define FRAME_TYPE_OFFSET         0
+#define FRAME_SEQ_NUMB_OFFSET     2
+
+#define FRAME_TYPE_MASK           0x07
+#define FRAME_TYPE_ACK            0x02
 
 static enum ieee802154_hw_caps spinel_drv_get_hw_caps(otRadioCaps caps)
 {
@@ -145,20 +151,31 @@ static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, 
 			break;
 		}
 
-		uint32_t t_id = SPINEL_HEADER_GET_TID(header);
+		uint8_t t_id = SPINEL_HEADER_GET_TID(header);
 
 		if (unpacked_cmd == cmd && unpacked_prop == prop) {
-			if (t_id && (prop != spinel_drv->t_id.props[PROP_OFFSET(t_id)])) {
-				ret = -EIO;
-				LOG_ERR("Unexpected Transaction ID (inst = %u)", spinel_drv->inst);
-				break;
+			if (t_id) {
+				uint32_t *p_saved_prop = &spinel_drv->t_id.props[PROP_OFFSET(t_id)];
+
+				if (!(cmd == SPINEL_CMD_PROP_VALUE_IS &&
+						prop == SPINEL_PROP_LAST_STATUS &&
+						*p_saved_prop != SPINEL_PROP_UNDEFINED) &&
+						(prop != *p_saved_prop)) {
+					ret = -EIO;
+					LOG_ERR("Unexpected Transaction ID (inst = %u)", spinel_drv->inst);
+					break;
+				}
+
+				*p_saved_prop = SPINEL_PROP_UNDEFINED;
 			}
 
-			spinel_drv->t_id.props[PROP_OFFSET(t_id)] = SPINEL_PROP_UNDEFINED;
 			ret = 0;
+			break;
 		} else if (unpacked_cmd == SPINEL_CMD_PROP_VALUE_IS &&
 				unpacked_prop == SPINEL_PROP_LAST_STATUS &&
-				prop == spinel_drv->t_id.props[PROP_OFFSET(t_id)]) {
+				t_id &&
+				prop == spinel_drv->t_id.props[PROP_OFFSET(t_id)] &&
+				prop != SPINEL_PROP_STREAM_RAW) {
 			uint32_t status;
 
 			spinel_drv->t_id.props[PROP_OFFSET(t_id)] = SPINEL_PROP_UNDEFINED;
@@ -171,18 +188,57 @@ static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, 
 				break;
 			}
 
-			LOG_ERR("Incorrect response status (inst = %u, status = %u)", spinel_drv->inst, status);
-			ret = -EIO;
-		} else {
-			// Skip this frame
-			ret = -EPERM;
+			if (status != SPINEL_STATUS_OK) {
+				LOG_ERR("Incorrect response status (inst = %u, status = %u)",
+					spinel_drv->inst, status);
+				ret = -EIO;
+				break;
+			}
 		}
+
+		// Skip this frame
+		ret = -EPERM;
 	} while(0);
 
 	if (ret < 0) {
 		*p_out_data = NULL;
 		*p_out_data_size = 0;
 	}
+
+	return ret;
+}
+
+static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame)
+{
+	int8_t noise_floor;
+	uint16_t flags;
+	uint8_t channel;
+	uint64_t timestamp;
+	uint32_t err;
+
+	frame->data_length = OT_RADIO_FRAME_MAX_SIZE;
+
+	int ret = spinel_datatype_unpack(data, data_size, true,
+		SPINEL_DATATYPE_DATA_WLEN_S SPINEL_DATATYPE_INT8_S
+		SPINEL_DATATYPE_INT8_S SPINEL_DATATYPE_UINT16_S SPINEL_DATATYPE_UINT8_S
+		SPINEL_DATATYPE_UINT8_S SPINEL_DATATYPE_UINT64_S SPINEL_DATATYPE_UINT_PACKED_S,
+		frame->data, &frame->data_length, &frame->rx.rssi,
+		&noise_floor, &flags, &channel,
+		&frame->rx.lqi, &timestamp, &err);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get radio frame (inst = %u, err = %d)", spinel_drv->inst, ret);
+		return ret;
+	}
+
+	if (err) {
+		LOG_ERR("Get incorrect error value in get_radio_frame (inst = %u, err = %d)",
+			spinel_drv->inst, err);
+		return -EIO;
+	}
+
+	frame->rx.frame_pending = flags & SPINEL_MD_FLAG_ACKED_FP;
 
 	return ret;
 }
@@ -1041,31 +1097,98 @@ bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv,
 	return true;
 }
 
-int spinel_drv_send_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+int spinel_drv_send_transmit_frame(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, const struct spinel_frame_data *frame)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Transmit(otRadioFrame &aFrame)
-	 * RxChannelAfterTxDone = Channel - always
-	 * MaxCsmaBackoffs = 4 - always (modules/lib/openthread/src/core/config/mac.h)
-	 * MaxFrameRetries = 15 - always (modules/lib/openthread/src/core/config/mac.h)
-	 * IsARetx = 0 ???
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_STREAM_RAW,
+		SPINEL_DATATYPE_DATA_WLEN_S SPINEL_DATATYPE_UINT8_S
+		SPINEL_DATATYPE_UINT8_S
+		SPINEL_DATATYPE_UINT8_S
+		SPINEL_DATATYPE_BOOL_S SPINEL_DATATYPE_BOOL_S
+		SPINEL_DATATYPE_BOOL_S SPINEL_DATATYPE_BOOL_S
+		SPINEL_DATATYPE_UINT32_S SPINEL_DATATYPE_UINT32_S SPINEL_DATATYPE_UINT8_S,
+		frame->data, frame->data_length, frame->tx.channel,
+		CONFIG_TELINK_W91_OT_SPINEL_MAC_MAX_CSMA_BACKOFFS,
+		CONFIG_TELINK_W91_OT_SPINEL_MAC_DEFAULT_MAX_FRAME_RETRIES,
+		frame->tx.csma_ca_enabled, frame->tx.header_updated,
+		frame->tx.isRet, frame->tx.security_processed,
+		frame->time_offset, frame->time_base, frame->tx.channel);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send transmit_frame (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
-bool spinel_drv_check_tramsmit_frame(struct spinel_drv_data *spinel_drv,
+bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.cpp
-	 * otError RadioSpinel::Transmit(otRadioFrame &aFrame)
-	 * see: https://www.silabs.com/documents/public/user-guides/ug235-02-using-connect-with-ieee-802-15-4.pdf
-	 * check if frame type ack
-	 * check sn if same
-	 * fill ack frame into frame
-	 */
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_LAST_STATUS,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || !param_size) {
+		LOG_ERR("Failed to check transmit_frame (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	uint32_t status;
+	bool frame_pending;
+	bool header_updated;
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_UINT_PACKED_S SPINEL_DATATYPE_BOOL_S SPINEL_DATATYPE_BOOL_S,
+		&status, &frame_pending, &header_updated);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get first parameters of transmit_frame (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+
+	if (status != SPINEL_STATUS_OK) {
+		LOG_ERR("Incorrect response status of transmit_frame (inst = %u, status = %u)",
+			spinel_drv->inst, status);
+		return false;
+	}
+
+	uint8_t tx_seq_numb = frame->data[FRAME_SEQ_NUMB_OFFSET];
+
+	param_data += ret;
+	param_size -= (uint16_t)ret;
+
+	ret = spinel_drv_get_radio_frame(spinel_drv, param_data, param_size, frame);
+
+	if (ret < 0 || !frame->data_length) {
+		LOG_ERR("Failed to get frame in transmit_frame (inst = %u, get_len/err = %d, frame size = %u)",
+			spinel_drv->inst, ret, frame->data_length);
+		return false;
+	}
+
+	uint8_t rx_frame_control_lo = frame->data[FRAME_TYPE_OFFSET];
+	uint8_t rx_seq_numb = frame->data[FRAME_SEQ_NUMB_OFFSET];
+
+	if ((rx_frame_control_lo & FRAME_TYPE_MASK) != FRAME_TYPE_ACK) {
+		LOG_ERR("Get incorrect frame type in response to send transmit_frame (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+
+	if (rx_seq_numb != tx_seq_numb) {
+		LOG_ERR("Get incorrect sequence number in response to send transmit_frame (inst = %u)",
+			spinel_drv->inst);
+		return false;
+	}
+	
 	return true;
 }
 
