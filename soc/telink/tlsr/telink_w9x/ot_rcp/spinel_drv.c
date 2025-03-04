@@ -210,7 +210,7 @@ static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, 
 }
 
 static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame)
+	const uint8_t *data, uint16_t data_size, bool copy_buff, struct spinel_frame_data *frame)
 {
 	int8_t noise_floor;
 	uint16_t flags;
@@ -220,11 +220,11 @@ static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv,
 
 	frame->data_length = OT_RADIO_FRAME_MAX_SIZE;
 
-	int ret = spinel_datatype_unpack(data, data_size, true,
+	int ret = spinel_datatype_unpack(data, data_size, copy_buff,
 		SPINEL_DATATYPE_DATA_WLEN_S SPINEL_DATATYPE_INT8_S
 		SPINEL_DATATYPE_INT8_S SPINEL_DATATYPE_UINT16_S SPINEL_DATATYPE_UINT8_S
 		SPINEL_DATATYPE_UINT8_S SPINEL_DATATYPE_UINT64_S SPINEL_DATATYPE_UINT_PACKED_S,
-		frame->data, &frame->data_length, &frame->rx.rssi,
+		copy_buff ? frame->data : (uint8_t *)&frame->data, &frame->data_length, &frame->rx.rssi,
 		&noise_floor, &flags, &channel,
 		&frame->rx.lqi, &timestamp, &err);
 
@@ -295,26 +295,6 @@ bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv,
 
 	if (status != SPINEL_STATUS_RESET_POWER_ON) {
 		LOG_ERR("Incorrect reset status (inst = %u, status = %u)", spinel_drv->inst, status);
-		return false;
-	}
-
-	return true;
-}
-
-bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
-	const uint8_t *in_data, uint16_t in_data_size,
-	const uint8_t **out_data, uint16_t *p_out_data_size)
-{
-	int ret = spinel_drv_get_cmd(spinel_drv,
-		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_STREAM_RAW,
-		in_data, in_data_size, out_data, p_out_data_size);
-
-	if (ret == -EPERM) {
-		// Skip this frame
-		return false;
-	} else if (ret < 0 || !*out_data || !*p_out_data_size) {
-		LOG_ERR("Failed to get reception data (inst = %u, err = %d, data = %p, size = %u)",
-			spinel_drv->inst, ret, out_data, *p_out_data_size);
 		return false;
 	}
 
@@ -1170,7 +1150,7 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 	param_data += ret;
 	param_size -= (uint16_t)ret;
 
-	ret = spinel_drv_get_radio_frame(spinel_drv, param_data, param_size, frame);
+	ret = spinel_drv_get_radio_frame(spinel_drv, param_data, param_size, true, frame);
 
 	if (ret < 0 || !frame->data_length) {
 		LOG_ERR("Failed to get frame in transmit_frame (inst = %u, get_len/err = %d, frame size = %u)",
@@ -1192,13 +1172,36 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 			spinel_drv->inst);
 		return false;
 	}
-	
+
 	return true;
 }
 
 bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, struct spinel_frame_data *frame)
 {
-	/* parse received data & fill into frame */
-	return false;
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_STREAM_RAW,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// Skip this frame
+		return false;
+	} else if (ret < 0 || !param_data || !param_size) {
+		LOG_ERR("Failed to check receive_frame (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_drv_get_radio_frame(spinel_drv, param_data, param_size, false, frame);
+
+	if (ret < 0 || !frame->data_length) {
+		LOG_ERR("Failed to get frame in receive_frame (inst = %u, get_len/err = %d, frame size = %u)",
+			spinel_drv->inst, ret, frame->data_length);
+		return false;
+	}
+
+	return true;
 }

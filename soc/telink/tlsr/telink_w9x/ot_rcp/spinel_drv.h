@@ -53,9 +53,6 @@ int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t type);
 bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size);
-bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
-	const uint8_t *in_data, uint16_t in_data_size,
-	const uint8_t **out_data, uint16_t *p_out_data_size);
 int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx);
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
