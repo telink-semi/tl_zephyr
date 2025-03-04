@@ -26,7 +26,7 @@ struct spinel_frame_data {
 
 			bool header_updated;
 			bool security_processed;
-			bool isRet;
+			bool is_ret;
 			bool csma_ca_enabled;
 		} tx;
 		struct {
