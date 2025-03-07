@@ -140,7 +140,8 @@ static int soc_tlx_init(void)
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
-	if (cclk == CLK_240MHZ) {
+	/* 60M SPI need to set 0.9v, only for internal flash*/
+	if (cclk == CLK_240MHZ || cclk == CLK_80MHZ) {
 		pm_set_dvdd(CORE_0P9V_SRAM_0P9V_BB_0P9V, DMA1, 1000);
 	}
 	pm_set_ret_ldo_voltage(RET_LDO_TRIM_0P65V);
@@ -176,7 +177,7 @@ static int soc_tlx_init(void)
 		break;
 
 	case CLK_80MHZ:
-		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_48M;
+		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_60M;
 		break;
 #endif
 
@@ -257,7 +258,7 @@ void soc_tlx_restore(void)
 		break;
 
 	case CLK_80MHZ:
-		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_48M;
+		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_60M;
 		break;
 #endif
 
