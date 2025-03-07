@@ -1338,7 +1338,7 @@ static int tlx_tx(const struct device *dev,
 				stimer_rf_handler, 0, 0);
 		plic_interrupt_disable(IRQ_SYSTIMER);
 		stimer_set_irq_capture(stimer_get_tick()
-				+ TLX_TX_WAIT_TIME_MS*SYSTEM_TIMER_TICK_1MS);
+				+ TLX_TX_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 		stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
 		plic_interrupt_enable(IRQ_SYSTIMER);
@@ -1360,7 +1360,7 @@ static int tlx_tx(const struct device *dev,
 		plic_interrupt_disable(IRQ_SYSTIMER);
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 		stimer_set_irq_capture(stimer_get_tick()
-				+TLX_ACK_WAIT_TIME_MS*SYSTEM_TIMER_TICK_1MS);
+				+ TLX_ACK_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
 		plic_interrupt_enable(IRQ_SYSTIMER);
 		core_entry_wfi_mode();
 		if (k_sem_take(&tlx->ack_wait, K_MSEC(0)) != 0) {
