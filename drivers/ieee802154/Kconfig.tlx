@@ -49,10 +49,10 @@ config IEEE802154_TLX_DELAY_TRX_ACC
 	  or delayed reception), in ppm.
 
 config IEEE802154_TLX_OPTIMIZATION
-	bool "optimize the rf performance for tlx"
+	bool "Optimize 802.15.4 RF performance for TLX SoCs"
 	default n
 	help
-	  optimize the rf performance for tlx.
+	  Improve RF performance in IEEE 802.15.4 communication on TLX SoCs.
 
 
 if IEEE802154_TLX_MAC_STATIC

@@ -61,11 +61,11 @@ static struct tlx_enh_ack_table enh_ack_table;
 static struct tlx_mac_keys mac_keys;
 #endif
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-__attribute__((section(".bss")))  uint8_t rxpkt_buffer[TLX_TRX_LENGTH] = {0};
-__attribute__((section(".bss")))  uint8_t txpkt_buffer[TLX_TRX_LENGTH] = {0};
+__attribute__((section(".bss"))) uint8_t rxpkt_buffer[TLX_TRX_LENGTH] = {0};
+__attribute__((section(".bss"))) uint8_t txpkt_buffer[TLX_TRX_LENGTH] = {0};
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 /* TLX data structure */
-static struct  tlx_data data = {
+static struct tlx_data data = {
 #ifdef CONFIG_OPENTHREAD_FTD
 	.src_match_table = &src_match_table,
 #endif /* CONFIG_OPENTHREAD_FTD */
@@ -73,7 +73,7 @@ static struct  tlx_data data = {
 	.enh_ack_table = &enh_ack_table,
 #endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-/* mac keys data */
+	/* mac keys data */
 	.mac_keys = &mac_keys,
 #endif
 
@@ -679,7 +679,6 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 		}
 		uint8_t *payload = (tlx->rx_buffer + TLX_PAYLOAD_OFFSET);
 
-
 		if (IS_ENABLED(CONFIG_IEEE802154_RAW_MODE) ||
 			IS_ENABLED(CONFIG_NET_L2_OPENTHREAD)) {
 			tlx_ieee802154_frame_parse(payload, length - TLX_FCS_LENGTH, &frame);
@@ -1006,7 +1005,7 @@ _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 	}
 }
-#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif
 
 /* API implementation: start */
 static int tlx_start(const struct device *dev)
@@ -1067,11 +1066,11 @@ static int tlx_stop(const struct device *dev)
 		riscv_plic_irq_disable(DT_INST_IRQN(0));
 		rf_set_tx_rx_off();
 #ifdef CONFIG_PM_DEVICE
-	/* Reset Radio */
-	rf_radio_reset();
+		/* Reset Radio */
+		rf_radio_reset();
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
-	rf_reset_dma();
-	rf_baseband_reset();
+		rf_reset_dma();
+		rf_baseband_reset();
 #endif
 		tlx_rf_zigbee_250K_mode = false;
 #endif /* CONFIG_PM_DEVICE */
@@ -1302,10 +1301,10 @@ static int tlx_tx(const struct device *dev,
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isThreadCommissioned == true) {
 		irq_connect_dynamic(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
-				stimer_rf_handler, 0, 0);
+				    stimer_rf_handler, 0, 0);
 		plic_interrupt_disable(IRQ_SYSTIMER);
-		stimer_set_irq_capture(stimer_get_tick()
-				+ TLX_TX_WAIT_TIME_MS*SYSTEM_TIMER_TICK_1MS);
+		stimer_set_irq_capture(stimer_get_tick() +
+				       TLX_ACK_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 		stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
 		plic_interrupt_enable(IRQ_SYSTIMER);
@@ -1323,23 +1322,23 @@ static int tlx_tx(const struct device *dev,
 		tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
 		tlx->ack_handler_en = true;
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-	if (isThreadCommissioned == true) {
-		plic_interrupt_disable(IRQ_SYSTIMER);
-		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
-		stimer_set_irq_capture(stimer_get_tick()
-				+TLX_ACK_WAIT_TIME_MS*SYSTEM_TIMER_TICK_1MS);
-		plic_interrupt_enable(IRQ_SYSTIMER);
-		core_entry_wfi_mode();
-		if (k_sem_take(&tlx->ack_wait, K_MSEC(0)) != 0) {
-			status = -ENOMSG;
-		}
-	} else
+		if (isThreadCommissioned == true) {
+			plic_interrupt_disable(IRQ_SYSTIMER);
+			stimer_clr_irq_status(FLD_SYSTEM_IRQ);
+			stimer_set_irq_capture(stimer_get_tick() +
+					       TLX_ACK_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
+			plic_interrupt_enable(IRQ_SYSTIMER);
+			core_entry_wfi_mode();
+			if (k_sem_take(&tlx->ack_wait, K_MSEC(0)) != 0) {
+				status = -ENOMSG;
+			}
+		} else
 #endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
-	{
-		if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
-			status = -ENOMSG;
+		{
+			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
+				status = -ENOMSG;
+			}
 		}
-	}
 		tlx->ack_handler_en = false;
 	}
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
