@@ -14,7 +14,7 @@ namespace ot {
 namespace Spinel {
 
 const struct device *const SpinelManager::k_uart_dev =
-	DEVICE_DT_GET_OR_NULL(DT_CHOSEN(zephyr_ot_uart));
+	DEVICE_DT_GET(DT_PROP(DT_CHOSEN(zephyr_ieee802154), serial));
 
 SpinelManager* SpinelManager::m_instance = nullptr;
 
