@@ -12,29 +12,31 @@
 
 #include "spinel.h"
 
-#define SPINEL_DRV_RECEPTION_DATA_HEADER_LEN         3
+struct spinel_t_id {
+	uint8_t act_id;
+	uint32_t props[SPINEL_MAX_NUMB_TID];
+};
 
 struct spinel_drv_data {
 	uint8_t inst;
-	uint8_t t_id;
+	struct spinel_t_id t_id;
 };
 
 void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst);
 int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t type);
 bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, size_t data_size);
-int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv,
-	spinel_tx_cb tx_cb, const void *ctx, uint32_t cmd, uint32_t prop, const char *fmt, ...);
+	const uint8_t *data, uint16_t data_size);
 bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, size_t data_size);
+	const uint8_t *in_data, uint16_t in_data_size,
+	const uint8_t **out_data, uint16_t *p_out_data_size);
 int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx);
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, size_t data_size, uint8_t ieee_eui64[8]);
+	const uint8_t *data, uint16_t data_size, uint8_t ieee_eui64[8]);
 int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx);
 bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, size_t data_size, enum ieee802154_hw_caps *radio_caps);
+	const uint8_t *data, uint16_t data_size, enum ieee802154_hw_caps *radio_caps);
 
 #endif /* SPINEL_DRV_H */

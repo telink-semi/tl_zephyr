@@ -116,12 +116,15 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
 		struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
 		if (ot_rcp->spinel_rx_buffer.data) {
+			const uint8_t *out_data = NULL;
+			uint16_t out_data_size = 0;
+
 			ot_rcp->spinel_rx_buffer.data_size -= HDLC_CODER_LENGTH_CRC;
 			if (spinel_drv_reception_data(&ot_rcp->spinel_drv,
-				ot_rcp->spinel_rx_buffer.data, ot_rcp->spinel_rx_buffer.data_size)) {
+				ot_rcp->spinel_rx_buffer.data, ot_rcp->spinel_rx_buffer.data_size,
+				&out_data, &out_data_size)) {
 				if (ot_rcp->reception) {
-					ot_rcp->reception(&ot_rcp->spinel_rx_buffer.data[3],
-						ot_rcp->spinel_rx_buffer.data_size - 3, ot_rcp->ctx);
+					ot_rcp->reception((uint8_t *)out_data, out_data_size, ot_rcp->ctx);
 				}
 				free(ot_rcp->spinel_rx_buffer.data);
 			} else {
