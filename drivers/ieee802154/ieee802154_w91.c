@@ -24,6 +24,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <ot_rcp/ot_rcp.h>
 
 #define W91_ZB_MAC_ADDR_MAX_LENGTH 						8
+#define W91_ZB_RADIO_CAPS_VERBOSE 						0
 
 struct w91_zb_config {
 	const struct device *uart_dev;
@@ -74,10 +75,9 @@ static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
 	if (openthread_rcp_capabilities(&data->ot_rcp, &radio_caps)) {
 		LOG_ERR("read capabilities failed");
 	}
-	radio_caps |= IEEE802154_HW_TX_RX_ACK;   /* required by Zephyr */
-
+#if W91_ZB_RADIO_CAPS_VERBOSE
 	static const char *radio_caps_str[] ={
-		"energy_scan", "fcs verification", "hw filter", "promiscuous",
+		"energy scan", "fcs verification", "hw filter", "promiscuous",
 		"tx csma-ca procedure", "tx rx ack", "tx retransmission", "rx tx ack",
 		"tx time", "tx from sleep", "rx time", "tx security", "rx on when idle"
 	};
@@ -87,7 +87,7 @@ static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
 			LOG_INF("radio supports: %s", radio_caps_str[i]);
 		}
 	}
-
+#endif /* W91_ZB_RADIO_CAPS_VERBOSE */
 	return radio_caps;
 }
 
