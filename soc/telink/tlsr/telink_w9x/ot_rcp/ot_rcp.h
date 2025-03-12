@@ -10,6 +10,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/sys/ring_buffer.h>
+#include <zephyr/net/ieee802154_radio.h>
 
 #include "hdlc_coder.h"
 #include "spinel_drv.h"
@@ -42,5 +43,7 @@ void openthread_rcp_reception_set(struct openthread_rcp_data *ot_rcp,
 int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_eui64[8]);
+int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
+	enum ieee802154_hw_caps *radio_caps);
 
 #endif /* OPENTHREAD_RCP_H */

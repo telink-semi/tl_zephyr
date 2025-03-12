@@ -56,7 +56,7 @@ static void w91_zb_iface_init(struct net_if *iface)
 	if (openthread_rcp_ieee_eui64(&data->ot_rcp, mac)) {
 		LOG_ERR("read mac failed");
 	}
-	LOG_HEXDUMP_INF(mac, sizeof(mac), "MAC");
+	LOG_HEXDUMP_INF(mac, sizeof(mac), "mac");
 	if (net_if_set_link_addr(data->iface, mac, sizeof(mac), NET_LINK_IEEE802154)) {
 		LOG_ERR("set MAC failed");
 	}
@@ -66,7 +66,25 @@ static void w91_zb_iface_init(struct net_if *iface)
 static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
-	enum ieee802154_hw_caps radio_caps = IEEE802154_HW_TX_RX_ACK;   /* required by Zephyr */
+	struct w91_zb_data *data = dev->data;
+	enum ieee802154_hw_caps radio_caps = 0;
+
+	if (openthread_rcp_capabilities(&data->ot_rcp, &radio_caps)) {
+		LOG_ERR("read capabilities failed");
+	}
+	radio_caps |= IEEE802154_HW_TX_RX_ACK;   /* required by Zephyr */
+
+	static const char *radio_caps_str[] ={
+		"energy_scan", "fcs verification", "hw filter", "promiscuous",
+		"tx csma-ca procedure", "tx rx ack", "tx retransmission", "rx tx ack",
+		"tx time", "tx from sleep", "rx time", "tx security", "rx on when idle"
+	};
+
+	for (size_t i = 0; i < ARRAY_SIZE(radio_caps_str); i++) {
+		if (radio_caps & BIT(i)) {
+			LOG_INF("radio supports: %s", radio_caps_str[i]);
+		}
+	}
 
 	return radio_caps;
 }
