@@ -63,3 +63,9 @@ int spinel_drv_send_reset(uint8_t inst, spinel_tx_cb tx_cb, const void *ctx, uin
 
 	return ret;
 }
+
+bool spinel_drv_check_reset(const void *ctx, uint8_t *data, size_t data_size)
+{
+	/* TODO: parse reset response */
+	return true;
+}
