@@ -293,3 +293,104 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 	
 	return true;
 }
+
+int spinel_drv_send_enable_src_match(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, bool enable)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError EnableSrcMatch(bool aEnable)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError EnableSrcMatch(bool aEnable)
+	 */
+	return true;
+}
+
+int spinel_drv_send_ack_fpb(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr, bool enable)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError AddSrcMatchShortEntry(uint16_t aShortAddress)
+	 * otError ClearSrcMatchShortEntry(uint16_t aShortAddress)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError AddSrcMatchShortEntry(uint16_t aShortAddress)
+	 * otError ClearSrcMatchShortEntry(uint16_t aShortAddress)
+	 */
+	return true;
+}
+
+int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8], bool enable)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError AddSrcMatchExtEntry(const otExtAddress &aExtAddress)
+	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError AddSrcMatchExtEntry(const otExtAddress &aExtAddress)
+	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
+	 */
+	return true;
+}
+
+int spinel_drv_send_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError ClearSrcMatchShortEntries(void)
+	 */
+	return 0;
+}
+bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError ClearSrcMatchShortEntries(void)
+	 */
+	return true;
+}
+int spinel_drv_send_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
+	 */
+	return 0;
+}
+bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
+	 */
+	return true;
+}

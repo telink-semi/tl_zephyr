@@ -143,7 +143,31 @@ static int w91_zb_configure(const struct device *dev, enum ieee802154_config_typ
 	const struct ieee802154_config *config)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	int result = -ENOTSUP;
+	struct w91_zb_data *data = dev->data;
+
+	switch (type) {
+	case IEEE802154_CONFIG_AUTO_ACK_FPB:
+		result = openthread_rcp_enable_src_match(&data->ot_rcp,
+			config->auto_ack_fpb.enabled);
+		break;
+	case IEEE802154_CONFIG_ACK_FPB:
+		if (config->ack_fpb.extended) {
+			result = openthread_rcp_ack_fpb_ext(&data->ot_rcp,
+				config->ack_fpb.addr, config->ack_fpb.enabled);
+		} else {
+			uint16_t addr = sys_get_le16(config->ack_fpb.addr);
+
+			result = openthread_rcp_ack_fpb(&data->ot_rcp,
+				addr, config->ack_fpb.enabled);
+		}
+		break;
+	default:
+		LOG_WRN("unhandled configuration %u", type);
+		break;
+	}
+
+	return result;
 }
 
 static int w91_zb_ed_scan(const struct device *dev, uint16_t duration,
