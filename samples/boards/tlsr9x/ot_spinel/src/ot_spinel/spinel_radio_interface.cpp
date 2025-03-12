@@ -23,14 +23,18 @@ static RadioSpinel *spinel_radio_interface = nullptr;
 static void spinel_radio_interface_rx_done(otInstance *aInstance,
 	otRadioFrame *aFrame, ot::Error aError)
 {
-	LOG_INF("%s", __func__);
+	LOG_INF("%s inst: %p, ch: %u %s", __func__, aInstance, aFrame->mChannel,
+		ot::ErrorToString(aError));
+	LOG_HEXDUMP_INF(aFrame->mPsdu, aFrame->mLength, "RX");
 }
 
 static void spinel_radio_interface_tx_done(otInstance *aInstance,
 	otRadioFrame *aFrame, otRadioFrame *aAckFrame, ot::Error aError)
 {
-	LOG_INF("%s inst: %p, ch: %u", __func__, aInstance, aFrame->mChannel);
+	LOG_INF("%s inst: %p, ch: %u %s", __func__, aInstance, aFrame->mChannel,
+		ot::ErrorToString(aError));
 	LOG_HEXDUMP_INF(aFrame->mPsdu, aFrame->mLength, "TX");
+	LOG_HEXDUMP_INF(aAckFrame->mPsdu, aAckFrame->mLength, "ACK");
 }
 
 static void spinel_radio_interface_escan_done(otInstance *aInstance,
@@ -43,7 +47,6 @@ static void spinel_radio_interface_tx_started(otInstance *aInstance,
 	otRadioFrame *aFrame)
 {
 	LOG_INF("%s inst: %p, ch: %u", __func__, aInstance, aFrame->mChannel);
-	LOG_HEXDUMP_INF(aFrame->mPsdu, aFrame->mLength, "TX");
 }
 
 static void spinel_radio_interface_sw_done(otInstance *aInstance,
