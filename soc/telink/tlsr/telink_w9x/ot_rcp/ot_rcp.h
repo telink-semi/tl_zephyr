@@ -51,5 +51,8 @@ int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[
 int openthread_rcp_ack_fpb_clear(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp,
 	uint32_t frame_counter, bool set_if_larger);
+int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id);
+int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr);
+int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8]);
 
 #endif /* OPENTHREAD_RCP_H */

@@ -339,3 +339,33 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp,
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_mac_frame_counter);
 }
+
+int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_panid(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, pan_id);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_panid);
+}
+
+int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_short_addr(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, addr);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_short_addr);
+}
+
+int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_ext_addr(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, addr);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ext_addr);
+}

@@ -548,3 +548,63 @@ bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 	/* TODO: Need to check correct responce */
 	return false;
 }
+
+int spinel_drv_send_panid(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint16_t pan_id)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetPanId(uint16_t aPanId)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_panid(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetPanId(uint16_t aPanId)
+	 */
+	return true;
+}
+
+int spinel_drv_send_short_addr(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetShortAddress(uint16_t aAddress)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetShortAddress(uint16_t aAddress)
+	 */
+	return true;
+}
+
+int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8])
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetExtendedAddress(const otExtAddress &aExtAddress)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetExtendedAddress(const otExtAddress &aExtAddress)
+	 */
+	return true;
+}
