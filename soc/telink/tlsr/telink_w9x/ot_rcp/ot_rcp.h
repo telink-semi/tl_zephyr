@@ -54,5 +54,6 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp,
 int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id);
 int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr);
 int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8]);
+int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm);
 
 #endif /* OPENTHREAD_RCP_H */
