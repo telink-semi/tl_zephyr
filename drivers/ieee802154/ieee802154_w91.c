@@ -51,10 +51,11 @@ static void w91_zb_iface_init(struct net_if *iface)
 
 	data->iface = iface;
 
-	/* get MAC address from RCP */
 	static uint8_t mac[W91_ZB_MAC_ADDR_MAX_LENGTH];
 
-	/* TODO: get IEEE EUI-64 RCP to mac */
+	if (openthread_rcp_ieee_eui64(&data->ot_rcp, mac)) {
+		LOG_ERR("read mac failed");
+	}
 	if (net_if_set_link_addr(data->iface, mac, sizeof(mac), NET_LINK_IEEE802154)) {
 		LOG_ERR("set MAC failed");
 	}

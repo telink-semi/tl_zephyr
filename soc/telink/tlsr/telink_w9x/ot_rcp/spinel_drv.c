@@ -73,14 +73,14 @@ int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv,
 }
 
 bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv,
-	uint8_t *data, size_t data_size)
+	const uint8_t *data, size_t data_size)
 {
 	/* TODO: parse reset response */
 	return true;
 }
 
 bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
-	uint8_t *data, size_t data_size)
+	const uint8_t *data, size_t data_size)
 {
 	bool result = false;
 
@@ -91,4 +91,24 @@ bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
 		}
 	}
 	return result;
+}
+
+int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx)
+{
+	int ret = 0;
+
+	/* TODO prepare request */
+
+	return ret;
+}
+
+bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, size_t data_size, uint8_t ieee_eui64[8])
+{
+	/* TODO: parse reset response, now dummy data */
+	for (size_t i = 0; i < 8; i++) {
+		ieee_eui64[i] = i;
+	}
+	return true;
 }
