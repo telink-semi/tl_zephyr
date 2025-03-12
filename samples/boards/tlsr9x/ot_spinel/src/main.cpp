@@ -5,12 +5,13 @@
  */
 
 // #define TEST_INTERFACE
+// #define TEST_RCP_EXCHANGE
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_main, LOG_LEVEL_INF);
 
-#ifdef TEST_INTERFACE
+#if defined(TEST_INTERFACE)
 
 #include <spinel_manager.hpp>
 using namespace ot::Spinel;
@@ -67,7 +68,7 @@ int main(void)
 	return 0;
 }
 
-#else
+#elif defined(TEST_RCP_EXCHANGE)
 
 #include <spinel_radio_interface.h>
 
@@ -194,4 +195,12 @@ int main(void)
 	return 0;
 }
 
-#endif // TEST_INTERFACE
+#else
+
+int main(void)
+{
+	LOG_INF("main started");
+	return 0;
+}
+
+#endif // app type

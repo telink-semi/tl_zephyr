@@ -9,19 +9,19 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
-
-typedef void (*openthread_rcp_ack)(uint8_t *data, size_t data_len, const void *ctx);
-typedef void (*openthread_rcp_rx)(uint8_t *data, size_t data_len, const void *ctx);
+#include <zephyr/sys/ring_buffer.h>
 
 struct openthread_rcp_data {
 	const struct device *uart;
-	struct k_sem response_sem;
-	openthread_rcp_ack ack;
-	openthread_rcp_rx rx;
 	const void *ctx;
+	struct k_work work;
+	struct ring_buf rb;
+	uint8_t rb_data[CONFIG_TELINK_W91_OT_RCP_RX_BUFFER_SIZE];
 };
 
-int openthread_rcp_init(struct openthread_rcp_data *ot_rcp);
+int openthread_rcp_init(struct openthread_rcp_data *ot_rcp,
+	const struct device *uart, const void *ctx);
+
 int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp);
 
