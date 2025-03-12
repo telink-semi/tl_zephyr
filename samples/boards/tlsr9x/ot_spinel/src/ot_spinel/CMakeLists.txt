@@ -7,6 +7,7 @@ zephyr_library_named("${OT_SPINEL_LIB}")
 
 zephyr_library_sources(
 	hdlc_interface.cpp
+	spinel_manager.cpp
 )
 
 target_include_directories("${OT_SPINEL_LIB}" PUBLIC
@@ -21,4 +22,6 @@ zephyr_include_directories(
 zephyr_link_libraries(
 	"${OT_SPINEL_LIB}"
 	openthread-hdlc
+	openthread-radio-spinel
+	openthread-spinel-rcp
 )
