@@ -204,6 +204,17 @@ otError spinel_radio_interface_set_pan_id(uint16_t pan_id)
 }
 
 extern "C"
+uint32_t spinel_radio_interface_get_radio_channel_mask(bool preffered)
+{
+	uint32_t result = 0;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->GetRadioChannelMask(preffered);
+	}
+	return result;
+}
+
+extern "C"
 otError spinel_radio_interface_energy_scan(uint8_t channel, uint16_t duration_us)
 {
 	otError result = OT_ERROR_FAILED;

@@ -223,18 +223,24 @@ int main(void)
 		LOG_INF("set extended address done");
 	}
 
-	err = spinel_radio_interface_receive(16);
+	err = spinel_radio_interface_receive(18);
 	if (err != OT_ERROR_NONE) {
 		LOG_ERR("receive failed: %s", otThreadErrorToString(err));
 	} else {
 		LOG_INF("receive done");
 	}
+	/* Test RCP reboot */
+	LOG_INF("receive loop +");
+	for (;;) {
+		k_msleep(10);
+	}
+	LOG_INF("receive loop -");
 
 	uint8_t data[] = {0x02, 0x00, 0x0a};
 	otRadioFrame frame = {
 		.mPsdu = data,
 		.mLength = sizeof(data),
-		.mChannel = 16,
+		.mChannel = 18,
 		.mInfo = {
 			.mTxInfo = {
 				.mAesKey = nullptr,
