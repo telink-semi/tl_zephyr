@@ -8,6 +8,9 @@
 #include "spinel_manager.hpp"
 #include <lib/spinel/radio_spinel.hpp>
 
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(SpinelRadio, LOG_LEVEL_INF); // TODO: use level from config?
+
 using namespace ot::Spinel;
 
 static RadioSpinel *spinel_radio_interface = nullptr;
@@ -18,7 +21,7 @@ void spinel_radio_interface_init(void)
 	if (!spinel_radio_interface) {
 		spinel_radio_interface = new RadioSpinel;
 		if (spinel_radio_interface) {
-			spinel_radio_interface->Init(true, false,
+			spinel_radio_interface->Init(false, true,
 				&SpinelManager::GetInstance()->GetSpinelDriver());
 		}
 	}
@@ -28,8 +31,10 @@ extern "C"
 void spinel_radio_interface_deinit(void)
 {
 	if (spinel_radio_interface) {
-		delete spinel_radio_interface;
+		spinel_radio_interface->Deinit();
 		SpinelManager::DestroyInstance();
+		delete spinel_radio_interface;
+		spinel_radio_interface = nullptr;
 	}
 }
 

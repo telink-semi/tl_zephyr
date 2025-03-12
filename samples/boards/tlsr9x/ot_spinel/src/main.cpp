@@ -70,6 +70,39 @@ int main(void)
 
 #include <spinel_radio_interface.h>
 
+static void radio_caps_show(otRadioCaps radio_caps)
+{
+	LOG_INF("radio capabilities:");
+	if (radio_caps & OT_RADIO_CAPS_ACK_TIMEOUT) {
+		LOG_INF("ACK time event");
+	}
+	if (radio_caps & OT_RADIO_CAPS_ENERGY_SCAN) {
+		LOG_INF("energy scans");
+	}
+	if (radio_caps & OT_RADIO_CAPS_TRANSMIT_RETRIES) {
+		LOG_INF("TX retry logic with collision avoidance (CSMA)");
+	}
+	if (radio_caps & OT_RADIO_CAPS_CSMA_BACKOFF) {
+		LOG_INF("CSMA backoff for frame transmission (but no retry)");
+	}
+	if (radio_caps & OT_RADIO_CAPS_SLEEP_TO_TX) {
+		LOG_INF("direct transition from sleep to TX with CSMA");
+	}
+	if (radio_caps & OT_RADIO_CAPS_TRANSMIT_SEC) {
+		LOG_INF("TX security");
+	}
+	if (radio_caps & OT_RADIO_CAPS_TRANSMIT_TIMING) {
+		LOG_INF("TX at specific time");
+	}
+	if (radio_caps & OT_RADIO_CAPS_RECEIVE_TIMING) {
+		LOG_INF("RX at specific time");
+	}
+	if (radio_caps & OT_RADIO_CAPS_RX_ON_WHEN_IDLE) {
+		LOG_INF("RX on when idle handling");
+	}
+	LOG_INF("radio capabilities end.");
+}
+
 int main(void)
 {
 	LOG_INF("main started");
@@ -77,6 +110,8 @@ int main(void)
 	LOG_INF("spinel radio inited");
 	LOG_INF("RCP bus speed: %u bps", spinel_radio_interface_get_bus_speed());
 	LOG_INF("RCP version: %s", spinel_radio_interface_get_version());
+	radio_caps_show(spinel_radio_interface_get_radio_caps());
+
 	spinel_radio_interface_deinit();
 	LOG_INF("main finished");
 	return 0;
