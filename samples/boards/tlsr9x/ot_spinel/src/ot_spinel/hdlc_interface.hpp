@@ -41,7 +41,7 @@ private:
 
 	bool                            m_uart_open;
 	const struct device *const      m_uart_dev;
-	struct k_msgq                  *m_msgq;
+	struct k_msgq                   m_msgq;
 	Hdlc::Decoder                   m_hdlc_decoder;
 	ReceiveFrameCallback            m_receive_frame_callback;
 	void                           *m_receive_frame_context;
