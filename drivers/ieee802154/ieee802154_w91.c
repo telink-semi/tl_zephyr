@@ -315,7 +315,8 @@ static int w91_zb_ed_scan(const struct device *dev, uint16_t duration,
 static net_time_t w91_zb_get_time(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	/* TODO: increase resolution or drop this api */
+	return k_ticks_to_us_floor64(k_uptime_ticks());
 }
 
 static uint8_t w91_zb_get_sch_acc(const struct device *dev)
