@@ -26,4 +26,5 @@ zephyr_link_libraries(
 	openthread-hdlc
 	openthread-radio-spinel
 	openthread-spinel-rcp
+	openthread-platform
 )

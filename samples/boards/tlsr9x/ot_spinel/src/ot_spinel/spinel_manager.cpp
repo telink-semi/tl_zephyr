@@ -25,6 +25,14 @@ SpinelManager::SpinelManager() : m_spinel_interface(nullptr), m_spinel_driver()
 		LOG_ERR("Can't create interface");
 	} else {
 		LOG_INF("Spinel interface created");
+		spinel_iid_t spinel_iid = 0;
+
+		CoprocessorType type = m_spinel_driver.Init(*m_spinel_interface,
+			false, &spinel_iid, sizeof(spinel_iid));
+		static const char *coprocessor_type_str[] = {"UNKNOWN", "RCP", "NCP"};
+
+		LOG_INF("Coprocessor type: (%u) %s", type, coprocessor_type_str[
+			type < ARRAY_SIZE(coprocessor_type_str) ? type : 0]);
 	}
 }
 
