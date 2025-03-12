@@ -64,10 +64,13 @@ void HdlcInterface::handle_hdlc_frame(void *aContext, otError aError)
 
 	interface->m_rcp_interface_metrics.mTransferredFrameCount++;
 	if (aError == OT_ERROR_NONE) {
+		uint8_t *data = interface->m_receive_frame_buffer->GetFrame();
+		uint16_t data_length = interface->m_receive_frame_buffer->GetLength();
+
 		interface->m_rcp_interface_metrics.mRxFrameCount++;
-		interface->m_rcp_interface_metrics.mRxFrameByteCount +=
-			interface->m_receive_frame_buffer->GetLength();
+		interface->m_rcp_interface_metrics.mRxFrameByteCount += data_length;
 		interface->m_rcp_interface_metrics.mTransferredValidFrameCount++;
+		LOG_HEXDUMP_INF(data, data_length, "<--");
 		interface->m_receive_frame_callback(interface->m_receive_frame_context);
 	} else {
 		interface->m_rcp_interface_metrics.mTransferredGarbageFrameCount++;
@@ -166,6 +169,7 @@ otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 		for(uint16_t i = 0; i < data_length; i++) {
 			uart_poll_out(m_uart_dev, data[i]);
 		}
+		LOG_HEXDUMP_INF(data, data_length, "-->");
 		if (IsSpinelResetCommand(aFrame, aLength)) {
 			k_msgq_purge(&m_msgq);
 			m_hdlc_decoder.Reset();

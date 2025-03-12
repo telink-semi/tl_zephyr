@@ -6,6 +6,7 @@
 
 // #define TEST_INTERFACE
 
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_main, LOG_LEVEL_INF);
 
@@ -201,7 +202,7 @@ int main(void)
 		LOG_INF("receive done");
 	}
 
-	uint8_t data[] = {0,1,2,3,4};
+	uint8_t data[] = {0x02, 0x00, 0x0a};
 	otRadioFrame frame = {
 		.mPsdu = data,
 		.mLength = sizeof(data),
@@ -213,6 +214,14 @@ int main(void)
 		LOG_ERR("transmit failed: %s", otThreadErrorToString(err));
 	} else {
 		LOG_INF("transmit done");
+	}
+
+	if (spinel_radio_interface_is_transmitting())
+	{
+		while (!spinel_radio_interface_is_transmit_done()) {
+			spinel_radio_interface_process();
+			k_msleep(5);
+		}
 	}
 
 	spinel_radio_interface_deinit();
