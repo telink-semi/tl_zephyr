@@ -166,6 +166,11 @@ otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 			LOG_ERR("OT Spinel can't finish encode");
 			break;
 		}
+		if (IsSpinelResetCommand(aFrame, aLength)) {
+			k_msgq_purge(&m_msgq);
+			m_hdlc_decoder.Reset();
+			LOG_INF("spinel reset");
+		}
 		uint8_t *data = tx_buf->GetFrame();
 		uint16_t data_length = tx_buf->GetLength();
 
@@ -173,10 +178,6 @@ otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 			uart_poll_out(m_uart_dev, data[i]);
 		}
 		LOG_HEXDUMP_INF(data, data_length, "-->");
-		if (IsSpinelResetCommand(aFrame, aLength)) {
-			k_msgq_purge(&m_msgq);
-			m_hdlc_decoder.Reset();
-		}
 	} while (0);
 
 	if (tx_buf) {

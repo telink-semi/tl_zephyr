@@ -394,14 +394,35 @@ bool spinel_radio_interface_is_transmit_done(void)
 	return result;
 }
 
+extern "C"
+otError spinel_radio_interface_clear_src_match_short_entries(void)
+{
+	otError result = OT_ERROR_FAILED;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->ClearSrcMatchShortEntries();
+	}
+	return result;
+}
+
+extern "C"
+otError spinel_radio_interface_clear_src_match_ext_entries(void)
+{
+	otError result = OT_ERROR_FAILED;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->ClearSrcMatchExtEntries();
+	}
+	return result;
+}
+
 static void spinel_radio_thread(void)
 {
 	LOG_INF("spinel_radio_thread start");
 	for(;;) {
-
 		if (spinel_radio_interface) {
 			spinel_radio_interface->Process(nullptr);
+			SpinelManager::GetInstance()->GetSpinelDriver().Process(nullptr);
 		}
-		SpinelManager::GetInstance()->GetSpinelDriver().Process(nullptr);
 	}
 }

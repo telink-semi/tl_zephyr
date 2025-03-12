@@ -73,41 +73,25 @@ int main(void)
 
 static void radio_caps_show(otRadioCaps radio_caps)
 {
-	LOG_INF("radio capabilities:");
-	if (radio_caps & OT_RADIO_CAPS_ACK_TIMEOUT) {
-		LOG_INF("ACK time event");
+	static const char *const radio_caps_str[] = {
+		"ack-timeout", "energy-scan", "tx-retries", "CSMA-backoff",
+		"sleep-to-tx", "tx-security", "tx-timing", "rx-timing",
+		"rx-on-when-idle", "tx-frame-power"
+	};
+
+	LOG_INF("rcp capabilities:");
+	for (size_t i = 0; i < ARRAY_SIZE(radio_caps_str); i++) {
+		if (radio_caps & (1 << i)) {
+			LOG_INF("%s", radio_caps_str[i]);
+		}
 	}
-	if (radio_caps & OT_RADIO_CAPS_ENERGY_SCAN) {
-		LOG_INF("energy scans");
-	}
-	if (radio_caps & OT_RADIO_CAPS_TRANSMIT_RETRIES) {
-		LOG_INF("TX retry logic with collision avoidance (CSMA)");
-	}
-	if (radio_caps & OT_RADIO_CAPS_CSMA_BACKOFF) {
-		LOG_INF("CSMA backoff for frame transmission (but no retry)");
-	}
-	if (radio_caps & OT_RADIO_CAPS_SLEEP_TO_TX) {
-		LOG_INF("direct transition from sleep to TX with CSMA");
-	}
-	if (radio_caps & OT_RADIO_CAPS_TRANSMIT_SEC) {
-		LOG_INF("TX security");
-	}
-	if (radio_caps & OT_RADIO_CAPS_TRANSMIT_TIMING) {
-		LOG_INF("TX at specific time");
-	}
-	if (radio_caps & OT_RADIO_CAPS_RECEIVE_TIMING) {
-		LOG_INF("RX at specific time");
-	}
-	if (radio_caps & OT_RADIO_CAPS_RX_ON_WHEN_IDLE) {
-		LOG_INF("RX on when idle handling");
-	}
-	LOG_INF("radio capabilities end.");
+	LOG_INF("rcp capabilities end");
 }
 
 static const char *radio_state_string(otRadioState state)
 {
-	static const char *radio_state_str[] = {
-		"DISABLED", "SLEEP", "RECEIVE", "TRANSMIT", "INVALID" };
+	static const char *const radio_state_str[] = {
+		"disabled", "sleep", "receive", "transmit", "invalid" };
 
 	if (state <= OT_RADIO_STATE_TRANSMIT) {
 		return radio_state_str[state];
@@ -134,155 +118,46 @@ int main(void)
 		LOG_ERR("read IEEE EUI-64 failed");
 	}
 
-	LOG_INF("radio channel: %u", spinel_radio_interface_get_channel());
+	LOG_INF("enable %s", otThreadErrorToString(spinel_radio_interface_enable(nullptr)));
+	LOG_INF("sleep %s", otThreadErrorToString(spinel_radio_interface_sleep()));
 
-	otError err = spinel_radio_interface_energy_scan(16, 10000);
+	LOG_INF("clear src match short entries %s",
+		otThreadErrorToString(spinel_radio_interface_clear_src_match_short_entries()));
+	LOG_INF("clear src match ext entries %s",
+		otThreadErrorToString(spinel_radio_interface_clear_src_match_ext_entries()));
 
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("energy scan failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("energy scan done");
-	}
+	LOG_INF("set short address %s",
+		otThreadErrorToString(spinel_radio_interface_set_short_address(0xfffe)));
 
-	err = spinel_radio_interface_set_cca_energy_detect_threshold(-60);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set cca energy detect threshold failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set cca energy detect threshold done");
-	}
+	const otExtAddress ext_addr = {
+		.m8 = (uint8_t []){0x6e, 0x65, 0xef, 0x8e, 0xf5, 0x2d, 0x27, 0x8a}
+	};
 
-	LOG_INF("RSSI: %u", spinel_radio_interface_get_rssi());
+	LOG_INF("set ext address %s",
+		otThreadErrorToString(spinel_radio_interface_set_extended_address(&ext_addr)));
+	LOG_INF("set pan id %s",
+		otThreadErrorToString(spinel_radio_interface_set_pan_id(0x1418)));
 
-	LOG_INF("radio is %s", spinel_radio_interface_radio_is_enabled() ? "enabled" : "disabled");
-
+	LOG_INF("receive %s", otThreadErrorToString(spinel_radio_interface_receive(18)));
 #if 0
-	err = spinel_radio_interface_disable();
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("disable failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("disable done");
+	for (;;) {
+		k_msleep(1000);
+		LOG_INF("rx");
 	}
 #endif
-
-	err = spinel_radio_interface_set_ch_max_transmit_power(16, 4);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set channel max transmit power: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set channel max transmit power done");
-	}
-
-	err = spinel_radio_interface_set_transmit_power(2);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set transmit power: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set transmit power done");
-	}
-
-	int8_t power;
-	err = spinel_radio_interface_get_transmit_power(&power);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("get transmit power: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("get transmit power done %d", power);
-	}
-
-	err = spinel_radio_interface_enable(nullptr);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("enable failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("enable done");
-	}
-
-	LOG_INF("radio is %s", spinel_radio_interface_radio_is_enabled() ? "enabled" : "disabled");
-
-	err = spinel_radio_interface_set_pan_id(0x1418);
-
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set panid failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set panid done");
-	}
-
-	err = spinel_radio_interface_set_short_address(0x5555);
-
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set short address failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set short address done");
-	}
-
-	otExtAddress ext_addr = {
-		.m8 = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+	uint8_t frame_data[] = {
+		0x41, 0xd8, 0x6d, 0x18, 0x14, 0xff, 0xff, 0xd6,
+		0x82, 0x7b, 0x1b, 0xba, 0x23, 0x43, 0x22, 0x7f,
+		0x3b, 0x02, 0xf0, 0x4d, 0x4c, 0x4d, 0x4c, 0xa0,
+		0x63, 0x00, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x01, 0xc9, 0xd1, 0x22, 0x70,
+		0xfc, 0xad, 0xe9, 0xe2, 0xb6, 0x35, 0x60, 0x98,
+		0xa5, 0x79, 0x8f, 0xa7, 0xe8, 0xe3, 0x97, 0x31,
+		0x14, 0xce, 0x2b, 0x3d, 0xd2, 0x00, 0x00
 	};
-
-	err = spinel_radio_interface_set_extended_address(&ext_addr);
-
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set extended address failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set extended address done");
-	}
-
-	err = spinel_radio_interface_set_mac_frame_counter(0, false);
-
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set mac frame counter failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set mac frame counter done");
-	}
-
-	otMacKeyMaterial prev_key = {
-		.mKeyMaterial = {
-			.mKey = {
-				.m8 = (uint8_t []) {0x3b, 0x0a, 0x35, 0x2b, 0x12, 0x93, 0x01, 0x21,
-									0xc5, 0x04, 0x3f, 0x35, 0xcc, 0xe5, 0xb5, 0xb0}
-			}
-		}
-	};
-
-	otMacKeyMaterial curr_key = {
-		.mKeyMaterial = {
-			.mKey = {
-				.m8 = (uint8_t []) {0xca, 0x5b, 0x13, 0x07, 0x4a, 0x97, 0xb0, 0x8c,
-									0x65, 0x6a, 0xd9, 0x82, 0x4d, 0x3d, 0x4d, 0xb4}
-			}
-		}
-	};
-
-	otMacKeyMaterial next_key = {
-		.mKeyMaterial = {
-			.mKey = {
-				.m8 = (uint8_t []) {0x2e, 0x07, 0xef, 0xc4, 0xa7, 0x19, 0x20, 0x31,
-									0xc4, 0xdf, 0x1d, 0xf8, 0xa2, 0x72, 0xa7, 0x97}
-			}
-		}
-	};
-
-	err = spinel_radio_interface_set_mac_key(8, 1, &prev_key, &curr_key, &next_key);
-
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("set mac key failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("set mac key done");
-	}
-
-	err = spinel_radio_interface_receive(18);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("receive failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("receive done");
-	}
-	/* Test RCP reboot */
-	LOG_INF("receive loop +");
-	for (;;) {
-		k_msleep(10);
-	}
-	LOG_INF("receive loop -");
-
-	uint8_t data[] = {0x02, 0x00, 0x0a};
 	otRadioFrame frame = {
-		.mPsdu = data,
-		.mLength = sizeof(data),
+		.mPsdu = frame_data,
+		.mLength = sizeof(frame_data),
 		.mChannel = 18,
 		.mInfo = {
 			.mTxInfo = {
@@ -290,33 +165,29 @@ int main(void)
 				.mIeInfo = nullptr,
 				.mTxDelayBaseTime = 0,
 				.mTxDelay = 0,
-				.mMaxCsmaBackoffs = 1,
-				.mMaxFrameRetries = 1,
-				.mRxChannelAfterTxDone = 16,
-				.mIsHeaderUpdated = true,
+				.mMaxCsmaBackoffs = 4,
+				.mMaxFrameRetries = 15,
+				.mRxChannelAfterTxDone = 18,
+				.mIsHeaderUpdated = false,
 				.mIsARetx = false,
-				.mCsmaCaEnabled = false,
+				.mCsmaCaEnabled = true,
 				.mCslPresent = false,
-				.mIsSecurityProcessed = true,
-			},
-		},
+				.mIsSecurityProcessed = false
+			}
+		}
 	};
 
-	err = spinel_radio_interface_transmit(&frame);
-	if (err != OT_ERROR_NONE) {
-		LOG_ERR("transmit failed: %s", otThreadErrorToString(err));
-	} else {
-		LOG_INF("transmit started");
+	LOG_INF("transmit %s",
+		otThreadErrorToString(spinel_radio_interface_transmit(&frame)));
+
+	while(spinel_radio_interface_is_transmitting()) {
+		k_msleep(10);
 	}
 
-	if (spinel_radio_interface_is_transmitting())
-	{
-		while (!spinel_radio_interface_is_transmit_done()) {
-			k_msleep(5);
-		}
-	}
+	LOG_INF("frame transmitted");
 
 	spinel_radio_interface_deinit();
+
 	LOG_INF("main finished");
 	return 0;
 }
