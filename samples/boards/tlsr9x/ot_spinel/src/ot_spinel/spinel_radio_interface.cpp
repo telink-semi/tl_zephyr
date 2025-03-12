@@ -215,6 +215,32 @@ uint32_t spinel_radio_interface_get_radio_channel_mask(bool preffered)
 }
 
 extern "C"
+otError spinel_radio_interface_set_mac_frame_counter(uint32_t counter, bool set_if_larger)
+{
+	otError result = OT_ERROR_FAILED;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->SetMacFrameCounter(counter, set_if_larger);
+	}
+	return result;
+}
+
+extern "C"
+otError spinel_radio_interface_set_mac_key(uint8_t key_id_mode, uint8_t key_id,
+	const otMacKeyMaterial *prev_key,
+	const otMacKeyMaterial *curr_key,
+	const otMacKeyMaterial *next_key)
+{
+	otError result = OT_ERROR_FAILED;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->SetMacKey(key_id_mode, key_id,
+			prev_key, curr_key, next_key);
+	}
+	return result;
+}
+
+extern "C"
 otError spinel_radio_interface_energy_scan(uint8_t channel, uint16_t duration_us)
 {
 	otError result = OT_ERROR_FAILED;

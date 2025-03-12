@@ -223,6 +223,49 @@ int main(void)
 		LOG_INF("set extended address done");
 	}
 
+	err = spinel_radio_interface_set_mac_frame_counter(0, false);
+
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set mac frame counter failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set mac frame counter done");
+	}
+
+	otMacKeyMaterial prev_key = {
+		.mKeyMaterial = {
+			.mKey = {
+				.m8 = (uint8_t []) {0x3b, 0x0a, 0x35, 0x2b, 0x12, 0x93, 0x01, 0x21,
+									0xc5, 0x04, 0x3f, 0x35, 0xcc, 0xe5, 0xb5, 0xb0}
+			}
+		}
+	};
+
+	otMacKeyMaterial curr_key = {
+		.mKeyMaterial = {
+			.mKey = {
+				.m8 = (uint8_t []) {0xca, 0x5b, 0x13, 0x07, 0x4a, 0x97, 0xb0, 0x8c,
+									0x65, 0x6a, 0xd9, 0x82, 0x4d, 0x3d, 0x4d, 0xb4}
+			}
+		}
+	};
+
+	otMacKeyMaterial next_key = {
+		.mKeyMaterial = {
+			.mKey = {
+				.m8 = (uint8_t []) {0x2e, 0x07, 0xef, 0xc4, 0xa7, 0x19, 0x20, 0x31,
+									0xc4, 0xdf, 0x1d, 0xf8, 0xa2, 0x72, 0xa7, 0x97}
+			}
+		}
+	};
+
+	err = spinel_radio_interface_set_mac_key(8, 1, &prev_key, &curr_key, &next_key);
+
+	if (err != OT_ERROR_NONE) {
+		LOG_ERR("set mac key failed: %s", otThreadErrorToString(err));
+	} else {
+		LOG_INF("set mac key done");
+	}
+
 	err = spinel_radio_interface_receive(18);
 	if (err != OT_ERROR_NONE) {
 		LOG_ERR("receive failed: %s", otThreadErrorToString(err));
