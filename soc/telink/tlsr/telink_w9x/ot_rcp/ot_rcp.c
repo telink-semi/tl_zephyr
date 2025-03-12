@@ -379,3 +379,23 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 
 	OPENTHREAD_RCP_HELPER(spinel_drv_check_tx_power, pwr_dbm);
 }
+
+int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_rcp_enable(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, enable);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_rcp_enable, enable);
+}
+
+int openthread_rcp_receive_on(struct openthread_rcp_data *ot_rcp, uint8_t channel)
+{
+	LOG_INF("%s", __func__);
+
+	int result = spinel_drv_send_receive_on(&ot_rcp->spinel_drv,
+		openthread_rcp_spinel_transmission, ot_rcp, channel);
+
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_receive_on, channel);
+}
