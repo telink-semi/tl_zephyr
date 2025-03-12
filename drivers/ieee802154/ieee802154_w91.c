@@ -28,6 +28,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define W91_ZB_MAC_ADDR_MAX_LENGTH                      8
 #define W91_ZB_RADIO_CAPS_VERBOSE                       0
 
+IEEE802154_DEFINE_PHY_SUPPORTED_CHANNELS(w91_zb_drv_attr, 11, 26);
+
 struct w91_zb_config {
 	const struct device *uart_dev;
 	const char *uart_pins_str;
@@ -329,7 +331,11 @@ static int w91_zb_attr_get(const struct device *dev, enum ieee802154_attr attr,
 	struct ieee802154_attr_value *value)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	ARG_UNUSED(dev);
+
+	return ieee802154_attr_get_channel_page_and_range(attr,
+		IEEE802154_ATTR_PHY_CHANNEL_PAGE_ZERO_OQPSK_2450_BPSK_868_915,
+		&w91_zb_drv_attr.phy_supported_channels, value);
 }
 
 static int w91_zb_init(const struct device *dev)
