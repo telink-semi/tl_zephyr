@@ -222,6 +222,7 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 		.data_length = frag->len,
 		.tx.header_updated = net_pkt_ieee802154_mac_hdr_rdy(pkt),
 		.tx.security_processed = net_pkt_ieee802154_frame_secured(pkt),
+		.tx.isRet = false,
 		.tx.channel = data->channel,
 		.tx.csma_ca_enabled = (mode == IEEE802154_TX_MODE_CSMA_CA)
 	};
