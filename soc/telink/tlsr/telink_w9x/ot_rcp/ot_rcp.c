@@ -276,7 +276,7 @@ int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool ena
 	int result = spinel_drv_send_enable_src_match(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, enable);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_enable_src_match);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_enable_src_match, enable);
 }
 
 int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bool enable)
@@ -286,7 +286,7 @@ int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bo
 	int result = spinel_drv_send_ack_fpb(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, addr, enable);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb, addr, enable);
 }
 
 int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[8], bool enable)
@@ -296,7 +296,7 @@ int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[
 	int result = spinel_drv_send_ack_fpb_ext(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, addr, enable);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb_ext);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_ack_fpb_ext, addr, enable);
 }
 
 static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp)
@@ -337,7 +337,7 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp,
 	int result = spinel_drv_send_mac_frame_counter(&ot_rcp->spinel_drv,
 		openthread_rcp_spinel_transmission, ot_rcp, frame_counter, set_if_larger);
 
-	OPENTHREAD_RCP_HELPER(spinel_drv_check_mac_frame_counter);
+	OPENTHREAD_RCP_HELPER(spinel_drv_check_mac_frame_counter, frame_counter);
 }
 
 int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)

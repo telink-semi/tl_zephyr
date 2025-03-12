@@ -41,15 +41,15 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 int spinel_drv_send_enable_src_match(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, bool enable);
 bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, bool enable);
 int spinel_drv_send_ack_fpb(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr, bool enable);
 bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, uint16_t addr, bool enable);
 int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8], bool enable);
 bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, uint8_t addr[8], bool enable);
 int spinel_drv_send_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx);
 bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
@@ -61,7 +61,7 @@ bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
 int spinel_drv_send_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint32_t frame_counter, bool set_if_larger);
 bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
-	const uint8_t *data, uint16_t data_size);
+	const uint8_t *data, uint16_t data_size, uint32_t frame_counter);
 int spinel_drv_send_panid(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t pan_id);
 bool spinel_drv_check_panid(struct spinel_drv_data *spinel_drv,
