@@ -23,16 +23,6 @@ SpinelManager::SpinelManager() : m_spinel_interface(nullptr), m_spinel_driver()
 	m_spinel_interface = new HdlcInterface(k_uart_dev);
 	if (!m_spinel_interface) {
 		LOG_ERR("Can't create interface");
-	} else {
-		LOG_INF("Spinel interface created");
-		spinel_iid_t spinel_iid = 0;
-
-		CoprocessorType type = m_spinel_driver.Init(*m_spinel_interface,
-			false, &spinel_iid, sizeof(spinel_iid));
-		static const char *coprocessor_type_str[] = {"UNKNOWN", "RCP", "NCP"};
-
-		LOG_INF("Coprocessor type: (%u) %s", type, coprocessor_type_str[
-			type < ARRAY_SIZE(coprocessor_type_str) ? type : 0]);
 	}
 }
 
@@ -59,6 +49,23 @@ void SpinelManager::DestroyInstance(void)
 	if(m_instance) {
 		delete m_instance;
 		m_instance = nullptr;
+	}
+}
+
+void SpinelManager::BindInterfaceToDriver(void)
+{
+	if (m_spinel_interface) {
+		LOG_INF("Spinel interface created");
+		spinel_iid_t spinel_iid = 0;
+
+		CoprocessorType type = m_spinel_driver.Init(*m_spinel_interface,
+			false, &spinel_iid, sizeof(spinel_iid));
+		static const char *coprocessor_type_str[] = {"UNKNOWN", "RCP", "NCP"};
+
+		LOG_INF("Coprocessor type: (%u) %s", type, coprocessor_type_str[
+			type < ARRAY_SIZE(coprocessor_type_str) ? type : 0]);
+	} else {
+		LOG_ERR("No spinel interface");
 	}
 }
 

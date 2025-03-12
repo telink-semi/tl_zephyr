@@ -19,12 +19,14 @@ HdlcInterface::HdlcInterface(const struct device *const uart_dev) :
 	m_uart_open(false),
 	m_uart_dev(uart_dev),
 	m_msgq(),
+	m_receive_sem(),
 	m_hdlc_decoder(),
 	m_receive_frame_callback(nullptr),
 	m_receive_frame_context(nullptr),
 	m_receive_frame_buffer(nullptr),
 	m_rcp_interface_metrics()
 {
+	(void) k_sem_init(&m_receive_sem, 0, 1);
 	memset(&m_rcp_interface_metrics, 0, sizeof(m_rcp_interface_metrics));
 	m_rcp_interface_metrics.mRcpInterfaceType = kSpinelInterfaceTypeHdlc;
 }
@@ -72,6 +74,7 @@ void HdlcInterface::handle_hdlc_frame(void *aContext, otError aError)
 		interface->m_rcp_interface_metrics.mTransferredValidFrameCount++;
 		LOG_HEXDUMP_INF(data, data_length, "<--");
 		interface->m_receive_frame_callback(interface->m_receive_frame_context);
+		k_sem_give(&interface->m_receive_sem);
 	} else {
 		interface->m_rcp_interface_metrics.mTransferredGarbageFrameCount++;
 		interface->m_receive_frame_buffer->DiscardFrame();
@@ -193,22 +196,16 @@ otError HdlcInterface::SendFrame(const uint8_t *aFrame, uint16_t aLength)
 
 otError HdlcInterface::WaitForFrame(uint64_t aTimeoutUs)
 {
-	k_timepoint_t timepoint = sys_timepoint_calc(K_USEC(aTimeoutUs));
+	k_sem_reset(&m_receive_sem);
 	otError result = OT_ERROR_FAILED;
 
 	if (m_uart_open) {
 		result = OT_ERROR_RESPONSE_TIMEOUT;
-		uint64_t rx_frame_cnt = m_rcp_interface_metrics.mRxFrameCount;
 
-		while (!sys_timepoint_expired(timepoint)) {
-			uint8_t bt;
-			if (!k_msgq_get(&m_msgq, &bt, sys_timepoint_timeout(timepoint))) {
-				m_hdlc_decoder.Decode(&bt, sizeof(bt));
-				result = OT_ERROR_NONE;
-				if (m_rcp_interface_metrics.mRxFrameCount > rx_frame_cnt) {
-					break;
-				}
-			}
+		if (!k_sem_take(&m_receive_sem, K_USEC(aTimeoutUs))) {
+			result = OT_ERROR_NONE;
+		} else {
+			LOG_WRN("Frame timeout");
 		}
 	} else {
 		LOG_ERR("OT Spinel UART not opened");
@@ -227,6 +224,12 @@ void HdlcInterface::Process(const void *aMainloopContext)
 {
 	// Nothing to do here for this platform
 	ARG_UNUSED(aMainloopContext);
+
+	uint8_t bt;
+
+	while (!k_msgq_get(&m_msgq, &bt, K_NO_WAIT)) {
+		m_hdlc_decoder.Decode(&bt, sizeof(bt));
+	}
 }
 
 uint32_t HdlcInterface::GetBusSpeed(void) const
