@@ -223,8 +223,12 @@ static int w91_zb_configure(const struct device *dev, enum ieee802154_config_typ
 		break;
 	case IEEE802154_CONFIG_ACK_FPB:
 		if (config->ack_fpb.extended) {
-			result = openthread_rcp_ack_fpb_ext(&data->ot_rcp,
-				config->ack_fpb.addr, config->ack_fpb.enabled);
+			if (config->ack_fpb.addr) {
+				result = openthread_rcp_ack_fpb_ext(&data->ot_rcp,
+					config->ack_fpb.addr, config->ack_fpb.enabled);
+			} else {
+				result = 0;
+			}
 		} else {
 			uint16_t addr = sys_get_le16(config->ack_fpb.addr);
 
