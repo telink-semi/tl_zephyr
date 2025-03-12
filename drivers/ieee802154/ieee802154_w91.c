@@ -39,6 +39,7 @@ struct w91_zb_data {
 	struct net_if *iface;
 	struct openthread_rcp_data ot_rcp;
 	ieee802154_event_cb_t event_handler;
+	enum ieee802154_hw_caps radio_caps;
 	bool reception_on;
 	uint8_t channel;
 	int8_t tx_power;
@@ -79,25 +80,26 @@ static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
 	struct w91_zb_data *data = dev->data;
-	enum ieee802154_hw_caps radio_caps = 0;
 
-	if (openthread_rcp_capabilities(&data->ot_rcp, &radio_caps)) {
-		LOG_ERR("read capabilities failed");
-	}
-#if W91_ZB_RADIO_CAPS_VERBOSE
-	static const char *radio_caps_str[] ={
-		"energy scan", "fcs verification", "hw filter", "promiscuous",
-		"tx csma-ca procedure", "tx rx ack", "tx retransmission", "rx tx ack",
-		"tx time", "tx from sleep", "rx time", "tx security", "rx on when idle"
-	};
-
-	for (size_t i = 0; i < ARRAY_SIZE(radio_caps_str); i++) {
-		if (radio_caps & BIT(i)) {
-			LOG_INF("radio supports: %s", radio_caps_str[i]);
+	if (!data->radio_caps) {
+		if (openthread_rcp_capabilities(&data->ot_rcp, &data->radio_caps)) {
+			LOG_ERR("read capabilities failed");
 		}
-	}
+#if W91_ZB_RADIO_CAPS_VERBOSE
+		static const char *radio_caps_str[] ={
+			"energy scan", "fcs verification", "hw filter", "promiscuous",
+			"tx csma-ca procedure", "tx rx ack", "tx retransmission", "rx tx ack",
+			"tx time", "tx from sleep", "rx time", "tx security", "rx on when idle"
+		};
+
+		for (size_t i = 0; i < ARRAY_SIZE(radio_caps_str); i++) {
+			if (data->radio_caps & BIT(i)) {
+				LOG_INF("radio supports: %s", radio_caps_str[i]);
+			}
+		}
 #endif /* W91_ZB_RADIO_CAPS_VERBOSE */
-	return radio_caps;
+	}
+	return data->radio_caps;
 }
 
 static int w91_zb_cca(const struct device *dev)
