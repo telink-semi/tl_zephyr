@@ -20,4 +20,5 @@ zephyr_include_directories(
 
 zephyr_link_libraries(
 	"${OT_SPINEL_LIB}"
+	openthread-hdlc
 )
