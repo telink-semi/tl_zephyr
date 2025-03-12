@@ -15,7 +15,7 @@
 #include "hdlc_coder.h"
 #include "spinel_drv.h"
 
-typedef void (*openthread_rcp_reception)(uint8_t *data, size_t data_len, const void *ctx);
+typedef void (*openthread_rcp_reception)(const struct spinel_frame_data *frame, const void *ctx);
 
 struct openthread_rcp_rx_buffer {
 	uint8_t *data;
