@@ -4,11 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <spinel_manager.hpp>
+// #define TEST_INTERFACE
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_main, LOG_LEVEL_INF);
 
+#ifdef TEST_INTERFACE
+
+#include <spinel_manager.hpp>
 using namespace ot::Spinel;
 
 void on_rx(void *aContext) {
@@ -62,3 +65,21 @@ int main(void)
 
 	return 0;
 }
+
+#else
+
+#include <spinel_radio_interface.h>
+
+int main(void)
+{
+	LOG_INF("main started");
+	spinel_radio_interface_init();
+	LOG_INF("spinel radio inited");
+	LOG_INF("RCP bus speed: %u bps", spinel_radio_interface_get_bus_speed());
+	LOG_INF("RCP version: %s", spinel_radio_interface_get_version());
+	spinel_radio_interface_deinit();
+	LOG_INF("main finished");
+	return 0;
+}
+
+#endif // TEST_INTERFACE

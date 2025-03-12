@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "spinel_manager.hpp"
 #include "hdlc_interface.hpp"
 
