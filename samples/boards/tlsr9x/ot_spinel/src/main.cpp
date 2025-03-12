@@ -11,7 +11,7 @@ LOG_MODULE_REGISTER(test_main, LOG_LEVEL_INF);
 
 void on_rx(void *aContext) {
 	ot::Spinel::SpinelInterface::RxFrameBuffer *buf =
-		(ot::Spinel::SpinelInterface::RxFrameBuffer *)aContext;
+		static_cast<ot::Spinel::SpinelInterface::RxFrameBuffer *>(aContext);
 
 	LOG_HEXDUMP_INF(buf->GetFrame(), buf->GetLength(), "received");
 	buf->DiscardFrame();
