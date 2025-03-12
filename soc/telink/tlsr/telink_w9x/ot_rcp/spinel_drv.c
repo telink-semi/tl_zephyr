@@ -6,9 +6,60 @@
 
 #include "spinel_drv.h"
 
+#include <openthread/platform/radio.h>
+
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(spinel_drv);
+
+#define SPINEL_DRV_CHECK_CMD_STATUS(name)                                                  \
+if (!spinel_drv_check_cmd_status(spinel_drv, data, data_size)) {                           \
+	LOG_ERR("Get incorrect command status in " #name " (inst = %u)", spinel_drv->inst);    \
+	return false;                                                                          \
+}
+
+static enum ieee802154_hw_caps spinel_drv_get_hw_caps(otRadioCaps caps)
+{
+	enum ieee802154_hw_caps radio_caps = 0;
+
+	if (caps & OT_RADIO_CAPS_ENERGY_SCAN) {
+		radio_caps |= IEEE802154_HW_ENERGY_SCAN;
+	}
+
+	if (caps & OT_RADIO_CAPS_CSMA_BACKOFF) {
+		radio_caps |= IEEE802154_HW_CSMA;
+	}
+
+	if (caps & OT_RADIO_CAPS_ACK_TIMEOUT) {
+		radio_caps |= IEEE802154_HW_TX_RX_ACK;
+	}
+
+	if (caps & OT_RADIO_CAPS_SLEEP_TO_TX) {
+		radio_caps |= IEEE802154_HW_SLEEP_TO_TX;
+	}
+
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+	if (caps & OT_RADIO_CAPS_TRANSMIT_SEC) {
+		radio_caps |= IEEE802154_HW_TX_SEC;
+	}
+#endif
+
+#if defined(CONFIG_NET_PKT_TXTIME)
+	if (caps & OT_RADIO_CAPS_TRANSMIT_TIMING) {
+		radio_caps |= IEEE802154_HW_TXTIME;
+	}
+#endif
+
+	if (caps & OT_RADIO_CAPS_RECEIVE_TIMING) {
+		radio_caps |= IEEE802154_HW_RXTIME;
+	}
+
+	if (caps & OT_RADIO_CAPS_RX_ON_WHEN_IDLE) {
+		radio_caps |= IEEE802154_RX_ON_WHEN_IDLE;
+	}
+
+	return radio_caps;
+}
 
 static int spinel_drv_set_t_id(struct spinel_drv_data *spinel_drv, uint32_t prop)
 {
@@ -37,7 +88,8 @@ static bool spinel_drv_check_t_id(struct spinel_drv_data *spinel_drv,
 		return true;
 	}
 
-	if (spinel_drv->t_id.props[t_id] != prop) {
+	if (prop != spinel_drv->t_id.props[t_id] &&
+			prop != SPINEL_PROP_LAST_STATUS) {
 		return false;
 	}
 
@@ -136,6 +188,42 @@ static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, 
 	return ret;
 }
 
+static bool spinel_drv_check_cmd_status(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+	uint32_t status;
+
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_LAST_STATUS,
+		data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		// This frame is not SPINEL_PROP_LAST_STATUS
+		return true;
+	} else if (ret < 0 || !param_data || !param_size) {
+		LOG_ERR("Failed to get command parameters (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_UINT_PACKED_S, &status);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get result (inst = %u, err = %d)", spinel_drv->inst, ret);
+			return false;
+	}
+
+	if (status != SPINEL_STATUS_OK) {
+		LOG_ERR("Incorrect response status (inst = %u, status = %u)", spinel_drv->inst, status);
+			return false;
+	}
+
+	return true;
+}
+
 void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst)
 {
 	spinel_drv->inst = inst;
@@ -197,7 +285,8 @@ bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
 	const uint8_t *in_data, uint16_t in_data_size,
 	const uint8_t **out_data, uint16_t *p_out_data_size)
 {
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_STREAM_RAW,
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_STREAM_RAW,
 		in_data, in_data_size, out_data, p_out_data_size);
 
 	if (ret == -EPERM) {
@@ -229,10 +318,13 @@ int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, uint8_t ieee_eui64[8])
 {
+	SPINEL_DRV_CHECK_CMD_STATUS(check_get_ieee_eui64);
+
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_HWADDR,
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_HWADDR,
 		data, data_size, &param_data, &param_size);
 
 	if (ret == -EPERM) {
@@ -273,10 +365,14 @@ int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv,
 bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size, enum ieee802154_hw_caps *radio_caps)
 {
+	SPINEL_DRV_CHECK_CMD_STATUS(check_get_capabilities);
+
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
+	uint32_t caps;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RADIO_CAPS,
+	int ret = spinel_drv_get_cmd(spinel_drv,
+		SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RADIO_CAPS,
 		data, data_size, &param_data, &param_size);
 
 	if (ret == -EPERM) {
@@ -288,8 +384,16 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 		return false;
 	}
 
-	/* TODO: parse caps response, now dummy data */
-	*radio_caps = 0;
+	ret = spinel_datatype_unpack(param_data, param_size, true,
+		SPINEL_DATATYPE_UINT_PACKED_S, &caps);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to get parameters of get_capabilities (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+			return false;
+	}
+
+	*radio_caps = spinel_drv_get_hw_caps(caps);
 	
 	return true;
 }
@@ -297,120 +401,150 @@ bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv,
 int spinel_drv_send_enable_src_match(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, bool enable)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError EnableSrcMatch(bool aEnable)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_SRC_MATCH_ENABLED,
+		SPINEL_DATATYPE_BOOL_S, enable);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send enable_src_match (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError EnableSrcMatch(bool aEnable)
-	 */
-	return true;
+	SPINEL_DRV_CHECK_CMD_STATUS(check_enable_src_match);
+	/* TODO: Need to check correct responce */
+	return false;
 }
 
 int spinel_drv_send_ack_fpb(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint16_t addr, bool enable)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError AddSrcMatchShortEntry(uint16_t aShortAddress)
-	 * otError ClearSrcMatchShortEntry(uint16_t aShortAddress)
-	 */
-	return 0;
+	int ret;
+
+	if (enable) {
+		ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+			SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_SRC_MATCH_SHORT_ADDRESSES,
+			SPINEL_DATATYPE_UINT16_S, addr);
+	} else {
+		ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+			SPINEL_CMD_PROP_VALUE_REMOVE, SPINEL_PROP_MAC_SRC_MATCH_SHORT_ADDRESSES,
+			SPINEL_DATATYPE_UINT16_S, addr);
+	}
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send ack_fpb (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError AddSrcMatchShortEntry(uint16_t aShortAddress)
-	 * otError ClearSrcMatchShortEntry(uint16_t aShortAddress)
-	 */
-	return true;
+	SPINEL_DRV_CHECK_CMD_STATUS(check_ack_fpb);
+	/* TODO: Need to check correct responce */
+	return false;
 }
 
 int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint8_t addr[8], bool enable)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError AddSrcMatchExtEntry(const otExtAddress &aExtAddress)
-	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
-	 */
-	return 0;
+	int ret;
+
+	if (enable) {
+		ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+			SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_SRC_MATCH_EXTENDED_ADDRESSES,
+			SPINEL_DATATYPE_EUI64_S, addr);
+	} else {
+		ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+			SPINEL_CMD_PROP_VALUE_REMOVE, SPINEL_PROP_MAC_SRC_MATCH_EXTENDED_ADDRESSES,
+			SPINEL_DATATYPE_EUI64_S, addr);
+	}
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send ack_fpb_ext (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError AddSrcMatchExtEntry(const otExtAddress &aExtAddress)
-	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
-	 */
-	return true;
+	SPINEL_DRV_CHECK_CMD_STATUS(check_ack_fpb_ext);
+	/* TODO: Need to check correct responce */
+	return false;
 }
 
 int spinel_drv_send_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError ClearSrcMatchShortEntries(void)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_SRC_MATCH_SHORT_ADDRESSES, NULL);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send ack_fpb_clear (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError ClearSrcMatchShortEntries(void)
-	 */
-	return true;
+	SPINEL_DRV_CHECK_CMD_STATUS(check_ack_fpb_clear);
+	/* TODO: Need to check correct responce */
+	return false;
 }
+
 int spinel_drv_send_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_MAC_SRC_MATCH_EXTENDED_ADDRESSES, NULL);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send ack_fpb_clear (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError ClearSrcMatchExtEntry(const otExtAddress &aExtAddress)
-	 */
-	return true;
+	SPINEL_DRV_CHECK_CMD_STATUS(check_ack_fpb_ext_clear);
+	/* TODO: Need to check correct responce */
+	return false;
 }
 
 int spinel_drv_send_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 	spinel_tx_cb tx_cb, const void *ctx, uint32_t frame_counter, bool set_if_larger)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetMacFrameCounter(uint32_t aMacFrameCounter, bool aSetIfLarger)
-	 */
-	return 0;
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx,
+		SPINEL_CMD_PROP_VALUE_SET, SPINEL_PROP_RCP_MAC_FRAME_COUNTER,
+		SPINEL_DATATYPE_UINT32_S, SPINEL_DATATYPE_BOOL_S,
+		frame_counter, set_if_larger);
+
+	if (ret < 0) {
+		LOG_ERR("Failed to send mac_frame_counter (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+	}
+
+	return ret;
 }
 
 bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
 	const uint8_t *data, uint16_t data_size)
 {
-	/*
-	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
-	 * otError SetMacFrameCounter(uint32_t aMacFrameCounter, bool aSetIfLarger)
-	 */
-	return true;
+	SPINEL_DRV_CHECK_CMD_STATUS(check_mac_frame_counter);
+	/* TODO: Need to check correct responce */
+	return false;
 }
