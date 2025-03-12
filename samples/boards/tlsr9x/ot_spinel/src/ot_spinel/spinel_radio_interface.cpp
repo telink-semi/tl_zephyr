@@ -72,34 +72,56 @@ otRadioCaps spinel_radio_interface_get_radio_caps(void)
 }
 
 extern "C"
-otError spinel_radio_interface_set_short_address(uint16_t aAddress)
+otRadioState spinel_radio_interface_get_state(void)
 {
-	otError result = OT_ERROR_FAILED;
+	otRadioState result = OT_RADIO_STATE_INVALID;
 
 	if (spinel_radio_interface) {
-		result = spinel_radio_interface->SetShortAddress(aAddress);
+		result = spinel_radio_interface->GetState();
 	}
 	return result;
 }
 
 extern "C"
-otError spinel_radio_interface_set_extended_address(const otExtAddress *aExtAddress)
+otError spinel_radio_interface_get_ieee_eui64(uint8_t *ieee_eui64)
 {
 	otError result = OT_ERROR_FAILED;
 
 	if (spinel_radio_interface) {
-		result = spinel_radio_interface->SetExtendedAddress(*aExtAddress);
+		result = spinel_radio_interface->GetIeeeEui64(ieee_eui64);
 	}
 	return result;
 }
 
 extern "C"
-otError spinel_radio_interface_set_pan_id(uint16_t aPanId)
+otError spinel_radio_interface_set_short_address(uint16_t short_address)
 {
 	otError result = OT_ERROR_FAILED;
 
 	if (spinel_radio_interface) {
-		result = spinel_radio_interface->SetPanId(aPanId);
+		result = spinel_radio_interface->SetShortAddress(short_address);
+	}
+	return result;
+}
+
+extern "C"
+otError spinel_radio_interface_set_extended_address(const otExtAddress *extended_address)
+{
+	otError result = OT_ERROR_FAILED;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->SetExtendedAddress(*extended_address);
+	}
+	return result;
+}
+
+extern "C"
+otError spinel_radio_interface_set_pan_id(uint16_t pan_id)
+{
+	otError result = OT_ERROR_FAILED;
+
+	if (spinel_radio_interface) {
+		result = spinel_radio_interface->SetPanId(pan_id);
 	}
 	return result;
 }
