@@ -394,3 +394,23 @@ bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv,
 	 */
 	return true;
 }
+
+int spinel_drv_send_mac_frame_counter(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint32_t frame_counter, bool set_if_larger)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetMacFrameCounter(uint32_t aMacFrameCounter, bool aSetIfLarger)
+	 */
+	return 0;
+}
+
+bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv,
+	const uint8_t *data, uint16_t data_size)
+{
+	/*
+	 * modules/lib/openthread/src/lib/spinel/radio_spinel.hpp
+	 * otError SetMacFrameCounter(uint32_t aMacFrameCounter, bool aSetIfLarger)
+	 */
+	return true;
+}
