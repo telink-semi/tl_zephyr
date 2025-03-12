@@ -102,6 +102,7 @@ if(CONFIG_TELINK_W91_OT_RCP)
 
 zephyr_sources(
 	ot_rcp/ot_rcp.c
+	ot_rcp/hdlc_coder.c
 )
 
 endif()

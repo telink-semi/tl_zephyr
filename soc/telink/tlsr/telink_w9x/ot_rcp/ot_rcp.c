@@ -70,7 +70,32 @@ static void openthread_rcp_reception_work(struct k_work *item)
 	uint8_t bt;
 
 	while (ring_buf_get(&ot_rcp->rb, &bt, sizeof(bt)) == sizeof(bt)) {
-		LOG_INF("spinel rx %02x", bt);
+		hdlc_coder_inp_poll(&ot_rcp->hdlc, bt);
+	}
+}
+
+static void openthread_rcp_transmission(uint8_t bt, const void *ctx)
+{
+	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
+
+	uart_poll_out(ot_rcp->uart, bt);
+}
+
+static void openthread_rcp_reception(uint8_t bt, const void *ctx)
+{
+	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
+
+	LOG_INF("spinel rx [%p] %02x", ot_rcp, bt);
+	/* TODO: unpack using spinel */
+}
+
+static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
+{
+	if (data_valid) {
+		struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
+
+		LOG_INF("spinel rx finish [%p]", ot_rcp);
+		/* TODO: analyze received spinel data */
 	}
 }
 
@@ -78,8 +103,7 @@ static void openthread_rcp_reception_work(struct k_work *item)
  * RCP interface functions
  ************************************************************************/
 
-int openthread_rcp_init(struct openthread_rcp_data *ot_rcp,
-	const struct device *uart, const void *ctx)
+int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device *uart)
 {
 	int result = 0;
 
@@ -91,10 +115,12 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp,
 		}
 
 		ot_rcp->uart = uart;
-		ot_rcp->ctx = ctx;
 		k_work_init(&ot_rcp->work, openthread_rcp_reception_work);
-		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data),
-			ot_rcp->rb_data);
+		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data), ot_rcp->rb_data);
+		hdlc_coder_init(&ot_rcp->hdlc, ot_rcp);
+		hdlc_coder_out_data_set(&ot_rcp->hdlc, openthread_rcp_transmission);
+		hdlc_coder_inp_data_set(&ot_rcp->hdlc, openthread_rcp_reception);
+		hdlc_coder_inp_finish_set(&ot_rcp->hdlc, openthread_rcp_reception_done);
 
 		if (uart_irq_callback_user_data_set(ot_rcp->uart,
 			openthread_rcp_reception_isr, ot_rcp)) {
@@ -132,12 +158,14 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 {
 	LOG_INF("%s", __func__);
-	/* Dummy for now */
-	uint8_t reset_cmd[] = {0x7e, 0x80, 0x01, 0x02, 0xea, 0xf0, 0x7e};
+	/* TODO: dummy for now pack, using spinel */
+	uint8_t reset_cmd[] = {0x80, 0x01, 0x02};
 
 	for(uint16_t i = 0; i < sizeof(reset_cmd); i++) {
-		uart_poll_out(ot_rcp->uart, reset_cmd[i]);
+		hdlc_coder_out_poll(&ot_rcp->hdlc, reset_cmd[i]);
 	}
+	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
+	/* TODO: wait for response */
 
 	return 0;
 }
