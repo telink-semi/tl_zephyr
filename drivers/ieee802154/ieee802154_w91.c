@@ -170,7 +170,28 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 	struct net_pkt *pkt, struct net_buf *frag)
 {
 	LOG_DBG("%s", __func__);
-	return 0;
+	int result = 0;
+	struct w91_zb_data *data = dev->data;
+	struct spinel_frame_data frame = {
+		.data = frag->data,
+		.data_length = frag->len,
+		.tx.header_updated = net_pkt_ieee802154_mac_hdr_rdy(pkt),
+		.tx.security_processed = net_pkt_ieee802154_frame_secured(pkt),
+		.tx.channel = data->channel,
+		.tx.csma_ca_enabled = (mode == IEEE802154_TX_MODE_CSMA_CA)
+	};
+
+	if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
+		frame.time_enabled = true;
+		/* TODO: time calculation */
+	}
+
+	result = openthread_rcp_transmit(&data->ot_rcp, &frame);
+	if (!result) {
+		/* TODO: handle ack from frame */
+	}
+
+	return result;
 }
 
 static int w91_zb_start(const struct device *dev)
