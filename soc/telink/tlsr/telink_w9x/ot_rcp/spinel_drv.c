@@ -10,8 +10,14 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(spinel_drv);
 
-int spinel_drv_send_cmd(uint8_t inst, int8_t t_id, spinel_tx_cb tx_cb, const void *ctx,
-	uint32_t cmd, uint32_t prop, const char *fmt, ...)
+void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst)
+{
+	spinel_drv->inst = inst;
+	spinel_drv->t_id = 0;
+}
+
+int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint32_t cmd, uint32_t prop, const char *fmt, ...)
 {
 	int ret = 0;
 	va_list args;
@@ -21,10 +27,11 @@ int spinel_drv_send_cmd(uint8_t inst, int8_t t_id, spinel_tx_cb tx_cb, const voi
 	do {
 		ret = spinel_datatype_pack(tx_cb, ctx,
 			SPINEL_DATATYPE_COMMAND_S SPINEL_DATATYPE_UINT8_S,
-			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(inst) | t_id, cmd, prop);
+			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(spinel_drv->inst) | spinel_drv->t_id,
+			cmd, prop);
 
 		if (ret < 0) {
-			LOG_ERR("Failed to pack header spinel data (inst = %u)", inst);
+			LOG_ERR("Failed to pack header spinel data (inst = %u)", spinel_drv->inst);
 			break;
 		}
 
@@ -33,7 +40,7 @@ int spinel_drv_send_cmd(uint8_t inst, int8_t t_id, spinel_tx_cb tx_cb, const voi
 
 			if (ret_vpack < 0) {
 				ret = ret_vpack;
-				LOG_ERR("Failed to pack spinel data (inst = %u)", inst);
+				LOG_ERR("Failed to pack spinel data (inst = %u)", spinel_drv->inst);
 				break;
 			}
 
@@ -45,17 +52,18 @@ int spinel_drv_send_cmd(uint8_t inst, int8_t t_id, spinel_tx_cb tx_cb, const voi
 	return ret;
 }
 
-int spinel_drv_send_reset(uint8_t inst, spinel_tx_cb tx_cb, const void *ctx, uint8_t type)
+int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint8_t type)
 {
 	int ret = 0;
 
 	do {
 		ret = spinel_datatype_pack(tx_cb, ctx,
 			SPINEL_DATATYPE_COMMAND_S SPINEL_DATATYPE_UINT8_S,
-			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(inst), SPINEL_CMD_RESET, type);
+			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(spinel_drv->inst), SPINEL_CMD_RESET, type);
 
 		if (ret < 0) {
-			LOG_ERR("Failed to pack spinel data (inst = %u)", inst);
+			LOG_ERR("Failed to pack spinel data (inst = %u)", spinel_drv->inst);
 			break;
 		}
 
@@ -64,8 +72,23 @@ int spinel_drv_send_reset(uint8_t inst, spinel_tx_cb tx_cb, const void *ctx, uin
 	return ret;
 }
 
-bool spinel_drv_check_reset(const void *ctx, uint8_t *data, size_t data_size)
+bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv,
+	uint8_t *data, size_t data_size)
 {
 	/* TODO: parse reset response */
 	return true;
+}
+
+bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
+	uint8_t *data, size_t data_size)
+{
+	bool result = false;
+
+	/* TODO: instance (possibly t_id) check */
+	if (data_size >= SPINEL_DRV_RECEPTION_DATA_HEADER_LEN) {
+		if (data[1] == SPINEL_CMD_PROP_VALUE_IS && data[2] == SPINEL_PROP_STREAM_RAW) {
+			result = true;
+		}
+	}
+	return result;
 }

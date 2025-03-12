@@ -12,6 +12,9 @@
 #include <zephyr/sys/ring_buffer.h>
 
 #include "hdlc_coder.h"
+#include "spinel_drv.h"
+
+typedef void (*openthread_rcp_reception)(uint8_t *data, size_t data_len, const void *ctx);
 
 struct openthread_rcp_rx_buffer {
 	uint8_t *data;
@@ -28,9 +31,14 @@ struct openthread_rcp_data {
 	struct openthread_rcp_rx_buffer
 		spinel_msgq_buffer[CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_COUNT];
 	struct k_msgq spinel_msgq;
+	struct spinel_drv_data spinel_drv;
+	openthread_rcp_reception reception;
+	const void *ctx;
 };
 
 int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device *uart);
+void openthread_rcp_reception_set(struct openthread_rcp_data *ot_rcp,
+	openthread_rcp_reception reception, const void *ctx);
 int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp);
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp);
 

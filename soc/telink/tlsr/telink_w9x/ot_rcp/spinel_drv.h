@@ -11,9 +11,21 @@
 
 #include "spinel.h"
 
-int spinel_drv_send_reset(uint8_t inst, spinel_tx_cb tx_cb, const void *ctx, uint8_t type);
-bool spinel_drv_check_reset(const void *ctx, uint8_t *data, size_t data_size);
-int spinel_drv_send_cmd(uint8_t inst, int8_t t_id, spinel_tx_cb tx_cb, const void *ctx,
-	uint32_t cmd, uint32_t prop, const char *fmt, ...);
+#define SPINEL_DRV_RECEPTION_DATA_HEADER_LEN         3
+
+struct spinel_drv_data {
+	uint8_t inst;
+	uint8_t t_id;
+};
+
+void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst);
+int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint8_t type);
+bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv,
+	uint8_t *data, size_t data_size);
+int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv,
+	spinel_tx_cb tx_cb, const void *ctx, uint32_t cmd, uint32_t prop, const char *fmt, ...);
+bool spinel_drv_reception_data(struct spinel_drv_data *spinel_drv,
+	uint8_t *data, size_t data_size);
 
 #endif /* SPINEL_DRV_H */
