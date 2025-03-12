@@ -1,0 +1,12 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+if IEEE802154
+
+config TELINK_W91_OT_RCP
+	bool "Telink W91 Openthread spinel interface"
+	default y
+	help
+		This option enables Telink W91 Openthread RCP interface.
+
+endif # IEEE802154
