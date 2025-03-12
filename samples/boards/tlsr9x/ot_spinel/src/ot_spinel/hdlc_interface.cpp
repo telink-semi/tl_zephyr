@@ -188,11 +188,16 @@ otError HdlcInterface::WaitForFrame(uint64_t aTimeoutUs)
 
 	if (m_uart_open) {
 		result = OT_ERROR_RESPONSE_TIMEOUT;
+		uint64_t rx_frame_cnt = m_rcp_interface_metrics.mRxFrameCount;
+
 		while (!sys_timepoint_expired(timepoint)) {
 			uint8_t bt;
 			if (!k_msgq_get(&m_msgq, &bt, sys_timepoint_timeout(timepoint))) {
 				m_hdlc_decoder.Decode(&bt, sizeof(bt));
 				result = OT_ERROR_NONE;
+				if (m_rcp_interface_metrics.mRxFrameCount > rx_frame_cnt) {
+					break;
+				}
 			}
 		}
 	} else {

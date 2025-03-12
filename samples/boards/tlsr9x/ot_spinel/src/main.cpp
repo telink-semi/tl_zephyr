@@ -39,6 +39,8 @@ int main(void)
 
 	ret = interface->WaitForFrame(1 * 1000 * 1000);
 	LOG_INF("hdlc.WaitForFrame %d", ret);
+	ret = interface->WaitForFrame(1 * 1000 * 1000);
+	LOG_INF("hdlc.WaitForFrame %d", ret);
 
 	const otRcpInterfaceMetrics *metrics = interface->GetRcpInterfaceMetrics();
 
