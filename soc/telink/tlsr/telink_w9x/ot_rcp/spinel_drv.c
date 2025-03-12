@@ -14,10 +14,11 @@ LOG_MODULE_REGISTER(spinel_drv);
 
 #define PROP_OFFSET(t_id)         ((t_id)-1)
 
-#define FRAME_TYPE_OFFSET         0
-#define FRAME_SEQ_NUMB_OFFSET     2
+#define FRAME_FC0_OFFSET          0
+#define FRAME_SN_OFFSET           2
 
 #define FRAME_TYPE_MASK           0x07
+#define FRAME_ACK_REQ_MASK        0x20
 #define FRAME_TYPE_ACK            0x02
 
 static enum ieee802154_hw_caps spinel_drv_get_hw_caps(otRadioCaps caps)
@@ -1112,7 +1113,7 @@ int spinel_drv_send_transmit_frame(struct spinel_drv_data *spinel_drv,
 		CONFIG_TELINK_W91_OT_SPINEL_MAC_MAX_CSMA_BACKOFFS,
 		CONFIG_TELINK_W91_OT_SPINEL_MAC_DEFAULT_MAX_FRAME_RETRIES,
 		frame->tx.csma_ca_enabled, frame->tx.header_updated,
-		frame->tx.isRet, frame->tx.security_processed,
+		frame->tx.is_ret, frame->tx.security_processed,
 		frame->time_offset, frame->time_base, frame->tx.channel);
 
 	if (ret < 0) {
@@ -1135,6 +1136,9 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 	if (ret == -EPERM) {
 		// Skip this frame
 		return false;
+	} else if (!(frame->data[FRAME_FC0_OFFSET] & FRAME_ACK_REQ_MASK)) {
+		memset(frame, 0, sizeof(struct spinel_frame_data));
+		return true;
 	} else if (ret < 0 || !param_data || !param_size) {
 		LOG_ERR("Failed to check transmit_frame (inst = %u, err = %d, data = %p, size = %u)",
 			spinel_drv->inst, ret, param_data, param_size);
@@ -1161,7 +1165,7 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 		return false;
 	}
 
-	uint8_t tx_seq_numb = frame->data[FRAME_SEQ_NUMB_OFFSET];
+	uint8_t tx_seq_numb = frame->data[FRAME_SN_OFFSET];
 
 	param_data += ret;
 	param_size -= (uint16_t)ret;
@@ -1174,8 +1178,8 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv,
 		return false;
 	}
 
-	uint8_t rx_frame_control_lo = frame->data[FRAME_TYPE_OFFSET];
-	uint8_t rx_seq_numb = frame->data[FRAME_SEQ_NUMB_OFFSET];
+	uint8_t rx_frame_control_lo = frame->data[FRAME_FC0_OFFSET];
+	uint8_t rx_seq_numb = frame->data[FRAME_SN_OFFSET];
 
 	if ((rx_frame_control_lo & FRAME_TYPE_MASK) != FRAME_TYPE_ACK) {
 		LOG_ERR("Get incorrect frame type in response to send transmit_frame (inst = %u)",
