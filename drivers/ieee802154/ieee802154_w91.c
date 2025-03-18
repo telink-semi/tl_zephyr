@@ -27,6 +27,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 #define W91_ZB_MAC_ADDR_MAX_LENGTH                      8
 #define W91_ZB_RADIO_CAPS_VERBOSE                       0
+#define W91_ZB_FCS_SIZE                                 2
 
 IEEE802154_DEFINE_PHY_SUPPORTED_CHANNELS(w91_zb_drv_attr, 11, 26);
 
@@ -219,7 +220,7 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode,
 	struct w91_zb_data *data = dev->data;
 	struct spinel_frame_data frame = {
 		.data = frag->data,
-		.data_length = frag->len,
+		.data_length = frag->len + W91_ZB_FCS_SIZE,
 		.tx.header_updated = net_pkt_ieee802154_mac_hdr_rdy(pkt),
 		.tx.security_processed = net_pkt_ieee802154_frame_secured(pkt),
 		.tx.is_ret = false,
