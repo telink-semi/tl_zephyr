@@ -69,8 +69,7 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         bin_file = os.path.abspath(self.cfg.bin_file)
         # activate chip
         activate = subprocess.Popen(['./bdt', soc_type, 'ac'], cwd=self.bdt_path)
-        if activate.wait():
-            exit()
+        activate.wait()
         # unlock flash only B92
         if soc_type == 'B92':
             unlock = subprocess.Popen(['./bdt', soc_type, 'ulf'], cwd=self.bdt_path)
