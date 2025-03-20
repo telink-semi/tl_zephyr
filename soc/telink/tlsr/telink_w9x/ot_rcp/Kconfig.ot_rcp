@@ -18,7 +18,7 @@ config OPENTHREAD_RADIO_WORKQUEUE_STACK_SIZE
 
 config TELINK_W91_OT_RCP_RX_BUFFER_SIZE
 	int "Telink W91 Openthread RCP reception buffer size"
-	default 128
+	default 256
 	help
 		This option sets Telink W91 Openthread RCP reception buffer size.
 

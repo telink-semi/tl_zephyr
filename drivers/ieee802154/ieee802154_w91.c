@@ -28,6 +28,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define W91_ZB_MAC_ADDR_MAX_LENGTH                      8
 #define W91_ZB_RADIO_CAPS_VERBOSE                       0
 #define W91_ZB_FCS_SIZE                                 2
+#define W91_ZB_EXT_ADDR_LENGTH                          8
 
 IEEE802154_DEFINE_PHY_SUPPORTED_CHANNELS(w91_zb_drv_attr, 11, 26);
 
@@ -185,8 +186,12 @@ static int w91_zb_filter(const struct device *dev, bool set,
 		case IEEE802154_FILTER_TYPE_SHORT_ADDR:
 			result = openthread_rcp_short_addr(&data->ot_rcp, filter->short_addr);
 			break;
-		case IEEE802154_FILTER_TYPE_IEEE_ADDR:
-			result = openthread_rcp_ext_addr(&data->ot_rcp, filter->ieee_addr);
+		case IEEE802154_FILTER_TYPE_IEEE_ADDR: {
+				uint8_t address[W91_ZB_EXT_ADDR_LENGTH];
+
+				sys_memcpy_swap(address, filter->ieee_addr, sizeof(address));
+				result = openthread_rcp_ext_addr(&data->ot_rcp, address);
+			}
 			break;
 		default:
 			LOG_WRN("unhandled filter %u", type);
