@@ -17,7 +17,7 @@
 
 typedef void (*openthread_rcp_reception)(const struct spinel_frame_data *frame, const void *ctx);
 
-struct openthread_rcp_rx_buffer {
+struct openthread_rcp_buffer {
 	uint8_t *data;
 	size_t data_size;
 };
@@ -25,13 +25,15 @@ struct openthread_rcp_rx_buffer {
 struct openthread_rcp_data {
 	const struct device *uart;
 	struct k_work work;
-	struct ring_buf rb;
-	uint8_t rb_data[CONFIG_TELINK_W91_OT_RCP_RX_BUFFER_SIZE];
 	struct hdlc_coder hdlc;
-	struct openthread_rcp_rx_buffer spinel_rx_buffer;
-	struct openthread_rcp_rx_buffer
+	struct openthread_rcp_buffer spinel_rx_buffer;
+	struct openthread_rcp_buffer spinel_hdlc_tx_buffer;
+	struct openthread_rcp_buffer
 		spinel_msgq_buffer[CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_COUNT];
+	struct openthread_rcp_buffer
+		spinel_hdlc_msgq_buffer[CONFIG_TELINK_W91_OT_SPINEL_HDLC_RX_BUFFER_COUNT];
 	struct k_msgq spinel_msgq;
+	struct k_msgq spinel_hdlc_msgq;
 	struct spinel_drv_data spinel_drv;
 	openthread_rcp_reception reception;
 	const void *ctx;

@@ -46,21 +46,42 @@ SYS_INIT(openthread_rcp_work_q_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DE
 
 static void openthread_rcp_reception_isr(const struct device *dev, void *user_data)
 {
-	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)user_data;
-
 	if (!uart_irq_update(dev)) {
 		return;
 	}
 	if (!uart_irq_rx_ready(dev)) {
 		return;
 	}
-	uint8_t bt;
 
-	while (uart_fifo_read(dev, &bt, sizeof(bt)) == sizeof(bt)) {
-		if (ring_buf_put(&ot_rcp->rb, &bt, sizeof(bt)) != sizeof(bt)) {
-			LOG_ERR("spinel serial rx overflow");
+	int result;
+	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)user_data;
+	struct openthread_rcp_buffer spinel_hdlc_rx_buffer;
+
+	do {
+		spinel_hdlc_rx_buffer.data = malloc(CONFIG_TELINK_W91_OT_SPINEL_HDLC_BUFFER_SIZE);
+
+		if (!spinel_hdlc_rx_buffer.data) {
+			LOG_ERR("spinel/hdlc rx buffer can't be allocated");
+			return;
 		}
-	}
+
+		result = uart_fifo_read(dev, spinel_hdlc_rx_buffer.data,
+			CONFIG_TELINK_W91_OT_SPINEL_HDLC_BUFFER_SIZE);
+
+		if (result < 0) {
+			LOG_ERR("failed to read spinel/hdlc frame");
+			free(spinel_hdlc_rx_buffer.data);
+			return;
+		}
+
+		spinel_hdlc_rx_buffer.data_size = result;
+
+		if (k_msgq_put(&ot_rcp->spinel_hdlc_msgq, &spinel_hdlc_rx_buffer, K_NO_WAIT)) {
+			LOG_ERR("spinel/hdlc message queue overflow");
+			free(spinel_hdlc_rx_buffer.data);
+		}
+	} while(uart_irq_rx_ready(dev));
+
 	k_work_submit_to_queue(&openthread_rcp_work_q, &ot_rcp->work);
 }
 
@@ -68,10 +89,20 @@ static void openthread_rcp_reception_work(struct k_work *item)
 {
 	struct openthread_rcp_data *ot_rcp =
 		CONTAINER_OF(item, struct openthread_rcp_data, work);
-	uint8_t bt;
 
-	while (ring_buf_get(&ot_rcp->rb, &bt, sizeof(bt)) == sizeof(bt)) {
-		hdlc_coder_inp_poll(&ot_rcp->hdlc, bt);
+	struct openthread_rcp_buffer spinel_hdlc_rx_buffer;
+
+	while (!k_msgq_get(&ot_rcp->spinel_hdlc_msgq, &spinel_hdlc_rx_buffer, K_NO_WAIT)) {
+		if (!spinel_hdlc_rx_buffer.data) {
+			LOG_ERR("invalid spinel/hdlc rx buffer parameters");
+			continue;
+		}
+
+		for (size_t i = 0; i < spinel_hdlc_rx_buffer.data_size; i++) {
+			hdlc_coder_inp_poll(&ot_rcp->hdlc, spinel_hdlc_rx_buffer.data[i]);
+		}
+
+		free(spinel_hdlc_rx_buffer.data);
 	}
 }
 
@@ -86,7 +117,29 @@ static void openthread_rcp_hdlc_transmission(uint8_t bt, const void *ctx)
 {
 	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
-	uart_poll_out(ot_rcp->uart, bt);
+	if (!ot_rcp->spinel_hdlc_tx_buffer.data) {
+		ot_rcp->spinel_hdlc_tx_buffer.data =
+			malloc(CONFIG_TELINK_W91_OT_SPINEL_HDLC_BUFFER_SIZE);
+		ot_rcp->spinel_hdlc_tx_buffer.data_size = 0;
+	}
+
+	if (ot_rcp->spinel_hdlc_tx_buffer.data) {
+		if (ot_rcp->spinel_hdlc_tx_buffer.data_size ==
+				CONFIG_TELINK_W91_OT_SPINEL_HDLC_BUFFER_SIZE) {
+
+			if (uart_fifo_fill(ot_rcp->uart, ot_rcp->spinel_hdlc_tx_buffer.data,
+					ot_rcp->spinel_hdlc_tx_buffer.data_size) < 0) {
+				LOG_ERR("failed to send spinel/hdlc frame");
+				return;
+			}
+			ot_rcp->spinel_hdlc_tx_buffer.data_size = 0;
+		}
+
+		ot_rcp->spinel_hdlc_tx_buffer.data[ot_rcp->spinel_hdlc_tx_buffer.data_size] = bt;
+		ot_rcp->spinel_hdlc_tx_buffer.data_size++;
+	} else {
+		LOG_ERR("spinel/hdlc tx buffer can't be allocated");
+	}
 }
 
 static void openthread_rcp_reception_byte(uint8_t bt, const void *ctx)
@@ -94,12 +147,12 @@ static void openthread_rcp_reception_byte(uint8_t bt, const void *ctx)
 	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
 	if (!ot_rcp->spinel_rx_buffer.data) {
-		ot_rcp->spinel_rx_buffer.data = malloc(CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_SIZE);
+		ot_rcp->spinel_rx_buffer.data = malloc(CONFIG_TELINK_W91_OT_SPINEL_HDLC_BUFFER_SIZE);
 		ot_rcp->spinel_rx_buffer.data_size = 0;
 	}
 
 	if (ot_rcp->spinel_rx_buffer.data) {
-		if (ot_rcp->spinel_rx_buffer.data_size < CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_SIZE) {
+		if (ot_rcp->spinel_rx_buffer.data_size < CONFIG_TELINK_W91_OT_SPINEL_HDLC_BUFFER_SIZE) {
 			ot_rcp->spinel_rx_buffer.data[ot_rcp->spinel_rx_buffer.data_size] = bt;
 			ot_rcp->spinel_rx_buffer.data_size ++;
 		} else {
@@ -150,14 +203,16 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 
 		ot_rcp->uart = uart;
 		k_work_init(&ot_rcp->work, openthread_rcp_reception_work);
-		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data), ot_rcp->rb_data);
 		hdlc_coder_init(&ot_rcp->hdlc, ot_rcp);
 		hdlc_coder_out_data_set(&ot_rcp->hdlc, openthread_rcp_hdlc_transmission);
 		hdlc_coder_inp_data_set(&ot_rcp->hdlc, openthread_rcp_reception_byte);
 		hdlc_coder_inp_finish_set(&ot_rcp->hdlc, openthread_rcp_reception_done);
 		ot_rcp->spinel_rx_buffer.data = NULL;
+		ot_rcp->spinel_hdlc_tx_buffer.data = NULL;
 		k_msgq_init(&ot_rcp->spinel_msgq, (char *)&ot_rcp->spinel_msgq_buffer,
-			sizeof(struct openthread_rcp_rx_buffer), ARRAY_SIZE(ot_rcp->spinel_msgq_buffer));
+			sizeof(struct openthread_rcp_buffer), ARRAY_SIZE(ot_rcp->spinel_msgq_buffer));
+		k_msgq_init(&ot_rcp->spinel_hdlc_msgq, (char *)&ot_rcp->spinel_hdlc_msgq_buffer,
+			sizeof(struct openthread_rcp_buffer), ARRAY_SIZE(ot_rcp->spinel_hdlc_msgq_buffer));
 		spinel_drv_init(&ot_rcp->spinel_drv, 0);
 		ot_rcp->reception = NULL;
 		ot_rcp->ctx = NULL;
@@ -169,6 +224,7 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 			break;
 		}
 		uart_irq_rx_enable(ot_rcp->uart);
+		uart_irq_tx_enable(ot_rcp->uart);
 	} while (0);
 
 	return result;
@@ -196,8 +252,8 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 		struct k_work_sync work_sync;
 
 		(void) k_work_cancel_sync(&ot_rcp->work, &work_sync);
-		ring_buf_reset(&ot_rcp->rb);
 		k_msgq_purge(&ot_rcp->spinel_msgq);
+		k_msgq_purge(&ot_rcp->spinel_hdlc_msgq);
 	} while (0);
 
 	return result;
@@ -207,12 +263,27 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 #define OPENTHREAD_RCP_HELPER(repsonse_parser, ...)                                                \
 	hdlc_coder_out_finish(&ot_rcp->hdlc, result >= 0);                                             \
 	if (result >= 0) {                                                                             \
+		if (ot_rcp->spinel_hdlc_tx_buffer.data) {                                                  \
+			result = uart_fifo_fill(ot_rcp->uart,                                                  \
+				ot_rcp->spinel_hdlc_tx_buffer.data, ot_rcp->spinel_hdlc_tx_buffer.data_size);      \
+                                                                                                   \
+			free(ot_rcp->spinel_hdlc_tx_buffer.data);                                              \
+			ot_rcp->spinel_hdlc_tx_buffer.data = NULL;                                             \
+			if (result < 0) {                                                                      \
+				LOG_ERR("failed to send spinel/hdlc frame");                                       \
+				return result;                                                                     \
+			}                                                                                      \
+		} else {                                                                                   \
+			LOG_ERR("spinel/hdlc tx buffer isn't allocated");                                      \
+			return -EINVAL;                                                                        \
+		}                                                                                          \
+                                                                                                   \
 		result = -ETIMEDOUT;                                                                       \
 		k_timepoint_t t = sys_timepoint_calc(                                                      \
 			K_MSEC(CONFIG_TELINK_W91_OT_SPINEL_RESPONSE_TIMEOUT_MS));                              \
                                                                                                    \
 		while (!sys_timepoint_expired(t)) {                                                        \
-			struct openthread_rcp_rx_buffer response;                                              \
+			struct openthread_rcp_buffer response;                                                 \
                                                                                                    \
 			if (!k_msgq_get(&ot_rcp->spinel_msgq, &response, sys_timepoint_timeout(t))) {          \
 				LOG_HEXDUMP_INF(response.data, response.data_size, "rx");                          \
