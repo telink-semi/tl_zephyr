@@ -49,9 +49,9 @@ struct w91_zb_data {
 
 static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 {
+	int result = 0;
 	const struct device *dev = (const struct device *)ctx;
 	struct w91_zb_data *data = dev->data;
-	bool net_data_received = false;
 	struct net_pkt *rx_pkt = net_pkt_rx_alloc_with_buffer(data->iface, frame->data_length,
 							      AF_UNSPEC, 0, K_NO_WAIT);
 
@@ -65,13 +65,16 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 			LOG_ERR("can't allocate rx packet");
 			break;
 		}
-		if (net_pkt_write(rx_pkt, frame->data, frame->data_length) < 0) {
+
+		result = net_pkt_write(rx_pkt, frame->data, frame->data_length);
+		if (result < 0) {
 			if (data->event_handler) {
 				data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
 						    (void *)&((enum ieee802154_rx_fail_reason){
 							    IEEE802154_RX_FAIL_NOT_RECEIVED}));
 			}
 			LOG_ERR("Failed to write rx packet.");
+			result = -ENOMEM;
 			break;
 		}
 		if (frame->time_enabled) {
@@ -81,7 +84,9 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 		net_pkt_set_ieee802154_lqi(rx_pkt, frame->rx.lqi);
 		net_pkt_set_ieee802154_ack_fpb(rx_pkt, frame->rx.frame_pending);
 		net_pkt_cursor_init(rx_pkt);
-		if (net_recv_data(data->iface, rx_pkt) < 0) {
+
+		result = net_recv_data(data->iface, rx_pkt);
+		if (result < 0) {
 			if (data->event_handler) {
 				data->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
 						    (void *)&((enum ieee802154_rx_fail_reason){
@@ -90,10 +95,9 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 			LOG_INF("rx packet not handled");
 			break;
 		}
-		net_data_received = true;
 	} while (0);
 
-	if (!net_data_received && rx_pkt) {
+	if (result < 0 && rx_pkt) {
 		net_pkt_unref(rx_pkt);
 	}
 }
