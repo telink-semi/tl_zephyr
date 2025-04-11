@@ -28,6 +28,7 @@ endif()
 endif() # CONFIG_BUILD_ONLY_NO_BLOBS
 
 zephyr_library_sources_ifdef(CONFIG_BT_B9X         hci_b9x.c)
+zephyr_library_sources_ifdef(CONFIG_BT_TLX         hci_tlx.c)
 zephyr_library_sources_ifdef(CONFIG_BT_W91         hci_w91.c)
 zephyr_library_sources_ifdef(CONFIG_BT_ESP32       hci_esp32.c)
 zephyr_library_sources_ifdef(CONFIG_BT_H4          h4.c)

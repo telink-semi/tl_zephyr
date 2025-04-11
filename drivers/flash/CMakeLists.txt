@@ -65,6 +65,7 @@ zephyr_library_sources_ifdef(CONFIG_SOC_FLASH_SILABS_SIWX91X soc_flash_silabs_si
 zephyr_library_sources_ifdef(CONFIG_SOC_FLASH_SMARTBOND flash_smartbond.c)
 zephyr_library_sources_ifdef(CONFIG_SOC_FLASH_XMC4XXX soc_flash_xmc4xxx.c)
 zephyr_library_sources_ifdef(CONFIG_SPI_FLASH_AT45 spi_flash_at45.c)
+zephyr_library_sources_ifdef(CONFIG_SOC_FLASH_TELINK_TLX soc_flash_tlx.c)
 zephyr_library_sources_ifdef(CONFIG_SOC_FLASH_TELINK_W91 soc_flash_w91.c)
 zephyr_library_sources_ifdef(CONFIG_SPI_NOR spi_nor.c)
 # zephyr-keep-sorted-stop
