@@ -44,5 +44,6 @@ source "drivers/wifi/nxp/Kconfig.nxp"
 source "drivers/wifi/infineon/Kconfig.airoc"
 source "drivers/wifi/nrf_wifi/Kconfig.nrfwifi"
 source "drivers/wifi/siwx91x/Kconfig.siwx91x"
+source "drivers/wifi/telink/Kconfig.w91"
 
 endif # WIFI

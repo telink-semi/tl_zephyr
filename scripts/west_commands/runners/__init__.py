@@ -54,6 +54,7 @@ _names = [
     'probe_rs',
     'pyocd',
     'qemu',
+    'sctool',
     'renode',
     'renode-robot',
     'silabs_commander',

@@ -84,3 +84,8 @@ zephyr_sources_ifdef(
   CONFIG_LOG_BACKEND_SEMIHOST
   log_backend_semihost.c
 )
+
+zephyr_sources_ifdef(
+  CONFIG_LOG_BACKEND_TELINK_W91
+  log_backend_telink_w91.c
+)
