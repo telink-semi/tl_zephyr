@@ -96,6 +96,7 @@ source "subsys/logging/Kconfig.template.log_config"
 # zephyr-keep-sorted-start
 source "drivers/spi/Kconfig.ambiq"
 source "drivers/spi/Kconfig.andes_atcspi200"
+source "drivers/spi/Kconfig.b9x"
 source "drivers/spi/Kconfig.bitbang"
 source "drivers/spi/Kconfig.cc13xx_cc26xx"
 source "drivers/spi/Kconfig.dw"

@@ -87,6 +87,23 @@ tests:
       # Disabling monolithic since CI environment doesn't use blobs
       - CONFIG_NXP_MONOLITHIC_NBU=n
       - OVERLAY_CONFIG="overlay-ot-rcp-host-nxp.conf"
+  sample.net.sockets.echo_client.b9x_802154:
+    extra_args: OVERLAY_CONFIG="overlay-802154.conf"
+    platform_allow:
+      - tlsr9518adk80d
+      - tlsr9528a
+      - tlsr9258a
+  sample.net.sockets.echo_client.b9x_openthread:
+    extra_args: OVERLAY_CONFIG="overlay-ot.conf"
+    slow: true
+    tags:
+      - net
+      - openthread
+    platform_allow:
+      - tlsr9518adk80d
+      - tlsr9528a
+      - tlsr9258a
+    filter: CONFIG_FULL_LIBC_SUPPORTED and not CONFIG_NATIVE_LIBC
     slow: true
     tags:
       - net
