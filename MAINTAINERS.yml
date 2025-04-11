@@ -5247,8 +5247,7 @@ West:
   status: odd fixes
   collaborators:
     - JiaT75
-  files:
-    - modules/lzma/
+  files: []
   labels:
     - "area: Compression"
 
