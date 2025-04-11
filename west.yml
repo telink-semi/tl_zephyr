@@ -247,7 +247,7 @@ manifest:
       path: modules/hal/tdk
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 9576bc034dde35b43b8fd9f2f1e0bd89255f48f2
+      revision: 62edeab7cde786a1403cb062e7cef7d13edae520
       path: modules/hal/telink
       groups:
         - hal
