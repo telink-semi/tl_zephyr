@@ -14,7 +14,6 @@ tests:
     platform_allow:
       - nrf52840dk/nrf52840
       - nrf52833dk/nrf52833
-      - tlsr9518adk80d
     integration_platforms:
       - nrf52840dk/nrf52840
   sample.net.openthread.coprocessor.usb:
@@ -33,7 +32,6 @@ tests:
     platform_allow:
       - nrf52840dk/nrf52840
       - nrf52833dk/nrf52833
-      - tlsr9518adk80d
     integration_platforms:
       - nrf52840dk/nrf52840
     extra_args: EXTRA_CONF_FILE=overlay-rcp.conf
