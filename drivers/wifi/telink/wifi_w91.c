@@ -199,7 +199,8 @@ static void wifi_w91_init_if(struct net_if *iface)
 	eth_ctx->eth_if_type = L2_ETH_IF_TYPE_WIFI;
 	data->base.iface = iface;
 
-	net_if_carrier_off(data->base.iface);
+	ethernet_init(data->base.iface);
+	net_eth_carrier_off(data->base.iface);
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
 		wifi_w91_init_if, NULL, &init_resp,
@@ -450,6 +451,11 @@ static void wifi_w91_l2_rx_cb(const void *data, size_t len, void *param)
 	int err;
 	struct wifi_w91_data *dev_data = ((struct device *)param)->data;
 	struct net_pkt *pkt;
+	struct ethernet_context *ctx = net_if_l2_data(dev_data->base.iface);
+
+	if (!ctx->is_net_carrier_up) {
+		return;
+	}
 
 	if (len <= offsetof(struct ipc_msg, data)) {
 		LOG_ERR("Incorrectly formed rx packet");
@@ -481,12 +487,15 @@ static void wifi_w91_l2_rx_cb(const void *data, size_t len, void *param)
 /* APIs implementation: wifi tx l2 data */
 static int wifi_w91_l2_tx(const struct device *dev, struct net_pkt *pkt)
 {
-	LOG_INF("%s", __func__);
-
 	int err;
 	struct wifi_w91_data *data = dev->data;
 	const struct wifi_w91_config *cfg = dev->config;
 	size_t len = net_pkt_get_len(pkt);
+	struct ethernet_context *ctx = net_if_l2_data(data->base.iface);
+
+	if (!ctx->is_net_carrier_up) {
+		return -ENETDOWN;
+	}
 
 	if (!len) {
 		LOG_ERR("zero net pkt packet length");
@@ -777,18 +786,17 @@ static void wifi_w91_event_thread(void *p1, void *p2, void *p3)
 		switch (event.id) {
 		case WIFI_W91_EVENT_STA_START:
 			data->base.state = WIFI_W91_STA_STARTED;
-			net_if_carrier_on(data->base.iface);
 			wifi_w91_reset_state(&data->base.if_state);
 			data->base.if_state.state = WIFI_STATE_DISCONNECTED;
 			data->base.if_state.iface_mode = WIFI_MODE_INFRA;
 			break;
 		case WIFI_W91_EVENT_STA_STOP:
 			data->base.state = WIFI_W91_STA_STOPPED;
-			net_if_carrier_off(data->base.iface);
 			wifi_w91_reset_state(&data->base.if_state);
 			break;
 		case WIFI_W91_EVENT_STA_CONNECTED:
 			data->base.state = WIFI_W91_STA_CONNECTED;
+			net_eth_carrier_on(data->base.iface);
 			LOG_INF("The WiFi STA connected");
 			wifi_mgmt_raise_connect_result_event(data->base.iface, 0);
 
@@ -810,6 +818,7 @@ static void wifi_w91_event_thread(void *p1, void *p2, void *p3)
 			break;
 		case WIFI_W91_EVENT_STA_DISCONNECTED:
 			LOG_INF("The WiFi STA disconnected");
+			net_eth_carrier_off(data->base.iface);
 			if (data->base.state == WIFI_W91_STA_CONNECTED) {
 				wifi_mgmt_raise_disconnect_result_event(data->base.iface, 0);
 			} else {
@@ -828,6 +837,7 @@ static void wifi_w91_event_thread(void *p1, void *p2, void *p3)
 			break;
 		case WIFI_W91_EVENT_AP_START:
 			data->base.state = WIFI_W91_AP_STARTED;
+			net_eth_carrier_on(data->base.iface);
 			LOG_INF("The WiFi Access Point is started");
 
 			data->base.if_state = (struct wifi_iface_status) {
@@ -849,6 +859,7 @@ static void wifi_w91_event_thread(void *p1, void *p2, void *p3)
 			break;
 		case WIFI_W91_EVENT_AP_STOP:
 			data->base.state = WIFI_W91_AP_STOPPED;
+			net_eth_carrier_off(data->base.iface);
 			wifi_w91_reset_state(&data->base.if_state);
 			LOG_INF("The WiFi Access Point is stopped");
 			break;
