@@ -11,19 +11,24 @@ menu "Application related configuration"
 
 choice APP_SOCKET_TYPE
 	prompt "Socket type used for data exchange"
-	default APP_SOCKET_UDP
+	default APP_SOCKET_UDP if NET_IPV4
+	default APP_SOCKET_UDP_IPV6 if NET_IPV6
 
 config APP_SOCKET_UDP
 	bool "Use UDP IPV4 socket"
+	depends on NET_IPV4
 
 config APP_SOCKET_UDP_IPV6
 	bool "Use UDP IPV6 socket"
+	depends on NET_IPV6
 
 config APP_SOCKET_TCP
 	bool "Use TCP IPV4 socket"
+	depends on NET_IPV4
 
 config APP_SOCKET_TCP_IPV6
 	bool "Use TCP IPV6 socket"
+	depends on NET_IPV6
 
 endchoice
 
