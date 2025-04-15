@@ -151,11 +151,11 @@ jobs:
         cp ../build_usb_console_b91/zephyr/zephyr.bin               telink_build_artifacts/b91_usb_console.bin
         cp ../build_ot_coprocessor_rcp_usb_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_coprocessor_rcp_usb.bin
         cp ../build_retention_basic_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_retention_basic.bin
-        cp ../build_ot_echo_client_pm_deep_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_echo_client_pm_retention.bin
         cp ../build_mcuboot_usb_dfu_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_mcuboot_usb_dfu.bin
         cp ../build_blinky_usb_dfu_b91/zephyr/zephyr.signed.bin     telink_build_artifacts/b91_blinky_usb_dfu.signed.bin
-        cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
         cp ../build_crypto_mbedtls_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_mbedtls.bin
+       #cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
+       #cp ../build_ot_echo_client_pm_deep_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_echo_client_pm_retention.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
