@@ -2220,10 +2220,14 @@ int net_dhcpv6_init(void)
 	net_ipaddr_copy(&net_sin6(&unspec_addr)->sin6_addr,
 			net_ipv6_unspecified_address());
 	unspec_addr.sa_family = AF_INET6;
-
-	ret = net_udp_register(AF_INET6, NULL, &unspec_addr,
-			       DHCPV6_SERVER_PORT, DHCPV6_CLIENT_PORT,
-			       NULL, dhcpv6_input, NULL, NULL);
+	/*
+	 * According to specification DHCP server should reply with an advertise
+	 * using ports 547 -> 546. But some routers are using different source port.
+	 * Linux systems accepts such response (ignore source port).
+	 * Lets do same on Zephyr - DHCPV6_SERVER_PORT ignored accepts from all.
+	 */
+	ret = net_udp_register(AF_INET6, NULL, &unspec_addr, 0, DHCPV6_CLIENT_PORT, NULL,
+			       dhcpv6_input, NULL, NULL);
 	if (ret < 0) {
 		NET_DBG("UDP callback registration failed");
 		return ret;
