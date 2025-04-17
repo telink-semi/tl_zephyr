@@ -340,12 +340,6 @@ static int w91_zb_stop(const struct device *dev)
 	return result;
 }
 
-static int w91_zb_continuous_carrier(const struct device *dev)
-{
-	LOG_WRN("%s not supported", __func__);
-	return -ENOTSUP;
-}
-
 static int w91_zb_configure(const struct device *dev, enum ieee802154_config_type type,
 			    const struct ieee802154_config *config)
 {
@@ -539,7 +533,6 @@ static const struct ieee802154_radio_api w91_zb_drv_api = {
 	.tx = w91_zb_tx,
 	.start = w91_zb_start,
 	.stop = w91_zb_stop,
-	.continuous_carrier = w91_zb_continuous_carrier,
 	.configure = w91_zb_configure,
 	.ed_scan = w91_zb_ed_scan,
 	.get_time = w91_zb_get_time,
