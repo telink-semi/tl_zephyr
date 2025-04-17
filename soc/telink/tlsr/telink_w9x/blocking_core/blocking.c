@@ -11,7 +11,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(blocking_core_w91);
 
-#define MTIME_REG    DT_REG_ADDR(DT_INST(0, telink_machine_timer))
+#define MTIME_REG    DT_REG_ADDR(DT_INST(0, riscv_machine_timer))
 #define BLOCKING_THREAD_PRIORITY (CONFIG_NUM_PREEMPT_PRIORITIES - 1)
 
 enum {
