@@ -35,11 +35,7 @@ config TELINK_TL721X_PMP
 	help
 		This option enables Telink TL721X PMP(memory protection) module.
 
-config TELINK_TLX_HWDSP
-	bool "Support Hardware DSP"
-	select RISCV_SOC_CONTEXT_SAVE
-
-config TELINK_TLX_PFT_ARCH
+config TELINK_TLX_PFT
 	bool "Support performance throttling"
 	default y
 	select RISCV_SOC_CONTEXT_SAVE
