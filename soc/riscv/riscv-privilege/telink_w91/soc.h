@@ -12,6 +12,7 @@
 #define NDS_MXSTATUS            0x7c4
 #define NDS_MCACHE_CTL          0x7ca
 #define NDS_MMISC_CTL           0x7d0
+#define NDS_UITB                0x800
 
 #define D25_RESET_VECTOR        0xf0100200
 #define N22_RESET_VECTOR        0xf0100204
