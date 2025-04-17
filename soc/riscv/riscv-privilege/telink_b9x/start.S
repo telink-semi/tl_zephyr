@@ -6,6 +6,7 @@
 
 #define NDS_MCACHE_CTL               0x7ca
 #define NDS_MMISC_CTL                0x7d0
+#define NDS_UITB                     0x800
 
 #include <zephyr/toolchain.h>
 
@@ -45,6 +46,10 @@ entry:
 	.align 2
 
 start:
+#if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
+	la     t0, _ITB_BASE_
+	csrw   NDS_UITB, t0                     #/ CoDense instruction table
+#endif
 
 #if defined(CONFIG_TELINK_B91_USB_SWI_DISABLE) && CONFIG_TELINK_B91_USB_SWI_DISABLE
 	/* USB SWI disable: 0x80100c01 <- 0x40 */

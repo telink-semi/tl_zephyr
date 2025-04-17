@@ -10,16 +10,16 @@
 #ifdef CONFIG_RISCV_SOC_OFFSETS
 
 /* Telink B91 specific registers. */
-#if defined(CONFIG_TELINK_B9X_PFT_ARCH) && defined(__riscv_dsp)
+#if defined(CONFIG_TELINK_B9X_PFT) && defined(CONFIG_ANDES_HWDSP)
 	#define GEN_SOC_OFFSET_SYMS()	     \
 	GEN_OFFSET_SYM(soc_esf_t, mxstatus); \
 	GEN_OFFSET_SYM(soc_esf_t, ucode)
 
-#elif defined(CONFIG_TELINK_B9X_PFT_ARCH)
+#elif defined(CONFIG_TELINK_B9X_PFT)
 	#define GEN_SOC_OFFSET_SYMS() \
 	GEN_OFFSET_SYM(soc_esf_t, mxstatus)
 
-#elif defined(__riscv_dsp)
+#elif defined(CONFIG_ANDES_HWDSP)
 	#define GEN_SOC_OFFSET_SYMS() \
 	GEN_OFFSET_SYM(soc_esf_t, ucode)
 

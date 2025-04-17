@@ -51,7 +51,10 @@ _check_start_core:
 	sw     t1, %lo(HART_RESET_CTRL)(t0)     #/ D25 core reset: HART_RESET_CTRL <- D25_MASK
 
 _start:                                     #/ after reset starts on D25 core
-
+#if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
+	la     t0, _ITB_BASE_
+	csrw   NDS_UITB, t0                     #/ CoDense instruction table
+#endif
 	lui    t0, 0
 	la     t2, IPC_REMOTE_TX_START
 	la     t3, IPC_REMOTE_TX_END
