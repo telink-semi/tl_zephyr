@@ -32,14 +32,17 @@ zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS
 zephyr_ld_options(-fuse-ld=bfd)
 
 # Set compile options
-zephyr_compile_options_ifdef(CONFIG_TELINK_B9X_HWDSP -mext-dsp)
+zephyr_compile_options_ifdef(CONFIG_ANDES_HWDSP -mext-dsp)
 zephyr_compile_options_ifndef(CONFIG_RISCV_GP -mno-relax)
 zephyr_linker_sources(ROM_START SORT_KEY 0x0 init.ld)
+zephyr_linker_sources_ifdef(CONFIG_ANDES_CODENSE RODATA SORT_KEY 0x0 execit.ld)
 if(CONFIG_TELINK_B9X_MATTER_RETENTION_LAYOUT)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention.ld)
 endif()
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm.ld)
 set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
+zephyr_cc_option_ifdef(CONFIG_ANDES_CODENSE -mexecit)
+zephyr_ld_option_ifdef(CONFIG_ANDES_CODENSE -Wl,--mexecit)
 
 if(CONFIG_TELINK_B9X_MATTER_RETENTION_LAYOUT)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention.ld)

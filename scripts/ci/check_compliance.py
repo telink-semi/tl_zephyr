@@ -995,6 +995,8 @@ flagged.
     UNDEF_KCONFIG_ALLOWLIST = {
         # zephyr-keep-sorted-start re(^\s+")
         "ALSO_MISSING",
+        "ANDES_CODENSE",
+        "ANDES_HWDSP",
         "APP_LINK_WITH_",
         "APP_LOG_LEVEL", # Application log level is not detected correctly as
                          # the option is defined using a template, so it can't

@@ -1,0 +1,30 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config NEWLIB_LIBC_SUPPORTED
+	def_bool y
+	help
+	  Andes supports newlib for C and C++ development.
+
+config FPU
+	def_bool y
+	help
+	  Andes supports HW FPU.
+
+config FPU_SHARING
+	def_bool y
+	help
+	  Andes supports HW FPU context switching.
+
+config ANDES_CODENSE
+	bool "Support CoDense instruction table"
+	default y
+	help
+	  Andes supports CoDense instruction table.
+
+config ANDES_HWDSP
+	bool "Support Hardware DSP"
+	default y
+	select RISCV_SOC_CONTEXT_SAVE
+	help
+	  Andes supports DSP instructions.
