@@ -30,11 +30,7 @@ config TELINK_B92_PMP
 	help
 		This option enables Telink B92 PMP(memory protection) module.
 
-config TELINK_B9X_HWDSP
-	bool "Support Hardware DSP"
-	select RISCV_SOC_CONTEXT_SAVE
-
-config TELINK_B9X_PFT_ARCH
+config TELINK_B9X_PFT
 	bool "Support performance throttling"
 	default y
 	select RISCV_SOC_CONTEXT_SAVE

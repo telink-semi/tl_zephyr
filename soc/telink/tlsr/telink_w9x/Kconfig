@@ -23,11 +23,7 @@ config SOC_RISCV_TELINK_W9X
 
 if SOC_RISCV_TELINK_W9X
 
-config TELINK_W91_HWDSP
-	bool "Support Hardware DSP"
-	select RISCV_SOC_CONTEXT_SAVE
-
-config TELINK_W91_PFT_ARCH
+config TELINK_W91_PFT
 	bool "Support performance throttling"
 	default y
 	select RISCV_SOC_CONTEXT_SAVE

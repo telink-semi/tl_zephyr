@@ -6,6 +6,7 @@
 
 #define NDS_MCACHE_CTL               0x7ca
 #define NDS_MMISC_CTL                0x7d0
+#define NDS_UITB                     0x800
 
 #include <zephyr/toolchain.h>
 
@@ -34,13 +35,18 @@ entry:
 	.align 2
 
 start:
+#if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
+	la     t0, _ITB_BASE_
+	csrw   NDS_UITB, t0                     #/ CoDense instruction table
+#endif
 
 	/* Disable vector mode */
 	csrci  0x7d0, 2
+
 	/* Disable vector feture enable address */
-	lui t0 ,0xc4000
-	li  t1 ,0x00
-	sw  t1 ,0x0(t0)
+	lui    t0 ,0xc4000
+	li     t1 ,0x00
+	sw     t1 ,0x0(t0)
 
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
