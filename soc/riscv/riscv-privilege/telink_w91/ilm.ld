@@ -13,6 +13,7 @@ SECTION_DATA_PROLOGUE(ram_code,,)
 	*(".ram_code.*")
 	*(.ram_code_data)
 	*(".ram_code_data.*")
+	"*malloc.c.obj*"(".noinit.*")
 
 	PROVIDE (_RAM_CODE_VMA_END = .);
 	PROVIDE (_RAM_CODE_VMA_START = ADDR(ram_code));

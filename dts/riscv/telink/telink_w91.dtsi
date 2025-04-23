@@ -53,12 +53,17 @@
 			ranges;
 
 			sram_tx: memory@40000000 {
-				reg = <0x40000000 0x3000>;
+				reg = <0x40000000 0x2000>;
 			};
 
-			sram_rx: memory@40003000 {
-				reg = <0x40003000 0x3000>;
+			sram_rx: memory@40002000 {
+				reg = <0x40002000 0x2000>;
 			};
+		};
+
+		sram: memory@4000c000 {
+			compatible = "mmio-sram";
+			reg = < 0x4000c000 0x14000 >;
 		};
 
 		mtimer: timer@e6000000 {

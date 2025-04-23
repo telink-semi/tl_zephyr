@@ -59,7 +59,7 @@
 
 	chosen {
 		/* zephyr,aux_ram = &sram; */
-		zephyr,sram = &ram_dlm;
+		zephyr,sram = &sram;
 		zephyr,flash = &flash;
 		zephyr,flash-controller = &flash_mspi;
 		telink,ipc-interface = &ipc0;
