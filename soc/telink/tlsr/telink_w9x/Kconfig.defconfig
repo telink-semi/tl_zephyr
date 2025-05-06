@@ -27,6 +27,10 @@ config NUM_IRQS
 	int
 	default 59
 
+config MAX_IRQ_PER_AGGREGATOR
+	int
+	default 59
+
 config PINCTRL
 	bool
 	default y
