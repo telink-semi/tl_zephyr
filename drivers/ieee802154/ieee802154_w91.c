@@ -80,6 +80,9 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 		net_pkt_set_ieee802154_rssi_dbm(rx_pkt, frame->rx.rssi);
 		net_pkt_set_ieee802154_lqi(rx_pkt, frame->rx.lqi);
 		net_pkt_set_ieee802154_ack_fpb(rx_pkt, frame->rx.frame_pending);
+#if defined(CONFIG_NET_L2_OPENTHREAD)
+		net_pkt_set_ieee802154_ack_seb(rx_pkt, frame->rx.sec_enh_ack);
+#endif
 		net_pkt_cursor_init(rx_pkt);
 		if (net_recv_data(data->iface, rx_pkt) < 0) {
 			if (data->event_handler) {
@@ -234,10 +237,12 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 	struct spinel_frame_data frame = {
 		.data = frag->data,
 		.data_length = frag->len + W91_ZB_FCS_SIZE,
+		.channel = data->channel,
+		.tx.time_base = 0,
+		.tx.time_offset = 0,
 		.tx.header_updated = net_pkt_ieee802154_mac_hdr_rdy(pkt),
 		.tx.security_processed = net_pkt_ieee802154_frame_secured(pkt),
 		.tx.is_ret = false,
-		.tx.channel = data->channel,
 		.tx.csma_ca_enabled = (mode == IEEE802154_TX_MODE_CSMA_CA)};
 
 	if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
@@ -361,8 +366,10 @@ static int w91_zb_configure(const struct device *dev, enum ieee802154_config_typ
 	case IEEE802154_CONFIG_ACK_FPB:
 		if (config->ack_fpb.extended) {
 			if (config->ack_fpb.addr) {
-				result = openthread_rcp_ack_fpb_ext(&data->ot_rcp,
-								    config->ack_fpb.addr,
+				uint8_t address[W91_ZB_EXT_ADDR_LENGTH];
+
+				sys_memcpy_swap(address, config->ack_fpb.addr, sizeof(address));
+				result = openthread_rcp_ack_fpb_ext(&data->ot_rcp, address,
 								    config->ack_fpb.enabled);
 			} else {
 				result = 0;

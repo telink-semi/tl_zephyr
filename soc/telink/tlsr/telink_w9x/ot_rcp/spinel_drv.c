@@ -6,8 +6,6 @@
 
 #include "spinel_drv.h"
 
-#include <openthread/platform/radio.h>
-
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(spinel_drv);
@@ -259,8 +257,6 @@ static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv, const 
 {
 	int8_t noise_floor;
 	uint16_t flags;
-	uint8_t channel;
-	uint64_t timestamp;
 	uint32_t err;
 
 	frame->data_length = OT_RADIO_FRAME_MAX_SIZE;
@@ -268,10 +264,13 @@ static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv, const 
 	int ret = spinel_datatype_unpack(
 		data, data_size, copy_buff,
 		SPINEL_DATATYPE_DATA_WLEN_S SPINEL_DATATYPE_INT8_S SPINEL_DATATYPE_INT8_S
-			SPINEL_DATATYPE_UINT16_S SPINEL_DATATYPE_UINT8_S SPINEL_DATATYPE_UINT8_S
-				SPINEL_DATATYPE_UINT64_S SPINEL_DATATYPE_UINT_PACKED_S,
+			SPINEL_DATATYPE_UINT16_S SPINEL_DATATYPE_STRUCT_S(
+				SPINEL_DATATYPE_UINT8_S SPINEL_DATATYPE_UINT8_S
+					SPINEL_DATATYPE_UINT64_S)
+				SPINEL_DATATYPE_STRUCT_S(SPINEL_DATATYPE_UINT_PACKED_S),
 		copy_buff ? frame->data : (uint8_t *)&frame->data, &frame->data_length,
-		&frame->rx.rssi, &noise_floor, &flags, &channel, &frame->rx.lqi, &timestamp, &err);
+		&frame->rx.rssi, &noise_floor, &flags, &frame->channel, &frame->rx.lqi,
+		&frame->rx.timestamp, &err);
 
 	if (ret < 0) {
 		LOG_ERR("Failed get radio frame (inst = %u, err = %d)", spinel_drv->inst, ret);
@@ -284,7 +283,8 @@ static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv, const 
 		return -EIO;
 	}
 
-	frame->rx.frame_pending = flags & SPINEL_MD_FLAG_ACKED_FP;
+	frame->rx.frame_pending = ((flags & SPINEL_MD_FLAG_ACKED_FP) != 0);
+	frame->rx.sec_enh_ack = ((flags & SPINEL_MD_FLAG_ACKED_SEC) != 0);
 
 	return ret;
 }
@@ -297,6 +297,11 @@ void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst)
 	for (size_t i = 0; i < SPINEL_MAX_NUMB_TID; i++) {
 		spinel_drv->t_id.props[i] = SPINEL_PROP_UNDEFINED;
 	}
+}
+
+void spinel_drv_remove_last_act(struct spinel_drv_data *spinel_drv)
+{
+	spinel_drv->t_id.props[PROP_OFFSET(spinel_drv->t_id.act_id)] = SPINEL_PROP_UNDEFINED;
 }
 
 int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb, const void *ctx,
@@ -361,7 +366,7 @@ int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv, spinel_tx
 }
 
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				     uint16_t data_size, uint8_t ieee_eui64[8])
+				     uint16_t data_size, uint8_t ieee_eui64[OT_EXT_ADDRESS_SIZE])
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
@@ -558,7 +563,7 @@ bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv, const uint8_t 
 }
 
 int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
-				const void *ctx, uint8_t addr[8], bool enable)
+				const void *ctx, uint8_t addr[OT_EXT_ADDRESS_SIZE], bool enable)
 {
 	int ret;
 
@@ -580,12 +585,13 @@ int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv, spinel_tx_cb
 }
 
 bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				  uint16_t data_size, uint8_t addr[8], bool enable)
+				  uint16_t data_size, uint8_t addr[OT_EXT_ADDRESS_SIZE],
+				  bool enable)
 {
 	int ret;
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	uint8_t(*p_get_addr)[8];
+	uint8_t (*p_get_addr)[OT_EXT_ADDRESS_SIZE];
 
 	if (enable) {
 		ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_INSERTED,
@@ -601,7 +607,7 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, const uint
 		/* Skip this frame */
 		return false;
 	} else if (ret < 0 || !param_data || param_size != sizeof(*p_get_addr)) {
-		LOG_ERR("Failed check ack_fpb (inst = %u, err = %d, data = %p, size = %u)",
+		LOG_ERR("Failed check ack_fpb_ext (inst = %u, err = %d, data = %p, size = %u)",
 			spinel_drv->inst, ret, param_data, param_size);
 		return false;
 	}
@@ -610,14 +616,15 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, const uint
 				     &p_get_addr);
 
 	if (ret < 0) {
-		LOG_ERR("Failed get parameters of ack_fpb (inst = %u, err = %d)", spinel_drv->inst,
-			ret);
+		LOG_ERR("Failed get parameters of ack_fpb_ext (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
 		return false;
 	}
 
 	if (!p_get_addr || !addr) {
 		ret = -EINVAL;
-		LOG_ERR("NULL pointer in response ack_fpb (inst = %u, addr = %p, p_get_addr = %p)",
+		LOG_ERR("NULL pointer in response ack_fpb_ext (inst = %u, addr = %p, p_get_addr = "
+			"%p)",
 			spinel_drv->inst, addr, p_get_addr);
 		return false;
 	}
@@ -716,7 +723,7 @@ int spinel_drv_send_mac_frame_counter(struct spinel_drv_data *spinel_drv, spinel
 }
 
 bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			       uint16_t data_size)
+					uint16_t data_size)
 {
 	bool ret = spinel_drv_check_status(spinel_drv, data, data_size);
 
@@ -829,7 +836,7 @@ bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv, const uint8
 }
 
 int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
-			     const void *ctx, uint8_t addr[8])
+			     const void *ctx, uint8_t addr[OT_EXT_ADDRESS_SIZE])
 {
 	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx, SPINEL_CMD_PROP_VALUE_SET,
 				      SPINEL_PROP_MAC_15_4_LADDR, SPINEL_DATATYPE_EUI64_S, addr);
@@ -842,11 +849,11 @@ int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx
 }
 
 bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			       uint16_t data_size, uint8_t addr[8])
+			       uint16_t data_size, uint8_t addr[OT_EXT_ADDRESS_SIZE])
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
-	uint8_t(*p_get_addr)[8];
+	uint8_t (*p_get_addr)[OT_EXT_ADDRESS_SIZE];
 
 	int ret =
 		spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_LADDR,
@@ -1098,11 +1105,11 @@ int spinel_drv_send_transmit_frame(struct spinel_drv_data *spinel_drv, spinel_tx
 				SPINEL_DATATYPE_BOOL_S SPINEL_DATATYPE_BOOL_S
 					SPINEL_DATATYPE_UINT32_S SPINEL_DATATYPE_UINT32_S
 						SPINEL_DATATYPE_UINT8_S,
-		frame->data, frame->data_length, frame->tx.channel,
+		frame->data, frame->data_length, frame->channel,
 		SPINEL_DRV_DEFAULT_MAX_CSMA_BACKOFFS, SPINEL_DRV_DEFAULT_MAX_FRAME_RETRIES,
 		frame->tx.csma_ca_enabled, frame->tx.header_updated, frame->tx.is_ret,
-		frame->tx.security_processed, frame->time_offset, frame->time_base,
-		frame->tx.channel);
+		frame->tx.security_processed, frame->tx.time_offset, frame->tx.time_base,
+		frame->channel);
 
 	if (ret < 0) {
 		LOG_ERR("Failed send transmit_frame (inst = %u, err = %d)", spinel_drv->inst, ret);
@@ -1216,7 +1223,8 @@ bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv, const ui
 }
 
 int spinel_drv_send_link_metrics(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
-				 const void *ctx, uint16_t short_addr, const uint8_t ext_addr[8],
+				 const void *ctx, uint16_t short_addr,
+				 const uint8_t ext_addr[OT_EXT_ADDRESS_SIZE],
 				 struct spinel_link_metrics link_metrics)
 {
 	uint8_t flags = 0;
