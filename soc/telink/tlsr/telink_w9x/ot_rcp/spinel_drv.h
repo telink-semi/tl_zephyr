@@ -9,6 +9,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/net/ieee802154_radio.h>
+#include <openthread/platform/radio.h>
 
 #include "spinel.h"
 
@@ -17,23 +18,25 @@ struct spinel_frame_data {
 	size_t data_length;
 
 	bool time_enabled;
-	uint32_t time_base;
-	uint32_t time_offset;
+	uint8_t channel;
 
 	union {
 		struct {
-			uint8_t channel;
+			uint32_t time_base;
+			uint32_t time_offset;
 
-			bool header_updated;
-			bool security_processed;
-			bool is_ret;
-			bool csma_ca_enabled;
+			bool header_updated: 1;
+			bool security_processed: 1;
+			bool is_ret: 1;
+			bool csma_ca_enabled: 1;
 		} tx;
 		struct {
+			uint64_t timestamp;
 			int8_t rssi;
 			uint8_t lqi;
 
-			bool frame_pending;
+			bool frame_pending: 1;
+			bool sec_enh_ack: 1;
 		} rx;
 	};
 };
@@ -66,6 +69,7 @@ struct spinel_drv_data {
 };
 
 void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst);
+void spinel_drv_remove_last_act(struct spinel_drv_data *spinel_drv);
 int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb, const void *ctx,
 			  uint8_t type);
 bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv, const uint8_t *data,
@@ -73,7 +77,7 @@ bool spinel_drv_check_reset(struct spinel_drv_data *spinel_drv, const uint8_t *d
 int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
 				   const void *ctx);
 bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				     uint16_t data_size, uint8_t ieee_eui64[8]);
+				     uint16_t data_size, uint8_t ieee_eui64[OT_EXT_ADDRESS_SIZE]);
 int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
 				     const void *ctx);
 bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv, const uint8_t *data,
@@ -87,9 +91,10 @@ int spinel_drv_send_ack_fpb(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_
 bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv, const uint8_t *data,
 			      uint16_t data_size, uint16_t addr, bool enable);
 int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
-				const void *ctx, uint8_t addr[8], bool enable);
+				const void *ctx, uint8_t addr[OT_EXT_ADDRESS_SIZE], bool enable);
 bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				  uint16_t data_size, uint8_t addr[8], bool enable);
+				  uint16_t data_size, uint8_t addr[OT_EXT_ADDRESS_SIZE],
+				  bool enable);
 int spinel_drv_send_ack_fpb_clear(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
 				  const void *ctx);
 bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv, const uint8_t *data,
@@ -111,9 +116,9 @@ int spinel_drv_send_short_addr(struct spinel_drv_data *spinel_drv, spinel_tx_cb 
 bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv, const uint8_t *data,
 				 uint16_t data_size, uint16_t addr);
 int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
-			     const void *ctx, uint8_t addr[8]);
+			     const void *ctx, uint8_t addr[OT_EXT_ADDRESS_SIZE]);
 bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			       uint16_t data_size, uint8_t addr[8]);
+			       uint16_t data_size, uint8_t addr[OT_EXT_ADDRESS_SIZE]);
 int spinel_drv_send_tx_power(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
 			     const void *ctx, int8_t pwr_dbm);
 bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv, const uint8_t *data,
@@ -137,7 +142,8 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv, const u
 bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv, const uint8_t *data,
 				    uint16_t data_size, struct spinel_frame_data *frame);
 int spinel_drv_send_link_metrics(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
-				 const void *ctx, uint16_t short_addr, const uint8_t ext_addr[8],
+				 const void *ctx, uint16_t short_addr,
+				 const uint8_t ext_addr[OT_EXT_ADDRESS_SIZE],
 				 struct spinel_link_metrics link_metrics);
 bool spinel_drv_check_link_metrics(struct spinel_drv_data *spinel_drv, const uint8_t *data,
 				   uint16_t data_size);

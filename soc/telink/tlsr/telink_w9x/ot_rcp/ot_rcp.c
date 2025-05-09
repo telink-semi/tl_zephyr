@@ -249,6 +249,7 @@ static int openthread_rcp_process_continue(struct openthread_rcp_data *ot_rcp,
 		result = data_income->data_size;
 	}
 	if (result == -ETIMEDOUT) {
+		spinel_drv_remove_last_act(&ot_rcp->spinel_drv);
 		LOG_ERR("spinel response timeout");
 	}
 
