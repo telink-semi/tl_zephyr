@@ -21,6 +21,9 @@ config 2ND_LVL_ISR_TBL_OFFSET
 config NUM_IRQS
 	default 64
 
+config MAX_IRQ_PER_AGGREGATOR
+	default 64
+
 config PINCTRL
 	default y
 
