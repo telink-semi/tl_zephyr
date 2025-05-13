@@ -124,11 +124,11 @@ jobs:
         cd ..
         west build -b tlsr9518adk80d             -d build_blinky_usb_dfu_b91            zephyr/samples/basic/blinky                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_BOOTLOADER_MCUBOOT=y
 
-# Comnmented due to RAM overflowing
-#    - name: Build B91 net/openthread/cli
-#      run: |
-#        cd ..
-#        west build -b tlsr9518adk80d             -d build_ot_cli_b91                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-telink-fixed-mac.conf
+
+    - name: Build B91 net/openthread/cli
+      run: |
+        cd ..
+        west build -b tlsr9518adk80d             -d build_ot_cli_b91                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-telink-fixed-mac.conf
 
     - name: Build B91 crypto/mbedtls
       run: |
@@ -154,7 +154,7 @@ jobs:
         cp ../build_mcuboot_usb_dfu_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_mcuboot_usb_dfu.bin
         cp ../build_blinky_usb_dfu_b91/zephyr/zephyr.signed.bin     telink_build_artifacts/b91_blinky_usb_dfu.signed.bin
         cp ../build_crypto_mbedtls_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_mbedtls.bin
-       #cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
+        cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
        #cp ../build_ot_echo_client_pm_deep_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_echo_client_pm_retention.bin
 
     - name: Publish artifacts
