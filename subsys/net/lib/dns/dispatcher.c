@@ -14,6 +14,8 @@ LOG_MODULE_REGISTER(net_dns_dispatcher, CONFIG_DNS_SOCKET_DISPATCHER_LOG_LEVEL);
 #include <zephyr/net/dns_resolve.h>
 #include <zephyr/net/socket_service.h>
 
+#include <zephyr/net/net_context.h>
+
 #include "dns_pack.h"
 
 static K_MUTEX_DEFINE(lock);
@@ -161,6 +163,17 @@ unlock:
 	return ret;
 }
 
+static inline struct net_if *get_network_interface(int sock)
+{
+	struct net_context *net_ctx = zsock_get_context_object(sock);
+
+	if (net_ctx) {
+		return net_context_get_iface(net_ctx);
+	} else {
+		return NULL;
+	}
+}
+
 void dns_dispatcher_svc_handler(struct k_work *work)
 {
 	struct net_socket_service_event *pev =
@@ -195,7 +208,9 @@ int dns_dispatcher_register(struct dns_socket_dispatcher *ctx)
 		if (ctx->type == entry->type &&
 		    ctx->local_addr.sa_family == entry->local_addr.sa_family) {
 			if (net_sin(&entry->local_addr)->sin_port ==
-			    net_sin(&ctx->local_addr)->sin_port) {
+				    net_sin(&ctx->local_addr)->sin_port &&
+			    get_network_interface(entry->sock) ==
+				    get_network_interface(ctx->sock)) {
 				dup = true;
 				continue;
 			}
@@ -210,7 +225,9 @@ int dns_dispatcher_register(struct dns_socket_dispatcher *ctx)
 		if (found == NULL && ctx->type != entry->type &&
 		    ctx->local_addr.sa_family == entry->local_addr.sa_family) {
 			if (net_sin(&entry->local_addr)->sin_port ==
-			    net_sin(&ctx->local_addr)->sin_port) {
+				    net_sin(&ctx->local_addr)->sin_port &&
+			    get_network_interface(entry->sock) ==
+				    get_network_interface(ctx->sock)) {
 				found = entry;
 				continue;
 			}
