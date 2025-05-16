@@ -17,6 +17,7 @@ telink_w91_post_build <1> <2> <3>
 
 import sys
 import os
+import shutil
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -24,6 +25,7 @@ from urllib3.util import Retry
 BASE_URL = f'https://doc.telink-semi.cn/Zephyr/binaries/public/w91_n22/'
 N22_URL_FORMAT = BASE_URL + f'w91_n22_%s.bin'
 MATTER_MCUBOOT_URL_FORMAT = BASE_URL + f'w91_mcuboot_%s.bin'
+DEFAULT_ZEPHYR_BASE = f'/opt/telink/zephyrproject/zephyr'
 # Retry strategy for fetching URLs
 URL_GET_TIMEOUT = 30
 URL_GET_RETRY = 5
@@ -75,17 +77,27 @@ def main():
     session.mount("https://", adapter)
 
     # Download N22 core firmware
-    n22_bin_url = N22_URL_FORMAT % n22_revision
     n22_bin_name = os.path.join(bin_path, 'n22.bin')
-    if not download_file(session, n22_bin_url, n22_bin_name, URL_GET_TIMEOUT):
-        return
+    n22_bin_src = os.path.join(DEFAULT_ZEPHYR_BASE, 'n22.bin')
+    if os.path.exists(n22_bin_src):
+        print(f'Found {n22_bin_src}, copying to {n22_bin_name}...')
+        shutil.copy(n22_bin_src, n22_bin_name)
+    else:
+        n22_bin_url = N22_URL_FORMAT % n22_revision
+        if not download_file(session, n22_bin_url, n22_bin_name, URL_GET_TIMEOUT):
+            return
 
     # Download Matter MCUboot firmware if Matter OTA layout is enabled
     if matter_ota_layout_enabled == '1':
-        matter_mcuboot_url = MATTER_MCUBOOT_URL_FORMAT % n22_revision
         matter_mcuboot_name = os.path.join(bin_path, 'mcuboot.bin')
-        if not download_file(session, matter_mcuboot_url, matter_mcuboot_name, URL_GET_TIMEOUT):
-            return
+        matter_mcuboot_src = os.path.join(DEFAULT_ZEPHYR_BASE, 'mcuboot.bin')
+        if os.path.exists(matter_mcuboot_src):
+            print(f'Found {matter_mcuboot_src}, copying to {matter_mcuboot_name}...')
+            shutil.copy(matter_mcuboot_src, matter_mcuboot_name)
+        else:
+            matter_mcuboot_url = MATTER_MCUBOOT_URL_FORMAT % n22_revision
+            if not download_file(session, matter_mcuboot_url, matter_mcuboot_name, URL_GET_TIMEOUT):
+                return
 
 if __name__ == "__main__":
     main()
