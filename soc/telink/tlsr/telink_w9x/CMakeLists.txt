@@ -111,6 +111,12 @@ zephyr_sources(
 	ot_rcp/spinel.c
 )
 
+if(CONFIG_OPENTHREAD_BORDER_ROUTING)
+zephyr_sources(
+	ot_rcp/otbr_ext.c
+)
+endif()
+
 endif()
 
 if(DEFINED CONFIG_TELINK_W91_OT_MAC_CSL_REQUEST_AHEAD_US)
