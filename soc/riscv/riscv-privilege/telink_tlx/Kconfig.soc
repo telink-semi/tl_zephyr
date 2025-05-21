@@ -127,3 +127,11 @@ config COMPRESS_LZMA_DICTIONARY_SIZE
 	depends on COMPRESS_LZMA
 	help
 	  This option sets LZMA compression dictionary size
+
+
+config MICRO_SPEECH_EXTRA_DRIVER
+	bool "Add extra driver for micro speech sample"
+	default n
+	depends on SOC_RISCV_TELINK_TL721X
+	help
+	  This option enables audio and dma driver for micro speech sample
