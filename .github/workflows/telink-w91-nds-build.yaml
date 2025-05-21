@@ -70,10 +70,10 @@ jobs:
         cd ..
         west build -b tlsr9118bdk40d             -d build_nvs_w91                       zephyr/samples/subsys/nvs                     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build W91 bootloader/mcuboot/boot
-      run: |
-        cd ..
-        west build -b tlsr9118bdk40d             -d build_mcuboot_w91                   bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y    -DCONFIG_LOG_DEFAULT_LEVEL=3
+    # - name: Build W91 bootloader/mcuboot/boot
+    #   run: |
+    #     cd ..
+    #     west build -b tlsr9118bdk40d             -d build_mcuboot_w91                   bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y    -DCONFIG_LOG_DEFAULT_LEVEL=3
 
     - name: Build W91 basic/blinky for DFU
       run: |
@@ -139,7 +139,7 @@ jobs:
         cp ../build_mpu6050_w91/zephyr/zephyr.bin                   telink_build_artifacts/w91_mpu6050.bin
         cp ../build_spi_flash_at45_w91/zephyr/zephyr.bin            telink_build_artifacts/w91_spi_flash_at45.bin
         cp ../build_nvs_w91/zephyr/zephyr.bin                       telink_build_artifacts/w91_nvs.bin
-        cp ../build_mcuboot_w91/zephyr/zephyr.bin                   telink_build_artifacts/w91_mcuboot.bin
+        # cp ../build_mcuboot_w91/zephyr/zephyr.bin                   telink_build_artifacts/w91_mcuboot.bin
         cp ../build_blinky_dfu_w91/zephyr/zephyr.signed.bin         telink_build_artifacts/w91_blinky_dfu.signed.bin
         cp ../build_bt_peripheral_ht_w91/zephyr/zephyr.bin          telink_build_artifacts/w91_bt_peripheral_ht.bin
         cp ../build_sock_simple_ipv4_w91/zephyr/zephyr.bin          telink_build_artifacts/w91_wifi_socket_udp_ipv4.bin

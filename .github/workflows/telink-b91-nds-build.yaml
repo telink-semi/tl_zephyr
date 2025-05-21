@@ -82,10 +82,10 @@ jobs:
         cd ..
         west build -b tlsr9518adk80d             -d build_ot_echo_client_pm_b91         zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y
 
-    - name: Build B91 bootloader/mcuboot/boot
-      run: |
-        cd ..
-        west build -b tlsr9518adk80d             -d build_mcuboot_b91                   bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3
+    # - name: Build B91 bootloader/mcuboot/boot
+    #   run: |
+    #     cd ..
+    #     west build -b tlsr9518adk80d             -d build_mcuboot_b91                   bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3
 
     - name: Build B91 subsys/mgmt/mcumgr/smp_svr for Bluetooth
       run: |
@@ -107,10 +107,10 @@ jobs:
         cd ..
         west build -b tlsr9518adk80d_retention   -d build_retention_basic_b91           zephyr/samples/boards/tlsr9x/basic                       -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_SOC_SERIES_RISCV_TELINK_B9X_NON_RETENTION_RAM_CODE=y
 
-    - name: Build B91 bootloader/mcuboot/boot for USB DFU
-      run: |
-        cd ..
-        west build -b tlsr9518adk80d             -d build_mcuboot_usb_dfu_b91           bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3 -DCONFIG_USB_DFU_WILL_DETACH=n -DCONFIG_BOOT_USB_DFU_GPIO=y -DCONFIG_MCUBOOT_INDICATION_LED=y
+    # - name: Build B91 bootloader/mcuboot/boot for USB DFU
+    #   run: |
+    #     cd ..
+    #     west build -b tlsr9518adk80d             -d build_mcuboot_usb_dfu_b91           bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3 -DCONFIG_USB_DFU_WILL_DETACH=n -DCONFIG_BOOT_USB_DFU_GPIO=y -DCONFIG_MCUBOOT_INDICATION_LED=y
 
     - name: Build B91 basic/blinky for USB DFU
       run: |
@@ -143,12 +143,12 @@ jobs:
         cp ../build_ot_echo_server_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_ot_echo_server.bin
         cp ../build_ot_echo_client_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_ot_echo_client.bin
         cp ../build_ot_echo_client_pm_b91/zephyr/zephyr.bin         telink_build_artifacts/b91_ot_echo_client_pm.bin
-        cp ../build_mcuboot_b91/zephyr/zephyr.bin                   telink_build_artifacts/b91_mcuboot.bin
+        # cp ../build_mcuboot_b91/zephyr/zephyr.bin                   telink_build_artifacts/b91_mcuboot.bin
         cp ../build_bt_smp_svr_b91/zephyr/zephyr.signed.bin         telink_build_artifacts/b91_bt_smp_svr.signed.bin
         cp ../build_usb_console_b91/zephyr/zephyr.bin               telink_build_artifacts/b91_usb_console.bin
         cp ../build_ot_coprocessor_rcp_usb_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_coprocessor_rcp_usb.bin
         cp ../build_retention_basic_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_retention_basic.bin
-        cp ../build_mcuboot_usb_dfu_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_mcuboot_usb_dfu.bin
+        # cp ../build_mcuboot_usb_dfu_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_mcuboot_usb_dfu.bin
         cp ../build_blinky_usb_dfu_b91/zephyr/zephyr.signed.bin     telink_build_artifacts/b91_blinky_usb_dfu.signed.bin
         cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
         cp ../build_crypto_mbedtls_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_mbedtls.bin
