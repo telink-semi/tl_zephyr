@@ -10,4 +10,7 @@ if (NOT CONFIG_SOC_RISCV_TELINK_W91)
   message(FATAL_ERROR "SOC is not supported for this sample")
 endif()
 
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE
+  src/main.c
+  src/connections.c
+)
