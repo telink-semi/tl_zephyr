@@ -120,3 +120,9 @@ config COMPRESS_LZMA_DICTIONARY_SIZE
 	depends on COMPRESS_LZMA
 	help
 	  This option sets LZMA compression dictionary size
+
+config DUAL_MODE
+	bool "Support dual-mode switch"
+	default n
+	help
+	  This option enables dual mode
