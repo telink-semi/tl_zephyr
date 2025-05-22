@@ -5106,7 +5106,7 @@ West:
 "West project: hal_telink":
   status: maintained
   maintainers:
-    - andy-liu-telink
+    - telink
   files:
     - modules/Kconfig.telink
   labels:
@@ -5542,6 +5542,14 @@ West:
     - "area: Wi-Fi"
   tests:
     - net.wifi
+
+"West project: tflite-micro-telink":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
 
 Xtensa arch:
   status: maintained
