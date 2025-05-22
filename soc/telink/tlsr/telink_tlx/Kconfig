@@ -129,4 +129,11 @@ config TELINK_TLX_MATTER_RETENTION_LAYOUT
 
 endif # BOOTLOADER_MCUBOOT || MCUBOOT
 
+config MICRO_SPEECH_EXTRA_DRIVER
+	bool "Add extra driver for micro speech sample"
+	default n
+	depends on SOC_RISCV_TELINK_TL721X
+	help
+	  This option enables audio and dma driver for micro speech sample
+
 endif # SOC_RISCV_TELINK_TLX
