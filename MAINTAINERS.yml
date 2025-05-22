@@ -2905,7 +2905,7 @@ West:
 "West project: hal_telink":
   status: maintained
   maintainers:
-    - andy-liu-telink
+    - telink
   files:
     - modules/Kconfig.telink
   labels:
@@ -3238,6 +3238,14 @@ West:
   files: []
   labels:
     - manifest-zscilib
+
+"West project: tflite-micro-telink":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
 
 Xtensa arch:
   status: maintained
