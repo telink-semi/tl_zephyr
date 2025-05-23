@@ -9,6 +9,12 @@ config TELINK_W91_OPUS_CODEC
 
 if TELINK_W91_OPUS_CODEC
 
+config TELINK_W91_OPUS_LIB_VERSION
+	int "Telink W91 OPUS library GCC version"
+	default 12
+	help
+		This option defines Telink W91 OPUS library GCC version.
+
 # BLOCKING, RAMCODE not needed
 
 endif # TELINK_W91_OPUS_CODEC
