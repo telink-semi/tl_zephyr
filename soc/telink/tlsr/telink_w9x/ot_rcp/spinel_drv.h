@@ -17,7 +17,6 @@ struct spinel_frame_data {
 	uint8_t *data;
 	size_t data_length;
 
-	bool time_enabled;
 	uint8_t channel;
 
 	union {
@@ -151,5 +150,9 @@ int spinel_drv_send_mac_keys(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx
 			     const void *ctx, const struct spinel_mac_keys *keys);
 bool spinel_drv_check_mac_keys(struct spinel_drv_data *spinel_drv, const uint8_t *data,
 			       uint16_t data_size);
+int spinel_drv_send_get_timestamp(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
+				  const void *ctx);
+bool spinel_drv_check_get_timestamp(struct spinel_drv_data *spinel_drv, const uint8_t *data,
+				    uint16_t data_size, uint64_t *timestamp);
 
 #endif /* SPINEL_DRV_H */
