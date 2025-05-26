@@ -814,3 +814,32 @@ int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spi
 
 	return result;
 }
+
+int openthread_rcp_timestamp(struct openthread_rcp_data *ot_rcp, uint64_t *timestamp)
+{
+	k_timepoint_t start_tp;
+	bool processed = false;
+
+	int result = spinel_drv_send_get_timestamp(&ot_rcp->spinel_drv,
+						   openthread_rcp_spinel_transmission, ot_rcp);
+
+	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	while (result >= 0 && !processed) {
+		struct openthread_rcp_buffer response;
+
+		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+		if (result >= 0) {
+			if (spinel_drv_check_get_timestamp(&ot_rcp->spinel_drv, response.data,
+							   response.data_size, timestamp)) {
+				processed = true;
+				result = 0;
+			} else {
+				LOG_HEXDUMP_WRN(response.data, response.data_size,
+						"trash rx @ " STRINGIFY(__LINE__));
+			}
+			free(response.data);
+		}
+	}
+
+	return result;
+}

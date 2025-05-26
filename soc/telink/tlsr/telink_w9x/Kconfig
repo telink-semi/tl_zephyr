@@ -73,6 +73,13 @@ config TELINK_W91_DEBUG_BAUDRATE
 	help
 		This option sets Telink W91 debug baudrate, bps.
 
+config TELINK_W91_OT_MAC_CSL_REQUEST_AHEAD_US
+	int "OpenThread CSL request ahead time in microseconds"
+	default 20000
+	depends on NET_PKT_TXTIME || NET_PKT_TIMESTAMP
+	help
+		This option sets the OPENTHREAD_CONFIG_MAC_CSL_REQUEST_AHEAD_US parameter.
+
 source "soc/telink/tlsr/telink_w9x/ipc/Kconfig.ipc"
 source "soc/telink/tlsr/telink_w9x/blocking_core/Kconfig.blocking"
 source "soc/telink/tlsr/telink_w9x/core_heartbeat/Kconfig.heartbeat"

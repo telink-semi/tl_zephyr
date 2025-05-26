@@ -12,6 +12,7 @@ zephyr_sources(
 	soc_irq.S
 	soc.c
 	halt.c
+	sys_clock.c
 	sys_heap_alloc_wrap.c
 	cache.c
 )
@@ -110,6 +111,12 @@ zephyr_sources(
 	ot_rcp/spinel.c
 )
 
+endif()
+
+if(DEFINED CONFIG_TELINK_W91_OT_MAC_CSL_REQUEST_AHEAD_US)
+zephyr_compile_definitions(
+	OPENTHREAD_CONFIG_MAC_CSL_REQUEST_AHEAD_US=${CONFIG_TELINK_W91_OT_MAC_CSL_REQUEST_AHEAD_US}
+)
 endif()
 
 if(CONFIG_TELINK_W91_FETCH_N22_BIN)

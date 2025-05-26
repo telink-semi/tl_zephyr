@@ -21,6 +21,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <zephyr/net/openthread.h>
 #include <zephyr/drivers/uart.h>
 
+#include <sys_clock.h>
+
 #include <openthread/platform/radio.h>
 
 #include <ot_rcp/ot_rcp.h>
@@ -45,7 +47,52 @@ struct w91_zb_data {
 	bool reception_on;
 	uint8_t channel;
 	int8_t tx_power;
+#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
+	int64_t timestamp_offset;
+	struct k_work_delayable sync_work;
+#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 };
+
+#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
+static K_KERNEL_STACK_DEFINE(w91_zb_sync_work_q_stack,
+			     CONFIG_IEEE802154_W91_SYNC_TIME_THREAD_STACK_SIZE);
+
+static struct k_work_q w91_zb_sync_work_q;
+
+static int w91_zb_sync_work_q_init(void)
+{
+	struct k_work_queue_config cfg = {
+		.name = "w91_zb_sync_workq", .no_yield = false, .essential = false};
+
+	k_work_queue_start(&w91_zb_sync_work_q, w91_zb_sync_work_q_stack,
+			   K_KERNEL_STACK_SIZEOF(w91_zb_sync_work_q_stack),
+			   CONFIG_IEEE802154_W91_SYNC_TIME_THREAD_PRIORITY, &cfg);
+	return 0;
+}
+
+SYS_INIT(w91_zb_sync_work_q_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+
+static void w91_zb_sync_time_work_handler(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct w91_zb_data *data = CONTAINER_OF(dwork, struct w91_zb_data, sync_work);
+	uint64_t local_tx_timestamp;
+	uint64_t local_rx_timestamp;
+	uint64_t rcp_timestamp;
+
+	k_work_schedule_for_queue(&w91_zb_sync_work_q, &data->sync_work,
+				  K_MSEC(CONFIG_IEEE802154_W91_SYNC_TIME_OFFSET_MS));
+
+	local_tx_timestamp = sys_clock_w91_get_time_us();
+	if (openthread_rcp_timestamp(&data->ot_rcp, &rcp_timestamp)) {
+		LOG_ERR("read rcp timestamp failed");
+		return;
+	}
+	local_rx_timestamp = sys_clock_w91_get_time_us();
+
+	data->timestamp_offset = rcp_timestamp - (local_rx_timestamp / 2 + local_tx_timestamp / 2);
+}
+#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 
 static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 {
@@ -74,9 +121,10 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 			LOG_ERR("Failed to write rx packet.");
 			break;
 		}
-		if (frame->time_enabled) {
-			/* TODO: set reception timestamp */
-		}
+#if defined(CONFIG_NET_PKT_TIMESTAMP)
+		net_pkt_set_timestamp_ns(rx_pkt, (frame->rx.timestamp - data->timestamp_offset) *
+							 NSEC_PER_USEC);
+#endif /* CONFIG_NET_PKT_TIMESTAMP */
 		net_pkt_set_ieee802154_rssi_dbm(rx_pkt, frame->rx.rssi);
 		net_pkt_set_ieee802154_lqi(rx_pkt, frame->rx.lqi);
 		net_pkt_set_ieee802154_ack_fpb(rx_pkt, frame->rx.frame_pending);
@@ -121,6 +169,11 @@ static void w91_zb_iface_init(struct net_if *iface)
 		LOG_ERR("rcp enabling failed");
 	}
 	ieee802154_init(data->iface);
+
+#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
+	k_work_init_delayable(&data->sync_work, w91_zb_sync_time_work_handler);
+	k_work_schedule_for_queue(&w91_zb_sync_work_q, &data->sync_work, K_NO_WAIT);
+#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 }
 
 static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
@@ -245,10 +298,16 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 		.tx.is_ret = false,
 		.tx.csma_ca_enabled = (mode == IEEE802154_TX_MODE_CSMA_CA)};
 
+#if defined(CONFIG_NET_PKT_TXTIME)
 	if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
-		frame.time_enabled = true;
-		/* TODO: time calculation */
+		uint64_t host_time_base_us = sys_clock_w91_get_time_us();
+		uint64_t set_timestamp_us = net_pkt_timestamp_ns(pkt) / NSEC_PER_USEC;
+
+		frame.tx.time_base = (uint32_t)(host_time_base_us + data->timestamp_offset);
+		frame.tx.time_offset = (uint32_t)(set_timestamp_us - host_time_base_us);
 	}
+#endif /* CONFIG_NET_PKT_TXTIME */
+
 	if (data->event_handler) {
 		data->event_handler(dev, IEEE802154_EVENT_TX_STARTED, NULL);
 	}
@@ -280,9 +339,11 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 				LOG_ERR("Failed to write ack packet.");
 				break;
 			}
-			if (frame.time_enabled) {
-				/* TODO: set reception timestamp */
-			}
+#if defined(CONFIG_NET_PKT_TIMESTAMP)
+			net_pkt_set_timestamp_ns(ack_pkt,
+						 (frame.rx.timestamp - data->timestamp_offset) *
+							 NSEC_PER_USEC);
+#endif /* CONFIG_NET_PKT_TIMESTAMP */
 			net_pkt_set_ieee802154_rssi_dbm(ack_pkt, frame.rx.rssi);
 			net_pkt_set_ieee802154_lqi(ack_pkt, frame.rx.lqi);
 			net_pkt_set_ieee802154_ack_fpb(ack_pkt, frame.rx.frame_pending);
@@ -452,14 +513,16 @@ static int w91_zb_ed_scan(const struct device *dev, uint16_t duration,
 static net_time_t w91_zb_get_time(const struct device *dev)
 {
 	LOG_DBG("%s", __func__);
-	/* TODO: increase resolution or drop this api */
-	return k_ticks_to_us_floor64(k_uptime_ticks());
+
+	return sys_clock_w91_get_time_ns();
 }
 
 static uint8_t w91_zb_get_sch_acc(const struct device *dev)
 {
-	LOG_WRN("%s not supported", __func__);
-	return 0;
+	LOG_DBG("%s", __func__);
+	ARG_UNUSED(dev);
+
+	return CONFIG_IEEE802154_W91_DELAY_TRX_ACC;
 }
 
 static int w91_zb_attr_get(const struct device *dev, enum ieee802154_attr attr,
