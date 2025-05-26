@@ -1266,7 +1266,7 @@ static int b9x_tx(const struct device *dev,
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
-		k_sleep(K_TIMEOUT_ABS_TICKS(k_ns_to_ticks_near64(net_pkt_timestamp_ns(pkt))));
+		k_sleep(K_TIMEOUT_ABS_TICKS(k_ns_to_ticks_ceil64(net_pkt_timestamp_ns(pkt))));
 	} else
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 	{

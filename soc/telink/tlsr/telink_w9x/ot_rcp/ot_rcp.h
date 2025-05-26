@@ -62,5 +62,6 @@ int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_fr
 int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t short_addr,
 				const uint8_t ext_addr[8], struct spinel_link_metrics link_metrics);
 int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spinel_mac_keys *keys);
+int openthread_rcp_timestamp(struct openthread_rcp_data *ot_rcp, uint64_t *timestamp);
 
 #endif /* OPENTHREAD_RCP_H */

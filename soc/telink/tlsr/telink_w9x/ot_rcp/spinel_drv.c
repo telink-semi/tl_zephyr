@@ -1293,3 +1293,46 @@ bool spinel_drv_check_mac_keys(struct spinel_drv_data *spinel_drv, const uint8_t
 
 	return ret;
 }
+
+int spinel_drv_send_get_timestamp(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
+				  const void *ctx)
+{
+	int ret = spinel_drv_send_cmd(spinel_drv, tx_cb, ctx, SPINEL_CMD_PROP_VALUE_GET,
+				      SPINEL_PROP_RCP_TIMESTAMP, NULL);
+
+	if (ret < 0) {
+		LOG_ERR("Failed send get_timestamp (inst = %u, err = %d)", spinel_drv->inst, ret);
+	}
+
+	return ret;
+}
+
+bool spinel_drv_check_get_timestamp(struct spinel_drv_data *spinel_drv, const uint8_t *data,
+				    uint16_t data_size, uint64_t *timestamp)
+{
+	const uint8_t *param_data = NULL;
+	uint16_t param_size = 0;
+
+	int ret =
+		spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RCP_TIMESTAMP,
+				   data, data_size, &param_data, &param_size);
+
+	if (ret == -EPERM) {
+		/* Skip this frame */
+		return false;
+	} else if (ret < 0 || !param_data || !param_size) {
+		LOG_ERR("Failed check get_timestamp (inst = %u, err = %d, data = %p, size = %u)",
+			spinel_drv->inst, ret, param_data, param_size);
+		return false;
+	}
+
+	ret = spinel_datatype_unpack(param_data, param_size, true, SPINEL_DATATYPE_UINT64_S,
+				     timestamp);
+
+	if (ret < 0) {
+		LOG_ERR("Failed get parameters of get_timestamp (inst = %u, err = %d)",
+			spinel_drv->inst, ret);
+		return false;
+	}
+	return true;
+}
