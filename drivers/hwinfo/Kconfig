@@ -273,8 +273,6 @@ config HWINFO_MAX32
 	help
 	  Enable MAX32 hwinfo driver.
 
-endif
-
 config HWINFO_TELINK_B9X
 	bool "Telink B9x device ID"
 	default y

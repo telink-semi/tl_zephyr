@@ -12,7 +12,7 @@
 
 LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 
-#define DT_DRV_COMPAT telink_machine_timer
+#define DT_DRV_COMPAT riscv_machine_timer
 
 #define MTIME_REG	DT_INST_REG_ADDR(0)
 #define MTIMECMP_REG	(DT_INST_REG_ADDR(0) + 8)

@@ -15,10 +15,6 @@ config RISCV_SOC_INTERRUPT_INIT
 	bool
 	default y
 
-config RISCV_GP
-	bool
-	default y
-
 config 2ND_LVL_INTR_00_OFFSET
 	int
 	default 11
