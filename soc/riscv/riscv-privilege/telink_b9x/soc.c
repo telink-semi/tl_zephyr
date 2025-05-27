@@ -135,6 +135,13 @@ static int soc_b9x_init(void)
 #if CONFIG_SOC_RISCV_TELINK_B91
 	sys_init(POWER_MODE, VBAT_TYPE);
 #elif CONFIG_SOC_RISCV_TELINK_B92
+	/* Reset Radio */
+	rf_radio_reset();
+#if CONFIG_SOC_RISCV_TELINK_B91 || CONFIG_SOC_RISCV_TELINK_B92
+	rf_reset_dma();
+	rf_baseband_reset();
+#endif
+	rf_clr_irq_status(FLD_RF_IRQ_ALL);
 	sys_init(POWER_MODE, VBAT_TYPE, GPIO_VOLTAGE_3V3);
 #endif
 
