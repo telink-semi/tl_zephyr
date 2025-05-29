@@ -25,6 +25,7 @@ struct openthread_rcp_buffer {
 struct openthread_rcp_data {
 	const struct device *uart;
 	struct k_work work;
+	struct k_mutex tx_lock;
 	uint8_t tx_data[CONFIG_TELINK_W91_OT_RCP_BUFFER_SIZE];
 	struct openthread_rcp_buffer tx_buffer;
 	struct hdlc_coder hdlc;
@@ -35,6 +36,12 @@ struct openthread_rcp_data {
 	struct spinel_drv_data spinel_drv;
 	openthread_rcp_reception reception;
 	const void *ctx;
+#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
+	struct k_mutex time_lock;
+	struct k_work_delayable sync_work;
+	uint64_t timestamp_req_time;
+	int64_t time_offset;
+#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 };
 
 int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device *uart);
@@ -62,6 +69,8 @@ int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_fr
 int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t short_addr,
 				const uint8_t ext_addr[8], struct spinel_link_metrics link_metrics);
 int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spinel_mac_keys *keys);
-int openthread_rcp_timestamp(struct openthread_rcp_data *ot_rcp, uint64_t *timestamp);
+#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
+void openthread_rcp_get_time_offset(struct openthread_rcp_data *ot_rcp, int64_t *time_offset);
+#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 
 #endif /* OPENTHREAD_RCP_H */
