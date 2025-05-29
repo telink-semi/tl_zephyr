@@ -47,52 +47,7 @@ struct w91_zb_data {
 	bool reception_on;
 	uint8_t channel;
 	int8_t tx_power;
-#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
-	int64_t timestamp_offset;
-	struct k_work_delayable sync_work;
-#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 };
-
-#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
-static K_KERNEL_STACK_DEFINE(w91_zb_sync_work_q_stack,
-			     CONFIG_IEEE802154_W91_SYNC_TIME_THREAD_STACK_SIZE);
-
-static struct k_work_q w91_zb_sync_work_q;
-
-static int w91_zb_sync_work_q_init(void)
-{
-	struct k_work_queue_config cfg = {
-		.name = "w91_zb_sync_workq", .no_yield = false, .essential = false};
-
-	k_work_queue_start(&w91_zb_sync_work_q, w91_zb_sync_work_q_stack,
-			   K_KERNEL_STACK_SIZEOF(w91_zb_sync_work_q_stack),
-			   CONFIG_IEEE802154_W91_SYNC_TIME_THREAD_PRIORITY, &cfg);
-	return 0;
-}
-
-SYS_INIT(w91_zb_sync_work_q_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
-
-static void w91_zb_sync_time_work_handler(struct k_work *work)
-{
-	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
-	struct w91_zb_data *data = CONTAINER_OF(dwork, struct w91_zb_data, sync_work);
-	uint64_t local_tx_timestamp;
-	uint64_t local_rx_timestamp;
-	uint64_t rcp_timestamp;
-
-	k_work_schedule_for_queue(&w91_zb_sync_work_q, &data->sync_work,
-				  K_MSEC(CONFIG_IEEE802154_W91_SYNC_TIME_OFFSET_MS));
-
-	local_tx_timestamp = sys_clock_w91_get_time_us();
-	if (openthread_rcp_timestamp(&data->ot_rcp, &rcp_timestamp)) {
-		LOG_ERR("read rcp timestamp failed");
-		return;
-	}
-	local_rx_timestamp = sys_clock_w91_get_time_us();
-
-	data->timestamp_offset = rcp_timestamp - (local_rx_timestamp / 2 + local_tx_timestamp / 2);
-}
-#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 
 static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 {
@@ -122,8 +77,11 @@ static void w91_zb_rx(const struct spinel_frame_data *frame, const void *ctx)
 			break;
 		}
 #if defined(CONFIG_NET_PKT_TIMESTAMP)
-		net_pkt_set_timestamp_ns(rx_pkt, (frame->rx.timestamp - data->timestamp_offset) *
-							 NSEC_PER_USEC);
+		int64_t time_offset;
+
+		openthread_rcp_get_time_offset(&data->ot_rcp, &time_offset);
+		net_pkt_set_timestamp_ns(rx_pkt,
+					 (frame->rx.timestamp - time_offset) * NSEC_PER_USEC);
 #endif /* CONFIG_NET_PKT_TIMESTAMP */
 		net_pkt_set_ieee802154_rssi_dbm(rx_pkt, frame->rx.rssi);
 		net_pkt_set_ieee802154_lqi(rx_pkt, frame->rx.lqi);
@@ -169,11 +127,6 @@ static void w91_zb_iface_init(struct net_if *iface)
 		LOG_ERR("rcp enabling failed");
 	}
 	ieee802154_init(data->iface);
-
-#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
-	k_work_init_delayable(&data->sync_work, w91_zb_sync_time_work_handler);
-	k_work_schedule_for_queue(&w91_zb_sync_work_q, &data->sync_work, K_NO_WAIT);
-#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 }
 
 static enum ieee802154_hw_caps w91_zb_get_capabilities(const struct device *dev)
@@ -300,10 +253,12 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 
 #if defined(CONFIG_NET_PKT_TXTIME)
 	if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
+		int64_t time_offset;
 		uint64_t host_time_base_us = sys_clock_w91_get_time_us();
 		uint64_t set_timestamp_us = net_pkt_timestamp_ns(pkt) / NSEC_PER_USEC;
 
-		frame.tx.time_base = (uint32_t)(host_time_base_us + data->timestamp_offset);
+		openthread_rcp_get_time_offset(&data->ot_rcp, &time_offset);
+		frame.tx.time_base = (uint32_t)(host_time_base_us + time_offset);
 		frame.tx.time_offset = (uint32_t)(set_timestamp_us - host_time_base_us);
 	}
 #endif /* CONFIG_NET_PKT_TXTIME */
@@ -340,9 +295,11 @@ static int w91_zb_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 				break;
 			}
 #if defined(CONFIG_NET_PKT_TIMESTAMP)
-			net_pkt_set_timestamp_ns(ack_pkt,
-						 (frame.rx.timestamp - data->timestamp_offset) *
-							 NSEC_PER_USEC);
+			int64_t time_offset;
+
+			openthread_rcp_get_time_offset(&data->ot_rcp, &time_offset);
+			net_pkt_set_timestamp_ns(ack_pkt, (frame.rx.timestamp - time_offset) *
+								  NSEC_PER_USEC);
 #endif /* CONFIG_NET_PKT_TIMESTAMP */
 			net_pkt_set_ieee802154_rssi_dbm(ack_pkt, frame.rx.rssi);
 			net_pkt_set_ieee802154_lqi(ack_pkt, frame.rx.lqi);
