@@ -136,6 +136,16 @@ static int soc_tlx_init(void)
 	blc_pm_select_internal_32k_crystal();
 #endif /* CONFIG_PM  */
 
+#if CONFIG_DUAL_MODE
+	/* Reset Radio */
+	rf_radio_reset();
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+	rf_reset_dma();
+	rf_baseband_reset();
+#endif
+	rf_clr_irq_status(FLD_RF_IRQ_ALL);
+#endif
+
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
