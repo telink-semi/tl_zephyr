@@ -19,22 +19,4 @@ config IEEE802154_W91_DELAY_TRX_ACC
 	  Accuracy of the clock used for scheduling radio delayed operations (delayed transmission
 	  or delayed reception), in ppm.
 
-config IEEE802154_W91_SYNC_TIME_THREAD_PRIORITY
-	int "Telink W91 synchronization time thread priority"
-	default 0
-	help
-		This option sets Telink W91 synchronization time thread priority.
-
-config IEEE802154_W91_SYNC_TIME_THREAD_STACK_SIZE
-	int "Telink W91 synchronization time thread stack size"
-	default 1024
-	help
-		This option sets Telink W91 synchronization time thread stack size.
-
-config IEEE802154_W91_SYNC_TIME_OFFSET_MS
-	int "Time to recalculate offset (ms)"
-	default 5000
-	help
-	  This option sets time to recalculate offset with RCP
-
 endif # IEEE802154_TELINK_W91
