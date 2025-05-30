@@ -5,6 +5,7 @@
  */
 
 #include <zephyr/drivers/hwinfo.h>
+#include <ext_driver/ext_pm.h>
 #include <string.h>
 #include <flash.h>
 
@@ -26,8 +27,13 @@ ssize_t z_impl_hwinfo_get_device_id(uint8_t *buffer, size_t length)
 int z_impl_hwinfo_get_reset_cause(uint32_t *cause)
 {
 	uint32_t flags = 0;
+	uint32_t reason = pm_get_mcu_status();
 
-	flags |= RESET_SOFTWARE;
+	if (reason & MCU_STATUS_POWER_ON) {
+		flags |= RESET_PIN;
+	} else {
+		flags |= RESET_SOFTWARE;
+	}
 
 	*cause = flags;
 
@@ -41,7 +47,7 @@ int z_impl_hwinfo_clear_reset_cause(void)
 
 int z_impl_hwinfo_get_supported_reset_cause(uint32_t *supported)
 {
-	*supported = (RESET_SOFTWARE);
+	*supported = (RESET_PIN | RESET_SOFTWARE);
 
 	return 0;
 }
