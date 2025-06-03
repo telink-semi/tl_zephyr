@@ -11,7 +11,7 @@
 
 &uart2 {
 	status = "okay";
-	current-speed = <115200>;
+	current-speed = <1000000>;
 	pinctrl-0 = <&uart2_tx_p16_default &uart2_rx_p15_default
 				&uart2_rts_p18_default &uart2_cts_p17_default>;
 	pinctrl-names = "default";
