@@ -9,7 +9,7 @@
 #include <zephyr/devicetree/fixed-partitions.h>
 #include <zephyr/irq.h>
 
-#define BOOTLOADER_MCUBOOT_ROM_START_OFFSET             0x400
+#define BOOTLOADER_MCUBOOT_ROM_START_OFFSET             0x200
 
 void mcuboot_status_change(mcuboot_status_type_t status)
 {
