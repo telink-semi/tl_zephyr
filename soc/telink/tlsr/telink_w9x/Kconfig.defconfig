@@ -91,6 +91,13 @@ config HAS_FLASH_LOAD_OFFSET
 	bool
 	default y if BOOTLOADER_MCUBOOT
 
+config OPENTHREAD_CSL_REQUEST_TIME_AHEAD
+	int "OpenThread CSL request ahead time in microseconds"
+	default 20000
+	depends on NET_PKT_TXTIME || NET_PKT_TIMESTAMP
+	help
+		This option sets the OPENTHREAD_CONFIG_MAC_CSL_REQUEST_AHEAD_US parameter.
+
 # Workaround for not being able to have commas in macro arguments
 DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
 
