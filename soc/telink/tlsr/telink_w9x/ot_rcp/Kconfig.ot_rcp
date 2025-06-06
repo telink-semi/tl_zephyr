@@ -62,6 +62,10 @@ config OPENTHREAD_EXTERNAL_HEAP
 	bool "External heap support"
 	default y if OPENTHREAD_BORDER_ROUTING
 
+config NET_ROUTING
+	bool
+	default y if OPENTHREAD_BORDER_ROUTING
+
 endif # TELINK_W91_OT_RCP
 
 endif # IEEE802154
