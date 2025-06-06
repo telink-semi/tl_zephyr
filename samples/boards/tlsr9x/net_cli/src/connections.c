@@ -11,9 +11,30 @@
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/net/openthread.h>
 #include <openthread/dataset_ftd.h>
+#include <openthread/border_routing.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(connections, LOG_LEVEL_INF);
+
+/* Since currently there is no official support of net route */
+#define NET_IPV6_ND_INFINITE_LIFETIME 0xFFFFFFFF
+#define NET_ROUTE_PREFERENCE_MEDIUM   0x00
+
+enum net_ipv6_nbr_state {
+	NET_IPV6_NBR_STATE_INCOMPLETE,
+	NET_IPV6_NBR_STATE_REACHABLE,
+	NET_IPV6_NBR_STATE_STALE,
+	NET_IPV6_NBR_STATE_DELAY,
+	NET_IPV6_NBR_STATE_PROBE,
+	NET_IPV6_NBR_STATE_STATIC,
+};
+extern struct net_nbr *net_ipv6_nbr_add(struct net_if *iface, const struct in6_addr *addr,
+					const struct net_linkaddr *lladdr, bool is_router,
+					enum net_ipv6_nbr_state state);
+extern struct net_route_entry *net_route_add(struct net_if *iface, struct in6_addr *addr,
+					     uint8_t prefix_len, struct in6_addr *nexthop,
+					     uint32_t lifetime, uint8_t preference);
+/* End of routing compatibility */
 
 #if !CONFIG_OPENTHREAD_MANUAL_START
 #error openthread should be started manually
@@ -85,6 +106,56 @@ static void ot_connection_changed(otChangedFlags flags, struct openthread_contex
 						      otThreadGetDeviceRole(ot_context->instance));
 		}
 	}
+	if (flags & OT_CHANGED_THREAD_NETDATA) {
+		otIp6Prefix omr_prefix;
+
+		if (otBorderRoutingGetOmrPrefix(ot_context->instance, &omr_prefix) ==
+		    OT_ERROR_NONE) {
+			char omr_prefix_str[OT_IP6_PREFIX_STRING_SIZE];
+			struct net_if *lan_if = (struct net_if *)user_data;
+
+			otIp6PrefixToString(&omr_prefix, omr_prefix_str, sizeof(omr_prefix_str));
+			LOG_INF("OMR prefix: %s, LAN if: %s", omr_prefix_str, lan_if->config.name);
+
+			struct in6_addr *lan_ip = net_if_ipv6_get_ll(lan_if, NET_ADDR_ANY_STATE);
+			const struct net_linkaddr *lan_mac = net_if_get_link_addr(lan_if);
+			struct in6_addr pr;
+
+			memcpy(&pr, &omr_prefix.mPrefix, sizeof(pr));
+
+			if (!net_ipv6_nbr_add(ot_context->iface, lan_ip, lan_mac, true,
+					      NET_IPV6_NBR_STATE_REACHABLE)) {
+				LOG_ERR("ot can't add lan neighbor");
+			}
+			if (!net_route_add(ot_context->iface, &pr, omr_prefix.mLength, lan_ip,
+					   NET_IPV6_ND_INFINITE_LIFETIME,
+					   NET_ROUTE_PREFERENCE_MEDIUM)) {
+				LOG_ERR("ot can't add lan route");
+			}
+
+			struct in6_addr *ot_ip =
+				net_if_ipv6_get_ll(ot_context->iface, NET_ADDR_ANY_STATE);
+			const struct net_linkaddr *ot_mac = net_if_get_link_addr(ot_context->iface);
+
+			if (!net_ipv6_nbr_add(lan_if, ot_ip, ot_mac, true,
+					      NET_IPV6_NBR_STATE_REACHABLE)) {
+				LOG_ERR("lan can't add ot neighbor");
+			}
+
+			otOperationalDatasetTlvs active_dataset;
+
+			if (otDatasetGetActiveTlvs(ot_context->instance, &active_dataset) ==
+			    OT_ERROR_NONE) {
+				char active_dataset_str[active_dataset.mLength * 2 + 1];
+
+				bin2hex(active_dataset.mTlvs, active_dataset.mLength,
+					active_dataset_str, sizeof(active_dataset_str));
+				LOG_INF("active dataset: %s", active_dataset_str);
+			} else {
+				LOG_ERR("no dataset");
+			}
+		}
+	}
 }
 
 void connections_init(connections_wifi_changed on_wifi, connections_thread_changed on_thread)
@@ -109,6 +180,7 @@ void connections_init(connections_wifi_changed on_wifi, connections_thread_chang
 	static struct openthread_state_changed_cb ot_callback = {.state_changed_cb =
 									 ot_connection_changed};
 
+	ot_callback.user_data = net_if_get_default();
 	openthread_state_changed_cb_register(openthread_get_default_context(), &ot_callback);
 
 	struct openthread_context *ot_context = openthread_get_default_context();
