@@ -126,7 +126,11 @@ static int openthread_rcp_process_continue(struct openthread_rcp_data *ot_rcp,
 	int result = -ETIMEDOUT;
 
 	if (!k_msgq_get(&ot_rcp->spinel_msgq, data_income, sys_timepoint_timeout(start_time))) {
-		result = data_income->data_size;
+		if (data_income->data && data_income->data_size) {
+			result = 0;
+		} else {
+			result = -EINVAL;
+		}
 	}
 	if (result == -ETIMEDOUT) {
 		spinel_drv_remove_last_act(&ot_rcp->spinel_drv);
@@ -152,18 +156,18 @@ static void openthread_rcp_sync_time_work_handler(struct k_work *work)
 	k_timepoint_t start_tp;
 	int result;
 
-	k_work_schedule_for_queue(&openthread_rcp_work_q, &ot_rcp->sync_work,
-				  K_MSEC(CONFIG_TELINK_W91_OT_RCP_SYNC_TIME_OFFSET_MS));
-
+	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
 	ot_rcp->timestamp_req_time = sys_clock_w91_get_time_us();
 
-	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
 	result = spinel_drv_send_get_timestamp(&ot_rcp->spinel_drv,
 					       openthread_rcp_spinel_transmission, ot_rcp);
 	if (result >= 0) {
 		openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	}
 	k_mutex_unlock(&ot_rcp->tx_lock);
+
+	k_work_schedule_for_queue(&openthread_rcp_work_q, &ot_rcp->sync_work,
+				  K_MSEC(CONFIG_TELINK_W91_OT_RCP_SYNC_TIME_OFFSET_MS));
 }
 #endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 
@@ -309,7 +313,7 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -322,23 +326,24 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_reset(&ot_rcp->spinel_drv, response.data,
-						   response.data_size)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_reset(&ot_rcp->spinel_drv, response.data, response.data_size)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
+
 #if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
 	k_work_schedule_for_queue(&openthread_rcp_work_q, &ot_rcp->sync_work, K_NO_WAIT);
 #endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
@@ -349,7 +354,7 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_eui64[8])
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -362,23 +367,24 @@ int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_e
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_get_ieee_eui64(&ot_rcp->spinel_drv, response.data,
-							    response.data_size, ieee_eui64)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_get_ieee_eui64(&ot_rcp->spinel_drv, response.data, response.data_size,
+					    ieee_eui64)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -387,7 +393,7 @@ int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 				enum ieee802154_hw_caps *radio_caps)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -400,23 +406,24 @@ int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_get_capabilities(&ot_rcp->spinel_drv, response.data,
-							      response.data_size, radio_caps)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_get_capabilities(&ot_rcp->spinel_drv, response.data,
+					      response.data_size, radio_caps)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -424,7 +431,7 @@ int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool enable)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -437,23 +444,24 @@ int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool ena
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_enable_src_match(&ot_rcp->spinel_drv, response.data,
-							      response.data_size, enable)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_enable_src_match(&ot_rcp->spinel_drv, response.data,
+					      response.data_size, enable)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -461,7 +469,7 @@ int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool ena
 int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bool enable)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -474,23 +482,24 @@ int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bo
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_ack_fpb(&ot_rcp->spinel_drv, response.data,
-						     response.data_size, addr, enable)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_ack_fpb(&ot_rcp->spinel_drv, response.data, response.data_size, addr,
+				     enable)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -498,7 +507,7 @@ int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bo
 int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[8], bool enable)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -511,23 +520,24 @@ int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_ack_fpb_ext(&ot_rcp->spinel_drv, response.data,
-							 response.data_size, addr, enable)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_ack_fpb_ext(&ot_rcp->spinel_drv, response.data, response.data_size,
+					 addr, enable)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -535,7 +545,7 @@ int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[
 static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -548,23 +558,24 @@ static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_ack_fpb_clear(&ot_rcp->spinel_drv, response.data,
-							   response.data_size)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_ack_fpb_clear(&ot_rcp->spinel_drv, response.data,
+					   response.data_size)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -572,7 +583,7 @@ static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp
 static int openthread_rcp_ack_fpb_ext_clear(struct openthread_rcp_data *ot_rcp)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -585,23 +596,24 @@ static int openthread_rcp_ack_fpb_ext_clear(struct openthread_rcp_data *ot_rcp)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_ack_fpb_ext_clear(&ot_rcp->spinel_drv, response.data,
-							       response.data_size)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_ack_fpb_ext_clear(&ot_rcp->spinel_drv, response.data,
+					       response.data_size)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -620,7 +632,7 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp, uint32_
 				     bool set_if_larger)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -634,23 +646,24 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp, uint32_
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_mac_frame_counter(&ot_rcp->spinel_drv, response.data,
-							       response.data_size)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_mac_frame_counter(&ot_rcp->spinel_drv, response.data,
+					       response.data_size)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -658,7 +671,7 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp, uint32_
 int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -671,23 +684,24 @@ int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_panid(&ot_rcp->spinel_drv, response.data,
-						   response.data_size, pan_id)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_panid(&ot_rcp->spinel_drv, response.data, response.data_size,
+				   pan_id)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -695,7 +709,7 @@ int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
 int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -708,23 +722,24 @@ int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_short_addr(&ot_rcp->spinel_drv, response.data,
-							response.data_size, addr)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_short_addr(&ot_rcp->spinel_drv, response.data, response.data_size,
+					addr)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -732,7 +747,7 @@ int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
 int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -745,23 +760,24 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_ext_addr(&ot_rcp->spinel_drv, response.data,
-						      response.data_size, addr)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_ext_addr(&ot_rcp->spinel_drv, response.data, response.data_size,
+				      addr)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -769,7 +785,7 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -782,23 +798,24 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_tx_power(&ot_rcp->spinel_drv, response.data,
-						      response.data_size, pwr_dbm)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_tx_power(&ot_rcp->spinel_drv, response.data, response.data_size,
+				      pwr_dbm)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -806,7 +823,7 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -819,23 +836,24 @@ int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_rcp_enable(&ot_rcp->spinel_drv, response.data,
-							response.data_size, enable)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_rcp_enable(&ot_rcp->spinel_drv, response.data, response.data_size,
+					enable)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -843,7 +861,7 @@ int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -856,23 +874,24 @@ int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enabl
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_receive_enable(&ot_rcp->spinel_drv, response.data,
-							    response.data_size, enable)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_receive_enable(&ot_rcp->spinel_drv, response.data, response.data_size,
+					    enable)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -880,7 +899,7 @@ int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enabl
 int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -893,23 +912,24 @@ int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_channel(&ot_rcp->spinel_drv, response.data,
-						     response.data_size, channel)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_channel(&ot_rcp->spinel_drv, response.data, response.data_size,
+				     channel)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -917,7 +937,7 @@ int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_frame_data *frame)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -930,35 +950,37 @@ int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_fr
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_transmit_frame(&ot_rcp->spinel_drv, response.data,
-							    response.data_size, frame)) {
-				processed = true;
-				result = 0;
-				if (frame->data && frame->data_length) {
-					void *p = malloc(frame->data_length);
-
-					if (p) {
-						memcpy(p, frame->data, frame->data_length);
-						frame->data = p;
-					} else {
-						frame->data = NULL;
-						frame->data_length = 0;
-						LOG_ERR("spinel can't allocate ack frame data");
-					}
-				}
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_transmit_frame(&ot_rcp->spinel_drv, response.data, response.data_size,
+					    frame)) {
+		if (frame->data && frame->data_length) {
+			void *p = malloc(frame->data_length);
+
+			if (p) {
+				memcpy(p, frame->data, frame->data_length);
+				frame->data = p;
+				result = 0;
+			} else {
+				frame->data = NULL;
+				frame->data_length = 0;
+				result = -ENOMEM;
+				LOG_ERR("spinel can't allocate ack frame data");
+			}
+		}
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -967,7 +989,7 @@ int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t sho
 				const uint8_t ext_addr[8], struct spinel_link_metrics link_metrics)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -981,23 +1003,23 @@ int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t sho
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_link_metrics(&ot_rcp->spinel_drv, response.data,
-							  response.data_size)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_link_metrics(&ot_rcp->spinel_drv, response.data, response.data_size)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }
@@ -1005,7 +1027,7 @@ int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t sho
 int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spinel_mac_keys *keys)
 {
 	k_timepoint_t start_tp;
-	bool processed = false;
+	struct openthread_rcp_buffer response;
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
@@ -1018,23 +1040,23 @@ int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spi
 
 	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
-
-	while (result >= 0 && !processed) {
-		struct openthread_rcp_buffer response;
-
-		result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
-		if (result >= 0) {
-			if (spinel_drv_check_mac_keys(&ot_rcp->spinel_drv, response.data,
-						      response.data_size)) {
-				processed = true;
-				result = 0;
-			} else {
-				LOG_HEXDUMP_DBG(response.data, response.data_size,
-						"trash rx @ " STRINGIFY(__LINE__));
-			}
-			free(response.data);
-		}
+	if (result < 0) {
+		return result;
 	}
+
+	result = openthread_rcp_process_continue(ot_rcp, start_tp, &response);
+	if (result < 0) {
+		return result;
+	}
+
+	if (spinel_drv_check_mac_keys(&ot_rcp->spinel_drv, response.data, response.data_size)) {
+		result = 0;
+	} else {
+		result = -EINVAL;
+		LOG_HEXDUMP_DBG(response.data, response.data_size,
+				"trash rx @ " STRINGIFY(__LINE__));
+	}
+	free(response.data);
 
 	return result;
 }

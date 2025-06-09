@@ -13,7 +13,7 @@
 
 &uart1 {
 	status = "okay";
-	current-speed = <1000000>;
+	current-speed = <2000000>;
 	pinctrl-0 = <&uart1_tx_pc6_default &uart1_rx_pc7_default
 					&uart1_rts_pc5_default &uart1_cts_pc4_default>;
 	pinctrl-names = "default";
