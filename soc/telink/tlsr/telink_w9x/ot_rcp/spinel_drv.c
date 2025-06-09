@@ -1155,8 +1155,17 @@ bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv, const u
 	}
 
 	if (status != SPINEL_STATUS_OK) {
-		LOG_ERR("Incorrect response status of transmit_frame (inst = %u, status = %u)",
-			spinel_drv->inst, status);
+		if (status == SPINEL_STATUS_NO_ACK) {
+			LOG_DBG("No ACK received during transmit_frame (inst = %u)",
+				spinel_drv->inst);
+		} else if (status == SPINEL_STATUS_CCA_FAILURE) {
+			LOG_DBG("Channel busy (CCA failure) during transmit_frame (inst = %u)",
+				spinel_drv->inst);
+		} else {
+			LOG_ERR("Incorrect response status of transmit_frame "
+				"(inst = %u, status = %u)",
+				spinel_drv->inst, status);
+		}
 		return false;
 	}
 
