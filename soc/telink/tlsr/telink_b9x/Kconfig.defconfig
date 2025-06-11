@@ -97,6 +97,7 @@ config MBEDTLS_CTR_DRBG_ENABLED
 
 config MBEDTLS_CIPHER_AES_ENABLED
 	default y if MBEDTLS_TEST && TELINK_B9X_MBEDTLS_HW_ACCELERATION
+	select MBEDTLS_AES_ROM_TABLES
 
 # Workaround for not being able to have commas in macro arguments
 DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
