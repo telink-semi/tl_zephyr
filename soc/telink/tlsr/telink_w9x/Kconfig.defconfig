@@ -15,10 +15,6 @@ config RISCV_SOC_INTERRUPT_INIT
 	bool
 	default y
 
-config RISCV_GP
-	bool
-	default y
-
 config 2ND_LVL_INTR_00_OFFSET
 	int
 	default 11
@@ -31,9 +27,9 @@ config NUM_IRQS
 	int
 	default 59
 
-config PINCTRL
-	bool
-	default y
+config MAX_IRQ_PER_AGGREGATOR
+	int
+	default 59
 
 config XIP
 	bool
@@ -98,5 +94,10 @@ DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
 config SETTINGS_NVS_SECTOR_COUNT
 	int
 	default $(shell,expr $(dt_node_reg_size_int,$(DT_LABEL_Z_STORAGE),0,K) / 4)
+
+config OPENTHREAD_CSL_REQUEST_TIME_AHEAD
+	int
+	default 20000
+	depends on NET_PKT_TXTIME || NET_PKT_TIMESTAMP
 
 endif # SOC_RISCV_TELINK_W9X

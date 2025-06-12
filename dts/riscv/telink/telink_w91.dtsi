@@ -64,9 +64,10 @@
 		};
 
 		mtimer: timer@e6000000 {
-			compatible = "telink,machine-timer";
-			reg = <0xe6000000 0x10000>;
+			compatible = "riscv,machine-timer";
+			reg = <0xe6000000 0x8 0xe6000008 0x8>;
 			interrupts = <7 0>;
+			interrupts-extended = <&hlic 7>;
 			interrupt-parent = <&hlic>;
 		};
 

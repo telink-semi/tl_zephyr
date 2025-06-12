@@ -12,12 +12,14 @@ config SOC_RISCV_TELINK_W9X
 	select RISCV_ISA_EXT_ZIFENCEI
 	select RISCV_PRIVILEGED
 	select RISCV_HAS_PLIC
+	select RISCV_SOC_HAS_GP_RELATIVE_ADDRESSING
 	select ATOMIC_OPERATIONS_BUILTIN
 	select CPU_HAS_FPU
 	select CPU_HAS_DCACHE
 	select CPU_HAS_ICACHE
 	select CACHE_MANAGEMENT
 	select INCLUDE_RESET_VECTOR
+	select PINCTRL
 	imply XIP
 	select SOC_EARLY_INIT_HOOK
 
@@ -72,13 +74,6 @@ config TELINK_W91_DEBUG_BAUDRATE
 	depends on TELINK_W91_DEBUG_ENABLE
 	help
 		This option sets Telink W91 debug baudrate, bps.
-
-config TELINK_W91_OT_MAC_CSL_REQUEST_AHEAD_US
-	int "OpenThread CSL request ahead time in microseconds"
-	default 20000
-	depends on NET_PKT_TXTIME || NET_PKT_TIMESTAMP
-	help
-		This option sets the OPENTHREAD_CONFIG_MAC_CSL_REQUEST_AHEAD_US parameter.
 
 source "soc/telink/tlsr/telink_w9x/ipc/Kconfig.ipc"
 source "soc/telink/tlsr/telink_w9x/blocking_core/Kconfig.blocking"
