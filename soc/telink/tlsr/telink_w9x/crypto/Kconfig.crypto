@@ -4,7 +4,7 @@
 if MBEDTLS
 
 config MBEDTLS_USER_CONFIG_FILE
-	default "crypto/telink_w91_mbedtls_user_config.h"
+	default "crypto/telink_w91_mbedtls_user_config.h" if !MCUBOOT
 
 config MBEDTLS_ENTROPY_POLL_ZEPHYR
 	default y if ENTROPY_HAS_DRIVER
