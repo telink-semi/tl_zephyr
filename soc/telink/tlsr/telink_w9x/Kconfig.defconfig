@@ -31,10 +31,6 @@ config MAX_IRQ_PER_AGGREGATOR
 	int
 	default 59
 
-config PINCTRL
-	bool
-	default y
-
 config XIP
 	bool
 	default n

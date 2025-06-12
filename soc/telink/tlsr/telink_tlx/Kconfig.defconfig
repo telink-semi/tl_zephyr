@@ -24,9 +24,6 @@ config NUM_IRQS
 config MAX_IRQ_PER_AGGREGATOR
 	default 64
 
-config PINCTRL
-	default y
-
 config XIP
 	default n
 
