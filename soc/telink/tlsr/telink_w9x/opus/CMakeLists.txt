@@ -7,22 +7,32 @@ set(OPUS_LIB_URL "${BASE_URL}/libtlka_opus_gcc_${CONFIG_TELINK_W91_OPUS_LIB_VERS
 
 file(MAKE_DIRECTORY "${OUTPUT_DIR}")
 
-# Define destination file
+# Set local path variable - override this using -DOPUS_LIB_LOCAL=...
+set(OPUS_LIB_LOCAL "" CACHE PATH "Path to local OPUS library (for development override)")
 set(OPUS_LIB_DESTINATION "${OUTPUT_DIR}/w91_opus.a")
 
-message(STATUS "Downloading OPUS library from ${OPUS_LIB_URL}")
+# --- Use local file if available ---
+if(OPUS_LIB_LOCAL AND EXISTS "${OPUS_LIB_LOCAL}")
+    message(STATUS "Using local OPUS library: ${OPUS_LIB_LOCAL}")
+    # Get just the filename (e.g., libtlka_opus.a)
+    get_filename_component(OPUS_LOCAL_FILENAME "${OPUS_LIB_LOCAL}" NAME)
+    set(OPUS_LOCAL_COPY_PATH "${OUTPUT_DIR}/${OPUS_LOCAL_FILENAME}")
+    file(COPY "${OPUS_LIB_LOCAL}" DESTINATION "${OUTPUT_DIR}")
+    file(RENAME "${OPUS_LOCAL_COPY_PATH}" "${OPUS_LIB_DESTINATION}")
+else()
+    message(STATUS "Downloading OPUS library from ${OPUS_LIB_URL}")
 
-file(DOWNLOAD
-    "${OPUS_LIB_URL}"
-    "${OPUS_LIB_DESTINATION}"
-    STATUS OPUS_LIB_STATUS)
+    file(DOWNLOAD
+        "${OPUS_LIB_URL}"
+        "${OPUS_LIB_DESTINATION}"
+        STATUS OPUS_LIB_STATUS)
 
-list(GET OPUS_LIB_STATUS 0 OPUS_LIB_CODE)
-if(NOT OPUS_LIB_CODE EQUAL 0)
-    message(FATAL_ERROR "Failed to download OPUS library: ${OPUS_LIB_STATUS}")
+    list(GET OPUS_LIB_STATUS 0 OPUS_LIB_CODE)
+    if(NOT OPUS_LIB_CODE EQUAL 0)
+        message(FATAL_ERROR "Failed to download OPUS library: ${OPUS_LIB_STATUS}")
+    endif()
 endif()
 
-# --- Extract and check GCC version in the downloaded library ---
 execute_process(
     COMMAND strings "${OPUS_LIB_DESTINATION}"
     COMMAND grep -i "gcc"
@@ -39,8 +49,4 @@ endif()
 if (CONFIG_TELINK_W91_OPUS_CODEC)
     target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
     target_link_libraries(app PRIVATE ${OPUS_LIB_DESTINATION})
-
-    # zephyr_sources(
-    #     test_opus.c
-    # )
 endif()

@@ -4,135 +4,75 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
 #include <zephyr/kernel.h>
-// #include <zephyr/audio/dmic.h>
+#include <zephyr/device.h>
+// #include <zephyr/drivers/audio/audio_codec.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/audio/codec.h>
 #include <opus/tlka_opus_api.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(opus_sample);
+LOG_MODULE_REGISTER(audio_test, LOG_LEVEL_INF);
 
-// #define MAX_SAMPLE_RATE  16000
-// #define SAMPLE_BIT_WIDTH 16
-// #define BYTES_PER_SAMPLE sizeof(int16_t)
-// /* Milliseconds to wait for a block to be read. */
-// #define READ_TIMEOUT     1000
+#define CODEC_NODE DT_NODELABEL(w91_audio)
+/* Such block length provides an echo with the delay of 100 ms. */
+#define SAMPLES_PER_BLOCK   ((SAMPLE_FREQUENCY / 10) * NUMBER_OF_CHANNELS)
+#define INITIAL_BLOCKS      4 // CONFIG_I2S_INIT_BUFFERS
+#define NUMBER_OF_CHANNELS (2U)
+#define TIMEOUT             (2000U)
+#define SAMPLE_FREQUENCY    16000 // CONFIG_SAMPLE_FREQ
+#define SAMPLE_BIT_WIDTH    (16U)
+#define BYTES_PER_SAMPLE    sizeof(int16_t)
 
-// /* Size of a block for 100 ms of audio data. */
-// #define BLOCK_SIZE(_sample_rate, _number_of_channels) \
-// 	(BYTES_PER_SAMPLE * (_sample_rate / 10) * _number_of_channels)
+// Lead to RAM overflowed by 62952 bytes
+#define BLOCK_SIZE  (BYTES_PER_SAMPLE * SAMPLES_PER_BLOCK)
+// #define BLOCK_COUNT (INITIAL_BLOCKS + 32)
+// K_MEM_SLAB_DEFINE_STATIC(mem_slab, BLOCK_SIZE, BLOCK_COUNT, 4);
 
-// /* Driver will allocate blocks from this slab to receive audio data into them.
-//  * Application, after getting a given block from the driver and processing its
-//  * data, needs to free that block.
-//  */
-// #define MAX_BLOCK_SIZE   BLOCK_SIZE(MAX_SAMPLE_RATE, 2)
-// #define BLOCK_COUNT      4
-// K_MEM_SLAB_DEFINE_STATIC(mem_slab, MAX_BLOCK_SIZE, BLOCK_COUNT, 4);
-
-// static int do_pdm_transfer(const struct device *dmic_dev,
-// 			   struct dmic_cfg *cfg,
-// 			   size_t block_count)
-// {
-// 	int ret;
-
-// 	LOG_INF("PCM output rate: %u, channels: %u",
-// 		cfg->streams[0].pcm_rate, cfg->channel.req_num_chan);
-
-// 	ret = dmic_configure(dmic_dev, cfg);
-// 	if (ret < 0) {
-// 		LOG_ERR("Failed to configure the driver: %d", ret);
-// 		return ret;
-// 	}
-
-// 	ret = dmic_trigger(dmic_dev, DMIC_TRIGGER_START);
-// 	if (ret < 0) {
-// 		LOG_ERR("START trigger failed: %d", ret);
-// 		return ret;
-// 	}
-
-// 	for (int i = 0; i < block_count; ++i) {
-// 		void *buffer;
-// 		uint32_t size;
-
-// 		ret = dmic_read(dmic_dev, 0, &buffer, &size, READ_TIMEOUT);
-// 		if (ret < 0) {
-// 			LOG_ERR("%d - read failed: %d", i, ret);
-// 			return ret;
-// 		}
-
-// 		LOG_INF("%d - got buffer %p of %u bytes", i, buffer, size);
-
-// 		k_mem_slab_free(&mem_slab, buffer);
-// 	}
-
-// 	ret = dmic_trigger(dmic_dev, DMIC_TRIGGER_STOP);
-// 	if (ret < 0) {
-// 		LOG_ERR("STOP trigger failed: %d", ret);
-// 		return ret;
-// 	}
-
-// 	return ret;
-// }
 
 int main(void)
 {
-	// const struct device *const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
-	// int ret;
-	printk("OPUS version: %d", tlka_opus_get_version());
+	LOG_INF("TLSR9118 audio test start");
 
-	// LOG_INF("DMIC sample");
+	printk("OPUS version: %d", tlka_opus_get_version()); // lib linking check
 
-	// if (!device_is_ready(dmic_dev)) {
-	// 	LOG_ERR("%s is not ready", dmic_dev->name);
-	// 	return 0;
+	const struct device *codec = DEVICE_DT_GET(CODEC_NODE);
+
+	if (!device_is_ready(codec)) {
+		LOG_ERR("Audio codec device not ready");
+		return -1;
+	}
+
+	struct audio_codec_cfg audio_cfg;
+
+	audio_cfg.dai_route = AUDIO_ROUTE_PLAYBACK;
+	audio_cfg.dai_type = AUDIO_DAI_TYPE_I2S;
+	audio_cfg.dai_cfg.i2s.word_size = SAMPLE_BIT_WIDTH;
+	audio_cfg.dai_cfg.i2s.channels =  2;
+	audio_cfg.dai_cfg.i2s.format = I2S_FMT_DATA_FORMAT_I2S;
+	audio_cfg.dai_cfg.i2s.options = I2S_OPT_FRAME_CLK_MASTER;
+	audio_cfg.dai_cfg.i2s.frame_clk_freq = SAMPLE_FREQUENCY;
+	audio_cfg.dai_cfg.i2s.mem_slab = NULL;
+	audio_cfg.dai_cfg.i2s.block_size = BLOCK_SIZE;
+
+    int err = audio_codec_configure(codec, &audio_cfg);
+    if (err) {
+        LOG_ERR("Configure error: %d", err);
+        return -1;
+    }
+
+	// if (audio_codec_start(codec, AUDIO_STREAM_PLAYBACK) != 0) {
+	// 	LOG_ERR("Failed to start codec");
+	// 	return;
 	// }
 
-	// struct pcm_stream_cfg stream = {
-	// 	.pcm_width = SAMPLE_BIT_WIDTH,
-	// 	.mem_slab  = &mem_slab,
-	// };
-	// struct dmic_cfg cfg = {
-	// 	.io = {
-	// 		/* These fields can be used to limit the PDM clock
-	// 		 * configurations that the driver is allowed to use
-	// 		 * to those supported by the microphone.
-	// 		 */
-	// 		.min_pdm_clk_freq = 1000000,
-	// 		.max_pdm_clk_freq = 3500000,
-	// 		.min_pdm_clk_dc   = 40,
-	// 		.max_pdm_clk_dc   = 60,
-	// 	},
-	// 	.streams = &stream,
-	// 	.channel = {
-	// 		.req_num_streams = 1,
-	// 	},
-	// };
+	LOG_INF("Playback started");
 
-	// cfg.channel.req_num_chan = 1;
-	// cfg.channel.req_chan_map_lo =
-	// 	dmic_build_channel_map(0, 0, PDM_CHAN_LEFT);
-	// cfg.streams[0].pcm_rate = MAX_SAMPLE_RATE;
-	// cfg.streams[0].block_size =
-	// 	BLOCK_SIZE(cfg.streams[0].pcm_rate, cfg.channel.req_num_chan);
+	k_sleep(K_SECONDS(2));
 
-	// ret = do_pdm_transfer(dmic_dev, &cfg, 2 * BLOCK_COUNT);
-	// if (ret < 0) {
-	// 	return 0;
-	// }
+	// audio_codec_stop(codec, AUDIO_STREAM_PLAYBACK);
 
-	// cfg.channel.req_num_chan = 2;
-	// cfg.channel.req_chan_map_lo =
-	// 	dmic_build_channel_map(0, 0, PDM_CHAN_LEFT) |
-	// 	dmic_build_channel_map(1, 0, PDM_CHAN_RIGHT);
-	// cfg.streams[0].pcm_rate = MAX_SAMPLE_RATE;
-	// cfg.streams[0].block_size =
-	// 	BLOCK_SIZE(cfg.streams[0].pcm_rate, cfg.channel.req_num_chan);
+	LOG_INF("Playback stopped");
 
-	// ret = do_pdm_transfer(dmic_dev, &cfg, 2 * BLOCK_COUNT);
-	// if (ret < 0) {
-	// 	return 0;
-	// }
-
-	// LOG_INF("Exiting");
 	return 0;
 }

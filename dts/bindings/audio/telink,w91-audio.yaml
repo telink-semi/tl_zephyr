@@ -1,0 +1,10 @@
+# Copyright (c) 2025 Telink
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TLSR9118BDK40D audio codec abstract interface
+
+compatible: "telink,w91-audio"
+
+include: base.yaml
+
+# include: i2s-device.yaml

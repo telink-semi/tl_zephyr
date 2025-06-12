@@ -1,0 +1,7 @@
+# Copyright 2025 Telink
+# SPDX-License-Identifier: Apache-2.0
+
+config AUDIO_TLSR9118
+	bool "Telink audio codec support"
+	# select I2C
+	depends on DT_HAS_TELINK_W91_AUDIO_ENABLED

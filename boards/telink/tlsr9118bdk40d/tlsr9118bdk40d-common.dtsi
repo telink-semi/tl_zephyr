@@ -138,6 +138,13 @@
 	pinctrl-names = "default";
 };
 
+&i2c1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_scl_default &i2c1_sda_default>;
+	pinctrl-names = "default";
+};
+
 &spi1 {
 	status = "okay";
 	pinctrl-0 = <&spi1_cs_default &spi1_clk_default &spi1_miso_default &spi1_mosi_default>;

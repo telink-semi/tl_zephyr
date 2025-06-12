@@ -173,7 +173,22 @@
 
 		i2c1: i2c1 {
 			compatible = "telink,w91-i2c";
+			#address-cells = <1>;
+			#size-cells = <0>;
 			status = "disabled";
+			clock-frequency = <I2C_BITRATE_STANDARD>;
+		};
+
+		dummy_i2s0: dummy_i2s0 {
+			compatible = "telink,w91-i2s";
+			status = "disabled";
+			label = "I2S_0";
+		};
+
+		w91_audio: w91_audio {
+			compatible = "telink,w91-audio";
+			status = "disabled";
+			label = "TLSR9118_AUDIO";
 		};
 
 		pwm0: pwm0 {
