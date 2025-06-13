@@ -77,6 +77,7 @@ config COMMON_LIBC_MALLOC
 
 config COMMON_LIBC_MALLOC_ARENA_SIZE
 	int
+	default 12288 if NET_L2_OPENTHREAD
 	default 8192
 
 config HEAP_MEM_POOL_SIZE
@@ -87,6 +88,13 @@ config HAS_FLASH_LOAD_OFFSET
 	bool
 	default y if BOOTLOADER_MCUBOOT
 
+config NVS
+	bool
+	default y if OPENTHREAD
+	depends on FLASH
+	depends on FLASH_PAGE_LAYOUT
+
+if SETTINGS_NVS
 # Workaround for not being able to have commas in macro arguments
 DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
 
@@ -94,10 +102,6 @@ DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
 config SETTINGS_NVS_SECTOR_COUNT
 	int
 	default $(shell,expr $(dt_node_reg_size_int,$(DT_LABEL_Z_STORAGE),0,K) / 4)
-
-config OPENTHREAD_CSL_REQUEST_TIME_AHEAD
-	int
-	default 20000
-	depends on NET_PKT_TXTIME || NET_PKT_TIMESTAMP
+endif # SETTINGS_NVS
 
 endif # SOC_RISCV_TELINK_W9X

@@ -111,12 +111,14 @@ zephyr_sources(
 	ot_rcp/spinel.c
 )
 
-if(CONFIG_OPENTHREAD_BORDER_ROUTING)
-zephyr_sources(
-	ot_rcp/otbr_ext.c
-)
 endif()
 
+if(CONFIG_TELINK_W91_OTBR)
+zephyr_sources(
+	otbr/otbr_icmpv6.c
+	otbr/otbr_ext.c
+	otbr/otbr_init.c
+)
 endif()
 
 if(CONFIG_TELINK_W91_FETCH_N22_BIN)

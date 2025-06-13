@@ -368,7 +368,12 @@ static enum net_verdict ipv6_route_packet(struct net_pkt *pkt,
 			add_route(net_pkt_orig_iface(pkt),
 				  (struct in6_addr *)hdr->src, 128);
 		}
-
+#if CONFIG_NET_L2_OPENTHREAD
+		if (net_if_l2(net_pkt_orig_iface(pkt)) == &NET_L2_GET_NAME(OPENTHREAD) &&
+			!net_pkt_ll_proto_type(pkt)) {
+			net_pkt_set_ll_proto_type(pkt, NET_ETH_PTYPE_IPV6);
+		}
+#endif /* CONFIG_NET_L2_OPENTHREAD */
 		ret = net_route_packet(pkt, nexthop);
 		if (ret < 0) {
 			NET_DBG("Cannot re-route pkt %p via %s "
