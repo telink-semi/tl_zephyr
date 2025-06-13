@@ -58,14 +58,6 @@ config TELINK_W91_OT_SPINEL_RESPONSE_TIMEOUT_MS
 	help
 		This option sets Telink W91 Openthread spinel response timeout, mS.
 
-config OPENTHREAD_EXTERNAL_HEAP
-	bool "External heap support"
-	default y if OPENTHREAD_BORDER_ROUTING
-
-config NET_ROUTING
-	bool
-	default y if OPENTHREAD_BORDER_ROUTING
-
 endif # TELINK_W91_OT_RCP
 
 endif # IEEE802154
