@@ -1,0 +1,71 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config TELINK_W91_OTBR
+	bool "Telink W91 Thread border router"
+	select NETWORKING
+	select NET_CONFIG_SETTINGS
+	select NET_L2_ETHERNET
+	select NET_L2_OPENTHREAD
+	select NET_L2_ETHERNET_MGMT
+	select WIFI
+	select OPENTHREAD_MANUAL_START
+	select SHELL
+	select OPENTHREAD_SHELL
+	select OPENTHREAD_BORDER_ROUTER
+	select OPENTHREAD_BORDER_ROUTING
+	select OPENTHREAD_BORDER_ROUTING_COUNTERS
+	select OPENTHREAD_SRP_SERVER
+	select OPENTHREAD_ENABLE_SERVICE
+	select OPENTHREAD_SLAAC
+	help
+		This option enables Telink W91 Thread border router.
+
+if TELINK_W91_OTBR
+
+choice
+	prompt "Telink W91 OTBR log level"
+	default TELINK_W91_OTBR_LOG_LEVEL_INFO
+	help
+		This option selects log level for Telink W91 OTBR.
+config TELINK_W91_OTBR_LOG_LEVEL_CRIT
+	bool "Critical"
+config TELINK_W91_OTBR_LOG_LEVEL_WARN
+	bool "Warning"
+config TELINK_W91_OTBR_LOG_LEVEL_NOTE
+	bool "Notice"
+config TELINK_W91_OTBR_LOG_LEVEL_INFO
+	bool "Informational"
+config TELINK_W91_OTBR_LOG_LEVEL_DEBG
+	bool "Debug"
+endchoice
+
+config TELINK_W91_OTBR_LOG_LEVEL
+	int
+	default 1 if TELINK_W91_OTBR_LOG_LEVEL_CRIT
+	default 2 if TELINK_W91_OTBR_LOG_LEVEL_WARN
+	default 3 if TELINK_W91_OTBR_LOG_LEVEL_NOTE
+	default 4 if TELINK_W91_OTBR_LOG_LEVEL_INFO
+	default 5 if TELINK_W91_OTBR_LOG_LEVEL_DEBG
+	default 0
+
+config NET_CONFIG_AUTO_INIT
+	bool "Init networking support automatically during device startup"
+	default n
+
+config TELINK_W91_OTBR_INIT_PRIO
+	int "Startup priority for the Telink W91 OTBR"
+	depends on !NET_CONFIG_AUTO_INIT
+	default 95
+
+config NET_IF_MAX_IPV6_COUNT
+	int "Max number of IPv6 network interfaces in the system"
+	default 2
+
+config TELINK_W91_OTBR_WIFI_SSID
+	string "WIFI SSID - Network name"
+
+config TELINK_W91_OTBR_WIFI_PASSWORD
+	string "WIFI PSK - Network password"
+
+endif # TELINK_W91_OTBR
