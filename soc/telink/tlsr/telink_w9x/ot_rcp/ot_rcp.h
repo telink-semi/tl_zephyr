@@ -35,6 +35,7 @@ struct openthread_rcp_data {
 	struct k_msgq spinel_msgq;
 	struct spinel_drv_data spinel_drv;
 	openthread_rcp_reception reception;
+	atomic_t rx_msgq_waiters;
 	const void *ctx;
 #if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
 	struct k_mutex time_lock;

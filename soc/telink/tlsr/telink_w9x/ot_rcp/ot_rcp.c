@@ -93,13 +93,10 @@ static void openthread_rcp_hdlc_transmission(uint8_t bt, const void *ctx)
 	}
 }
 
-static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp, int encode_result,
+static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp,
 					k_timepoint_t *start_time)
 {
-	if (encode_result < 0) {
-		LOG_ERR("spinel encoding error");
-	}
-	hdlc_coder_out_finish(&ot_rcp->hdlc, encode_result >= 0);
+	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
 	int result =
 		uart_fifo_fill(ot_rcp->uart, ot_rcp->tx_buffer.data, ot_rcp->tx_buffer.data_size);
 
@@ -108,9 +105,6 @@ static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp, int 
 		result = result < 0 ? result : -EIO;
 	}
 	ot_rcp->tx_buffer.data_size = 0;
-	if (encode_result < 0) {
-		result = encode_result;
-	}
 	if (result >= 0) {
 		*start_time =
 			sys_timepoint_calc(K_MSEC(CONFIG_TELINK_W91_OT_SPINEL_RESPONSE_TIMEOUT_MS));
@@ -125,6 +119,7 @@ static int openthread_rcp_process_continue(struct openthread_rcp_data *ot_rcp,
 {
 	int result = -ETIMEDOUT;
 
+	atomic_inc(&ot_rcp->rx_msgq_waiters);
 	if (!k_msgq_get(&ot_rcp->spinel_msgq, data_income, sys_timepoint_timeout(start_time))) {
 		if (data_income->data && data_income->data_size) {
 			result = 0;
@@ -132,8 +127,10 @@ static int openthread_rcp_process_continue(struct openthread_rcp_data *ot_rcp,
 			result = -EINVAL;
 		}
 	}
+	if (atomic_get(&ot_rcp->rx_msgq_waiters) > 0) {
+		atomic_dec(&ot_rcp->rx_msgq_waiters);
+	}
 	if (result == -ETIMEDOUT) {
-		spinel_drv_remove_last_act(&ot_rcp->spinel_drv);
 		LOG_ERR("spinel response timeout");
 	}
 
@@ -162,7 +159,7 @@ static void openthread_rcp_sync_time_work_handler(struct k_work *work)
 	result = spinel_drv_send_get_timestamp(&ot_rcp->spinel_drv,
 					       openthread_rcp_spinel_transmission, ot_rcp);
 	if (result >= 0) {
-		openthread_rcp_process_start(ot_rcp, result, &start_tp);
+		openthread_rcp_process_start(ot_rcp, &start_tp);
 	}
 	k_mutex_unlock(&ot_rcp->tx_lock);
 
@@ -214,7 +211,7 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
 				free(ot_rcp->spinel_rx_buffer.data);
 #if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
 			} else if (spinel_drv_check_get_timestamp(
-					   &ot_rcp->spinel_drv, ot_rcp->spinel_rx_buffer.data,
+					   &ot_rcp->spinel_drv, 0, ot_rcp->spinel_rx_buffer.data,
 					   ot_rcp->spinel_rx_buffer.data_size, &rcp_time)) {
 				uint64_t timestamp_resp_time = sys_clock_w91_get_time_us();
 				int64_t time_offset = rcp_time - (ot_rcp->timestamp_req_time / 2 +
@@ -224,8 +221,12 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
 				free(ot_rcp->spinel_rx_buffer.data);
 #endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 			} else {
-				k_msgq_put(&ot_rcp->spinel_msgq, &ot_rcp->spinel_rx_buffer,
-					   K_FOREVER);
+				if (atomic_get(&ot_rcp->rx_msgq_waiters) > 0) {
+					k_msgq_put(&ot_rcp->spinel_msgq, &ot_rcp->spinel_rx_buffer,
+						   K_FOREVER);
+				} else {
+					free(ot_rcp->spinel_rx_buffer.data);
+				}
 			}
 			ot_rcp->spinel_rx_buffer.data = NULL;
 		}
@@ -324,7 +325,7 @@ int openthread_rcp_reset(struct openthread_rcp_data *ot_rcp)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -365,7 +366,9 @@ int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_e
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -376,8 +379,8 @@ int openthread_rcp_ieee_eui64(struct openthread_rcp_data *ot_rcp, uint8_t ieee_e
 		return result;
 	}
 
-	if (spinel_drv_check_get_ieee_eui64(&ot_rcp->spinel_drv, response.data, response.data_size,
-					    ieee_eui64)) {
+	if (spinel_drv_check_get_ieee_eui64(&ot_rcp->spinel_drv, spinel_id, response.data,
+					    response.data_size, ieee_eui64)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -404,7 +407,9 @@ int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -415,7 +420,7 @@ int openthread_rcp_capabilities(struct openthread_rcp_data *ot_rcp,
 		return result;
 	}
 
-	if (spinel_drv_check_get_capabilities(&ot_rcp->spinel_drv, response.data,
+	if (spinel_drv_check_get_capabilities(&ot_rcp->spinel_drv, spinel_id, response.data,
 					      response.data_size, radio_caps)) {
 		result = 0;
 	} else {
@@ -442,7 +447,9 @@ int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool ena
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -453,7 +460,7 @@ int openthread_rcp_enable_src_match(struct openthread_rcp_data *ot_rcp, bool ena
 		return result;
 	}
 
-	if (spinel_drv_check_enable_src_match(&ot_rcp->spinel_drv, response.data,
+	if (spinel_drv_check_enable_src_match(&ot_rcp->spinel_drv, spinel_id, response.data,
 					      response.data_size, enable)) {
 		result = 0;
 	} else {
@@ -480,7 +487,9 @@ int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bo
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -491,8 +500,8 @@ int openthread_rcp_ack_fpb(struct openthread_rcp_data *ot_rcp, uint16_t addr, bo
 		return result;
 	}
 
-	if (spinel_drv_check_ack_fpb(&ot_rcp->spinel_drv, response.data, response.data_size, addr,
-				     enable)) {
+	if (spinel_drv_check_ack_fpb(&ot_rcp->spinel_drv, spinel_id, response.data,
+				     response.data_size, addr, enable)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -518,7 +527,9 @@ int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -529,8 +540,8 @@ int openthread_rcp_ack_fpb_ext(struct openthread_rcp_data *ot_rcp, uint8_t addr[
 		return result;
 	}
 
-	if (spinel_drv_check_ack_fpb_ext(&ot_rcp->spinel_drv, response.data, response.data_size,
-					 addr, enable)) {
+	if (spinel_drv_check_ack_fpb_ext(&ot_rcp->spinel_drv, spinel_id, response.data,
+					 response.data_size, addr, enable)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -556,7 +567,9 @@ static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -567,7 +580,7 @@ static int openthread_rcp_ack_fpb_short_clear(struct openthread_rcp_data *ot_rcp
 		return result;
 	}
 
-	if (spinel_drv_check_ack_fpb_clear(&ot_rcp->spinel_drv, response.data,
+	if (spinel_drv_check_ack_fpb_clear(&ot_rcp->spinel_drv, spinel_id, response.data,
 					   response.data_size)) {
 		result = 0;
 	} else {
@@ -594,7 +607,9 @@ static int openthread_rcp_ack_fpb_ext_clear(struct openthread_rcp_data *ot_rcp)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -605,7 +620,7 @@ static int openthread_rcp_ack_fpb_ext_clear(struct openthread_rcp_data *ot_rcp)
 		return result;
 	}
 
-	if (spinel_drv_check_ack_fpb_ext_clear(&ot_rcp->spinel_drv, response.data,
+	if (spinel_drv_check_ack_fpb_ext_clear(&ot_rcp->spinel_drv, spinel_id, response.data,
 					       response.data_size)) {
 		result = 0;
 	} else {
@@ -644,7 +659,9 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp, uint32_
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -655,7 +672,7 @@ int openthread_rcp_mac_frame_counter(struct openthread_rcp_data *ot_rcp, uint32_
 		return result;
 	}
 
-	if (spinel_drv_check_mac_frame_counter(&ot_rcp->spinel_drv, response.data,
+	if (spinel_drv_check_mac_frame_counter(&ot_rcp->spinel_drv, spinel_id, response.data,
 					       response.data_size)) {
 		result = 0;
 	} else {
@@ -682,7 +699,9 @@ int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -693,8 +712,8 @@ int openthread_rcp_panid(struct openthread_rcp_data *ot_rcp, uint16_t pan_id)
 		return result;
 	}
 
-	if (spinel_drv_check_panid(&ot_rcp->spinel_drv, response.data, response.data_size,
-				   pan_id)) {
+	if (spinel_drv_check_panid(&ot_rcp->spinel_drv, spinel_id, response.data,
+				   response.data_size, pan_id)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -720,7 +739,9 @@ int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -731,8 +752,8 @@ int openthread_rcp_short_addr(struct openthread_rcp_data *ot_rcp, uint16_t addr)
 		return result;
 	}
 
-	if (spinel_drv_check_short_addr(&ot_rcp->spinel_drv, response.data, response.data_size,
-					addr)) {
+	if (spinel_drv_check_short_addr(&ot_rcp->spinel_drv, spinel_id, response.data,
+					response.data_size, addr)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -758,7 +779,9 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -769,8 +792,8 @@ int openthread_rcp_ext_addr(struct openthread_rcp_data *ot_rcp, uint8_t addr[8])
 		return result;
 	}
 
-	if (spinel_drv_check_ext_addr(&ot_rcp->spinel_drv, response.data, response.data_size,
-				      addr)) {
+	if (spinel_drv_check_ext_addr(&ot_rcp->spinel_drv, spinel_id, response.data,
+				      response.data_size, addr)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -796,7 +819,9 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -807,8 +832,8 @@ int openthread_rcp_tx_power(struct openthread_rcp_data *ot_rcp, int8_t pwr_dbm)
 		return result;
 	}
 
-	if (spinel_drv_check_tx_power(&ot_rcp->spinel_drv, response.data, response.data_size,
-				      pwr_dbm)) {
+	if (spinel_drv_check_tx_power(&ot_rcp->spinel_drv, spinel_id, response.data,
+				      response.data_size, pwr_dbm)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -834,7 +859,9 @@ int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -845,8 +872,8 @@ int openthread_rcp_enable(struct openthread_rcp_data *ot_rcp, bool enable)
 		return result;
 	}
 
-	if (spinel_drv_check_rcp_enable(&ot_rcp->spinel_drv, response.data, response.data_size,
-					enable)) {
+	if (spinel_drv_check_rcp_enable(&ot_rcp->spinel_drv, spinel_id, response.data,
+					response.data_size, enable)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -872,7 +899,9 @@ int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enabl
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -883,8 +912,8 @@ int openthread_rcp_receive_enable(struct openthread_rcp_data *ot_rcp, bool enabl
 		return result;
 	}
 
-	if (spinel_drv_check_receive_enable(&ot_rcp->spinel_drv, response.data, response.data_size,
-					    enable)) {
+	if (spinel_drv_check_receive_enable(&ot_rcp->spinel_drv, spinel_id, response.data,
+					    response.data_size, enable)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -910,7 +939,9 @@ int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -921,8 +952,8 @@ int openthread_rcp_channel(struct openthread_rcp_data *ot_rcp, uint8_t channel)
 		return result;
 	}
 
-	if (spinel_drv_check_channel(&ot_rcp->spinel_drv, response.data, response.data_size,
-				     channel)) {
+	if (spinel_drv_check_channel(&ot_rcp->spinel_drv, spinel_id, response.data,
+				     response.data_size, channel)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -948,7 +979,9 @@ int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_fr
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -959,8 +992,8 @@ int openthread_rcp_transmit(struct openthread_rcp_data *ot_rcp, struct spinel_fr
 		return result;
 	}
 
-	if (spinel_drv_check_transmit_frame(&ot_rcp->spinel_drv, response.data, response.data_size,
-					    frame)) {
+	if (spinel_drv_check_transmit_frame(&ot_rcp->spinel_drv, spinel_id, response.data,
+					    response.data_size, frame)) {
 		if (frame->data && frame->data_length) {
 			void *p = malloc(frame->data_length);
 
@@ -1001,7 +1034,9 @@ int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t sho
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -1012,7 +1047,8 @@ int openthread_rcp_link_metrics(struct openthread_rcp_data *ot_rcp, uint16_t sho
 		return result;
 	}
 
-	if (spinel_drv_check_link_metrics(&ot_rcp->spinel_drv, response.data, response.data_size)) {
+	if (spinel_drv_check_link_metrics(&ot_rcp->spinel_drv, spinel_id, response.data,
+					  response.data_size)) {
 		result = 0;
 	} else {
 		result = -EINVAL;
@@ -1038,7 +1074,9 @@ int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spi
 		return result;
 	}
 
-	result = openthread_rcp_process_start(ot_rcp, result, &start_tp);
+	uint8_t spinel_id = result;
+
+	result = openthread_rcp_process_start(ot_rcp, &start_tp);
 	k_mutex_unlock(&ot_rcp->tx_lock);
 	if (result < 0) {
 		return result;
@@ -1049,7 +1087,8 @@ int openthread_rcp_mac_keys(struct openthread_rcp_data *ot_rcp, const struct spi
 		return result;
 	}
 
-	if (spinel_drv_check_mac_keys(&ot_rcp->spinel_drv, response.data, response.data_size)) {
+	if (spinel_drv_check_mac_keys(&ot_rcp->spinel_drv, spinel_id, response.data,
+				      response.data_size)) {
 		result = 0;
 	} else {
 		result = -EINVAL;

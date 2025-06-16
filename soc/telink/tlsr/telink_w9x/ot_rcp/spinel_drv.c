@@ -65,23 +65,17 @@ static enum ieee802154_hw_caps spinel_drv_get_hw_caps(otRadioCaps caps)
 	return radio_caps;
 }
 
-static int spinel_drv_set_t_id(struct spinel_drv_data *spinel_drv, uint32_t prop)
+static uint8_t spinel_drv_set_tid(struct spinel_drv_data *spinel_drv)
 {
-	uint8_t next_t_id = spinel_drv->t_id.act_id;
+	uint8_t act_id;
+	uint8_t next_id;
 
 	do {
-		next_t_id = SPINEL_GET_NEXT_TID(next_t_id);
+		act_id = (uint8_t)atomic_get(&spinel_drv->act_id);
+		next_id = SPINEL_GET_NEXT_TID(act_id);
+	} while (!atomic_cas(&spinel_drv->act_id, act_id, next_id));
 
-		if (spinel_drv->t_id.act_id == next_t_id) {
-			/* All TIDs are used */
-			return -ENOMEM;
-		}
-	} while (spinel_drv->t_id.props[PROP_OFFSET(next_t_id)] != SPINEL_PROP_UNDEFINED);
-
-	spinel_drv->t_id.props[PROP_OFFSET(next_t_id)] = prop;
-	spinel_drv->t_id.act_id = next_t_id;
-
-	return 0;
+	return next_id;
 }
 
 static int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb,
@@ -89,22 +83,14 @@ static int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv, spinel_tx_cb 
 {
 	int ret;
 	va_list args;
+	uint8_t tid = spinel_drv_set_tid(spinel_drv);
 
 	va_start(args, fmt);
 
 	do {
-		ret = spinel_drv_set_t_id(spinel_drv, prop);
-		if (ret < 0) {
-			LOG_ERR("Failed set next Transaction ID (inst = %u, err = %d)",
-				spinel_drv->inst, ret);
-			break;
-		}
-
-		ret = spinel_datatype_pack(tx_cb, ctx, SPINEL_DATATYPE_COMMAND_PROP_S,
-					   SPINEL_HEADER_FLAG |
-						   SPINEL_HEADER_IID(spinel_drv->inst) |
-						   spinel_drv->t_id.act_id,
-					   cmd, prop);
+		ret = spinel_datatype_pack(
+			tx_cb, ctx, SPINEL_DATATYPE_COMMAND_PROP_S,
+			SPINEL_HEADER_FLAG | SPINEL_HEADER_IID(spinel_drv->inst) | tid, cmd, prop);
 
 		if (ret < 0) {
 			LOG_ERR("Failed pack spinel header (inst = %u, err = %d)", spinel_drv->inst,
@@ -113,25 +99,26 @@ static int spinel_drv_send_cmd(struct spinel_drv_data *spinel_drv, spinel_tx_cb 
 		}
 
 		if (fmt) {
-			int ret_vpack = spinel_datatype_vpack(tx_cb, ctx, fmt, &args);
-
-			if (ret_vpack < 0) {
-				ret = ret_vpack;
+			ret = spinel_datatype_vpack(tx_cb, ctx, fmt, &args);
+			if (ret < 0) {
 				LOG_ERR("Failed pack spinel data (inst = %u, err = %d)",
 					spinel_drv->inst, ret);
 				break;
 			}
-
-			ret += ret_vpack;
 		}
 	} while (0);
 
 	va_end(args);
+
+	if (ret >= 0) {
+		ret = tid;
+	}
+
 	return ret;
 }
 
-static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, uint32_t prop,
-			      const uint8_t *in_data, uint16_t in_data_size,
+static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint8_t spinel_id, uint32_t cmd,
+			      uint32_t prop, const uint8_t *in_data, uint16_t in_data_size,
 			      const uint8_t **p_out_data, uint16_t *p_out_data_size)
 {
 	int ret;
@@ -159,52 +146,47 @@ static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, 
 
 		uint8_t t_id = SPINEL_HEADER_GET_TID(header);
 
-		if (unpacked_cmd == cmd && unpacked_prop == prop) {
-			if (t_id) {
-				uint32_t *p_saved_prop = &spinel_drv->t_id.props[PROP_OFFSET(t_id)];
+		if (t_id && spinel_id) {
+			if (t_id != spinel_id) {
+				ret = -EINVAL;
+				LOG_ERR("Unexpected Transaction ID (inst = %u, got = %u, exp = %u)",
+					spinel_drv->inst, t_id, spinel_id);
+				break;
+			} else if (unpacked_cmd != cmd || unpacked_prop != prop) {
+				if (unpacked_cmd == SPINEL_CMD_PROP_VALUE_IS &&
+				    unpacked_prop == SPINEL_PROP_LAST_STATUS) {
+					uint32_t status;
 
-				if (!(cmd == SPINEL_CMD_PROP_VALUE_IS &&
-				      prop == SPINEL_PROP_LAST_STATUS &&
-				      *p_saved_prop != SPINEL_PROP_UNDEFINED) &&
-				    (prop != *p_saved_prop)) {
-					ret = -EIO;
-					LOG_ERR("Unexpected Transaction ID (inst = %u)",
-						spinel_drv->inst);
-					break;
+					ret = spinel_datatype_unpack(
+						*p_out_data, *p_out_data_size, true,
+						SPINEL_DATATYPE_UINT_PACKED_S, &status);
+					if (ret < 0) {
+						LOG_ERR("Failed get result (inst = %u, err = %d)",
+							spinel_drv->inst, ret);
+						break;
+					}
+
+					if (status != SPINEL_STATUS_OK) {
+						LOG_ERR("Incorrect response status (inst = %u, "
+							"status = %u)",
+							spinel_drv->inst, status);
+					}
+				} else {
+					LOG_ERR("Unexpected cmd/prob (inst = %u, got = %u/%u, "
+						"exp = %u/%u)",
+						spinel_drv->inst, unpacked_cmd, unpacked_prop, cmd,
+						prop);
 				}
-
-				*p_saved_prop = SPINEL_PROP_UNDEFINED;
+				ret = -EINVAL;
+				break;
 			}
-
-			ret = 0;
+		} else if (unpacked_cmd != cmd || unpacked_prop != prop) {
+			/* Skip this frame */
+			ret = -EPERM;
 			break;
-		} else if (unpacked_cmd == SPINEL_CMD_PROP_VALUE_IS &&
-			   unpacked_prop == SPINEL_PROP_LAST_STATUS && t_id &&
-			   prop == spinel_drv->t_id.props[PROP_OFFSET(t_id)] &&
-			   prop != SPINEL_PROP_STREAM_RAW) {
-			uint32_t status;
-
-			spinel_drv->t_id.props[PROP_OFFSET(t_id)] = SPINEL_PROP_UNDEFINED;
-
-			ret = spinel_datatype_unpack(*p_out_data, *p_out_data_size, true,
-						     SPINEL_DATATYPE_UINT_PACKED_S, &status);
-
-			if (ret < 0) {
-				LOG_ERR("Failed get result (inst = %u, err = %d)", spinel_drv->inst,
-					ret);
-				break;
-			}
-
-			if (status != SPINEL_STATUS_OK) {
-				LOG_ERR("Incorrect response status (inst = %u, status = %u)",
-					spinel_drv->inst, status);
-				ret = -EIO;
-				break;
-			}
 		}
 
-		/* Skip this frame */
-		ret = -EPERM;
+		ret = 0;
 	} while (0);
 
 	if (ret < 0) {
@@ -215,15 +197,16 @@ static int spinel_drv_get_cmd(struct spinel_drv_data *spinel_drv, uint32_t cmd, 
 	return ret;
 }
 
-static bool spinel_drv_check_status(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				    uint16_t data_size)
+static bool spinel_drv_check_status(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				    const uint8_t *data, uint16_t data_size)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	uint32_t status;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_LAST_STATUS,
-				     data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_LAST_STATUS, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -292,16 +275,7 @@ static int spinel_drv_get_radio_frame(struct spinel_drv_data *spinel_drv, const 
 void spinel_drv_init(struct spinel_drv_data *spinel_drv, uint8_t inst)
 {
 	spinel_drv->inst = inst;
-	spinel_drv->t_id.act_id = 0;
-
-	for (size_t i = 0; i < SPINEL_MAX_NUMB_TID; i++) {
-		spinel_drv->t_id.props[i] = SPINEL_PROP_UNDEFINED;
-	}
-}
-
-void spinel_drv_remove_last_act(struct spinel_drv_data *spinel_drv)
-{
-	spinel_drv->t_id.props[PROP_OFFSET(spinel_drv->t_id.act_id)] = SPINEL_PROP_UNDEFINED;
+	atomic_set(&spinel_drv->act_id, 0);
 }
 
 int spinel_drv_send_reset(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb, const void *ctx,
@@ -365,14 +339,15 @@ int spinel_drv_send_get_ieee_eui64(struct spinel_drv_data *spinel_drv, spinel_tx
 	return ret;
 }
 
-bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				     uint16_t data_size, uint8_t ieee_eui64[OT_EXT_ADDRESS_SIZE])
+bool spinel_drv_check_get_ieee_eui64(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				     const uint8_t *data, uint16_t data_size,
+				     uint8_t ieee_eui64[OT_EXT_ADDRESS_SIZE])
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_HWADDR, data,
-				     data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_HWADDR, data, data_size, &param_data, &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -409,15 +384,17 @@ int spinel_drv_send_get_capabilities(struct spinel_drv_data *spinel_drv, spinel_
 	return ret;
 }
 
-bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				       uint16_t data_size, enum ieee802154_hw_caps *radio_caps)
+bool spinel_drv_check_get_capabilities(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				       const uint8_t *data, uint16_t data_size,
+				       enum ieee802154_hw_caps *radio_caps)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	uint32_t get_caps;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RADIO_CAPS,
-				     data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_RADIO_CAPS, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -457,14 +434,14 @@ int spinel_drv_send_enable_src_match(struct spinel_drv_data *spinel_drv, spinel_
 	return ret;
 }
 
-bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				       uint16_t data_size, bool enable)
+bool spinel_drv_check_enable_src_match(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				       const uint8_t *data, uint16_t data_size, bool enable)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	bool get_enable;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS,
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
 				     SPINEL_PROP_MAC_SRC_MATCH_ENABLED, data, data_size,
 				     &param_data, &param_size);
 
@@ -517,8 +494,8 @@ int spinel_drv_send_ack_fpb(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_
 	return ret;
 }
 
-bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			      uint16_t data_size, uint16_t addr, bool enable)
+bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+			      const uint8_t *data, uint16_t data_size, uint16_t addr, bool enable)
 {
 	int ret;
 	const uint8_t *param_data = NULL;
@@ -526,11 +503,11 @@ bool spinel_drv_check_ack_fpb(struct spinel_drv_data *spinel_drv, const uint8_t 
 	uint16_t get_addr;
 
 	if (enable) {
-		ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_INSERTED,
+		ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_INSERTED,
 					 SPINEL_PROP_MAC_SRC_MATCH_SHORT_ADDRESSES, data, data_size,
 					 &param_data, &param_size);
 	} else {
-		ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_REMOVED,
+		ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_REMOVED,
 					 SPINEL_PROP_MAC_SRC_MATCH_SHORT_ADDRESSES, data, data_size,
 					 &param_data, &param_size);
 	}
@@ -584,9 +561,9 @@ int spinel_drv_send_ack_fpb_ext(struct spinel_drv_data *spinel_drv, spinel_tx_cb
 	return ret;
 }
 
-bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				  uint16_t data_size, uint8_t addr[OT_EXT_ADDRESS_SIZE],
-				  bool enable)
+bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				  const uint8_t *data, uint16_t data_size,
+				  uint8_t addr[OT_EXT_ADDRESS_SIZE], bool enable)
 {
 	int ret;
 	const uint8_t *param_data = NULL;
@@ -594,11 +571,11 @@ bool spinel_drv_check_ack_fpb_ext(struct spinel_drv_data *spinel_drv, const uint
 	uint8_t (*p_get_addr)[OT_EXT_ADDRESS_SIZE];
 
 	if (enable) {
-		ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_INSERTED,
+		ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_INSERTED,
 					 SPINEL_PROP_MAC_SRC_MATCH_EXTENDED_ADDRESSES, data,
 					 data_size, &param_data, &param_size);
 	} else {
-		ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_REMOVED,
+		ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_REMOVED,
 					 SPINEL_PROP_MAC_SRC_MATCH_EXTENDED_ADDRESSES, data,
 					 data_size, &param_data, &param_size);
 	}
@@ -650,13 +627,13 @@ int spinel_drv_send_ack_fpb_clear(struct spinel_drv_data *spinel_drv, spinel_tx_
 
 	return ret;
 }
-bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				    uint16_t data_size)
+bool spinel_drv_check_ack_fpb_clear(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				    const uint8_t *data, uint16_t data_size)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS,
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
 				     SPINEL_PROP_MAC_SRC_MATCH_SHORT_ADDRESSES, data, data_size,
 				     &param_data, &param_size);
 
@@ -684,13 +661,13 @@ int spinel_drv_send_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv, spinel
 
 	return ret;
 }
-bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-					uint16_t data_size)
+bool spinel_drv_check_ack_fpb_ext_clear(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+					const uint8_t *data, uint16_t data_size)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS,
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
 				     SPINEL_PROP_MAC_SRC_MATCH_EXTENDED_ADDRESSES, data, data_size,
 				     &param_data, &param_size);
 
@@ -722,10 +699,10 @@ int spinel_drv_send_mac_frame_counter(struct spinel_drv_data *spinel_drv, spinel
 	return ret;
 }
 
-bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-					uint16_t data_size)
+bool spinel_drv_check_mac_frame_counter(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+					const uint8_t *data, uint16_t data_size)
 {
-	bool ret = spinel_drv_check_status(spinel_drv, data, data_size);
+	bool ret = spinel_drv_check_status(spinel_drv, spinel_id, data, data_size);
 
 	if (!ret) {
 		LOG_ERR("Failed check mac_frame_counter (inst = %u)", spinel_drv->inst);
@@ -747,16 +724,16 @@ int spinel_drv_send_panid(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_cb
 	return ret;
 }
 
-bool spinel_drv_check_panid(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			    uint16_t data_size, uint16_t pan_id)
+bool spinel_drv_check_panid(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+			    const uint8_t *data, uint16_t data_size, uint16_t pan_id)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	uint16_t get_pan_id;
 
-	int ret =
-		spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_PANID,
-				   data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_MAC_15_4_PANID, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -797,16 +774,16 @@ int spinel_drv_send_short_addr(struct spinel_drv_data *spinel_drv, spinel_tx_cb 
 	return ret;
 }
 
-bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				 uint16_t data_size, uint16_t addr)
+bool spinel_drv_check_short_addr(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				 const uint8_t *data, uint16_t data_size, uint16_t addr)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	uint16_t get_addr;
 
-	int ret =
-		spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_SADDR,
-				   data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_MAC_15_4_SADDR, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -848,16 +825,17 @@ int spinel_drv_send_ext_addr(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx
 	return ret;
 }
 
-bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			       uint16_t data_size, uint8_t addr[OT_EXT_ADDRESS_SIZE])
+bool spinel_drv_check_ext_addr(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+			       const uint8_t *data, uint16_t data_size,
+			       uint8_t addr[OT_EXT_ADDRESS_SIZE])
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	uint8_t (*p_get_addr)[OT_EXT_ADDRESS_SIZE];
 
-	int ret =
-		spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_MAC_15_4_LADDR,
-				   data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_MAC_15_4_LADDR, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -906,15 +884,16 @@ int spinel_drv_send_tx_power(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx
 	return ret;
 }
 
-bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			       uint16_t data_size, int8_t pwr_dbm)
+bool spinel_drv_check_tx_power(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+			       const uint8_t *data, uint16_t data_size, int8_t pwr_dbm)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	int8_t get_pwr_dbm;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_PHY_TX_POWER,
-				     data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_PHY_TX_POWER, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -956,15 +935,16 @@ int spinel_drv_send_rcp_enable(struct spinel_drv_data *spinel_drv, spinel_tx_cb 
 	return ret;
 }
 
-bool spinel_drv_check_rcp_enable(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				 uint16_t data_size, bool enable)
+bool spinel_drv_check_rcp_enable(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				 const uint8_t *data, uint16_t data_size, bool enable)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	bool get_enable;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_PHY_ENABLED,
-				     data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_PHY_ENABLED, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -1007,14 +987,14 @@ int spinel_drv_send_receive_enable(struct spinel_drv_data *spinel_drv, spinel_tx
 	return ret;
 }
 
-bool spinel_drv_check_receive_enable(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				     uint16_t data_size, bool enable)
+bool spinel_drv_check_receive_enable(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				     const uint8_t *data, uint16_t data_size, bool enable)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	bool get_enable;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS,
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
 				     SPINEL_PROP_MAC_RAW_STREAM_ENABLED, data, data_size,
 				     &param_data, &param_size);
 
@@ -1058,15 +1038,16 @@ int spinel_drv_send_channel(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx_
 	return ret;
 }
 
-bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			      uint16_t data_size, uint8_t channel)
+bool spinel_drv_check_channel(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+			      const uint8_t *data, uint16_t data_size, uint8_t channel)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 	uint8_t get_channel;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_PHY_CHAN,
-				     data, data_size, &param_data, &param_size);
+	int ret =
+		spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				   SPINEL_PROP_PHY_CHAN, data, data_size, &param_data, &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -1118,14 +1099,16 @@ int spinel_drv_send_transmit_frame(struct spinel_drv_data *spinel_drv, spinel_tx
 	return ret;
 }
 
-bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				     uint16_t data_size, struct spinel_frame_data *frame)
+bool spinel_drv_check_transmit_frame(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				     const uint8_t *data, uint16_t data_size,
+				     struct spinel_frame_data *frame)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_LAST_STATUS,
-				     data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_LAST_STATUS, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -1207,8 +1190,9 @@ bool spinel_drv_check_receive_frame(struct spinel_drv_data *spinel_drv, const ui
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret = spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_STREAM_RAW,
-				     data, data_size, &param_data, &param_size);
+	int ret =
+		spinel_drv_get_cmd(spinel_drv, 0, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_STREAM_RAW,
+				   data, data_size, &param_data, &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
@@ -1262,10 +1246,10 @@ int spinel_drv_send_link_metrics(struct spinel_drv_data *spinel_drv, spinel_tx_c
 	return ret;
 }
 
-bool spinel_drv_check_link_metrics(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				   uint16_t data_size)
+bool spinel_drv_check_link_metrics(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				   const uint8_t *data, uint16_t data_size)
 {
-	bool ret = spinel_drv_check_status(spinel_drv, data, data_size);
+	bool ret = spinel_drv_check_status(spinel_drv, spinel_id, data, data_size);
 
 	if (!ret) {
 		LOG_ERR("Failed check link_metrics (inst = %u)", spinel_drv->inst);
@@ -1291,10 +1275,10 @@ int spinel_drv_send_mac_keys(struct spinel_drv_data *spinel_drv, spinel_tx_cb tx
 	return ret;
 }
 
-bool spinel_drv_check_mac_keys(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-			       uint16_t data_size)
+bool spinel_drv_check_mac_keys(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+			       const uint8_t *data, uint16_t data_size)
 {
-	bool ret = spinel_drv_check_status(spinel_drv, data, data_size);
+	bool ret = spinel_drv_check_status(spinel_drv, spinel_id, data, data_size);
 
 	if (!ret) {
 		LOG_ERR("Failed check mac_keys (inst = %u)", spinel_drv->inst);
@@ -1316,15 +1300,15 @@ int spinel_drv_send_get_timestamp(struct spinel_drv_data *spinel_drv, spinel_tx_
 	return ret;
 }
 
-bool spinel_drv_check_get_timestamp(struct spinel_drv_data *spinel_drv, const uint8_t *data,
-				    uint16_t data_size, uint64_t *timestamp)
+bool spinel_drv_check_get_timestamp(struct spinel_drv_data *spinel_drv, uint8_t spinel_id,
+				    const uint8_t *data, uint16_t data_size, uint64_t *timestamp)
 {
 	const uint8_t *param_data = NULL;
 	uint16_t param_size = 0;
 
-	int ret =
-		spinel_drv_get_cmd(spinel_drv, SPINEL_CMD_PROP_VALUE_IS, SPINEL_PROP_RCP_TIMESTAMP,
-				   data, data_size, &param_data, &param_size);
+	int ret = spinel_drv_get_cmd(spinel_drv, spinel_id, SPINEL_CMD_PROP_VALUE_IS,
+				     SPINEL_PROP_RCP_TIMESTAMP, data, data_size, &param_data,
+				     &param_size);
 
 	if (ret == -EPERM) {
 		/* Skip this frame */
