@@ -8,3 +8,11 @@ config BOARD_TL7218X
 config BOARD_TL7218X_RETENTION
 	bool "Telink TL721X Platform with retention"
 	depends on SOC_RISCV_TELINK_TL721X
+
+config BOARD_TL7218X_ML7G
+	bool "Telink TL721X Platform with Module Board ML7G"
+	depends on SOC_RISCV_TELINK_TL721X
+
+config BOARD_TL7218X_ML7M
+	bool "Telink TL721X Platform with Module Board ML7M"
+	depends on SOC_RISCV_TELINK_TL721X
