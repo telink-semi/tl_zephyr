@@ -15,10 +15,17 @@ config BOARD
 
 endif
 
+if BOARD_TL3218X_ML3M
+
+config BOARD
+	default "tl3218x_ml3m"
+
+endif
+
 config HEAP_MEM_POOL_SIZE
 	default 4096
 
-if BOARD_TL3218X || BOARD_TL3218X_RETENTION
+if BOARD_TL3218X || BOARD_TL3218X_RETENTION || BOARD_TL3218X_ML3M
 
 config SOC_FLASH_TELINK_TLX
 	default y if FLASH

@@ -15,10 +15,24 @@ config BOARD
 
 endif
 
+if BOARD_TL7218X_ML7G
+
+config BOARD
+	default "tl7218x_ml7g"
+
+endif
+
+if BOARD_TL7218X_ML7M
+
+config BOARD
+	default "tl7218x_ml7m"
+
+endif
+
 config HEAP_MEM_POOL_SIZE
 	default 4096
 
-if BOARD_TL7218X || BOARD_TL7218X_RETENTION
+if BOARD_TL7218X || BOARD_TL7218X_RETENTION || BOARD_TL7218X_ML7G || BOARD_TL7218X_ML7M
 
 config SOC_FLASH_TELINK_TLX
 	default y if FLASH
