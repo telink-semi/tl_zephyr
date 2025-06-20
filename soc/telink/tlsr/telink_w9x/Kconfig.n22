@@ -15,7 +15,7 @@ config TELINK_W91_FETCH_N22_BIN
 
 config TELINK_W91_FETCH_N22_BIN_REVISION
 	string "N22 binaries revision"
-	default "17877eb855de444891d40c0ac2c355aea1e4a426"
+	default "c8835e37647f0de6caf5f3c9264ca42d7231354b"
 	depends on TELINK_W91_FETCH_N22_BIN
 	help
 		This option sets N22 binary revision.
