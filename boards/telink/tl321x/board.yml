@@ -8,3 +8,8 @@ boards:
   vendor: telink
   socs:
   - name: telink_tl321x
+
+- name: tl3218x_ml3m
+  vendor: telink
+  socs:
+  - name: telink_tl321x
