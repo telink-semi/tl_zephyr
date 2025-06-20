@@ -6,6 +6,7 @@
 
 #define DT_DRV_COMPAT telink_tlx_watchdog
 
+#include <zephyr/kernel.h>
 #include <clock.h>
 #include <watchdog.h>
 #include <zephyr/drivers/watchdog.h>
@@ -20,14 +21,29 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
+struct k_timer WdtTimer;
+
+void WdtTimerTimeoutCallback(struct k_timer *timer)
+{
+	if (!timer) {
+		return;
+	}
+	/*printk("Interval:(%d)ms to feeding watchdog\n", CONFIG_TELINK_WDT_FEED_TIME);*/
+	wd_clear_cnt();
+}
 
 static int wdt_tlx_setup(const struct device *dev, uint8_t options)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(options);
 
+	wd_stop();
 	wd_start();
 
+	k_timer_stop(&WdtTimer);
+	k_timer_init(&WdtTimer, &WdtTimerTimeoutCallback, NULL);
+	k_timer_start(&WdtTimer, K_MSEC(CONFIG_TELINK_WDT_FEED_TIME),
+		K_MSEC(CONFIG_TELINK_WDT_FEED_TIME));
 	LOG_INF("HW watchdog started");
 
 	return 0;
@@ -38,6 +54,7 @@ static int wdt_tlx_disable(const struct device *dev)
 	ARG_UNUSED(dev);
 
 	wd_stop();
+	k_timer_stop(&WdtTimer);
 
 	LOG_INF("HW watchdog stopped");
 

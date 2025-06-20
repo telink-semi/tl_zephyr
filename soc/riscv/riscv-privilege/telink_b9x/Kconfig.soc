@@ -112,11 +112,31 @@ config COMPRESS_LZMA
 	select BOOT_IMAGE_ACCESS_HOOKS
 	depends on BOOTLOADER_MCUBOOT || MCUBOOT
 	help
-	  This option enables LZMA compression with MCUBoot
+		This option enables LZMA compression with MCUBoot
 
 config COMPRESS_LZMA_DICTIONARY_SIZE
 	int "Set LZMA compression dictionary size"
 	default 32768
 	depends on COMPRESS_LZMA
 	help
-	  This option sets LZMA compression dictionary size
+		This option sets LZMA compression dictionary size
+
+config DUAL_MODE
+	bool "Support dual-mode switch"
+	default n
+	help
+		This option enables dual mode
+
+config TELINK_WDT_TIMEOUT
+	int "Watchdog timeout in milliseconds"
+	depends on WATCHDOG
+	default 30000
+	help
+		This option supports setting the watchdog timeout
+
+config TELINK_WDT_FEED_TIME
+	int "Feed watchdog time in milliseconds"
+	depends on WATCHDOG
+	default 1000
+	help
+		This option supports feeding the watchdog
