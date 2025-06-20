@@ -64,6 +64,11 @@ enum wifi_w91_event_id {
 	WIFI_W91_EVENT_MAX,
 };
 
+struct wifi_w91_ip_flags {
+	uint8_t ipv4: 1;
+	uint8_t ipv6: 1;
+};
+
 struct wifi_w91_init_resp {
 	int err;
 	uint8_t mac[WIFI_MAC_ADDR_LEN];
@@ -167,7 +172,20 @@ static void wifi_w91_reset_state(struct wifi_iface_status *if_state)
 }
 
 /* APIs implementation: wifi init */
-IPC_DISPATCHER_PACK_FUNC_WITHOUT_PARAM(wifi_w91_init_if, IPC_DISPATCHER_WIFI_INIT);
+static size_t pack_wifi_w91_init_if(uint8_t inst, void *unpack_data, uint8_t *pack_data)
+{
+	struct wifi_w91_ip_flags *p_ip_flags = unpack_data;
+	size_t pack_data_len = sizeof(uint32_t) + sizeof(*p_ip_flags);
+
+	if (pack_data != NULL) {
+		uint32_t id = IPC_DISPATCHER_MK_ID(IPC_DISPATCHER_WIFI_INIT, inst);
+
+		IPC_DISPATCHER_PACK_FIELD(pack_data, id);
+		IPC_DISPATCHER_PACK_FIELD(pack_data, *p_ip_flags);
+	}
+
+	return pack_data_len;
+}
 
 static void unpack_wifi_w91_init_if(void *unpack_data,
 	const uint8_t *pack_data, size_t pack_data_len)
@@ -194,15 +212,25 @@ static void wifi_w91_init_if(struct net_if *iface)
 	struct wifi_w91_init_resp init_resp = { .err = -ETIMEDOUT };
 	const struct wifi_w91_config *cfg = iface->if_dev->dev->config;
 	struct wifi_w91_data *data = iface->if_dev->dev->data;
+	struct wifi_w91_ip_flags ip_flags = {
+		.ipv4 = 0,
+		.ipv6 = 0,
+	};
 
 	data->base.iface = iface;
 
 	ethernet_init(data->base.iface);
 	net_if_carrier_off(data->base.iface);
 
-	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
-		wifi_w91_init_if, NULL, &init_resp,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+#ifdef CONFIG_NET_IPV4
+	ip_flags.ipv4 = 1;
+#endif
+#ifdef CONFIG_NET_IPV6
+	ip_flags.ipv6 = 1;
+#endif
+
+	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id, wifi_w91_init_if, &ip_flags,
+				      &init_resp, CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (init_resp.err) {
 		LOG_ERR("Failed to start Wi-Fi driver (response status is incorrect)");
