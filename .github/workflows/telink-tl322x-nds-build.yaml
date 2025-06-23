@@ -1,0 +1,159 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+name: Telink TL322X build examples using Andes GCC
+
+on: pull_request
+
+jobs:
+  telink_build_examples:
+    runs-on: ubuntu-22.04
+    name: Telink build examples
+    env:
+      ZEPHYR_TOOLCHAIN_VARIANT: "andes-gcc"
+      ANDES_GCC_PATH: "~/nds-gcc/nds32le-elf-newlib-v5f"
+    steps:
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends libdigest-sha-perl cmake python3 ninja-build
+
+    - name: Setup Andes toolchain
+      run: |
+        mkdir ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f.tar.gz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f.tar.gz -C ~/nds-gcc
+
+    - name: Checkout Zephyr
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
+    - name: West setup
+      run: |
+        pip install west
+        cd ..
+        west init -l zephyr
+        west update
+        west blobs fetch hal_telink
+        west zephyr-export
+        pip install -r zephyr/scripts/requirements.txt
+
+    - name: Build TL322x samples/basic/blinky
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_blinky_tl322x                      zephyr/samples/basic/blinky                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/hello_world
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_hello_tl322x                       zephyr/samples/hello_world                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/basic/button
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_button_tl322x                      zephyr/samples/basic/button                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/sensor/sht3xd
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_sht3xd_tl322x                      zephyr/samples/sensor/sht3xd                  -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/drivers/adc
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_adc_tl322x                         zephyr/samples/drivers/adc                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/drivers/watchdog
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_watchdog_tl322x                    zephyr/samples/drivers/watchdog               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x tests/drivers/flash/common
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_tests_flash_tl322x                 zephyr/tests/drivers/flash/common             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/drivers/spi_flash
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_spi_flash_tl322x                    zephyr/samples/drivers/spi_flash             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x samples/basic/fade_led/
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_fade_tl322x                        zephyr/samples/basic/fade_led/                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x bluetooth/peripheral_ht
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_peripheral_ht_tl322x               zephyr/samples/bluetooth/peripheral_ht        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x net/openthread/cli
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_ot_cli_tl322x                      zephyr/samples/net/openthread/cli              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x net/openthread/coprocessor in RCP configuration with UART interface
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_ot_coprocessor_rcp_uart_tl322x     zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-rcp.conf
+
+    - name: Build TL322x subsys/usb/console for USB driver
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_usb_console_tl322x                 zephyr/samples/subsys/usb/console             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322x subsys/usb/cdc_acm for USB CDC
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_usb_cdc_acm_tl322x                 zephyr/samples/subsys/usb/cdc_acm             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL322X net/openthread/coprocessor in RCP configuration with USB interface
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_ot_coprocessor_rcp_usb_tl322x      zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DDTC_OVERLAY_FILE="usb.overlay boards/tl3228x-dongle.overlay" -DOVERLAY_CONFIG=overlay-rcp-usb-telink.conf
+
+    - name: Build TL322X crypto/mbedtls
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_crypto_mbedtls_tl322x              zephyr/tests/crypto/mbedtls                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
+
+    - name: Build TL322X bootloader/mcuboot/boot for compressed LZMA image
+      run: |
+        cd ..
+        west build -b tl3228x     -d build_mcuboot_tl322x_lzma                bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y
+
+    - name: Build TL322X net/sockets/echo_client for OpenThread with PM deep-sleep
+      run: |
+        cd ..
+        west build -b tl3228x_retention        -d build_ot_echo_client_pm_deep_tl3228x    zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y -DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y -DCONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE=y
+
+    - name: Collect artifacts
+      run: |
+        mkdir telink_build_artifacts
+        cp ../build_blinky_tl322x/zephyr/zephyr.bin                     telink_build_artifacts/tl322x_blinky.bin
+        cp ../build_hello_tl322x/zephyr/zephyr.bin                      telink_build_artifacts/tl322x_hello_world.bin
+        cp ../build_button_tl322x/zephyr/zephyr.bin                     telink_build_artifacts/tl322x_button.bin
+        cp ../build_sht3xd_tl322x/zephyr/zephyr.bin                     telink_build_artifacts/tl322x_sht3xd.bin
+        cp ../build_adc_tl322x/zephyr/zephyr.bin                        telink_build_artifacts/tl322x_adc.bin
+        cp ../build_watchdog_tl322x/zephyr/zephyr.bin                   telink_build_artifacts/tl322x_watchdog.bin
+        cp ../build_tests_flash_tl322x/zephyr/zephyr.bin                telink_build_artifacts/tl322x_tests_flash.bin
+        cp ../build_spi_flash_tl322x/zephyr/zephyr.bin                  telink_build_artifacts/tl322x_spi_flash.bin
+        cp ../build_fade_tl322x/zephyr/zephyr.bin                       telink_build_artifacts/tl322x_tests_pwm.bin
+        cp ../build_peripheral_ht_tl322x/zephyr/zephyr.bin              telink_build_artifacts/tl322x_peripheral_ht.bin
+        cp ../build_ot_cli_tl322x/zephyr/zephyr.bin                     telink_build_artifacts/tl322x_ot_cli.bin
+        cp ../build_ot_coprocessor_rcp_uart_tl322x/zephyr/zephyr.bin    telink_build_artifacts/tl322x_ot_coprocessor_rcp_uart.bin
+        cp ../build_usb_console_tl322x/zephyr/zephyr.bin                telink_build_artifacts/tl322x_usb_console.bin
+        cp ../build_usb_cdc_acm_tl322x/zephyr/zephyr.bin                telink_build_artifacts/tl322x_usb_cdc_acm.bin
+        cp ../build_ot_coprocessor_rcp_usb_tl322x/zephyr/zephyr.bin     telink_build_artifacts/tl322x_ot_coprocessor_rcp_usb.bin
+        cp ../build_crypto_mbedtls_tl322x/zephyr/zephyr.bin             telink_build_artifacts/tl322x_mbedtls.bin
+        cp ../build_ot_echo_client_pm_deep_tl3228x/zephyr/zephyr.bin    telink_build_artifacts/tl322x_ot_echo_client_pm_retention.bin
+
+    - name: Publish artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          telink_build_artifacts/*

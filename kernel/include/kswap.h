@@ -181,6 +181,9 @@ static inline int z_swap_irqlock(unsigned int key)
 	return do_swap(key, NULL, false);
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+__GENERIC_SECTION(.ram_code)
+#endif
 static inline int z_swap(struct k_spinlock *lock, k_spinlock_key_t key)
 {
 	return do_swap(key.key, lock, true);

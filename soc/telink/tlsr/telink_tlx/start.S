@@ -9,6 +9,28 @@
 #define NDS_UITB                     0x800
 #define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
 #define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+    .equ __D25F_IRAM_SIZE,   2 //64KB
+    .equ __D25F_DRAM_SIZE,   3 //96KB
+    .equ __N22_IRAM_SIZE,    5 //160KB
+    .equ __N22_DRAM_SIZE,    2 //64KB
+
+    .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12)|(__N22_DRAM_SIZE<<8)|(__D25F_DRAM_SIZE)
+
+    .section .vectors, "ax"
+
+    .global     __D25F_IRAM_SIZE
+    .global     __D25F_DRAM_SIZE
+    .global     __N22_IRAM_SIZE
+    .global     __N22_DRAM_SIZE
+    .global     __D25F_N22_RAM_REG
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+    .equ __D25F_IRAM_SIZE,   3 //96KB   note: configuration Options: 1/2/3
+    .equ __D25F_DRAM_SIZE,   2 //64KB   note: configuration Options: 4/3/2
+
+	.global     __D25F_IRAM_SIZE
+    .global     __D25F_DRAM_SIZE
+#endif
 
 #include <zephyr/toolchain.h>
 #include <zephyr/devicetree.h>
@@ -38,6 +60,18 @@ entry:
 	.align 2
 
 start:
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+    /*Initialize D25 & N22 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , __D25F_N22_RAM_REG
+    sh     t1 , -2036(t0)              //write16(0x8014080c,0x2105)
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+    /*Initialize D25 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , __D25F_DRAM_SIZE
+    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
+#endif
+
 #if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
 	la     t0, _ITB_BASE_
 	csrw   NDS_UITB, t0                     #/ CoDense instruction table
@@ -53,6 +87,7 @@ start:
 	li     t1, 3
 	sw     t1, 0(t0)
 #else
+	/* Disable vector mode */
 	csrci  NDS_MMISC_CTL, 2
 
 	/* Disable vector feture enable address */
@@ -185,6 +220,13 @@ retention_entry:
 	.org 0x22
 
 retention_start:
+	/* Select ram mode */
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+/*Initialize D25 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , __D25F_DRAM_SIZE
+    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
+#endif
 
 	/* Select PLIC mode */
 #ifdef CONFIG_RISCV_VECTORED_MODE
@@ -231,7 +273,7 @@ _CORE_FEATURES_SETUP:
 	csrs   NDS_MMISC_CTL, t0
 
 	/* flash wakeup */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	/* we are not in ISR so use ISR stack to restore registers */
 	la     sp, z_interrupt_stacks
 	li     t0, CONFIG_ISR_STACK_SIZE

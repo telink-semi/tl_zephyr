@@ -10,7 +10,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <tlx_bt.h>
 
-#define LOG_LEVEL CONFIG_BT_HCI_DRIVER_LOG_LEVEL
+#define LOG_LEVEL LOG_LEVEL_NONE
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bt_hci_driver_tlx);
 
@@ -142,7 +142,7 @@ static void hci_tlx_host_rcv_pkt(uint8_t *data, uint16_t len)
 	uint8_t pkt_indicator;
 	struct net_buf *buf;
 
-	LOG_HEXDUMP_DBG(data, len, "host packet data:");
+	LOG_HEXDUMP_WRN(data, len, "host packet data:");
 
 	pkt_indicator = *data++;
 	len -= sizeof(pkt_indicator);
@@ -200,10 +200,14 @@ static int hci_tlx_open(const struct device *dev, bt_hci_recv_t recv)
 	hci_recv = recv;
 	tlx_bt_host_callback_register(&vhci_host_cb);
 
-#if CONFIG_SOC_RISCV_TELINK_B91
-	LOG_DBG("B91 BT started");
-#elif CONFIG_SOC_RISCV_TELINK_B92
-	LOG_DBG("B92 BT started");
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+	LOG_DBG("TL721X BT started");
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+	LOG_DBG("TL321X BT started");
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	LOG_DBG("TL322X BT started");
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	LOG_DBG("TL323X BT started");
 #endif
 
 	return 0;

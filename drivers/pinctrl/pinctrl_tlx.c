@@ -5,17 +5,22 @@
  */
 
 #include "analog.h"
+#include "gpio.h"
 #include <zephyr/drivers/pinctrl.h>
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 #include <zephyr/dt-bindings/pinctrl/tl321x-pinctrl.h>
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #include <zephyr/dt-bindings/pinctrl/tl721x-pinctrl.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#include <zephyr/dt-bindings/pinctrl/tl322x-pinctrl.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+#include <zephyr/dt-bindings/pinctrl/tl323x-pinctrl.h>
 #endif
 #include <zephyr/pm/device.h>
 
 #define DT_DRV_COMPAT telink_tlx_pinctrl
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 /**
  *      GPIO Function Enable Register
  *      ADDR                 PINS
@@ -30,7 +35,7 @@
 						((pin >> 8) * 0x10)))
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 /**
  *      Function Multiplexer Register
  *         ADDR              PINS
@@ -78,6 +83,13 @@
  *      pull_up_en + 9:     PORT_E[4-7]
  *      pull_up_en + 10:    PORT_F[0-3]
  *      pull_up_en + 11:    PORT_F[4-7]
+ *      The following resistors are for TL322X
+ *      pull_up_en + 12:    PORT_G[0-3]
+ *      pull_up_en + 13:    PORT_G[4-7]
+ *      pull_up_en + 14:    PORT_H[0-3]
+ *      pull_up_en + 15:    PORT_H[4-7]
+ *      pull_up_en + 16:    PORT_I[0-3]
+ *      pull_up_en + 17:    PORT_I[4-7]
  */
 #define reg_pull_up_en(pin) ((uint8_t)(DT_INST_REG_ADDR_BY_NAME(0, pull_up_en) + \
 				       ((pin >> 8) * 2) +			 \
@@ -187,6 +199,9 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 	uint32_t pin = TLX_PINMUX_GET_PIN(*pinctrl);
 	uint8_t pull_up_en_addr = reg_pull_up_en(pin);
 
+	/* set input enable */
+	gpio_input_en(pin);
+
 	/* calculate offset and mask for the func and pull values */
 	status = pinctrl_tlx_get_offset(pin, &offset);
 	if (status != 0) {
@@ -202,6 +217,12 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 #elif CONFIG_SOC_RISCV_TELINK_TL321X
 	reg_pin_mux(pin) =
 		(reg_pin_mux(pin) & (~TL321X_PIN_FUNC_POS)) | (func & TL321X_PIN_FUNC_POS);
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	reg_pin_mux(pin) =
+		(reg_pin_mux(pin) & (~TL322X_PIN_FUNC_POS)) | (func & TL322X_PIN_FUNC_POS);
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	reg_pin_mux(pin) =
+		(reg_pin_mux(pin) & (~TL323X_PIN_FUNC_POS)) | (func & TL323X_PIN_FUNC_POS);
 #endif
 
 	/* disable GPIO function (can be enabled back by GPIO init using GPIO driver) */
