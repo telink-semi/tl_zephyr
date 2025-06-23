@@ -8,6 +8,10 @@
 #define DT_DRV_COMPAT telink_tl321x_spi
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #define DT_DRV_COMPAT telink_tl721x_spi
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#define DT_DRV_COMPAT telink_tl322x_spi
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+#define DT_DRV_COMPAT telink_tl323x_spi
 #endif
 
 /*  Redefine 'spi_read' and 'spi_write' functions names from HAL */
@@ -59,7 +63,7 @@ static void spi_tlx_hw_cs_disable(const struct spi_tlx_cfg *config)
 
 		/* if CS pin is defined in device tree */
 		if (pin != 0) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			gspi_cs_pin_dis(pin);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 			if (config->peripheral_id == LSPI_MODULE) {
@@ -107,7 +111,7 @@ static bool spi_tlx_config_cs(const struct device *dev,
 
 		/* disable cs pin if it is defined and is not requested */
 		if ((cs_pin != 0) && (cs_id != config->slave)) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			gspi_cs_pin_dis(cs_pin);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 			if (tlx_config->peripheral_id == LSPI_MODULE) {
@@ -120,7 +124,7 @@ static bool spi_tlx_config_cs(const struct device *dev,
 
 		/* enable cs pin if it is defined and is requested */
 		if ((cs_pin != 0) && (cs_id == config->slave)) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			gspi_cs_pin_en(cs_pin);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 			if (tlx_config->peripheral_id == LSPI_MODULE) {
@@ -240,7 +244,7 @@ static void spi_tlx_txrx(const struct device *dev, uint32_t len)
 		}
 
 		/* clear TX and RX fifo */
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_TXF_CLR_LEVEL);
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_RXF_CLR_LEVEL);
 #endif
@@ -313,7 +317,7 @@ static int spi_tlx_config(const struct device *dev,
 	struct spi_tlx_cfg *tlx_config = SPI_CFG(dev);
 	struct spi_tlx_data *tlx_data = SPI_DATA(dev);
 	const pinctrl_soc_pin_t *pins = tlx_config->pcfg->states->pins;
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint8_t clk_src = sys_clk.pll_clk;
 #endif
 
@@ -343,7 +347,7 @@ static int spi_tlx_config(const struct device *dev,
 	}
 
 	/* init SPI master */
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	spi_master_init(tlx_config->peripheral_id,
 			clk_src * 1000000/config->frequency, mode);
 #endif
@@ -358,7 +362,7 @@ static int spi_tlx_config(const struct device *dev,
 		} else if (lines == SPI_LINES_DUAL) {
 			spi_set_io_mode(tlx_config->peripheral_id, SPI_DUAL_MODE);
 		} else if (lines == SPI_LINES_QUAD) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			spi_set_io_mode(tlx_config->peripheral_id, SPI_QUAD_MODE);
 #endif
 		}
