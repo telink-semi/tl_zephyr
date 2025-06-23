@@ -41,7 +41,7 @@ start:
 #endif
 
 	/* Disable vector mode */
-	csrci  0x7d0, 2
+	csrci  NDS_MMISC_CTL, 2
 
 	/* Disable vector feture enable address */
 	lui    t0 ,0xc4000
