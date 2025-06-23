@@ -46,8 +46,8 @@ jobs:
     - name: Build TL321X samples/basic/blinky
       run: |
         cd ..
-        west build -b tl3218x     -d build_blinky_tl321x                      zephyr/samples/basic/blinky                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-
+        west build -b tl3218x  -p   -d build_blinky_tl321x                      zephyr/samples/basic/blinky                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+west build -b tl3228x  -p   -d build_blinky_tl322x                      zephyr/samples/basic/blinky
     - name: Build TL321X samples/hello_world
       run: |
         cd ..

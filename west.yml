@@ -246,9 +246,15 @@ manifest:
       revision: 6727477af1e46fa43878102489b9672a9d24e39f
       path: modules/hal/tdk
     - name: hal_telink
-      url: https://github.com/telink-semi/hal_telink
-      revision: 0c2d784cb4d49a04878a22f5dda589605dd0d4c4
+      url: git@192.168.48.36:ZhihanTao/hal_telink_src.git
+      revision: 493c2f30c98e22c5b820eac7f19d3153e7fbd805
       path: modules/hal/telink
+      groups:
+        - hal
+    - name: tl_ble_src
+      url: git@192.168.48.36:src/ble/telink_b91m_ble_multi_connection_src.git
+      revision: c7f7cfff918b5b87e4a5607509ad9c8520d1a9ce
+      path: modules/hal/telink/tl_ble_src
       groups:
         - hal
     - name: hal_ti

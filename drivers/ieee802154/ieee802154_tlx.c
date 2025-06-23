@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "plic.h"
 #include "clock.h"
+#include "tlx_bt.h"
 
 #define LOG_MODULE_NAME ieee802154_tlx
 #if defined(CONFIG_IEEE802154_DRIVER_LOG_LEVEL)

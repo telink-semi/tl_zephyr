@@ -5,7 +5,7 @@
  */
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X
-#include "driver_tl321x.h"
+#include "driver.h"
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #include "driver.h"
 #endif

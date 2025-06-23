@@ -12,4 +12,5 @@ config SOC_SERIES
 
 config SOC
 	default "telink_tl321x" if SOC_RISCV_TELINK_TL321X
+	default "telink_tl322x" if SOC_RISCV_TELINK_TL322X
 	default "telink_tl721x" if SOC_RISCV_TELINK_TL721X

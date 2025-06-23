@@ -11,4 +11,5 @@ family:
       - name: telink_tlx
         socs:
           - name: telink_tl321x
+          - name: telink_tl322x
           - name: telink_tl721x

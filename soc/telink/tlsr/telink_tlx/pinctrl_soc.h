@@ -13,6 +13,8 @@
 #include <zephyr/dt-bindings/pinctrl/tl321x-pinctrl.h>
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #include <zephyr/dt-bindings/pinctrl/tl721x-pinctrl.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#include <zephyr/dt-bindings/pinctrl/tl322x-pinctrl.h>
 #endif
 
 /**

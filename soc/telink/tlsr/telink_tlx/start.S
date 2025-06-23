@@ -53,6 +53,7 @@ start:
 	li     t1, 3
 	sw     t1, 0(t0)
 #else
+	/* Disable vector mode */
 	csrci  NDS_MMISC_CTL, 2
 
 	/* Disable vector feture enable address */
