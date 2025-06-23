@@ -142,18 +142,13 @@ static int pwm_tlx_get_cycles_per_sec(const struct device *dev,
 }
 
 #ifdef CONFIG_PM_DEVICE
-
 static int pwm_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
 	const struct pwm_tlx_config *config = dev->config;
 	struct pwm_tlx_data *data = dev->data;
 
 	extern bool pm_has_resumed_from_deep_sleep_retention(void);
-
 	switch (action) {
-	case PM_DEVICE_ACTION_RESUME:
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-	{
 		if (pm_has_resumed_from_deep_sleep_retention()) {
 			pwm_tlx_init(dev);
 		}

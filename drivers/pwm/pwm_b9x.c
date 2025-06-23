@@ -159,10 +159,6 @@ static int pwm_b9x_pm_action(const struct device *dev, enum pm_device_action act
 #if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
 	{
 		if (pm_has_resumed_from_deep_sleep_retention()) {
-			pwm_b9x_init(dev);
-		}
-
-		for (uint8_t channel = 0; channel < config->channels; channel++) {
 			if (data->out_pin_ch_connected & BIT(channel)) {
 				pwm_b9x_set_cycles(dev, channel, data->ch[channel].period,
 						   data->ch[channel].pulse,

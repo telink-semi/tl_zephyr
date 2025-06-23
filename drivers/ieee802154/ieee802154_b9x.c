@@ -619,7 +619,7 @@ ALWAYS_INLINE static void b9x_send_ack(const struct device *dev, struct ieee8021
 				LOG_WRN("encrypt ack failed");
 			}
 		} else {
-			delay_us(CONFIG_IEEE802154_B9X_SET_TXRX_DELAY_US);
+				delay_us(CONFIG_IEEE802154_B9X_SET_TXRX_DELAY_US);
 		}
 #else
 		delay_us(CONFIG_IEEE802154_B9X_SET_TXRX_DELAY_US);

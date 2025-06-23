@@ -10,7 +10,7 @@ config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32000
 
 config RISCV_VECTORED_MODE
-	default y
+	default n
 
 config RISCV_SOC_INTERRUPT_INIT
 	default y
@@ -24,10 +24,14 @@ config 2ND_LVL_ISR_TBL_OFFSET
 config NUM_IRQS
 	default 65 if SOC_RISCV_TELINK_TL721X
 	default 65 if SOC_RISCV_TELINK_TL321X
+	default 77 if SOC_RISCV_TELINK_TL322X
+	default 58 if SOC_RISCV_TELINK_TL323X
 
 config MAX_IRQ_PER_AGGREGATOR
 	default 65 if SOC_RISCV_TELINK_TL721X
 	default 65 if SOC_RISCV_TELINK_TL321X
+	default 77 if SOC_RISCV_TELINK_TL322X
+	default 58 if SOC_RISCV_TELINK_TL323X
 
 config XIP
 	default n

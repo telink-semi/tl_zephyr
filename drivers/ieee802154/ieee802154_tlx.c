@@ -6,13 +6,6 @@
 
 #define DT_DRV_COMPAT telink_tlx_zb
 
-#include "rf_common.h"
-#include "stimer.h"
-#include "tl_rf_power.h"
-#include "gpio.h"
-#include "plic.h"
-#include "clock.h"
-
 #define LOG_MODULE_NAME ieee802154_tlx
 #if defined(CONFIG_IEEE802154_DRIVER_LOG_LEVEL)
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
@@ -37,6 +30,21 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "ieee802154_tlx.h"
 
 #include "ieee802154_tlx_frame.c"
+
+#include "rf_common.h"
+#include "stimer.h"
+#include "tl_rf_power.h"
+#include "gpio.h"
+#include "plic.h"
+#include "clock.h"
+#include "tlx_bt.h"
+#include "drivers.h"
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#define RAM_CODE_SECTION_IEEE802154		__GENERIC_SECTION(.ram_code)
+#else
+#define RAM_CODE_SECTION_IEEE802154		
+#endif
 
 #if defined(CONFIG_IEEE802154_TLX_MAC_FLASH)
 #include <zephyr/drivers/flash.h>
@@ -78,6 +86,12 @@ static struct tlx_data data = {
 	.tx_buffer = txpkt_buffer,
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 };
+
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+extern bool isThreadCommissioned;
+volatile bool isFirstCcaBeforeTx = true;
+volatile bool shouldPowerDownRFEarly;
+#endif
 
 #ifdef CONFIG_OPENTHREAD_FTD
 
@@ -619,6 +633,9 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 	if (tlx_ieee802154_frame_build(frame, ack_buf, sizeof(ack_buf), &ack_len)) {
 		tlx->ack_sending = true;
 		k_sem_reset(&tlx->tx_wait);
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
+#endif
 		rf_set_txmode();
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 		if (frame->general.se_bit) {
@@ -631,7 +648,7 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 				LOG_WRN("encrypt ack failed");
 			}
 		} else {
-			delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
+				delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
 		}
 #else
 		delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
@@ -651,9 +668,13 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	struct net_pkt *pkt = NULL;
 	struct ieee802154_frame frame = {};
 
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	shouldPowerDownRFEarly = false;
+#endif
+
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
 		SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -712,6 +733,15 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 		}
 		if (frame.general.type == IEEE802154_FRAME_FCF_TYPE_ACK) {
 			if (tlx->ack_handler_en) {
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+				if (isThreadCommissioned) {
+					if(frame.general.fp_bit == false)
+					{
+						shouldPowerDownRFEarly = true;
+						rf_set_tx_rx_off();
+					}
+				}
+#endif
 				if (tlx->ack_sn == *frame.sn) {
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 					tlx_handle_ack(dev, payload, length, rx_time);
@@ -828,7 +858,13 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	if (status < 0 && pkt != NULL) {
 		net_pkt_unref(pkt);
 	}
-	dma_chn_en(DMA1);
+
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	if(!shouldPowerDownRFEarly)
+#endif
+	{
+		dma_chn_en(DMA1);
+	}
 }
 
 /* TX IRQ handler */
@@ -846,7 +882,14 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 	/* release tx semaphore */
 	k_sem_give(&tlx->tx_wait);
 
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	isFirstCcaBeforeTx = true;
+#endif
+
 	/* set to rx mode */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
 	rf_set_rxmode();
 }
 
@@ -875,20 +918,25 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
 		if (!tlx_rf_zigbee_250K_mode) {
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 			ske_dig_en();
 #endif
-#endif
 			if (tlx->rf_mode_154 == false) {
-				rf_baseband_reset();
-				rf_reset_dma();
+				if(tl_rf_is_inited()){
+					rf_baseband_reset();
+					rf_reset_dma();
+				}
+				else{
+					tl_rf_change_to_inited();
+				}
+
 				tlx->rf_mode_154 = true;
 			}
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-			rf_mode_init();
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-			rf_zigbee_mode_init();
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+			sys_n22_init(0x20080000);
+			rf_n22_dig_init();
+			rf_clr_irq_mask(FLD_RF_IRQ_ALL);
 #endif
+			rf_mode_init();
 			rf_set_zigbee_250K_mode();
 			tlx_rf_zigbee_250K_mode = true;
 		}
@@ -903,7 +951,15 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
 		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
 		riscv_plic_irq_enable(DT_INST_IRQN(0));
-		rf_set_rxmode();
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+		if(!isThreadCommissioned)
+#endif
+		{
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+			rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
+			rf_set_rxmode();
+		}
 		tlx->is_started = true;
 	}
 	return 0;
@@ -919,11 +975,14 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 			}
 		}
 		riscv_plic_irq_disable(DT_INST_IRQN(0));
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
 		rf_set_tx_rx_off();
 #ifdef CONFIG_PM_DEVICE
 		/* Reset Radio */
 		rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL323X
 		rf_reset_dma();
 		rf_baseband_reset();
 #endif
@@ -945,6 +1004,9 @@ ALWAYS_INLINE static int tlx_set_channel_radio(struct tlx_data *tlx, uint16_t ch
 		tlx->current_channel = channel;
 		if (tlx->is_started) {
 			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(channel));
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+			rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
 			rf_set_rxmode();
 		}
 	}
@@ -1048,13 +1110,24 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 }
 
 /* API implementation: cca */
+RAM_CODE_SECTION_IEEE802154
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	if (isFirstCcaBeforeTx && isThreadCommissioned) {
+		isFirstCcaBeforeTx = false;
+		return 0;
+	}
+	else
+#endif
+	{
+		signed int rssi = 0, cnt = 0;
+		unsigned int t1 = stimer_get_tick();
 
-	signed int rssi = 0, cnt = 0;
-	unsigned int t1 = stimer_get_tick();
-
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
 	rf_set_rxmode();
 	delay_us(85);
 
@@ -1069,15 +1142,18 @@ static int tlx_cca(const struct device *dev)
 		return 0;
 	}
 	return -EBUSY;
+	}	
 }
 
 /* API implementation: set_channel */
+RAM_CODE_SECTION_IEEE802154
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
 	return tlx_set_channel_radio(dev->data, channel);
 }
 
 /* API implementation: filter */
+RAM_CODE_SECTION_IEEE802154
 static int tlx_filter(const struct device *dev,
 		      bool set,
 		      enum ieee802154_filter_type type,
@@ -1099,6 +1175,7 @@ static int tlx_filter(const struct device *dev,
 }
 
 /* API implementation: set_txpower */
+RAM_CODE_SECTION_IEEE802154
 static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 {
 	struct tlx_data *tlx = dev->data;
@@ -1134,21 +1211,21 @@ __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 #endif
 
 /* API implementation: start */
+RAM_CODE_SECTION_IEEE802154
 static int tlx_start(const struct device *dev)
 {
 	return tlx_start_radio(dev->data);
 }
 
 /* API implementation: stop */
+RAM_CODE_SECTION_IEEE802154
 static int tlx_stop(const struct device *dev)
 {
 	return tlx_stop_radio(dev->data);
 }
 
 /* API implementation: tx */
-#if defined(CONFIG_IEEE802154_TLX_ACTIVE_STAGE_OPTIMIZATION)
-__GENERIC_SECTION(.ram_code)
-#endif
+RAM_CODE_SECTION_IEEE802154
 static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct net_pkt *pkt,
 		  struct net_buf *frag)
 {
@@ -1171,6 +1248,9 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	if (tlx->ack_sending) {
 		if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
 			tlx->ack_sending = false;
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+			rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
 			rf_set_rxmode();
 		}
 	}
@@ -1384,6 +1464,9 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	k_sem_reset(&tlx->ack_wait);
 
 	/* start transmission */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
+#endif
 	rf_set_txmode();
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
@@ -1404,7 +1487,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 				    stimer_rf_handler, 0, 0);
 		plic_interrupt_disable(IRQ_SYSTIMER);
 		stimer_set_irq_capture(stimer_get_tick() +
-				       TLX_ACK_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
+				       800 * SYSTEM_TIMER_TICK_1US);
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 		stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
 		plic_interrupt_enable(IRQ_SYSTIMER);
@@ -1412,6 +1495,9 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	}
 #endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
 		rf_set_rxmode();
 		status = -EIO;
 	}
@@ -1421,7 +1507,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		IEEE802154_FRAME_FCF_ACK_REQ_ON) {
 		tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
 		tlx->ack_handler_en = true;
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#if 0
 		if (isThreadCommissioned == true) {
 			plic_interrupt_disable(IRQ_SYSTIMER);
 			stimer_clr_irq_status(FLD_SYSTEM_IRQ);
