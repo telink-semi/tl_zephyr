@@ -15,32 +15,32 @@
 	compatible = "telink,tl3228x";
 
 	aliases {
-		led0 = &led_blue;
-		led1 = &led_green;
+		led0 = &led_red;
+		led1 = &led_blue;
 		led2 = &led_white;
-		led3 = &led_red;
+		led3 = &led_green;
 		sw0 = &key_1;
 		sw1 = &key_2;
 		sw2 = &key_3;
 		sw3 = &key_4;
-		pwm-led0 = &pwm_led_blue;
+		pwm-led0 = &pwm_led_red;
 		pwm-0 = &pwm0;
 		watchdog0 = &wdt;
 		mcuboot-button0 = &key_dfu;
-		mcuboot-led0 = &led_blue;
+		mcuboot-led0 = &led_red;
 	};
 
 	leds {
 		compatible = "gpio-leds";
 
-		led_blue: led_0 {
+		led_red: led_0 {
 			gpios = <&gpioc 4 GPIO_ACTIVE_HIGH>;
-			label = "LED Blue";
+			label = "LED Red";
 		};
 
-		led_green: led_1 {
-			gpios = <&gpioc 7 GPIO_ACTIVE_HIGH>;
-			label = "LED Green";
+		led_blue: led_1 {
+			gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
+			label = "LED Blue";
 		};
 
 		led_white: led_2 {
@@ -48,18 +48,18 @@
 			label = "LED White";
 		};
 
-		led_red: led_3 {
-			gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
-			label = "LED Red";
+		led_green: led_3 {
+			gpios = <&gpioc 7 GPIO_ACTIVE_HIGH>;
+			label = "LED Green";
 		};
 	};
 
 	pwm_leds {
 		compatible = "pwm-leds";
 
-		pwm_led_blue: pwm_led_0 {
+		pwm_led_red: pwm_led_0 {
 			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-			label = "PWM LED Blue";
+			label = "PWM LED Red";
 		};
 	};
 

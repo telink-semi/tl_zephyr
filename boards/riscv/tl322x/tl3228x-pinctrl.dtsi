@@ -12,7 +12,7 @@
 	 */
 	pad-mul-sel = <1>;
 
-	/* UART0: TX(PB2), RX(PB3), RTS(PB4), CTS(PB6) */
+	/* UART0: TX(PA0), RX(PA1), RTS(PB4), CTS(PB6) */
 
 	uart0_tx_pa0_default: uart0_tx_pa0_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_A, TLX_PIN_0,

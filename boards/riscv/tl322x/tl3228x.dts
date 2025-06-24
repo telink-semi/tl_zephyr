@@ -13,7 +13,7 @@
 		compatible = "gpio-leds";
 
 		out {
-			gpios = <&gpioc 3 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioc 6 GPIO_ACTIVE_HIGH>;
 		};
 	};
 
@@ -29,20 +29,20 @@
 
 &pwm0 {
 	/* On board RGB LEDs */
-	pinctrl-ch0 = <&pwm_ch0_pc1_default>;
-	pinctrl-ch1 = <&pwm_ch1_pc2_default>;
-	pinctrl-ch2 = <&pwm_ch2_pc0_default>;
+	pinctrl-ch0 = <&pwm_ch0_pc4_default>;
+	pinctrl-ch1 = <&pwm_ch1_pc7_default>;
+	pinctrl-ch2 = <&pwm_ch2_pc5_default>;
 };
 
 &pinctrl {
-	pwm_ch0_pc1_default: pwm_ch0_pc1_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_1, TL322X_FUNC_PWM0)>;
+	pwm_ch0_pc4_default: pwm_ch0_pc4_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_4, TL322X_FUNC_PWM0)>;
 	};
-	pwm_ch1_pc2_default: pwm_ch1_pc2_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_2, TL322X_FUNC_PWM1)>;
+	pwm_ch1_pc7_default: pwm_ch1_pc7_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_7, TL322X_FUNC_PWM4)>;
 	};
-	pwm_ch2_pc0_default: pwm_ch2_pc0_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_0, TL322X_FUNC_PWM2)>;
+	pwm_ch2_pc5_default: pwm_ch2_pc5_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_5, TL322X_FUNC_PWM8)>;
 	};
 };
 
