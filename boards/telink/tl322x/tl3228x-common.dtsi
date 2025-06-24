@@ -23,7 +23,7 @@
 		sw1 = &key_2;
 		sw2 = &key_3;
 		sw3 = &key_4;
-		pwm-led0 = &pwm_led_green;
+		pwm-led0 = &pwm_led_red;
 		pwm-0 = &pwm0;
 		watchdog0 = &wdt;
 		mcuboot-button0 = &key_dfu;
@@ -57,9 +57,9 @@
 	pwm_leds {
 		compatible = "pwm-leds";
 
-		pwm_led_green: pwm_led_0 {
+		pwm_led_red: pwm_led_0 {
 			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-			label = "PWM LED Green";
+			label = "PWM LED Red";
 		};
 	};
 
