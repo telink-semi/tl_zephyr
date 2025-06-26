@@ -13,7 +13,7 @@ extern void pm_update_status_info(unsigned char clr_en);
 
 static bool is_mcu_status_updated;
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X
 #include <flash/flash_common.h>
 #endif
 
@@ -22,7 +22,7 @@ ssize_t z_impl_hwinfo_get_device_id(uint8_t *buffer, size_t length)
 	uint32_t flash_mid = 0;
 	uint8_t uid[16];
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X
 	flash_mid = flash_read_mid_with_device_num(SLAVE0);
 	flash_read_mid_uid_with_check_with_device_num(SLAVE0, &flash_mid, uid);
 #elif CONFIG_SOC_RISCV_TELINK_TL321X

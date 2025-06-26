@@ -247,7 +247,7 @@ manifest:
       path: modules/hal/tdk
     - name: hal_telink
       url: git@192.168.48.36:ZhihanTao/hal_telink_src.git
-      revision: 493c2f30c98e22c5b820eac7f19d3153e7fbd805
+      revision: 12a03401687beed0bd8efd2499b8ff5bf0222153
       path: modules/hal/telink
       groups:
         - hal
