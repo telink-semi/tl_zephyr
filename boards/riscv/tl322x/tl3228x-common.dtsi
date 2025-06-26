@@ -87,13 +87,12 @@
 		};
 	};
 
-	/* Short TL_Key3 (J6 pin 31) to ground */
 	key_pool {
 		compatible = "gpio-keys";
 
 		inp {
-			gpios = <&gpiod 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
-				<&gpiod 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpiog 3 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpiog 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 	};
 
@@ -101,13 +100,13 @@
 		compatible = "gpio-keys";
 
 		col {
-			gpios = <&gpiod 5 GPIO_ACTIVE_HIGH>,
-				<&gpiod 7 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpiog 1 GPIO_ACTIVE_HIGH>,
+				<&gpiog 0 GPIO_ACTIVE_HIGH>;
 		};
 
 		row {
-			gpios = <&gpiod 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
-				<&gpiod 6 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpiog 3 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+				<&gpiog 2 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
 		};
 	};
 
@@ -185,7 +184,7 @@
 };
 
 &gpiod {
-	interrupts = <37 1>;
+	interrupts = <47 1>;
 	status = "okay";
 };
 
@@ -194,12 +193,20 @@
 };
 
 &gpiof {
-	interrupts = <38 1>;
+	interrupts = <48 1>;
 	status = "okay";
 };
 
 &gpiog {
-	interrupts = <39 1>;
+	interrupts = <49 1>;
+	status = "okay";
+};
+
+&gpioh {
+	status = "okay";
+};
+
+&gpioi {
 	status = "okay";
 };
 

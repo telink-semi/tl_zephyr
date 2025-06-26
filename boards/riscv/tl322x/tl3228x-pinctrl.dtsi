@@ -16,11 +16,11 @@
 
 	uart0_tx_pa0_default: uart0_tx_pa0_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_A, TLX_PIN_0,
-			(TL322X_FUNC_UART0_TX | TL322X_PULL_UP))>;
+			(TL322X_FUNC_UART0_TX))>;
 	};
 	uart0_rx_pa1_default: uart0_rx_pa1_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_A, TLX_PIN_1,
-			(TL322X_FUNC_UART0_RTX_IO | TL322X_PULL_UP))>;
+			(TL322X_FUNC_UART0_RTX_IO))>;
 	};
 	uart0_rts_pb4_default: uart0_rts_pb4_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_B, TLX_PIN_4, TL322X_FUNC_UART0_RTS)>;
