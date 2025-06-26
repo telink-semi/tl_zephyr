@@ -137,6 +137,11 @@ jobs:
         cd ..
         west build -b tl3218x     -d build_mcuboot_chip_id_tl321x             bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3 -DCONFIG_TELINK_TLX_MCUBOOT_STARTUP=y
 
+    - name: Build TL321x_ml3m samples/basic/button
+      run: |
+        cd ..
+        west build -b tl3218x_ml3m -d build_button_tl321x_ml3m                zephyr/samples/basic/button                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -158,6 +163,7 @@ jobs:
         cp ../build_ot_echo_client_pm_deep_tl321x/zephyr/zephyr.bin     telink_build_artifacts/tl321x_ot_echo_client_pm_retention.bin
         cp ../build_crypto_mbedtls_tl321x/zephyr/zephyr.bin             telink_build_artifacts/tl321x_mbedtls.bin
         cp ../build_mcuboot_chip_id_tl321x/zephyr/zephyr.bin            telink_build_artifacts/tl321x_mcuboot_chip_id.bin
+        cp ../build_button_tl321x_ml3m/zephyr/zephyr.bin                telink_build_artifacts/tl321x_ml3m_button.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

@@ -8,3 +8,13 @@ boards:
   vendor: telink
   socs:
   - name: telink_tl721x
+
+- name: tl7218x_ml7g
+  vendor: telink
+  socs:
+  - name: telink_tl721x
+
+- name: tl7218x_ml7m
+  vendor: telink
+  socs:
+  - name: telink_tl721x
