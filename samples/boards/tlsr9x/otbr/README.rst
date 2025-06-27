@@ -136,3 +136,18 @@ Ping Thread device from PC:
 	64 bytes from fd6a:c41a:dced:1:d567:5def:2c66:be64: icmp_seq=2 ttl=64 time=28.6 ms
 	64 bytes from fd6a:c41a:dced:1:d567:5def:2c66:be64: icmp_seq=3 ttl=64 time=28.5 ms
 	...
+
+Thread border router shell for controlling and retrieving its status is available over telnet.
+To connect from PC:
+
+.. code-block:: console
+
+	avahi-resolve -n telink-otbr.local
+	telink-otbr.local	fdef:e3be:8d3c:0:66f9:47ff:fef0:120
+
+	telnet fdef:e3be:8d3c:0:66f9:47ff:fef0:120
+	Trying fdef:e3be:8d3c:0:66f9:47ff:fef0:120...
+	Connected to fdef:e3be:8d3c:0:66f9:47ff:fef0:120.
+	Escape character is '^]'.
+
+Type "help" to see available commands.

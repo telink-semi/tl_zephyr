@@ -58,7 +58,7 @@ config NET_CONFIG_AUTO_INIT
 config TELINK_W91_OTBR_INIT_PRIO
 	int "Startup priority for the Telink W91 OTBR"
 	depends on !NET_CONFIG_AUTO_INIT
-	default 95
+	default 90
 
 config NET_IF_MAX_IPV6_COUNT
 	int "Max number of IPv6 network interfaces in the system"
