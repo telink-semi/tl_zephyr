@@ -8,3 +8,7 @@ config BOARD_TL3218X
 config BOARD_TL3218X_RETENTION
 	bool "Telink TL321X Platform with retention"
 	depends on SOC_RISCV_TELINK_TL321X
+
+config BOARD_TL3218X_ML3M
+	bool "Telink TL321X Platform with Module Board ML3M"
+	depends on SOC_RISCV_TELINK_TL321X

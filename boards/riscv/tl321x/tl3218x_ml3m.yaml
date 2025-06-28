@@ -1,0 +1,15 @@
+identifier: tl3218x_ml3m
+name: Telink TL3218X_ML3M
+type: mcu
+arch: riscv32
+toolchain:
+  - cross-compile
+  - zephyr
+ram: 128
+flash: 1024
+supported:
+  - gpio
+  - i2c
+  - pwm
+  - spi
+  - netif:openthread
