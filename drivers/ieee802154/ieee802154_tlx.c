@@ -943,6 +943,7 @@ static int tlx_cca(const struct device *dev)
 	unsigned int t1 = stimer_get_tick();
 
 	rf_set_rxmode();
+	delay_us(85);
 	rssi_cur = rf_get_rssi();
 	rssiSum += rssi_cur;
 
