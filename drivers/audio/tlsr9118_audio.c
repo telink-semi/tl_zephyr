@@ -60,7 +60,7 @@ static size_t pack_w91_audio_ipc_configure(uint8_t inst, void *unpack_data, uint
 	// 	IPC_DISPATCHER_PACK_FIELD(pack_data, p_config_req->bit_order);
 	// }
 
-	return pack_data_len;
+	return 0;
 }
 
 IPC_DISPATCHER_UNPACK_FUNC_ONLY_WITH_ERROR_PARAM(w91_audio_ipc_configure);
@@ -123,9 +123,9 @@ static void tlsr9118_audio_stop_output(const struct device *dev)
 
 /* Audio codec API declaration */
 static const struct audio_codec_api tlsr9118_audio_driver_api = {
-    .configure    = tlsr9118_audio_configure,
-    .start_output = tlsr9118_audio_start_output,
-    .stop_output  = tlsr9118_audio_stop_output,
+    // .configure    = tlsr9118_audio_configure,
+    // .start_output = tlsr9118_audio_start_output,
+    // .stop_output  = tlsr9118_audio_stop_output,
 };
 
 /* Driver instance definition */

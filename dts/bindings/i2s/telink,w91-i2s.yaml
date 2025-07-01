@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+description: Telink TLSR9118 I2S controller
+
+compatible: "telink,w91-i2s"
+
+include: base.yaml
