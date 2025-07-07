@@ -20,6 +20,8 @@ config TELINK_W91_OTBR
 	select OPENTHREAD_SLAAC
 	select OPENTHREAD_EXTERNAL_HEAP
 	select NET_ROUTING
+	select NET_SOCKETS
+	select NET_SOCKETS_SERVICE
 	help
 		This option enables Telink W91 Thread border router.
 
@@ -34,8 +36,6 @@ config TELINK_W91_OTBR_LOG_LEVEL_CRIT
 	bool "Critical"
 config TELINK_W91_OTBR_LOG_LEVEL_WARN
 	bool "Warning"
-config TELINK_W91_OTBR_LOG_LEVEL_NOTE
-	bool "Notice"
 config TELINK_W91_OTBR_LOG_LEVEL_INFO
 	bool "Informational"
 config TELINK_W91_OTBR_LOG_LEVEL_DEBG
@@ -46,9 +46,8 @@ config TELINK_W91_OTBR_LOG_LEVEL
 	int
 	default 1 if TELINK_W91_OTBR_LOG_LEVEL_CRIT
 	default 2 if TELINK_W91_OTBR_LOG_LEVEL_WARN
-	default 3 if TELINK_W91_OTBR_LOG_LEVEL_NOTE
-	default 4 if TELINK_W91_OTBR_LOG_LEVEL_INFO
-	default 5 if TELINK_W91_OTBR_LOG_LEVEL_DEBG
+	default 3 if TELINK_W91_OTBR_LOG_LEVEL_INFO
+	default 4 if TELINK_W91_OTBR_LOG_LEVEL_DEBG
 	default 0
 
 config NET_CONFIG_AUTO_INIT
@@ -63,6 +62,18 @@ config TELINK_W91_OTBR_INIT_PRIO
 config NET_IF_MAX_IPV6_COUNT
 	int "Max number of IPv6 network interfaces in the system"
 	default 2
+
+config NET_SOCKETS_SERVICE_STACK_SIZE
+	int "Stack size for the thread handling socket services"
+	default 2048
+
+config NET_HOSTNAME_ENABLE
+	bool "Add hostname to the device"
+	default n
+
+config TELINK_W91_OTBR_HOST_NAME
+	string "DNS host name"
+	default "telink-otbr"
 
 config TELINK_W91_OTBR_WIFI_SSID
 	string "WIFI SSID - Network name"

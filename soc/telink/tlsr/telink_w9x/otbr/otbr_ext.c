@@ -11,6 +11,7 @@
 #include <openthread/platform/infra_if.h>
 #include <openthread/border_routing.h>
 #include <openthread/dataset_ftd.h>
+#include <openthread/srp_server.h>
 
 #include <zephyr/net/net_if.h>
 #include <../subsys/net/ip/ipv6.h>
@@ -79,15 +80,17 @@ bool otPlatInfraIfHasAddress(uint32_t aInfraIfIndex, const otIp6Address *aAddres
  * OTBR external functions
  ************************************************************************/
 
-void otbr_ext_infra_up(struct openthread_context *aContext, uint32_t aInfraIfIndex)
+void otbr_ext_infra_up(struct otbr_context *ctx)
 {
-	otError err = otBorderRoutingInit(aContext->instance, aInfraIfIndex, true);
+	int infra_idx = net_if_get_by_iface(ctx->infra_if);
+	otError err = otBorderRoutingInit(ctx->ot_ctx->instance, infra_idx, true);
 
 	if (err == OT_ERROR_NONE) {
-		otbr_icmpv6_start_listen(aInfraIfIndex, otbr_infra_icmpv6_inp, aContext->instance);
-		err = otBorderRoutingSetEnabled(aContext->instance, true);
+		otbr_icmpv6_start_listen(infra_idx, otbr_infra_icmpv6_inp, ctx->ot_ctx->instance);
+		err = otBorderRoutingSetEnabled(ctx->ot_ctx->instance, true);
 		if (err == OT_ERROR_NONE) {
 			LOG_INF("otbr enabled");
+			otSrpServerSetEnabled(ctx->ot_ctx->instance, true);
 		} else {
 			LOG_ERR("otbr enabling failed %d", err);
 		}
@@ -96,14 +99,15 @@ void otbr_ext_infra_up(struct openthread_context *aContext, uint32_t aInfraIfInd
 	}
 }
 
-void otbr_ext_infra_down(struct openthread_context *aContext, uint32_t aInfraIfIndex)
+void otbr_ext_infra_down(struct otbr_context *ctx)
 {
-	otError err = otBorderRoutingSetEnabled(aContext->instance, false);
+	otError err = otBorderRoutingSetEnabled(ctx->ot_ctx->instance, false);
 
-	otbr_icmpv6_stop_listen(aInfraIfIndex);
+	otbr_icmpv6_stop_listen(net_if_get_by_iface(ctx->infra_if));
 
 	if (err == OT_ERROR_NONE) {
 		LOG_INF("obr disabled");
+		otSrpServerSetEnabled(ctx->ot_ctx->instance, false);
 	} else {
 		LOG_ERR("otbr disabling failed %d", err);
 	}
@@ -221,7 +225,5 @@ void otbr_ext_apply_omr_prefix(struct openthread_context *aContext)
 					    NET_IPV6_ND_INFINITE_LIFETIME)) {
 			LOG_ERR("ot add omr prefix failed");
 		}
-	} else {
-		LOG_ERR("otbr no omr prefix");
 	}
 }

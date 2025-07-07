@@ -151,3 +151,52 @@ To connect from PC:
 	Escape character is '^]'.
 
 Type "help" to see available commands.
+
+For sure it's possible access services directly by host name:
+
+.. code-block:: console
+
+	telnet telink-otbr.local
+
+But most distros do not support IPv6 name resolution out of the box. To fix this check your
+*/etc/nsswitch.conf* file. Usually you have the next resolution:
+
+.. code-block:: console
+
+	 hosts:          files mdns4_minimal [NOTFOUND=return] dns
+
+As you see only IPv4 name resolution is available. So change it:
+
+.. code-block:: console
+
+	 hosts:          files mdns_minimal [NOTFOUND=return] dns
+
+Commissioning Matter devices
+****************************
+
+To proceed commissioning procedure with Matter device you need border router dataset.
+This dataset as was mentioned is available in console after boot:
+
+.. code-block:: console
+
+	ot active dataset: 0e080000000000010000000300001235060004001fffe00208ff0db800000000000708fde770d7092819070510ff112233445566778899aabbccddeeff030974656c696e6b2d6f740102141804108a6e1d9875742d29ab11523b4f02bdcf0c0402a0f7f8
+
+In case if console is not available it can be obtained using telnet:
+
+.. code-block:: console
+
+	telnet telink-otbr.local
+	Trying fd11:1111:1122:2222:66f9:47ff:fef0:120%3...
+	Connected to telink-otbr.local.
+	Escape character is '^]'.
+	ot dataset active -x
+
+	0e080000000000010000000300001235060004001fffe00208ff0db800000000000708fde770d7092819070510ff112233445566778899aabbccddeeff030974656c696e6b2d6f740102141804108a6e1d9875742d29ab11523b4f02bdcf0c0402a0f7f8
+	Done
+
+Now just run chip-tool as usual (Matter device should be in BLE advertisement mode):
+
+.. code-block:: console
+
+	rm -rf /tmp/chip_*
+	./chip-tool pairing ble-thread 1234 hex:0e080000000000010000000300001235060004001fffe00208ff0db800000000000708fde770d7092819070510ff112233445566778899aabbccddeeff030974656c696e6b2d6f740102141804108a6e1d9875742d29ab11523b4f02bdcf0c0402a0f7f8 20202021 3840
