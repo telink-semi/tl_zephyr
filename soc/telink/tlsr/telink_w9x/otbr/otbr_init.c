@@ -5,6 +5,9 @@
  */
 
 #include "otbr_ext.h"
+#include "otbr_context.h"
+#include "otbr_srp.h"
+#include "otbr_mdns.h"
 #include <zephyr/init.h>
 #include <zephyr/net/net_config.h>
 #include <zephyr/net/wifi_mgmt.h>
@@ -33,10 +36,9 @@ LOG_MODULE_REGISTER(otbr_init);
  * OTBR init Data types
  ************************************************************************/
 struct otbr_init_ctx {
-	struct net_if *infra_if;
+	struct otbr_context otbr_ctx;
 	struct net_mgmt_event_callback infra_cb;
 	struct k_work_delayable infra_aux_work;
-	struct openthread_context *ot_ctx;
 };
 
 /************************************************************************
@@ -55,10 +57,13 @@ static void otbr_init_infra_auxiliary_work_handler(struct k_work *item)
 	struct otbr_init_ctx *otbr_context = CONTAINER_OF(k_work_delayable_from_work(item),
 							  struct otbr_init_ctx, infra_aux_work);
 
-	if (net_if_is_wifi(otbr_context->infra_if)) {
+	if (net_if_is_wifi(otbr_context->otbr_ctx.infra_if)) {
 		LOG_INF("wifi '%s' connecting...", CONFIG_TELINK_W91_OTBR_WIFI_SSID);
-		if (net_mgmt(NET_REQUEST_WIFI_CONNECT, otbr_context->infra_if, &con_req,
-			     sizeof(con_req))) {
+		int req = net_mgmt(NET_REQUEST_WIFI_CONNECT, otbr_context->otbr_ctx.infra_if,
+				   &con_req, sizeof(con_req));
+
+		if (req && req != -EALREADY) {
+			LOG_WRN("wifi request connect fail %d", req);
 			(void)k_work_schedule(&otbr_context->infra_aux_work,
 					      K_MSEC(OTBR_INIT_INFRA_AUX_PERIOD_MS));
 		}
@@ -89,13 +94,11 @@ static void infra_change(struct net_mgmt_event_callback *cb, uint32_t mgmt_event
 	switch (mgmt_event) {
 	case NET_EVENT_ETHERNET_CARRIER_ON: {
 		LOG_INF("infra carrier on");
-		otbr_ext_infra_up(otbr_context->ot_ctx,
-				  net_if_get_by_iface(otbr_context->infra_if));
+		otbr_ext_infra_up(&otbr_context->otbr_ctx);
 	} break;
 	case NET_EVENT_ETHERNET_CARRIER_OFF:
 		LOG_INF("infra carrier off");
-		otbr_ext_infra_down(otbr_context->ot_ctx,
-				    net_if_get_by_iface(otbr_context->infra_if));
+		otbr_ext_infra_down(&otbr_context->otbr_ctx);
 		(void)k_work_schedule(&otbr_context->infra_aux_work, K_NO_WAIT);
 		break;
 	}
@@ -107,28 +110,32 @@ static void otbr_init_start(void)
 
 	STRUCT_SECTION_FOREACH(net_if, iface) {
 		if (net_if_l2(iface) == &NET_L2_GET_NAME(ETHERNET)) {
-			otbr_context.infra_if = iface;
+			otbr_context.otbr_ctx.infra_if = iface;
 		}
 	}
-	otbr_context.ot_ctx = openthread_get_default_context();
-	if (otbr_context.infra_if && otbr_context.ot_ctx) {
+	otbr_context.otbr_ctx.ot_ctx = openthread_get_default_context();
+	if (otbr_context.otbr_ctx.infra_if && otbr_context.otbr_ctx.ot_ctx) {
 
 		static struct openthread_state_changed_cb ot_cb = {.state_changed_cb = ot_change};
 
-		openthread_state_changed_cb_register(otbr_context.ot_ctx, &ot_cb);
-		otbr_ext_thread_start(otbr_context.ot_ctx);
+		openthread_state_changed_cb_register(otbr_context.otbr_ctx.ot_ctx, &ot_cb);
+		otbr_ext_thread_start(otbr_context.otbr_ctx.ot_ctx);
 
-		static const struct in6_addr router_addr = {
-			{{0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x02}}};
+		static const struct in6_addr router_addr = IN6ADDR_ROUTER_MULTICAST_INIT;
+		static const struct in6_addr mdns_addr = IN6ADDR_DNS_MULTICAST_INIT;
 
-		net_if_ipv6_maddr_join(otbr_context.infra_if,
-				       net_if_ipv6_maddr_add(otbr_context.infra_if, &router_addr));
+		net_if_ipv6_maddr_join(
+			otbr_context.otbr_ctx.infra_if,
+			net_if_ipv6_maddr_add(otbr_context.otbr_ctx.infra_if, &router_addr));
+		net_if_ipv6_maddr_join(
+			otbr_context.otbr_ctx.infra_if,
+			net_if_ipv6_maddr_add(otbr_context.otbr_ctx.infra_if, &mdns_addr));
 
-		const struct ethernet_context *infra_ctx = net_if_l2_data(otbr_context.infra_if);
+		const struct ethernet_context *infra_ctx =
+			net_if_l2_data(otbr_context.otbr_ctx.infra_if);
 
 		if (infra_ctx->is_net_carrier_up) {
-			otbr_ext_infra_up(otbr_context.ot_ctx,
-					  net_if_get_by_iface(otbr_context.infra_if));
+			otbr_ext_infra_up(&otbr_context.otbr_ctx);
 		}
 		net_mgmt_init_event_callback(&otbr_context.infra_cb, infra_change,
 					     NET_EVENT_ETHERNET_CARRIER_ON |
@@ -139,24 +146,29 @@ static void otbr_init_start(void)
 		(void)k_work_schedule(&otbr_context.infra_aux_work, K_NO_WAIT);
 
 		struct in6_addr *infra_ll =
-			net_if_ipv6_get_ll(otbr_context.infra_if, NET_ADDR_ANY_STATE);
-		const struct net_linkaddr *infra_mac = net_if_get_link_addr(otbr_context.infra_if);
+			net_if_ipv6_get_ll(otbr_context.otbr_ctx.infra_if, NET_ADDR_ANY_STATE);
+		const struct net_linkaddr *infra_mac =
+			net_if_get_link_addr(otbr_context.otbr_ctx.infra_if);
 		struct in6_addr *ot_ll =
-			net_if_ipv6_get_ll(otbr_context.ot_ctx->iface, NET_ADDR_ANY_STATE);
+			net_if_ipv6_get_ll(otbr_context.otbr_ctx.ot_ctx->iface, NET_ADDR_ANY_STATE);
 		const struct net_linkaddr *ot_mac =
-			net_if_get_link_addr(otbr_context.ot_ctx->iface);
+			net_if_get_link_addr(otbr_context.otbr_ctx.ot_ctx->iface);
 
-		if (!net_ipv6_nbr_add(otbr_context.ot_ctx->iface, infra_ll, infra_mac, true,
-				      NET_IPV6_NBR_STATE_REACHABLE)) {
+		if (!net_ipv6_nbr_add(otbr_context.otbr_ctx.ot_ctx->iface, infra_ll, infra_mac,
+				      true, NET_IPV6_NBR_STATE_REACHABLE)) {
 			LOG_ERR("otbr ot neighbor failed");
 		}
-		if (!net_ipv6_nbr_add(otbr_context.infra_if, ot_ll, ot_mac, true,
+		if (!net_ipv6_nbr_add(otbr_context.otbr_ctx.infra_if, ot_ll, ot_mac, true,
 				      NET_IPV6_NBR_STATE_REACHABLE)) {
 			LOG_ERR("otbr infra neighbor failed");
 		}
+#if CONFIG_TELINK_W91_OTBR_LOG_LEVEL_DEBG
+		otbr_srp_init(otbr_context.otbr_ctx.ot_ctx);
+#endif /* CONFIG_TELINK_W91_OTBR_LOG_LEVEL_DEBG */
+		otbr_mdns_start(&otbr_context.otbr_ctx);
 	} else {
-		LOG_ERR("otbr start failed: infra_if=%p, ot_ctx=%p", otbr_context.infra_if,
-			otbr_context.ot_ctx);
+		LOG_ERR("otbr start failed: infra_if=%p, ot_ctx=%p", otbr_context.otbr_ctx.infra_if,
+			otbr_context.otbr_ctx.ot_ctx);
 	}
 }
 
