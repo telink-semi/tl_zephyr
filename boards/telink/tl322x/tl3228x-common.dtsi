@@ -23,7 +23,7 @@
 		sw1 = &key_2;
 		sw2 = &key_3;
 		sw3 = &key_4;
-		pwm-led0 = &pwm_led_red;
+		pwm-led0 = &pwm_led_green;
 		pwm-0 = &pwm0;
 		watchdog0 = &wdt;
 		mcuboot-button0 = &key_dfu;
@@ -57,9 +57,9 @@
 	pwm_leds {
 		compatible = "pwm-leds";
 
-		pwm_led_red: pwm_led_0 {
+		pwm_led_green: pwm_led_0 {
 			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-			label = "PWM LED Red";
+			label = "PWM LED Green";
 		};
 	};
 
@@ -234,7 +234,7 @@
 
 &gspi {
 	status = "okay";
-	cs0-pin = "GPIO_PF3";
+	cs0-pin = "GPIO_PH3";
 	pinctrl-0 = <&gspi_clk_ph4_default &gspi_miso_ph6_default &gspi_mosi_ph7_default>;
 	pinctrl-names = "default";
 };
