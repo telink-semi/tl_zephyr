@@ -64,14 +64,14 @@
 
 	/* GSPI: CLK(PF4), MOSI(PF7), MISO(PF6) */
 
-	gspi_clk_pf4_default: gspi_clk_pf4_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_F, TLX_PIN_4, TL322X_FUNC_GSPI_CK_IO)>;
+	gspi_clk_ph4_default: gspi_clk_ph4_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_4, TL322X_FUNC_GSPI_CK_IO)>;
 	};
-	gspi_mosi_pf7_default: gspi_mosi_pf7_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_F, TLX_PIN_7, TL322X_FUNC_GSPI_MOSI_IO)>;
+	gspi_mosi_ph7_default: gspi_mosi_ph7_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_7, TL322X_FUNC_GSPI_MOSI_IO)>;
 	};
-	gspi_miso_pf6_default: gspi_miso_pf6_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_F, TLX_PIN_6, TL322X_FUNC_GSPI_MISO_IO)>;
+	gspi_miso_ph6_default: gspi_miso_ph6_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_6, TL322X_FUNC_GSPI_MISO_IO)>;
 	};
 
 	/* Define I2C pins: SCL(PE6), SDA(PE7) */

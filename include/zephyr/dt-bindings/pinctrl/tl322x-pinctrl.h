@@ -161,6 +161,8 @@
 #define TLX_PORT_E       0x04
 #define TLX_PORT_F       0x05
 #define TLX_PORT_G       0x06
+#define TLX_PORT_H       0x07
+#define TLX_PORT_I       0x08
 
 /* IDs for GPIO Pins */
 
