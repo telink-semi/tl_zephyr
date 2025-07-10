@@ -21,13 +21,19 @@ LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_LOG_LEVEL);
 #include <adc.h>
 #include <zephyr/drivers/pinctrl.h>
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 /* Set ADC resolution value */
 static inline void adc_set_resolution(adc_res_e res)
 {
 	analog_write_reg8(areg_adc_res_m, (analog_read_reg8
 		(areg_adc_res_m)&(~FLD_ADC_RES_M)) | res);
 }
-
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+static inline void adc_set_resolution(adc_num_e sar_adc_num,adc_res_e res)
+{
+    analog_write_reg8(areg_adc_res_m(sar_adc_num), (analog_read_reg8(areg_adc_res_m(sar_adc_num) )&(~FLD_ADC_RES_M)) | res);
+}
+#endif
 
 /* ADC tlx defines */
 #define SIGN_BIT_POSITION          (13)
@@ -99,7 +105,7 @@ static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 	adc_input_pin_def_e adc_pin;
 
 	switch (dt_pin) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 	case DT_ADC_GPIO_PB0:
 		adc_pin = ADC_GPIO_PB0;
 		break;
@@ -132,6 +138,31 @@ static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 	case DT_ADC_GPIO_PD1:
 		adc_pin = ADC_GPIO_PD1;
 		break;
+// #elif CONFIG_SOC_RISCV_TELINK_TL322X
+// 	case DT_ADC_GPIO_PC0:
+// 		adc_pin = ADC_GPIO_PC0;
+// 		break;
+// 	case DT_ADC_GPIO_PC1:
+// 		adc_pin = ADC_GPIO_PC1;
+// 		break;
+// 	case DT_ADC_GPIO_PC2:
+// 		adc_pin = ADC_GPIO_PC2;
+// 		break;
+// 	case DT_ADC_GPIO_PC3:
+// 		adc_pin = ADC_GPIO_PC3;
+// 		break;
+// 	case DT_ADC_GPIO_PC4:
+// 		adc_pin = ADC_GPIO_PC4;
+// 		break;
+// 	case DT_ADC_GPIO_PC5:
+// 		adc_pin = ADC_GPIO_PC5;
+// 		break;
+// 	case DT_ADC_GPIO_PC6:
+// 		adc_pin = ADC_GPIO_PC6;
+// 		break;
+// 	case DT_ADC_GPIO_PC7:
+// 		adc_pin = ADC_GPIO_PC7;
+// 		break;
 #endif
 	case DT_ADC_VBAT:
 		adc_pin = ADC_VBAT;
@@ -145,6 +176,7 @@ static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 	return adc_pin;
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 /* Get ADC value */
 static signed short adc_tlx_get_code(void)
 {
@@ -157,6 +189,15 @@ static signed short adc_tlx_get_code(void)
 #endif
 	return adc_code;
 }
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+/* Get ADC value */
+static signed short adc_tlx_get_code(adc_num_e sar_adc_num)
+{
+	signed short adc_code;
+	adc_code = adc_get_code(sar_adc_num);
+	return adc_code;
+}
+#endif
 
 /* ADC Context API implementation: start sampling */
 static void adc_context_start_sampling(struct adc_context *ctx)
@@ -166,7 +207,11 @@ static void adc_context_start_sampling(struct adc_context *ctx)
 
 	data->repeat_buffer = data->buffer;
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	adc_power_on();
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	adc_power_on(ADC0);
+#endif
 
 	k_sem_give(&data->acq_sem);
 }
@@ -197,15 +242,15 @@ static int adc_tlx_adc_start_read(const struct device *dev, const struct adc_seq
 	/* Set resolution */
 	switch (sequence->resolution) {
 	case 12:
-		adc_set_resolution(ADC_RES12);
+		adc_set_resolution(ADC0, ADC_RES12);
 		data->resolution_divider = 4;
 		break;
 	case 10:
-		adc_set_resolution(ADC_RES10);
+		adc_set_resolution(ADC0, ADC_RES10);
 		data->resolution_divider = 16;
 		break;
 	case 8:
-		adc_set_resolution(ADC_RES8);
+		adc_set_resolution(ADC0, ADC_RES8);
 		data->resolution_divider = 64;
 		break;
 	default:
@@ -236,9 +281,18 @@ static void adc_tlx_acquisition_thread(const struct device *dev)
 		while (((reg_adc_rxfifo_trig_num & FLD_BUF_CNT) >> 4)
 				== 0){
 		}
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+		adc_start_sample_nodma(ADC0);
+		while (((reg_adc_rxfifo_trig_num(ADC0) & FLD_BUF_CNT) >> 4)
+				== 0){
+		}
 #endif
-		/* Perform read */
+
+#if  CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 		adc_code = adc_tlx_get_code();
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+		adc_code = adc_tlx_get_code(ADC0);
+#endif
 		if (!data->differential) {
 			/* Sign bit is not used in case of single-ended configuration */
 			adc_code = adc_code * 8;
@@ -250,9 +304,12 @@ static void adc_tlx_acquisition_thread(const struct device *dev)
 		}
 		*data->buffer++ = adc_code;
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 		/* Power off ADC */
 		adc_power_off();
-
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+		adc_power_off(ADC0);
+#endif
 		/* Release ADC context */
 		adc_context_on_sampling_done(&data->ctx, dev);
 	}
@@ -262,7 +319,6 @@ static void adc_tlx_acquisition_thread(const struct device *dev)
 static int adc_tlx_init(const struct device *dev)
 {
 	struct tlx_adc_data *data = dev->data;
-
 	const struct tlx_adc_cfg *config = dev->config;
 	int err;
 
@@ -308,7 +364,7 @@ static int adc_tlx_channel_setup(const struct device *dev,
 
 	/* Check internal reference */
 	switch (config->vref_internal_mv) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 	case 900:
 		vref_internal_mv = ADC_VREF_0P9V;
 		break;
@@ -346,7 +402,7 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	case ADC_GAIN_1:
 		pre_scale = ADC_PRESCALE_1;
 		break;
-	#if CONFIG_SOC_RISCV_TELINK_TL321X
+	#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 	case ADC_GAIN_1_4:
 		pre_scale = ADC_PRESCALE_1F4;
 		break;
@@ -403,8 +459,9 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	}
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
-	/* Init NDMA ADC */
 	adc_init(NDMA_M_CHN);
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	adc_init(ADC0, NDMA_M_CHN);
 #endif
 
 	data->differential = channel_cfg->differential;
@@ -414,24 +471,32 @@ static int adc_tlx_channel_setup(const struct device *dev,
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_set_diff_pin(ADC_M_CHANNEL, input_positive, input_negative);
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+		adc_set_diff_pin(ADC0, ADC_M_CHANNEL, input_positive, input_negative);
 #endif
 	} else if (input_positive == (uint8_t)ADC_VBAT) {
 		/* VBAT pin configuration */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_vbat_sample_init(ADC_M_CHANNEL);
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+		adc_vbat_sample_init(ADC0, ADC_M_CHANNEL);
 #endif
 	} else {
 		/* Single-ended GPIO pin configuration */
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 		adc_gpio_cfg_t adc_gpio_cfg_m = {
 				.v_ref			=	vref_internal_mv,
 				.pre_scale		=	pre_scale,
 				.sample_freq		=	sample_freq,
 				.pin			=	input_positive,
 		};
+#endif
+#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_gpio_sample_init(ADC_M_CHANNEL, adc_gpio_cfg_m);
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+		adc_gpio_sample_init(ADC0, ADC_M_CHANNEL, adc_gpio_cfg_m);
 #endif
 	}
 
