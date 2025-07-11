@@ -909,6 +909,7 @@ static int b9x_cca(const struct device *dev)
 	unsigned int t1 = stimer_get_tick();
 
 	rf_set_rxmode();
+	delay_us(85);
 	rssi_cur = rf_get_rssi();
 	rssiSum += rssi_cur;
 
@@ -919,7 +920,6 @@ static int b9x_cca(const struct device *dev)
 	}
 
 	rssi_peak = rssiSum/cnt;
-	rf_set_tx_rx_off();
 
 	if (rssi_peak > CONFIG_IEEE802154_B9X_CCA_RSSI_THRESHOLD) {
 		return -EBUSY;
