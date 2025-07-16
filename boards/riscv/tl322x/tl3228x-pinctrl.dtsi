@@ -46,8 +46,8 @@
 
 	/* PWM Channel 0 (PB7) */
 
-	pwm_ch0_pb7_default: pwm_ch0_pb7_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_B, TLX_PIN_7, TL322X_FUNC_PWM0)>;
+	pwm_ch0_pc7_default: pwm_ch0_pc7_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_7, TL322X_FUNC_PWM0)>;
 	};
 
 	/* LSPI: CLK(PE1), MOSI(PE2), MISO(PE3) */

@@ -228,7 +228,7 @@
 &pwm0 {
 	status = "okay";
 	clock-frequency = <300000>;
-	pinctrl-ch0 = <&pwm_ch0_pb7_default>;
+	pinctrl-ch0 = <&pwm_ch0_pc7_default>;
 };
 
 
