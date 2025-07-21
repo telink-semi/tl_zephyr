@@ -213,6 +213,11 @@
 			status = "disabled";
 		};
 
+		bt_hci: bt_hci {
+			compatible = "telink,tlx-bt";
+			status = "disabled";
+		};
+
 		trng0: trng@80103000 {
 			compatible = "telink,tlx-trng";
 			reg = <0x80103000 0x20>;

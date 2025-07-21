@@ -120,6 +120,7 @@
 		zephyr,entropy = &trng0;
 		zephyr,code-partition = &slot0_partition;
 		zephyr,ieee802154 = &ieee802154;
+		zephyr,bt-hci = &bt_hci;
 	};
 };
 
@@ -260,5 +261,9 @@ zephyr_udc0: &usbd {
 };
 
 &wdt {
+	status = "okay";
+};
+
+&bt_hci {
 	status = "okay";
 };
