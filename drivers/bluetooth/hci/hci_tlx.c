@@ -234,6 +234,8 @@ static int hci_tlx_open(void)
 	LOG_DBG("TL721X BT started");
 #elif CONFIG_SOC_RISCV_TELINK_TL321X
 	LOG_DBG("TL321X BT started");
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	LOG_DBG("TL322X BT started");
 #endif
 
 	return 0;
@@ -258,6 +260,8 @@ static const struct bt_hci_driver drv = {
 	.name   = "BT TL721X",
 #elif CONFIG_SOC_RISCV_TELINK_TL321X
 	.name   = "BT TL321X",
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	.name   = "BT TL322X",
 #endif
 	.open   = hci_tlx_open,
 	.close	= hci_tlx_close,
