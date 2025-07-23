@@ -5,7 +5,8 @@
 import os
 import subprocess
 
-from runners.core import ZephyrBinaryRunner, RunnerCaps, BuildConfiguration
+from runners.core import BuildConfiguration, RunnerCaps, ZephyrBinaryRunner
+
 
 class BDTBinaryRunner(ZephyrBinaryRunner):
     '''Runner front-end for BDT.'''
@@ -26,10 +27,8 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
 
     @classmethod
     def do_add_parser(cls, parser):
-        parser.add_argument('--bdt-path', default='',
-            help='path to BDT installation root')
-        parser.add_argument('--address', default='0x0',
-            help='start flash address to write')
+        parser.add_argument('--bdt-path', default='', help='path to BDT installation root')
+        parser.add_argument('--address', default='0x0', help='start flash address to write')
 
     @classmethod
     def do_create(cls, cfg, args):
@@ -60,6 +59,9 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         if build_conf['CONFIG_SOC_RISCV_TELINK_TL321X']:
             soc_type = 'TL321X'
             print('Telink TL321')
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL721X']:
+            soc_type = 'TL721X'
+            print('Telink TL721')
         if soc_type is None:
             print('only Telink chips are supported!')
             exit()
@@ -80,8 +82,8 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         print('activating...')
         activate = subprocess.Popen(['./bdt', soc_type, 'ac'], cwd=self.bdt_path)
         activate.wait()
-        # unlock flash only B92
-        if soc_type in ('B92', 'TL321X'):
+        # unlock flash
+        if soc_type in ('B92', 'TL321X', 'TL721X'):
             print('unlocking flash...')
             unlock = subprocess.Popen(['./bdt', soc_type, 'ulf'], cwd=self.bdt_path)
             if unlock.wait():
@@ -89,17 +91,21 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         # erase flash
         if self.erase:
             print('erasing...')
-            erase = subprocess.Popen(['./bdt', soc_type, 'wf', '0', '-e', '-s', flash_size], cwd=self.bdt_path)
+            erase = subprocess.Popen(
+                ['./bdt', soc_type, 'wf', '0', '-e', '-s', flash_size], cwd=self.bdt_path
+            )
             if erase.wait():
                 exit()
         # flash
         print('flashing...')
-        flash = subprocess.Popen(['./bdt', soc_type, 'wf', self.address, '-i', bin_file], cwd=self.bdt_path)
+        flash = subprocess.Popen(
+            ['./bdt', soc_type, 'wf', self.address, '-i', bin_file], cwd=self.bdt_path
+        )
         if flash.wait():
             exit()
         # reset chip
         print('resetting...')
-        reset = subprocess.Popen(['./bdt', soc_type, 'rst'] ,cwd=self.bdt_path)
+        reset = subprocess.Popen(['./bdt', soc_type, 'rst'], cwd=self.bdt_path)
         if reset.wait():
             exit()
         print('done!')
