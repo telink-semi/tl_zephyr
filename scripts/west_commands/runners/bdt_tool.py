@@ -60,6 +60,9 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         if build_conf['CONFIG_SOC_RISCV_TELINK_TL321X']:
             soc_type = 'TL321X'
             print('Telink TL321')
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL721X']:
+            soc_type = 'TL721X'
+            print('Telink TL721')
         if soc_type is None:
             print('only Telink chips are supported!')
             exit()
@@ -81,7 +84,7 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         activate = subprocess.Popen(['./bdt', soc_type, 'ac'], cwd=self.bdt_path)
         activate.wait()
         # unlock flash only B92
-        if soc_type in ('B92', 'TL321X'):
+        if soc_type in ('B92', 'TL321X', 'TL721X'):
             print('unlocking flash...')
             unlock = subprocess.Popen(['./bdt', soc_type, 'ulf'], cwd=self.bdt_path)
             if unlock.wait():
