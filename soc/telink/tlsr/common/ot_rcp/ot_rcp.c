@@ -11,17 +11,15 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ot_rcp);
 
-#include <sys_clock.h>
-
 #include <zephyr/init.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/timer/system_timer.h>
 
 /************************************************************************
  * RCP reception work queue
  ************************************************************************/
 
-static K_KERNEL_STACK_DEFINE(openthread_rcp_work_q_stack,
-			     CONFIG_TELINK_W91_OT_RCP_THREAD_STACK_SIZE);
+static K_KERNEL_STACK_DEFINE(openthread_rcp_work_q_stack, CONFIG_TELINK_OT_RCP_THREAD_STACK_SIZE);
 
 static struct k_work_q openthread_rcp_work_q;
 
@@ -32,7 +30,7 @@ static int openthread_rcp_work_q_init(void)
 
 	k_work_queue_start(&openthread_rcp_work_q, openthread_rcp_work_q_stack,
 			   K_KERNEL_STACK_SIZEOF(openthread_rcp_work_q_stack),
-			   CONFIG_TELINK_W91_OT_RCP_THREAD_PRIORITY, &cfg);
+			   CONFIG_TELINK_OT_RCP_THREAD_PRIORITY, &cfg);
 	return 0;
 }
 
@@ -49,28 +47,42 @@ static void openthread_rcp_reception_isr(const struct device *dev, void *user_da
 	if (!uart_irq_update(dev)) {
 		return;
 	}
-	if (!uart_irq_rx_ready(dev)) {
-		return;
+	while (uart_irq_rx_ready(dev)) {
+		uint8_t bt;
+
+		if (ring_buf_space_get(&ot_rcp->rb) > sizeof(bt)) {
+			int r = uart_fifo_read(dev, &bt, sizeof(bt));
+
+			if (r < 0) {
+				LOG_ERR("rcp uart reception error");
+			} else if (r > 0) {
+				(void)ring_buf_put(&ot_rcp->rb, &bt, r);
+			}
+		} else {
+			/* that's ok for hw flow control */
+			uart_irq_rx_disable(dev);
+			break;
+		}
 	}
-	k_work_submit_to_queue(&openthread_rcp_work_q, &ot_rcp->work);
+	if (!ring_buf_is_empty(&ot_rcp->rb)) {
+		k_work_submit_to_queue(&openthread_rcp_work_q, &ot_rcp->work);
+	}
 }
 
 static void openthread_rcp_reception_work(struct k_work *item)
 {
 	struct openthread_rcp_data *ot_rcp = CONTAINER_OF(item, struct openthread_rcp_data, work);
 
-	while (uart_irq_rx_ready(ot_rcp->uart)) {
-		uint8_t data[CONFIG_TELINK_W91_OT_RCP_BUFFER_SIZE];
-		int rx_result = uart_fifo_read(ot_rcp->uart, data, sizeof(data));
+	for (;;) {
+		uint8_t bt;
 
-		if (rx_result < 0) {
-			LOG_ERR("rcp uart reception error");
+		if (ring_buf_get(&ot_rcp->rb, &bt, sizeof(bt)) == sizeof(bt)) {
+			hdlc_coder_inp_poll(&ot_rcp->hdlc, bt);
+		} else {
 			break;
 		}
-		for (size_t i = 0; i < (size_t)rx_result; i++) {
-			hdlc_coder_inp_poll(&ot_rcp->hdlc, data[i]);
-		}
 	}
+	uart_irq_rx_enable(ot_rcp->uart);
 }
 
 static void openthread_rcp_spinel_transmission(uint8_t bt, const void *ctx)
@@ -97,17 +109,30 @@ static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp,
 					k_timepoint_t *start_time)
 {
 	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
-	int result =
-		uart_fifo_fill(ot_rcp->uart, ot_rcp->tx_buffer.data, ot_rcp->tx_buffer.data_size);
 
+	int result = 0;
+	const uint8_t *tx_ptr = ot_rcp->tx_buffer.data;
+	size_t tx_len = ot_rcp->tx_buffer.data_size;
+
+	while (tx_len) {
+		int r = uart_fifo_fill(ot_rcp->uart, tx_ptr, tx_len);
+
+		if (r < 0) {
+			result = r;
+			break;
+		}
+		tx_ptr += r;
+		tx_len -= r;
+		result += r;
+	}
 	if (result != ot_rcp->tx_buffer.data_size) {
-		LOG_ERR("rcp uart transmission error");
+		LOG_ERR("rcp uart transmission error %u", result);
 		result = result < 0 ? result : -EIO;
 	}
 	ot_rcp->tx_buffer.data_size = 0;
 	if (result >= 0) {
 		*start_time =
-			sys_timepoint_calc(K_MSEC(CONFIG_TELINK_W91_OT_SPINEL_RESPONSE_TIMEOUT_MS));
+			sys_timepoint_calc(K_MSEC(CONFIG_TELINK_OT_SPINEL_RESPONSE_TIMEOUT_MS));
 	}
 
 	return result;
@@ -154,7 +179,7 @@ static void openthread_rcp_sync_time_work_handler(struct k_work *work)
 	int result;
 
 	k_mutex_lock(&ot_rcp->tx_lock, K_FOREVER);
-	ot_rcp->timestamp_req_time = sys_clock_w91_get_time_us();
+	ot_rcp->timestamp_req_time = k_cyc_to_us_floor64(sys_clock_cycle_get_64());
 
 	result = spinel_drv_send_get_timestamp(&ot_rcp->spinel_drv,
 					       openthread_rcp_spinel_transmission, ot_rcp);
@@ -164,7 +189,7 @@ static void openthread_rcp_sync_time_work_handler(struct k_work *work)
 	k_mutex_unlock(&ot_rcp->tx_lock);
 
 	k_work_schedule_for_queue(&openthread_rcp_work_q, &ot_rcp->sync_work,
-				  K_MSEC(CONFIG_TELINK_W91_OT_RCP_SYNC_TIME_OFFSET_MS));
+				  K_MSEC(CONFIG_TELINK_OT_RCP_SYNC_TIME_OFFSET_MS));
 }
 #endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 
@@ -173,13 +198,12 @@ static void openthread_rcp_reception_byte(uint8_t bt, const void *ctx)
 	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
 	if (!ot_rcp->spinel_rx_buffer.data) {
-		ot_rcp->spinel_rx_buffer.data = malloc(CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_SIZE);
+		ot_rcp->spinel_rx_buffer.data = malloc(CONFIG_TELINK_OT_SPINEL_RX_BUFFER_SIZE);
 		ot_rcp->spinel_rx_buffer.data_size = 0;
 	}
 
 	if (ot_rcp->spinel_rx_buffer.data) {
-		if (ot_rcp->spinel_rx_buffer.data_size <
-		    CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_SIZE) {
+		if (ot_rcp->spinel_rx_buffer.data_size < CONFIG_TELINK_OT_SPINEL_RX_BUFFER_SIZE) {
 			ot_rcp->spinel_rx_buffer.data[ot_rcp->spinel_rx_buffer.data_size] = bt;
 			ot_rcp->spinel_rx_buffer.data_size++;
 		} else {
@@ -213,7 +237,8 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
 			} else if (spinel_drv_check_get_timestamp(
 					   &ot_rcp->spinel_drv, 0, ot_rcp->spinel_rx_buffer.data,
 					   ot_rcp->spinel_rx_buffer.data_size, &rcp_time)) {
-				uint64_t timestamp_resp_time = sys_clock_w91_get_time_us();
+				uint64_t timestamp_resp_time =
+					k_cyc_to_us_floor64(sys_clock_cycle_get_64());
 				int64_t time_offset = rcp_time - (ot_rcp->timestamp_req_time / 2 +
 								  timestamp_resp_time / 2);
 
@@ -249,6 +274,7 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 		}
 
 		ot_rcp->uart = uart;
+		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data), ot_rcp->rb_data);
 		k_work_init(&ot_rcp->work, openthread_rcp_reception_work);
 #if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
 		k_work_init_delayable(&ot_rcp->sync_work, openthread_rcp_sync_time_work_handler);
@@ -276,7 +302,6 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 			break;
 		}
 		uart_irq_rx_enable(ot_rcp->uart);
-		uart_irq_tx_enable(ot_rcp->uart);
 	} while (0);
 
 	return result;
@@ -294,7 +319,6 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 	int result = 0;
 
 	do {
-		uart_irq_tx_disable(ot_rcp->uart);
 		uart_irq_rx_disable(ot_rcp->uart);
 		if (uart_irq_callback_user_data_set(ot_rcp->uart, NULL, NULL)) {
 			LOG_ERR("can't reset serial isr");
@@ -306,6 +330,7 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 
 		(void)k_work_cancel_sync(&ot_rcp->work, &work_sync);
 		k_msgq_purge(&ot_rcp->spinel_msgq);
+		ring_buf_reset(&ot_rcp->rb);
 	} while (0);
 
 	return result;

@@ -72,7 +72,7 @@ source "drivers/ieee802154/Kconfig.b9x"
 
 source "drivers/ieee802154/Kconfig.tlx"
 
-source "drivers/ieee802154/Kconfig.w91"
+source "drivers/ieee802154/Kconfig.telink_rcp"
 
 source "drivers/ieee802154/Kconfig.cc2520"
 

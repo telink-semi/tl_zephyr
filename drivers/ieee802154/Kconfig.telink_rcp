@@ -1,0 +1,30 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+# Telink RCP RF configuration options
+
+config IEEE802154_TELINK_RCP
+	bool "Telink RCP RF driver"
+	default y
+	select SERIAL
+	select UART_INTERRUPT_DRIVEN
+	select TELINK_OT_RCP
+	depends on DT_HAS_TELINK_RCP_ZB_ENABLED
+
+if IEEE802154_TELINK_RCP
+
+config IEEE802154_TELINK_RCP_DELAY_TRX_ACC
+	int "Clock accuracy for delayed operations"
+	default 20
+	help
+	  Accuracy of the clock used for scheduling radio delayed operations (delayed transmission
+	  or delayed reception), in ppm.
+
+config IEEE802154_TELINK_RCP_INIT_PRIO
+	int "Telink RCP IEEE 802.15.4 initialization priority"
+	default 80
+	help
+	  Set the initialization priority number. Do not mess with it unless
+	  you know what you are doing.
+
+endif # IEEE802154_TELINK_RCP

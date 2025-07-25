@@ -14,7 +14,7 @@
 #include <zephyr/net/ethernet_mgmt.h>
 #include <../subsys/net/ip/ipv6.h>
 
-#define LOG_LEVEL CONFIG_TELINK_W91_OTBR_LOG_LEVEL
+#define LOG_LEVEL CONFIG_TELINK_OTBR_LOG_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(otbr_init);
 
@@ -49,16 +49,16 @@ static void otbr_init_infra_auxiliary_work_handler(struct k_work *item)
 {
 #if CONFIG_WIFI
 	static struct wifi_connect_req_params con_req = {
-		.ssid = CONFIG_TELINK_W91_OTBR_WIFI_SSID,
-		.ssid_length = strlen(CONFIG_TELINK_W91_OTBR_WIFI_SSID),
-		.psk = CONFIG_TELINK_W91_OTBR_WIFI_PASSWORD,
-		.psk_length = strlen(CONFIG_TELINK_W91_OTBR_WIFI_PASSWORD),
+		.ssid = CONFIG_TELINK_OTBR_WIFI_SSID,
+		.ssid_length = strlen(CONFIG_TELINK_OTBR_WIFI_SSID),
+		.psk = CONFIG_TELINK_OTBR_WIFI_PASSWORD,
+		.psk_length = strlen(CONFIG_TELINK_OTBR_WIFI_PASSWORD),
 		.security = WIFI_SECURITY_TYPE_PSK};
 	struct otbr_init_ctx *otbr_context = CONTAINER_OF(k_work_delayable_from_work(item),
 							  struct otbr_init_ctx, infra_aux_work);
 
 	if (net_if_is_wifi(otbr_context->otbr_ctx.infra_if)) {
-		LOG_INF("wifi '%s' connecting...", CONFIG_TELINK_W91_OTBR_WIFI_SSID);
+		LOG_INF("wifi '%s' connecting...", CONFIG_TELINK_OTBR_WIFI_SSID);
 		int req = net_mgmt(NET_REQUEST_WIFI_CONNECT, otbr_context->otbr_ctx.infra_if,
 				   &con_req, sizeof(con_req));
 
@@ -162,9 +162,9 @@ static void otbr_init_start(void)
 				      NET_IPV6_NBR_STATE_REACHABLE)) {
 			LOG_ERR("otbr infra neighbor failed");
 		}
-#if CONFIG_TELINK_W91_OTBR_LOG_LEVEL_DEBG
+#if CONFIG_TELINK_OTBR_LOG_LEVEL_DEBG
 		otbr_srp_init(otbr_context.otbr_ctx.ot_ctx);
-#endif /* CONFIG_TELINK_W91_OTBR_LOG_LEVEL_DEBG */
+#endif /* CONFIG_TELINK_OTBR_LOG_LEVEL_DEBG */
 		otbr_mdns_start(&otbr_context.otbr_ctx);
 	} else {
 		LOG_ERR("otbr start failed: infra_if=%p, ot_ctx=%p", otbr_context.otbr_ctx.infra_if,
@@ -198,4 +198,4 @@ static int otbr_init_process(void)
 	return 0;
 }
 
-SYS_INIT(otbr_init_process, APPLICATION, CONFIG_TELINK_W91_OTBR_INIT_PRIO);
+SYS_INIT(otbr_init_process, APPLICATION, CONFIG_TELINK_OTBR_INIT_PRIO);

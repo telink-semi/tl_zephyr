@@ -9,7 +9,7 @@
 #include "otbr_srp.h"
 #include <zephyr/net/socket_service.h>
 
-#define LOG_LEVEL CONFIG_TELINK_W91_OTBR_LOG_LEVEL
+#define LOG_LEVEL CONFIG_TELINK_OTBR_LOG_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(otbr_mdns);
 
@@ -41,7 +41,7 @@ static void otbr_mdns_handler(struct net_socket_service_event *evt);
 static bool otbr_mdns_update_top_domain(char *str, size_t str_len, const char *old,
 					const char *new);
 
-static const char otbr_mdns_host_name[] = CONFIG_TELINK_W91_OTBR_HOST_NAME ".local.";
+static const char otbr_mdns_host_name[] = CONFIG_TELINK_OTBR_HOST_NAME ".local.";
 
 static struct otbr_mdns_context otbr_mdns_ctx;
 static struct zsock_pollfd otbr_mdns_sockfd = {.fd = -1, .events = ZSOCK_POLLIN};

@@ -83,7 +83,7 @@ config OPENTHREAD_CSL_AUTO_SYNC
 
 config OPENTHREAD_CSL_REQUEST_TIME_AHEAD
 	int "CSL transmitter request time ahead"
-	default 20000 if TELINK_W91_OT_RCP
+	default 20000 if IEEE802154_TELINK_RCP
 	default 2000
 	help
 	  Defines how many microseconds ahead should MAC deliver a CSL frame to the sub-MAC layer.

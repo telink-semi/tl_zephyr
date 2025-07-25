@@ -8,7 +8,7 @@
 #include <openthread/srp_server.h>
 #include <openthread/border_routing.h>
 
-#define LOG_LEVEL CONFIG_TELINK_W91_OTBR_LOG_LEVEL
+#define LOG_LEVEL CONFIG_TELINK_OTBR_LOG_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(otbr_services);
 
