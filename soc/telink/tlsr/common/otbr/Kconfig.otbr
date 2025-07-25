@@ -1,8 +1,8 @@
 # Copyright (c) 2025 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-config TELINK_W91_OTBR
-	bool "Telink W91 Thread border router"
+config TELINK_OTBR
+	bool "Telink Thread border router"
 	select NETWORKING
 	select NET_CONFIG_SETTINGS
 	select NET_L2_ETHERNET
@@ -23,39 +23,39 @@ config TELINK_W91_OTBR
 	select NET_SOCKETS
 	select NET_SOCKETS_SERVICE
 	help
-		This option enables Telink W91 Thread border router.
+		This option enables Telink Thread border router.
 
-if TELINK_W91_OTBR
+if TELINK_OTBR
 
 choice
-	prompt "Telink W91 OTBR log level"
-	default TELINK_W91_OTBR_LOG_LEVEL_INFO
+	prompt "Telink OTBR log level"
+	default TELINK_OTBR_LOG_LEVEL_INFO
 	help
-		This option selects log level for Telink W91 OTBR.
-config TELINK_W91_OTBR_LOG_LEVEL_CRIT
+		This option selects log level for Telink OTBR.
+config TELINK_OTBR_LOG_LEVEL_CRIT
 	bool "Critical"
-config TELINK_W91_OTBR_LOG_LEVEL_WARN
+config TELINK_OTBR_LOG_LEVEL_WARN
 	bool "Warning"
-config TELINK_W91_OTBR_LOG_LEVEL_INFO
+config TELINK_OTBR_LOG_LEVEL_INFO
 	bool "Informational"
-config TELINK_W91_OTBR_LOG_LEVEL_DEBG
+config TELINK_OTBR_LOG_LEVEL_DEBG
 	bool "Debug"
 endchoice
 
-config TELINK_W91_OTBR_LOG_LEVEL
+config TELINK_OTBR_LOG_LEVEL
 	int
-	default 1 if TELINK_W91_OTBR_LOG_LEVEL_CRIT
-	default 2 if TELINK_W91_OTBR_LOG_LEVEL_WARN
-	default 3 if TELINK_W91_OTBR_LOG_LEVEL_INFO
-	default 4 if TELINK_W91_OTBR_LOG_LEVEL_DEBG
+	default 1 if TELINK_OTBR_LOG_LEVEL_CRIT
+	default 2 if TELINK_OTBR_LOG_LEVEL_WARN
+	default 3 if TELINK_OTBR_LOG_LEVEL_INFO
+	default 4 if TELINK_OTBR_LOG_LEVEL_DEBG
 	default 0
 
 config NET_CONFIG_AUTO_INIT
 	bool "Init networking support automatically during device startup"
 	default n
 
-config TELINK_W91_OTBR_INIT_PRIO
-	int "Startup priority for the Telink W91 OTBR"
+config TELINK_OTBR_INIT_PRIO
+	int "Startup priority for the Telink OTBR"
 	depends on !NET_CONFIG_AUTO_INIT
 	default 90
 
@@ -71,14 +71,14 @@ config NET_HOSTNAME_ENABLE
 	bool "Add hostname to the device"
 	default n
 
-config TELINK_W91_OTBR_HOST_NAME
+config TELINK_OTBR_HOST_NAME
 	string "DNS host name"
 	default "telink-otbr"
 
-config TELINK_W91_OTBR_WIFI_SSID
+config TELINK_OTBR_WIFI_SSID
 	string "WIFI SSID - Network name"
 
-config TELINK_W91_OTBR_WIFI_PASSWORD
+config TELINK_OTBR_WIFI_PASSWORD
 	string "WIFI PSK - Network password"
 
-endif # TELINK_W91_OTBR
+endif # TELINK_OTBR

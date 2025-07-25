@@ -1,0 +1,69 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+if IEEE802154
+
+config TELINK_OT_RCP
+	bool
+	select RING_BUFFER
+	select CRC
+	depends on IEEE802154_TELINK_RCP
+	help
+		This option enables Telink Openthread RCP interface.
+
+if TELINK_OT_RCP
+
+config OPENTHREAD_RADIO_WORKQUEUE_STACK_SIZE
+	default 2048
+
+config TELINK_OT_RCP_SYNC_TIME_OFFSET_MS
+	int "Time to recalculate offset (ms)"
+	default 2000
+	help
+		This option sets time to recalculate offset with RCP
+
+config TELINK_OT_RCP_RX_ISR_BUFFER_SIZE
+	int "Telink Openthread RCP UART RX ISR buffer size"
+	default 64
+	help
+		This option sets Telink Openthread RCP UART RX ISR buffer size.
+
+config TELINK_OT_RCP_BUFFER_SIZE
+	int "Telink Openthread RCP UART TX/RX buffer size"
+	default 256
+	help
+		This option sets Telink Openthread RCP UART TX/RX buffer size.
+
+config TELINK_OT_RCP_THREAD_PRIORITY
+	int "Telink Openthread spinel interface reception thread priority"
+	default 0
+	help
+		This option sets Telink Openthread RCP reception thread priority.
+
+config TELINK_OT_RCP_THREAD_STACK_SIZE
+	int "Telink Openthread spinel interface reception thread stack size"
+	default 2048
+	help
+		This option sets Telink Openthread RCP reception thread stack size.
+
+config TELINK_OT_SPINEL_RX_BUFFER_SIZE
+	int "Telink Openthread spinel reception buffer size"
+	default 256
+	help
+		This option sets Telink Openthread spinel reception buffer size.
+
+config TELINK_OT_SPINEL_RX_BUFFER_COUNT
+	int "Telink Openthread spinel reception buffers count"
+	default 4
+	help
+		This option sets Telink Openthread spinel reception buffers count.
+
+config TELINK_OT_SPINEL_RESPONSE_TIMEOUT_MS
+	int "Telink Openthread spinel response timeout, mS"
+	default 100
+	help
+		This option sets Telink Openthread spinel response timeout, mS.
+
+endif # TELINK_OT_RCP
+
+endif # IEEE802154

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2024-2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -124,8 +124,8 @@
 			status = "disabled";
 		};
 
-		ieee802154: ieee802154 {
-			compatible = "telink,w91-zb";
+		ieee802154: ieee802154_rcp {
+			compatible = "telink,rcp-zb";
 			serial = <&uart2>;
 			status = "disabled";
 		};

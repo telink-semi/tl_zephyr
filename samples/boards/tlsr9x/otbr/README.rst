@@ -50,8 +50,8 @@ Which without modification corresponds to
 =====================  =====================
 **tx** p16 (J20 16)    **rx** pc7 (J5 4)
 **rx** p15 (J20 18)    **tx** pc6 (J5 2)
-**rts** p18 (J20 12    **cts** pc4 (J3 19)
-**cts** p17 (J20 14)   **rts** pc5 (J3 21)e
+**rts** p18 (J20 12)   **cts** pc4 (J3 19)
+**cts** p17 (J20 14)   **rts** pc5 (J3 21)
 **gnd** (J20 35)       **gnd** (J3 30)
 =====================  =====================
 
@@ -60,8 +60,8 @@ Configure Wi-Fi and Thread credentials
 File *samples/boards/tlsr9x/otbr/prj.conf* contains credentials.
 Set the next configs according to your Wi-Fi network and required Thread network:
 
-* CONFIG_TELINK_W91_OTBR_WIFI_SSID
-* CONFIG_TELINK_W91_OTBR_WIFI_PASSWORD
+* CONFIG_TELINK_OTBR_WIFI_SSID
+* CONFIG_TELINK_OTBR_WIFI_PASSWORD
 * CONFIG_OPENTHREAD_CHANNEL
 * CONFIG_OPENTHREAD_PANID
 * CONFIG_OPENTHREAD_XPANID

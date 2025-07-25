@@ -25,13 +25,14 @@ struct openthread_rcp_buffer {
 struct openthread_rcp_data {
 	const struct device *uart;
 	struct k_work work;
+	uint8_t rb_data[CONFIG_TELINK_OT_RCP_RX_ISR_BUFFER_SIZE];
+	struct ring_buf rb;
 	struct k_mutex tx_lock;
-	uint8_t tx_data[CONFIG_TELINK_W91_OT_RCP_BUFFER_SIZE];
+	uint8_t tx_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
 	struct openthread_rcp_buffer tx_buffer;
 	struct hdlc_coder hdlc;
 	struct openthread_rcp_buffer spinel_rx_buffer;
-	struct openthread_rcp_buffer
-		spinel_msgq_buffer[CONFIG_TELINK_W91_OT_SPINEL_RX_BUFFER_COUNT];
+	struct openthread_rcp_buffer spinel_msgq_buffer[CONFIG_TELINK_OT_SPINEL_RX_BUFFER_COUNT];
 	struct k_msgq spinel_msgq;
 	struct spinel_drv_data spinel_drv;
 	openthread_rcp_reception reception;

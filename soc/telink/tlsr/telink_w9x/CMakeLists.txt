@@ -102,35 +102,6 @@ zephyr_link_libraries(
 )
 endif()
 
-if(CONFIG_TELINK_W91_OT_RCP)
-
-zephyr_sources(
-	ot_rcp/ot_rcp.c
-	ot_rcp/hdlc_coder.c
-	ot_rcp/spinel_drv.c
-	ot_rcp/spinel.c
-)
-
-endif()
-
-if(CONFIG_TELINK_W91_OTBR)
-
-zephyr_sources(
-	otbr/otbr_icmpv6.c
-	otbr/otbr_ext.c
-	otbr/otbr_init.c
-	otbr/otbr_srp.c
-	otbr/otbr_route.c
-	otbr/otbr_mdns.c
-	otbr/otbr_mdns_fmt.c
-)
-
-zephyr_link_libraries(
-	-Wl,--wrap,net_route_packet
-)
-
-endif()
-
 if(CONFIG_TELINK_W91_FETCH_N22_BIN)
 	set_property(GLOBAL APPEND PROPERTY extra_post_build_commands COMMAND
 		${ZEPHYR_BASE}/scripts/utils/telink_w91_post_build ${ZEPHYR_BINARY_DIR} ${CONFIG_TELINK_W91_FETCH_N22_BIN_REVISION}

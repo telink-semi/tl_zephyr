@@ -4,5 +4,11 @@
 if SOC_FAMILY_TELINK_TLSR
 
 rsource "*/Kconfig"
+if IEEE802154
+rsource "common/ot_rcp/Kconfig.ot_rcp"
+endif # IEEE802154
+if SOC_RISCV_TELINK_W9X
+rsource "common/otbr/Kconfig.otbr"
+endif # SOC_RISCV_TELINK_W9X
 
 endif # SOC_FAMILY_TELINK_TLSR
