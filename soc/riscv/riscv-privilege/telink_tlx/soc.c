@@ -255,8 +255,9 @@ static int soc_tlx_init(void)
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
 	#if TLK_ONLY_BLE_HOST
 		sys_n22_start();
-		tlk_multi_core_send_clock_config();
+		// tlk_multi_core_send_clock_config();		//Workaround for dual-core clock config. Currently, TL_BLE_SRC use RAM 0x12 to set clock, which is used by Zephyr .ram_code section
 		tlk_multi_core_communication_init();
+		delay_ms(600);		//for N22 HW prepare
 	#else
 		rf_n22_dig_init();
 	#endif
