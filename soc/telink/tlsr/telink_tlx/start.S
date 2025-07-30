@@ -9,6 +9,23 @@
 #define NDS_UITB                     0x800
 #define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
 #define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+    .equ __D25F_IRAM_SIZE,   2 //64KB
+    .equ __D25F_DRAM_SIZE,   3 //96KB
+    .equ __N22_IRAM_SIZE,    5 //160KB
+    .equ __N22_DRAM_SIZE,    2 //64KB
+
+    .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12)|(__N22_DRAM_SIZE<<8)|(__D25F_DRAM_SIZE)
+
+    .section .vectors, "ax"
+
+    .global     __D25F_IRAM_SIZE
+    .global     __D25F_DRAM_SIZE
+    .global     __N22_IRAM_SIZE
+    .global     __N22_DRAM_SIZE
+    .global     __D25F_N22_RAM_REG
+#endif
+
 
 #include <zephyr/toolchain.h>
 #include <zephyr/devicetree.h>
@@ -38,6 +55,13 @@ entry:
 	.align 2
 
 start:
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+    /*Initialize D25 & N22 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , __D25F_N22_RAM_REG
+    sh     t1 , -2036(t0)              //write16(0x8014080c,0x2105)
+#endif
+
 #if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
 	la     t0, _ITB_BASE_
 	csrw   NDS_UITB, t0                     #/ CoDense instruction table

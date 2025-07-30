@@ -244,7 +244,13 @@ void soc_early_init_hook(void)
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 	#define N22_FW_DOWNLOAD_FLASH_ADDR  0x20080000
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
-	rf_n22_dig_init();
+	#if TLK_ONLY_BLE_HOST
+		sys_n22_start();
+		tlk_multi_core_send_clock_config();
+		tlk_multi_core_communication_init();
+	#else
+		rf_n22_dig_init();
+	#endif
 #endif
 
 }
