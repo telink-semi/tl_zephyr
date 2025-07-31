@@ -142,7 +142,7 @@ static void hci_tlx_host_rcv_pkt(uint8_t *data, uint16_t len)
 	uint8_t pkt_indicator;
 	struct net_buf *buf;
 
-	LOG_HEXDUMP_DBG(data, len, "host packet data:");
+	LOG_HEXDUMP_WRN(data, len, "host packet data:");
 
 	pkt_indicator = *data++;
 	len -= sizeof(pkt_indicator);

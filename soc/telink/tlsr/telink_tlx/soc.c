@@ -244,7 +244,7 @@ void soc_early_init_hook(void)
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 	#define N22_FW_DOWNLOAD_FLASH_ADDR  0x20080000
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
-	#if TLK_ONLY_BLE_HOST
+	#if TLK_ONLY_BLE_HOST_CONNCURRENT
 		sys_n22_start();
 		// tlk_multi_core_send_clock_config();		//Workaround for dual-core clock config. Currently, TL_BLE_SRC use RAM 0x12 to set clock, which is used by Zephyr .ram_code section
 		tlk_multi_core_communication_init();

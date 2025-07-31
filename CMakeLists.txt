@@ -1874,7 +1874,7 @@ if(CONFIG_OUTPUT_DISASSEMBLE_ALL)
   list(APPEND
     post_build_commands
     COMMAND $<TARGET_PROPERTY:bintools,disassembly_command>
-            $<TARGET_PROPERTY:bintools,disassembly_flag>
+            $<TARGET_PROPERTY:bintools,disassembly_flag> -x
             ${disassembly_type}
             $<TARGET_PROPERTY:bintools,disassembly_flag_infile>${KERNEL_ELF_NAME}
             $<TARGET_PROPERTY:bintools,disassembly_flag_outfile>${KERNEL_LST_NAME}
