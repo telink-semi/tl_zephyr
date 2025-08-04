@@ -22,6 +22,13 @@
 #include <stdlib.h>
 
 /* List of supported CCLK frequencies */
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+# if TLK_ONLY_BLE_HOST
+	#include "stack/multiCoreComm/comm.h"
+# endif
+#endif
+
+/* Power Mode value */
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 	/* List of supported CCLK frequencies */
 	#define CLK_24MHZ                   24000000u
@@ -42,6 +49,7 @@
 #define CLK_120MHZ 120000000u
 #define CLK_240MHZ 240000000u
 #endif
+
 
 /* MID register flash size */
 #define FLASH_MID_SIZE_OFFSET 16
