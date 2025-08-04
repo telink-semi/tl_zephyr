@@ -253,7 +253,7 @@ manifest:
         - hal
     - name: tl_ble_sdk
       url: http://192.168.48.36/sdk_app/ble/tl_ble_sdk
-      revision: 18a910b1f7e876fee1239c5e7f3f3f23f4e13711
+      revision: 6e8be68fe03826e2c181e7958f26c444a60d9487
       path: modules/hal/telink/tl_ble_sdk
       groups:
         - hal
