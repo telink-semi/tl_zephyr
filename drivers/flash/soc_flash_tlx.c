@@ -17,6 +17,7 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/kernel.h>
 #include <stdlib.h>
+#include "tl_flash.h"
 
 LOG_MODULE_REGISTER(flash_tlx, CONFIG_FLASH_LOG_LEVEL);
 
