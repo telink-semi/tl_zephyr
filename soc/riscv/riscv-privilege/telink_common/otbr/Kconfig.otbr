@@ -1,0 +1,96 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config TELINK_OTBR
+	bool "Telink Thread border router"
+	select NETWORKING
+	select NET_CONFIG_SETTINGS
+	select NET_L2_ETHERNET
+	select NET_L2_OPENTHREAD
+	select NET_L2_ETHERNET_MGMT
+	select WIFI
+	select OPENTHREAD_MANUAL_START
+	select SHELL
+	select OPENTHREAD_SHELL
+	select OPENTHREAD_BORDER_ROUTER
+	select OPENTHREAD_BORDER_ROUTING
+	select OPENTHREAD_BORDER_ROUTING_COUNTERS
+	select OPENTHREAD_SRP_SERVER
+	select OPENTHREAD_ENABLE_SERVICE
+	select OPENTHREAD_SLAAC
+	select OPENTHREAD_EXTERNAL_HEAP
+	select NET_ROUTING
+	select NET_SOCKETS
+	select NET_SOCKETS_SERVICE
+	help
+		This option enables Telink Thread border router.
+
+if TELINK_OTBR
+
+choice
+	prompt "Telink OTBR log level"
+	default TELINK_OTBR_LOG_LEVEL_INFO
+	help
+		This option selects log level for Telink OTBR.
+config TELINK_OTBR_LOG_LEVEL_CRIT
+	bool "Critical"
+config TELINK_OTBR_LOG_LEVEL_WARN
+	bool "Warning"
+config TELINK_OTBR_LOG_LEVEL_INFO
+	bool "Informational"
+config TELINK_OTBR_LOG_LEVEL_DEBG
+	bool "Debug"
+endchoice
+
+config TELINK_OTBR_LOG_LEVEL
+	int
+	default 1 if TELINK_OTBR_LOG_LEVEL_CRIT
+	default 2 if TELINK_OTBR_LOG_LEVEL_WARN
+	default 3 if TELINK_OTBR_LOG_LEVEL_INFO
+	default 4 if TELINK_OTBR_LOG_LEVEL_DEBG
+	default 0
+
+config NET_CONFIG_AUTO_INIT
+	bool "Init networking support automatically during device startup"
+	default n
+
+config TELINK_OTBR_INIT_PRIO
+	int "Startup priority for the Telink OTBR"
+	depends on !NET_CONFIG_AUTO_INIT
+	default 90
+
+config NET_IF_MAX_IPV6_COUNT
+	int "Max number of IPv6 network interfaces in the system"
+	default 2
+
+config NET_SOCKETS_SERVICE_STACK_SIZE
+	int "Stack size for the thread handling socket services"
+	default 2048
+
+config NET_HOSTNAME_ENABLE
+	bool "Add hostname to the device"
+	default n
+
+config TELINK_OTBR_HOST_NAME
+	string "DNS host name"
+	default "telink-otbr"
+
+config TELINK_OTBR_MDNS_THREAD_PRIORITY
+	int "Telink OTBR MDNS thread priority"
+	default 0
+	help
+		This option sets Telink OTBR MDNS thread priority.
+
+config TELINK_OTBR_MDNS_THREAD_STACK_SIZE
+	int "Telink OTBR MDNS thread stack size"
+	default 2048
+	help
+		This option sets Telink OTBR MDNS thread stack size.
+
+config TELINK_OTBR_WIFI_SSID
+	string "WIFI SSID - Network name"
+
+config TELINK_OTBR_WIFI_PASSWORD
+	string "WIFI PSK - Network password"
+
+endif # TELINK_OTBR

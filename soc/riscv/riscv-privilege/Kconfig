@@ -37,5 +37,12 @@ config TELINK_TLX_MATTER_RETENTION_LAYOUT
 	default n
 	help
 	  link mcu_boot_tlx.ld for tl3218x
-
+if SOC_SERIES_RISCV_TELINK_B9X || SOC_SERIES_RISCV_TELINK_TLX || SOC_SERIES_RISCV_TELINK_W91
 source "soc/riscv/riscv-privilege/*/Kconfig.soc"
+if IEEE802154
+source "soc/riscv/riscv-privilege/telink_common/ot_rcp/Kconfig.ot_rcp"
+endif # IEEE802154
+if SOC_SERIES_RISCV_TELINK_W91
+source "soc/riscv/riscv-privilege/telink_common/otbr/Kconfig.otbr"
+endif # SOC_SERIES_RISCV_TELINK_W91
+endif

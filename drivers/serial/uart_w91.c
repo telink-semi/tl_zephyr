@@ -675,7 +675,9 @@ static int uart_w91_driver_init(const struct device *dev)
 	config.flow_ctrl = cfg->hw_flow_control;
 
 	err = uart_w91_configure(dev, &config);
-
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+	uart_w91_irq_tx_enable(dev);
+#endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 	return err;
 }
 

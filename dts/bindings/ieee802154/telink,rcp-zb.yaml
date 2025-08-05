@@ -1,0 +1,14 @@
+# Copyright (c) 2025, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink RCP IEEE802154 node
+
+compatible: "telink,rcp-zb"
+
+include: base.yaml
+
+properties:
+  serial:
+    type: phandle
+    required: true
+    description: serial port for RCP connection
