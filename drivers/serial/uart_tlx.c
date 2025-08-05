@@ -6,7 +6,7 @@
 
 #include "analog.h"
 #include "clock.h"
-
+#include "uart.h"
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/pinctrl.h>
@@ -330,6 +330,17 @@ static int uart_tlx_driver_init(const struct device *dev)
 #endif
 	data->rx_byte_index = 0;
 	data->tx_byte_index = 0;
+
+	/* configure pins */
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	//  workaround: use driver api because pinctrl_apply_state does not work correctly
+	uart_set_pin(0, GPIO_FC_PA0, GPIO_FC_PA1);
+#endif
+	if (status < 0) {
+		return status;
+	}
 
 	uart_tlx_cal_div_and_bwpc(cfg->baud_rate, sys_clk.pclk * 1000 * 1000, &divider, &bwpc);
 	uart_tlx_init(uart, divider, bwpc, UART_PARITY_NONE, UART_STOP_BIT_1);

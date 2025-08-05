@@ -153,3 +153,5 @@ config MICRO_SPEECH_EXTRA_DRIVER
 	  This option enables audio and dma driver for micro speech sample
 
 endif # SOC_RISCV_TELINK_TLX
+
+source "soc/telink/tlsr/telink_tlx/Kconfig.n22"
