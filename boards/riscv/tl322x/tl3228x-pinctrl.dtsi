@@ -74,13 +74,13 @@
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_6, TL322X_FUNC_GSPI_MISO_IO)>;
 	};
 
-	/* Define I2C pins: SCL(PE6), SDA(PE7) */
+	/* Define I2C pins: SCL(PE0), SDA(PE1) */
 
-	i2c_scl_pe6_default: i2c_scl_pe6_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_6, TL322X_FUNC_I2C_SCL_IO)>;
+	i2c_scl_pe0_default: i2c_scl_pe0_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_0, TL322X_FUNC_I2C_SCL_IO)>;
 	};
-	i2c_sda_pe7_default: i2c_sda_pe7_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_7, TL322X_FUNC_I2C_SDA_IO)>;
+	i2c_sda_pe1_default: i2c_sda_pe1_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_1, TL322X_FUNC_I2C_SDA_IO)>;
 	};
 
 	/* Define ADC pins: PB0..PB7, PD0-PD1 */

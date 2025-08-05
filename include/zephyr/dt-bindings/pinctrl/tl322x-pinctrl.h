@@ -209,6 +209,10 @@
 #define TLX_PIN_MSK      0xFFFF
 #define TLX_PIN_ID_MSK   0xFF
 
+#define TL322X_PULL_NONE    (TLX_PULL_NONE << (TLX_PULL_POS - TLX_FUNC_POS))
+#define TL322X_PULL_DOWN    (TLX_PULL_DOWN << (TLX_PULL_POS - TLX_FUNC_POS))
+#define TL322X_PULL_UP      (TLX_PULL_UP << (TLX_PULL_POS - TLX_FUNC_POS))
+
 /* Setters and getters */
 
 #define TLX_PINMUX_SET(port, pin, func)   ((func << TLX_FUNC_POS) | \

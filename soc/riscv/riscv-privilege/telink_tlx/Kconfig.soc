@@ -148,3 +148,5 @@ config MICRO_SPEECH_EXTRA_DRIVER
 	depends on SOC_RISCV_TELINK_TL721X
 	help
 	  This option enables audio and dma driver for micro speech sample
+
+source "soc/riscv/riscv-privilege/telink_tlx/Kconfig.n22"

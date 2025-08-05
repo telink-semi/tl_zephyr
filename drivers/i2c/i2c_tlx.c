@@ -136,12 +136,14 @@ static int i2c_tlx_init(const struct device *dev)
 		return status;
 	}
 
-	/* configure pins */
-	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
-	if (status < 0) {
-		LOG_ERR("Failed to configure I2C pins");
-		return status;
-	}
+	// /* configure pins */
+	// status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+	// if (status < 0) {
+	// 	LOG_ERR("Failed to configure I2C pins");
+	// 	return status;
+	// }
+	// workaround: use driver api because pinctrl_apply_state does not work correctly
+	i2c_set_pin(GPIO_FC_PE1, GPIO_FC_PE0);
 
 #ifdef CONFIG_PM
 	const pinctrl_soc_pin_t *i2cPinsMux = cfg->pcfg->states->pins;
