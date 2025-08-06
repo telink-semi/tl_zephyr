@@ -602,7 +602,7 @@ static int plic_init(const struct device *dev)
 	}
 
 	/* Set priority of each interrupt line to 0 initially */
-	for (uint32_t i = 0; i < config->nr_irqs; i++) {
+	for (uint32_t i = 1; i <= config->nr_irqs; i++) {
 		sys_write32(0U, prio_addr + (i * sizeof(uint32_t)));
 	}
 
