@@ -22,12 +22,6 @@ config TELINK_OT_RCP_SYNC_TIME_OFFSET_MS
 	help
 		This option sets time to recalculate offset with RCP
 
-config TELINK_OT_RCP_RX_ISR_BUFFER_SIZE
-	int "Telink Openthread RCP UART RX ISR buffer size"
-	default 64
-	help
-		This option sets Telink Openthread RCP UART RX ISR buffer size.
-
 config TELINK_OT_RCP_BUFFER_SIZE
 	int "Telink Openthread RCP UART TX/RX buffer size"
 	default 256

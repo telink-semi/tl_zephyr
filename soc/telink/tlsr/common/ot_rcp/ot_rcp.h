@@ -25,7 +25,7 @@ struct openthread_rcp_buffer {
 struct openthread_rcp_data {
 	const struct device *uart;
 	struct k_work work;
-	uint8_t rb_data[CONFIG_TELINK_OT_RCP_RX_ISR_BUFFER_SIZE];
+	uint8_t rb_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
 	struct ring_buf rb;
 	struct k_mutex tx_lock;
 	uint8_t tx_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
