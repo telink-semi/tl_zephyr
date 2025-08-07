@@ -651,7 +651,7 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
 		SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -1140,7 +1140,49 @@ _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 /* API implementation: start */
 static int tlx_start(const struct device *dev)
 {
-	return tlx_start_radio(dev->data);
+	struct tlx_data *tlx = dev->data;
+
+	tlx_disable_pm(dev);
+	/* check if RF is already started */
+	if (!tlx->is_started) {
+#ifdef CONFIG_DYNAMIC_INTERRUPTS
+		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
+			(void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
+		riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+			DT_INST_IRQ(0, priority));
+#endif /* CONFIG_DYNAMIC_INTERRUPTS */
+		if (!tlx_rf_zigbee_250K_mode) {
+#if CONFIG_IEEE802154_2015
+			ske_dig_en();
+#endif
+			if (tlx->rf_mode_154 == false) {
+				rf_baseband_reset();
+				rf_reset_dma();
+				tlx->rf_mode_154 = true;
+			}
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+			    sys_n22_init(0x20080000);
+				rf_n22_dig_init();
+				rf_clr_irq_mask(FLD_RF_IRQ_ALL);
+#endif
+				rf_mode_init();
+				rf_set_zigbee_250K_mode();
+				tlx_rf_zigbee_250K_mode = true;
+		}
+		rf_set_tx_dma(1, TLX_TRX_LENGTH);
+		rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
+		if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
+			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(tlx->current_channel));
+		}
+		if (tlx->current_dbm != TLX_TX_PWR_NOT_SET) {
+			rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
+		}
+		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
+		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
+		tlx->is_started = true;
+	}
+
+	return 0;
 }
 
 /* API implementation: stop */
