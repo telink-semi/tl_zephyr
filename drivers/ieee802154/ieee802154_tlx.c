@@ -650,7 +650,7 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
 		SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -1062,6 +1062,11 @@ static int tlx_start(const struct device *dev)
 				rf_reset_dma();
 				tlx->rf_mode_154 = true;
 			}
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+			    sys_n22_init(0x20080000);
+				rf_n22_dig_init();
+				rf_clr_irq_mask(FLD_RF_IRQ_ALL);
+#endif
 				rf_mode_init();
 				rf_set_zigbee_250K_mode();
 				tlx_rf_zigbee_250K_mode = true;
