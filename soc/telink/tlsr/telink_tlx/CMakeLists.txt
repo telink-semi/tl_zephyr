@@ -17,7 +17,6 @@ zephyr_sources(
 	soc.c
 	halt.c
 	sys_heap_alloc_wrap.c
-	idle.c
 )
 
 zephyr_sources_ifdef(CONFIG_PM

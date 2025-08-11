@@ -93,7 +93,9 @@
 
 		inp {
 			gpios = <&gpiod 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
-				<&gpiod 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+				<&gpiod 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpiod 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpiod 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 	};
 
