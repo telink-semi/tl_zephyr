@@ -55,7 +55,7 @@ void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat
 #if defined(CONFIG_LOG_MODE_MINIMAL)
 	Z_LOG_TO_VPRINTK(level, aFormat, param_list);
 #else
-	log_generic(level, aFormat, param_list);
+	log2_generic(level, aFormat, param_list);
 #endif
 	va_end(param_list);
 #else

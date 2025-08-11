@@ -42,7 +42,4 @@ source "soc/riscv/riscv-privilege/*/Kconfig.soc"
 if IEEE802154
 source "soc/riscv/riscv-privilege/telink_common/ot_rcp/Kconfig.ot_rcp"
 endif # IEEE802154
-if SOC_SERIES_RISCV_TELINK_W91
-source "soc/riscv/riscv-privilege/telink_common/otbr/Kconfig.otbr"
-endif # SOC_SERIES_RISCV_TELINK_W91
 endif

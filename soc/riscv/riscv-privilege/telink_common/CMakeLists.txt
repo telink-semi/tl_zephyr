@@ -14,22 +14,3 @@ zephyr_sources(
 )
 
 endif()
-
-# This component requires from SOC Ethernet and some kind of IEEE802.15.4 radio
-if(CONFIG_TELINK_OTBR)
-
-zephyr_sources(
-	otbr/otbr_icmpv6.c
-	otbr/otbr_ext.c
-	otbr/otbr_init.c
-	otbr/otbr_srp.c
-	otbr/otbr_route.c
-	otbr/otbr_mdns.c
-	otbr/otbr_mdns_fmt.c
-)
-
-zephyr_link_libraries(
-	-Wl,--wrap,net_route_packet
-)
-
-endif()

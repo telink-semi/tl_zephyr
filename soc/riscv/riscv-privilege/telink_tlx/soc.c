@@ -15,7 +15,7 @@
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
 
-#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154))
+#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 #include "tlx_bt_flash.h"
 #endif
 
@@ -88,7 +88,7 @@
 	#endif
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154))
+#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 /* SOC Parameters structure */
 _attribute_data_retention_sec_ struct {
 	unsigned char	cap_freq_offset_en;
@@ -150,7 +150,7 @@ static int soc_tlx_init(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
-#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154))
+#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
 #endif
 
@@ -231,7 +231,7 @@ void soc_tlx_restore(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
-#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154))
+#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
 #endif
 

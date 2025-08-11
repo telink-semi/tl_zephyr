@@ -6,12 +6,28 @@
 
 / {
 	chosen {
-		zephyr,shell-uart = &cdc_acm_uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,ieee802154 = &ieee802154_rcp;
+	};
+
+	soc {
+		ieee802154_rcp: ieee802154_rcp {
+			compatible = "telink,rcp-zb";
+			serial = <&uart1>;
+			status = "ok";
+		};
 	};
 };
 
-&zephyr_udc0 {
-	cdc_acm_uart0: cdc_acm_uart0 {
-		compatible = "zephyr,cdc-acm-uart";
- 	};
+&uart1 {
+	status = "ok";
+	current-speed = <2000000>;
+	pinctrl-0 = <&uart1_tx_pc6_default &uart1_rx_pc7_default
+				&uart1_rts_pc5_default &uart1_cts_pc4_default>;
+	pinctrl-names = "default";
+	hw-flow-control;
+};
+
+&ieee802154 {
+	status = "disabled";
 };
