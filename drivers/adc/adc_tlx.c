@@ -150,8 +150,10 @@ static signed short adc_tlx_get_code(void)
 {
 	signed short adc_code;
 
-#if  CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if  CONFIG_SOC_RISCV_TELINK_TL321X
 	adc_code = adc_get_code();
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
+	adc_code = adc_get_raw_code();
 #endif
 	return adc_code;
 }
@@ -315,7 +317,7 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		break;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 	case 1200:
-		vref_internal_mv = ADC_VREF_VBAT_1P2V;
+		vref_internal_mv = ADC_VREF_ANTI_AGING;
 		break;
 #endif
 	default:
