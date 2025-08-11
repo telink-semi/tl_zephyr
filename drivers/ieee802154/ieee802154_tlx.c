@@ -1063,7 +1063,11 @@ static int tlx_start(const struct device *dev)
 				rf_reset_dma();
 				tlx->rf_mode_154 = true;
 			}
+#if CONFIG_SOC_RISCV_TELINK_TL321X
 				rf_mode_init();
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
+				rf_zigbee_mode_init();
+#endif
 				rf_set_zigbee_250K_mode();
 				tlx_rf_zigbee_250K_mode = true;
 		}
@@ -1104,7 +1108,7 @@ static int tlx_stop(const struct device *dev)
 	rf_reset_dma();
 	rf_baseband_reset();
 #endif
-		tlx_rf_zigbee_250K_mode = false;
+	tlx_rf_zigbee_250K_mode = false;
 #endif /* CONFIG_PM_DEVICE */
 		tlx->is_started = false;
 		if (tlx->event_handler) {
