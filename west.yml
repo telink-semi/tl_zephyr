@@ -247,7 +247,7 @@ manifest:
       path: modules/hal/tdk
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 541f19515a7796411ed68352ffd9718472212ca6
+      revision: 82ac7118d5e966169dd7939580ad51988c2ce1bd
       path: modules/hal/telink
       groups:
         - hal
@@ -341,6 +341,10 @@ manifest:
       path: modules/debug/segger
       groups:
         - debug
+    - name: tflite-micro-telink
+      url: https://github.com/telink-semi/tflite-micro-telink.git
+      revision: c89ed44791d592f4435c7fa924d2edaa0aa0e071
+      path: modules/lib/tflite-micro-telink
     - name: tinycrypt
       revision: 1012a3ebee18c15ede5efc8332ee2fc37817670f
       path: modules/crypto/tinycrypt
@@ -362,10 +366,6 @@ manifest:
     - name: zcbor
       revision: 9b07780aca6fb21f82a241ba386ad9b379809337
       path: modules/lib/zcbor
-    - name: tflite-micro-telink
-      url: https://github.com/telink-semi/tflite-micro-telink.git
-      revision: c89ed44791d592f4435c7fa924d2edaa0aa0e071
-      path: modules/lib/tflite-micro-telink
   # zephyr-keep-sorted-stop
 
   self:
