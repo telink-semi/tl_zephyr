@@ -51,6 +51,13 @@
 #endif
 
 
+#if CONFIG_SOC_RISCV_TELINK_TL322X && CONFIG_USB_TELINK_TLX
+	/* Check Clock value for USB0. */
+	#if DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) < CLK_96MHZ
+		#error "USB0 digital voltage must be 1.1V and HCLK min's 48M"
+	#endif
+#endif
+
 /* MID register flash size */
 #define FLASH_MID_SIZE_OFFSET 16
 #define FLASH_MID_SIZE_MASK   0x00ff0000
@@ -210,13 +217,16 @@ void soc_early_init_hook(void)
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 	case CLK_64MHZ:
 		PLL_192M_D25F_64M_HCLK_N22_32M_PCLK_32M_MSPI_48M;
+		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
 		break;
 
 	case CLK_72MHZ:
 		PLL_144M_D25F_72M_HCLK_N22_36M_PCLK_36M_MSPI_48M;
+		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
 		break;
 
 	case CLK_96MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
@@ -229,6 +239,7 @@ void soc_early_init_hook(void)
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
 		break;
 #endif
@@ -320,13 +331,16 @@ void soc_tlx_restore(void)
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 	case CLK_64MHZ:
 		PLL_192M_D25F_64M_HCLK_N22_32M_PCLK_32M_MSPI_48M;
+		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
 		break;
 
 	case CLK_72MHZ:
 		PLL_144M_D25F_72M_HCLK_N22_36M_PCLK_36M_MSPI_48M;
+		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
 		break;
 
 	case CLK_96MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
@@ -338,6 +352,8 @@ void soc_tlx_restore(void)
 #endif /* CONFIG_SOC_RISCV_TELINK_TL321X */
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
 		break;
 #endif

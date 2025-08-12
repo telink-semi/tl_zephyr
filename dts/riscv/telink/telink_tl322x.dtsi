@@ -272,14 +272,12 @@
 			#io-channel-cells = <1>;
 		};
 
-		usbd: usbd@80188000 {
-			compatible = "telink,tlx-usbd";
-			reg = <0x80188000 0x70>;
-			interrupts = <7 1>, <8 1>, <9 1>, <10 1>, <11 1>, <24 1>, <30 1>, <31 1>;
+		usbd: usbd@80280000 {
+			compatible = "telink,tl322x-usbd";
+			reg = <0x80280000 0x6000c>;
+			interrupts = <26 1>;
 			interrupt-parent = <&plic0>;
-			num-bidir-endpoints = <1>;
-			num-in-endpoints = <6>;
-			num-out-endpoints = <2>;
+			num-bidir-endpoints = <9>;
 			status = "disabled";
 		};
 
