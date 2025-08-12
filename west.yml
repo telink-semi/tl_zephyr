@@ -154,7 +154,7 @@ manifest:
         - hal
     - name: tl_ble_src
       url: git@192.168.48.36:src/ble/telink_b91m_ble_multi_connection_src.git
-      revision: 931f2f67745c4111a97feeda3e97dda529d0443f
+      revision: 95cb876e678fe81c7fa17743b91be170c95985bc
       path: modules/hal/telink/tl_ble_src
       groups:
         - hal

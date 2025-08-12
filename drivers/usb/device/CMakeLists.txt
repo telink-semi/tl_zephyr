@@ -18,6 +18,10 @@ zephyr_library_sources_ifdef(CONFIG_USB_NATIVE_POSIX
 zephyr_library_sources_ifdef(CONFIG_USB_NRFX         usb_dc_nrfx.c)
 zephyr_library_sources_ifdef(CONFIG_USB_MCUX         usb_dc_mcux.c)
 zephyr_library_sources_ifdef(CONFIG_USB_TELINK_B9X   usb_dc_b9x.c)
+if(CONFIG_SOC_RISCV_TELINK_TL322X)
+zephyr_library_sources_ifdef(CONFIG_USB_TELINK_TLX   usb_dc_tl322x.c)
+else()
 zephyr_library_sources_ifdef(CONFIG_USB_TELINK_TLX   usb_dc_tlx.c)
+endif()
 
 endif()
