@@ -14,6 +14,7 @@
 
 #include "hdlc_coder.h"
 #include "spinel_drv.h"
+#include "transport/rcp_transport.h"
 
 typedef void (*openthread_rcp_reception)(const struct spinel_frame_data *frame, const void *ctx);
 
@@ -23,7 +24,7 @@ struct openthread_rcp_buffer {
 };
 
 struct openthread_rcp_data {
-	const struct device *uart;
+	const struct device *rcp_transport_dev;
 	struct k_work work;
 	uint8_t rb_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
 	struct ring_buf rb;

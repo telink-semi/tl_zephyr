@@ -16,6 +16,10 @@ if TELINK_OT_RCP
 config OPENTHREAD_RADIO_WORKQUEUE_STACK_SIZE
 	default 2048
 
+config TELINK_OT_RCP_UART
+	bool "Set UART as a transport for OT RCP"
+	default y
+
 config TELINK_OT_RCP_SYNC_TIME_OFFSET_MS
 	int "Time to recalculate offset (ms)"
 	default 2000
