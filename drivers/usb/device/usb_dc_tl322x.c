@@ -146,8 +146,6 @@ struct tlx_usbd_ep_buf {
 	uint8_t *current_pos;
 };
 
-uint8_t ep_data_buf[USBD_EP_TOTAL_CNT][EP_DATA_BUF_LEN];
-
 /**
  * @brief Endpoint context
  *
@@ -430,7 +428,7 @@ static void ep_buf_init(uint8_t ep)
 {
 	struct tlx_usbd_ep_ctx *ep_ctx = endpoint_ctx(ep);
 
-	ep_ctx->buf.data = ep_data_buf[USB_EP_GET_IDX(ep)];
+	ep_ctx->buf.data = NULL;
 	ep_buf_clear(ep);
 }
 
@@ -656,7 +654,7 @@ static inline void usb_irq_sof(void)
 	usb0hw_clear_gintsts(FLD_USB_GINTSTS_SOF);
 }
 
-static void usb_irq_handler(void)
+__attribute__((section(".ram_code"))) static void usb_irq_handler(void)
 {
 	unsigned int status = usb0hw_get_gintsts() & reg_usb_gintmsk;
 
@@ -1123,6 +1121,14 @@ int usb_dc_ep_enable(const uint8_t ep)
 	if (dev_ready()) {
 		ep_ctx->cfg.stall = false;
 		
+		if (USB_EP_GET_DIR(ep) == USB_EP_DIR_IN) {
+			ep_ctx->buf.data = (uint8_t *)malloc(ep_ctx->cfg.max_sz);
+			if (ep_ctx->buf.data == NULL) {
+				LOG_ERR("ep(0X%x) malloc fail", ep);
+				return -ENOSPC;
+			}
+		}
+		
 		if (USB_EP_GET_IDX(ep) != 0) {
 			usb0hw_ep_open(USB_EP_GET_IDX(ep_ctx->cfg.addr), 
 			USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN : USB0_DIR_OUT,
@@ -1161,6 +1167,11 @@ int usb_dc_ep_disable(const uint8_t ep)
 
 	if (!ep_ctx->cfg.en) {
 		return -EALREADY;
+	}
+
+	if (ep_ctx->buf.data != NULL) {
+		free(ep_ctx->buf.data);
+		ep_ctx->buf.data = NULL;
 	}
 
 	LOG_DBG("EP disable: 0x%02x", ep);
