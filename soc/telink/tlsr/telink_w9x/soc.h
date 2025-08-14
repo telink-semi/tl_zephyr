@@ -8,6 +8,7 @@
 #define RISCV_TELINK_W91_SOC_H
 
 #define NDS_MXSTATUS            0x7c4
+#define NDS_MDCAUSE             0x7c9
 #define NDS_MCACHE_CTL          0x7ca
 #define NDS_MMISC_CTL           0x7d0
 #define NDS_UITB                0x800

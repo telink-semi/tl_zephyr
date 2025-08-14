@@ -44,6 +44,7 @@ zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS
 
 zephyr_sources_ifdef(CONFIG_PM
 	power.c
+	pm_cpu.S
 )
 
 # Force using BFD-LD
