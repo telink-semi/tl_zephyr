@@ -30,6 +30,16 @@
 				#interrupt-cells = <1>;
 				interrupt-controller;
 			};
+			cpu-power-states = <&state0>;
+		};
+	};
+
+	power-states {
+		state0: state0 {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			min-residency-us = <2000>;
+			exit-latency-us = <1500>;
 		};
 	};
 
