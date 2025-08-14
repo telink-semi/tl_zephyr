@@ -17,39 +17,33 @@ zephyr_sources(
 	cache.c
 )
 
-if (CONFIG_BT)
-zephyr_sources(
+zephyr_sources_ifdef(CONFIG_BT
 	bluetooth/bt_mac.c
 )
-endif()
 
-if(CONFIG_TELINK_W91_IPC_DISPATCHER)
-zephyr_sources(
+zephyr_sources_ifdef(CONFIG_TELINK_W91_IPC_DISPATCHER
 	ipc/ipc_dispatcher.c
 	ipc/ipc_based_driver.c
 )
-endif()
 
-if(CONFIG_TELINK_W91_BLOCKING_CORE)
-zephyr_sources(
+zephyr_sources_ifdef(CONFIG_TELINK_W91_BLOCKING_CORE
 	blocking_core/blocking.c
 )
-endif()
 
-if(CONFIG_TELINK_W91_CORE_HEARTBEAT)
-zephyr_sources(
+zephyr_sources_ifdef(CONFIG_TELINK_W91_CORE_HEARTBEAT
 	core_heartbeat/core_heartbeat.c
 )
-endif()
 
-if(CONFIG_TELINK_W91_DEBUG_ENABLE)
-zephyr_sources(
+zephyr_sources_ifdef(CONFIG_TELINK_W91_DEBUG_ENABLE
 	debug.c
 )
-endif()
 
 zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS
 	mcuboot_status_change.c
+)
+
+zephyr_sources_ifdef(CONFIG_PM
+	power.c
 )
 
 # Force using BFD-LD
