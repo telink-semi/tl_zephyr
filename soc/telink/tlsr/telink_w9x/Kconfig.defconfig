@@ -71,6 +71,12 @@ config TEST_EXTRA_STACK_SIZE
 	int
 	default 1024
 
+config HAS_PM
+	default y
+
+config PM_DEVICE
+	default y if PM
+
 config COMMON_LIBC_MALLOC
 	bool
 	default y
