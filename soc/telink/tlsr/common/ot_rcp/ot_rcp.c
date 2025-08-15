@@ -15,9 +15,10 @@ LOG_MODULE_REGISTER(ot_rcp);
 #include <zephyr/drivers/timer/system_timer.h>
 
 /************************************************************************
- * RCP reception work queue
+ * RCP work queue
  ************************************************************************/
 
+#if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
 static K_KERNEL_STACK_DEFINE(openthread_rcp_work_q_stack, CONFIG_TELINK_OT_RCP_THREAD_STACK_SIZE);
 
 static struct k_work_q openthread_rcp_work_q;
@@ -25,7 +26,7 @@ static struct k_work_q openthread_rcp_work_q;
 static int openthread_rcp_work_q_init(void)
 {
 	struct k_work_queue_config cfg = {
-		.name = "rcpworkq", .no_yield = false, .essential = false};
+		.name = "ot_rcp_workq", .no_yield = false, .essential = false};
 
 	k_work_queue_start(&openthread_rcp_work_q, openthread_rcp_work_q_stack,
 			   K_KERNEL_STACK_SIZEOF(openthread_rcp_work_q_stack),
@@ -34,39 +35,17 @@ static int openthread_rcp_work_q_init(void)
 }
 
 SYS_INIT(openthread_rcp_work_q_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+#endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 
 /************************************************************************
  * RCP internal functions
  ************************************************************************/
 
-static void openthread_rcp_reception_isr(const struct device *dev, void *user_data)
+static void openthread_rcp_reception_handler(const void *ctx, uint8_t bt)
 {
-	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)user_data;
+	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
-	if (rcp_transport_receive(dev, &ot_rcp->rb) != 0) {
-		LOG_ERR("rcp_transport transmit error");
-		return;
-	}
-
-	if (!ring_buf_is_empty(&ot_rcp->rb)) {
-		k_work_submit_to_queue(&openthread_rcp_work_q, &ot_rcp->work);
-	}
-}
-
-static void openthread_rcp_reception_work(struct k_work *item)
-{
-	struct openthread_rcp_data *ot_rcp = CONTAINER_OF(item, struct openthread_rcp_data, work);
-
-	for (;;) {
-		uint8_t bt;
-
-		if (ring_buf_get(&ot_rcp->rb, &bt, sizeof(bt)) == sizeof(bt)) {
-			hdlc_coder_inp_poll(&ot_rcp->hdlc, bt);
-		} else {
-			break;
-		}
-	}
-	rcp_transport_irq_enable(ot_rcp->rcp_transport_dev);
+	hdlc_coder_inp_poll(&ot_rcp->hdlc, bt);
 }
 
 static void openthread_rcp_spinel_transmission(uint8_t bt, const void *ctx)
@@ -99,7 +78,7 @@ static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp,
 	size_t tx_len = ot_rcp->tx_buffer.data_size;
 
 	while (tx_len) {
-		int r = rcp_transport_transmit(ot_rcp->rcp_transport_dev, tx_ptr, tx_len);
+		int r = rcp_transport_transmit(&ot_rcp->rcp_transport, tx_ptr, tx_len);
 
 		if (r < 0) {
 			result = r;
@@ -246,20 +225,11 @@ static void openthread_rcp_reception_done(bool data_valid, const void *ctx)
  * RCP interface functions
  ************************************************************************/
 
-int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device *rcp_transport_dev)
+int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const void *transport_device)
 {
 	int result = 0;
 
 	do {
-		if (!device_is_ready(rcp_transport_dev)) {
-			LOG_ERR("spinel serial not ready");
-			result = -EIO;
-			break;
-		}
-
-		ot_rcp->rcp_transport_dev = rcp_transport_dev;
-		ring_buf_init(&ot_rcp->rb, sizeof(ot_rcp->rb_data), ot_rcp->rb_data);
-		k_work_init(&ot_rcp->work, openthread_rcp_reception_work);
 #if defined(CONFIG_NET_PKT_TIMESTAMP) || defined(CONFIG_NET_PKT_TXTIME)
 		k_work_init_delayable(&ot_rcp->sync_work, openthread_rcp_sync_time_work_handler);
 		k_mutex_init(&ot_rcp->time_lock);
@@ -278,14 +248,13 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device 
 		spinel_drv_init(&ot_rcp->spinel_drv, 0);
 		ot_rcp->reception = NULL;
 		ot_rcp->ctx = NULL;
-
-		if (rcp_transport_set_callback(ot_rcp->rcp_transport_dev,
-					       openthread_rcp_reception_isr, ot_rcp)) {
-			LOG_ERR("can't set serial isr");
+		if (rcp_transport_init(&ot_rcp->rcp_transport, transport_device, ot_rcp)) {
 			result = -EIO;
 			break;
 		}
-		rcp_transport_irq_enable(ot_rcp->rcp_transport_dev);
+		rcp_transport_reception_handler_set(&ot_rcp->rcp_transport,
+						    openthread_rcp_reception_handler);
+		rcp_transport_irq_enable(&ot_rcp->rcp_transport);
 	} while (0);
 
 	return result;
@@ -303,18 +272,13 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 	int result = 0;
 
 	do {
-		rcp_transport_irq_disable(ot_rcp->rcp_transport_dev);
-		if (rcp_transport_set_callback(ot_rcp->rcp_transport_dev, NULL, NULL)) {
+		rcp_transport_irq_disable(&ot_rcp->rcp_transport);
+		if (rcp_transport_deinit(&ot_rcp->rcp_transport)) {
 			LOG_ERR("can't reset serial isr");
 			result = -EIO;
 			break;
 		}
-
-		struct k_work_sync work_sync;
-
-		(void)k_work_cancel_sync(&ot_rcp->work, &work_sync);
 		k_msgq_purge(&ot_rcp->spinel_msgq);
-		ring_buf_reset(&ot_rcp->rb);
 	} while (0);
 
 	return result;
