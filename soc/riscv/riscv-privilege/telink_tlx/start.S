@@ -7,6 +7,7 @@
 #define NDS_MCACHE_CTL               0x7ca
 #define NDS_MMISC_CTL                0x7d0
 #define NDS_UITB                     0x800
+
 #if CONFIG_SOC_RISCV_TELINK_TL322X
     .equ __D25F_IRAM_SIZE,   2 //64KB
     .equ __D25F_DRAM_SIZE,   3 //96KB
@@ -24,8 +25,10 @@
     .global     __D25F_N22_RAM_REG
 #endif
 
+#define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
 
 #include <zephyr/toolchain.h>
+#include <zephyr/devicetree.h>
 
 	.option push
 	.option norelax
@@ -64,13 +67,22 @@ start:
 	csrw   NDS_UITB, t0                     #/ CoDense instruction table
 #endif
 
-	/* Disable vector mode */
+	/* Select PLIC mode */
+#ifdef CONFIG_RISCV_MTVEC_VECTORED_MODE
+	csrsi  NDS_MMISC_CTL, 2
+
+	lui    t0, %hi(PLIC_BASE_ADDRESS)
+	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
+	li     t1 ,0x03
+	sw     t1 ,0x0(t0)
+#else
 	csrci  NDS_MMISC_CTL, 2
 
-	/* Disable vector feture enable address */
-	lui    t0 ,0xc4000
-	li     t1 ,0x00
-	sw     t1 ,0x0(t0)
+	lui    t0, %hi(PLIC_BASE_ADDRESS)
+	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
+ 	li     t1 ,0x00
+ 	sw     t1 ,0x0(t0)
+#endif /* CONFIG_RISCV_MTVEC_VECTORED_MODE */
 
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
