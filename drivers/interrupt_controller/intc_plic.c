@@ -188,6 +188,7 @@ static int plic_init(void)
 	}
 
 	/* Set priority of each interrupt line to 0 initially */
+	prio++; /* no zero ISR, it's reserved for PLIC features */
 	for (i = 0; i < PLIC_IRQS; i++) {
 		*prio = 0U;
 		prio++;
