@@ -10,7 +10,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <tlx_bt.h>
 
-#define LOG_LEVEL CONFIG_BT_HCI_DRIVER_LOG_LEVEL
+#define LOG_LEVEL LOG_LEVEL_NONE
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bt_hci_driver_tlx);
 
