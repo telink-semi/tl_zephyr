@@ -24,7 +24,7 @@ config SOC_FLASH_TELINK_TLX
 	default y if FLASH
 
 config USB_TELINK_TLX
-	default y
+	default n
 
 if BT
 
