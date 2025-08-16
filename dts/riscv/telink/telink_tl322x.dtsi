@@ -38,8 +38,8 @@
 		state0: state0 {
 			compatible = "zephyr,power-state";
 			power-state-name = "suspend-to-idle";
-			min-residency-us = <500>;
-			exit-latency-us = <10>;
+			min-residency-us = <10000>;
+			exit-latency-us = <3000>;
 		};
 	};
 
@@ -63,6 +63,15 @@
 			interrupts = <7 0>;
 			interrupts-extended = <&hlic 7>;
 			interrupt-parent = <&hlic>;
+		};
+
+		mbox: mbox@80101c00 {
+			compatible = "telink,mbox-ipc-tl322x";
+			#mbox-cells = <1>;
+			reg = <0x80101c00 0x36>;
+			interrupt-parent = <&plic0>;
+			interrupts = <58 1>;
+			status = "okay";
 		};
 
 		flash_mspi: flash-controller@a3ffff00 {
