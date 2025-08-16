@@ -592,6 +592,7 @@ static int uart_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 			}
 		}
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+		uart_tlx_driver_init(dev);
 		/* reset TX/RX byte index */
 		data->tx_byte_index = 0;
 		data->rx_byte_index = 0;
@@ -601,6 +602,12 @@ static int uart_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 		break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
+		uart_tlx_driver_init(dev);
+		// /* reset TX/RX byte index */
+		data->tx_byte_index = 0;
+		data->rx_byte_index = 0;
+		uart->txrx_status |= FLD_UART_RX_BUF_IRQ | FLD_UART_TX_BUF_IRQ;
+
 		break;
 
 	default:
