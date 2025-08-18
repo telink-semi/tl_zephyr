@@ -22,8 +22,13 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 	irq_unlock(key);
 
 	/* Due to silicon bug in B92 platform, the WFI emulation is implemented */
-	while (__irq_pending) {
-	}
+	/* Wait for interrupt */
+	#if CONFIG_SOC_RISCV_TELINK_TL322X
+		__asm__ volatile("wfi");
+	#else
+		while (__irq_pending) {
+		}
+	#endif
 }
 
 /**
