@@ -60,6 +60,9 @@ class BDTBinaryRunner(ZephyrBinaryRunner):
         if 'CONFIG_SOC_RISCV_TELINK_B91' in build_conf:
             if build_conf['CONFIG_SOC_RISCV_TELINK_B91']:
                 soc_type = '9518'
+        if 'CONFIG_SOC_RISCV_TELINK_TL322X' in build_conf:
+            if build_conf['CONFIG_SOC_RISCV_TELINK_TL322X']:
+                soc_type = 'TL322x'
         if soc_type is None:
             print('only Telink chips are supported!')
             exit()
