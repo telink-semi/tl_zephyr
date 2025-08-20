@@ -10,6 +10,7 @@
 #include <ext_driver/ext_pm.h>
 #include "rf_common.h"
 #include "flash.h"
+#include "pm_internal.h"
 #include <watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
