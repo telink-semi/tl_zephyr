@@ -500,8 +500,14 @@ static bool usb_get_descriptor(struct usb_setup_packet *setup,
 			 * exception, length is at offset
 			 * 2 and 3
 			 */
-			*len = (p[CONF_DESC_wTotalLength]) |
-			    (p[CONF_DESC_wTotalLength + 1] << 8);
+			*len = (p[CONF_DESC_wTotalLength]) | (p[CONF_DESC_wTotalLength + 1] << 8);
+			LOG_DBG("USB_DESC_CONFIGURATION LEN 0X%x", *len);
+		} else if (type == USB_DESC_OTHER_SPEED) {
+			/* other speed descriptor is similar
+			 * to configuration descriptor.
+			 */
+			*len = (p[CONF_DESC_wTotalLength]) | (p[CONF_DESC_wTotalLength + 1] << 8);
+			LOG_DBG("USB_DESC_OTHER_SPEED LEN 0X%x", *len);
 		} else {
 			/* normally length is at offset 0 */
 			*len = p[DESC_bLength];

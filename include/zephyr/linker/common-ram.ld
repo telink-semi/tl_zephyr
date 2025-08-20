@@ -93,7 +93,14 @@
 	SECTION_DATA_PROLOGUE(usb_descriptor,,SUBALIGN(1))
 	{
 		__usb_descriptor_start = .;
-		*(".usb.descriptor")
+		*(.usb.descriptor_primary.0)
+		__usb_class_descr_start = .;
+		*(SORT(.usb.descriptor_primary.1.*))
+		__usb_class_descr_end = .;
+		*(.usb.descriptor_primary.2)
+		__usb_user_descr_start = .;
+		*(.usb.descriptor_primary.3)
+		__usb_user_descr_end = .;
 		KEEP(*(SORT_BY_NAME(".usb.descriptor*")))
 		__usb_descriptor_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
