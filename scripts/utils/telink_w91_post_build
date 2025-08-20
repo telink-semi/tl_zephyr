@@ -23,7 +23,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 BASE_URL = f'https://doc.telink-semi.cn/Zephyr/binaries/public/w91_n22/'
-N22_URL_FORMAT = BASE_URL + f'w91_n22_zephyr_3.7_%s.bin'
+N22_URL_FORMAT = BASE_URL + f'w91_n22_%s.bin'
 MATTER_MCUBOOT_URL_FORMAT = BASE_URL + f'w91_mcuboot_%s.bin'
 DEFAULT_ZEPHYR_BASE = f'/opt/telink/zephyrproject/zephyr'
 # Retry strategy for fetching URLs
