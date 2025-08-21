@@ -55,7 +55,7 @@ static void rcp_transport_reception_work(struct k_work *item)
 			break;
 		}
 	}
-	rcp_transport_irq_enable(rcp_transport);
+	uart_irq_rx_enable((const struct device *)rcp_transport->device);
 }
 
 static void rcp_transport_reception_isr(const struct device *dev, void *user_data)
@@ -91,26 +91,49 @@ static void rcp_transport_reception_isr(const struct device *dev, void *user_dat
  * RCP transport interface functions
  ************************************************************************/
 
-int rcp_transport_transmit(const struct rcp_transport_data *rcp_transport, const uint8_t *data,
-			   size_t length)
+void rcp_transport_put_byte(struct rcp_transport_data *rcp_transport, uint8_t bt)
 {
-	return uart_fifo_fill((const struct device *)rcp_transport->device, data, length);
+	if (rcp_transport->tx_data_size < sizeof(rcp_transport->tx_data)) {
+		rcp_transport->tx_data[rcp_transport->tx_data_size] = bt;
+		rcp_transport->tx_data_size++;
+	} else {
+		LOG_ERR("rcp tx buffer overflow");
+		rcp_transport->tx_data_size = 0;
+	}
+}
+
+int rcp_transport_transmit(struct rcp_transport_data *rcp_transport)
+{
+	int result = 0;
+	const uint8_t *tx_ptr = rcp_transport->tx_data;
+	size_t tx_len = rcp_transport->tx_data_size;
+
+	while (tx_len) {
+		int r = uart_fifo_fill((const struct device *)rcp_transport->device, tx_ptr,
+				       tx_len);
+
+		if (r < 0) {
+			result = r;
+			break;
+		}
+		tx_ptr += r;
+		tx_len -= r;
+		result += r;
+	}
+	if (result != rcp_transport->tx_data_size) {
+		LOG_ERR("rcp rcp_transport transmission error %u", result);
+		result = result < 0 ? result : -EIO;
+	}
+	rcp_transport->tx_data_size = 0;
+
+	return result;
 }
 
 void rcp_transport_reception_handler_set(struct rcp_transport_data *rcp_transport,
 					 rpc_transport_reception_t rcp_transport_reception_handler)
 {
 	rcp_transport->reception_handler = rcp_transport_reception_handler;
-}
-
-void rcp_transport_irq_enable(const struct rcp_transport_data *rcp_transport)
-{
 	uart_irq_rx_enable((const struct device *)rcp_transport->device);
-}
-
-void rcp_transport_irq_disable(const struct rcp_transport_data *rcp_transport)
-{
-	uart_irq_rx_disable((const struct device *)rcp_transport->device);
 }
 
 int rcp_transport_init(struct rcp_transport_data *rcp_transport, const void *transport_device,
@@ -124,6 +147,7 @@ int rcp_transport_init(struct rcp_transport_data *rcp_transport, const void *tra
 	rcp_transport->ctx = ctx;
 
 	do {
+		rcp_transport->tx_data_size = 0;
 		ring_buf_init(&rcp_transport->data.rb, sizeof(rcp_transport->data.rb_data),
 			      rcp_transport->data.rb_data);
 		k_work_init(&rcp_transport->data.work, rcp_transport_reception_work);
@@ -142,6 +166,8 @@ int rcp_transport_init(struct rcp_transport_data *rcp_transport, const void *tra
 int rcp_transport_deinit(struct rcp_transport_data *rcp_transport)
 {
 	int result = 0;
+
+	uart_irq_rx_disable((const struct device *)rcp_transport->device);
 
 	do {
 		if (uart_irq_callback_user_data_set((const struct device *)rcp_transport->device,

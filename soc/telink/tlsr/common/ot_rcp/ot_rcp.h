@@ -26,8 +26,6 @@ struct openthread_rcp_buffer {
 struct openthread_rcp_data {
 	struct rcp_transport_data rcp_transport;
 	struct k_mutex tx_lock;
-	uint8_t tx_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
-	struct openthread_rcp_buffer tx_buffer;
 	struct hdlc_coder hdlc;
 	struct openthread_rcp_buffer spinel_rx_buffer;
 	struct openthread_rcp_buffer spinel_msgq_buffer[CONFIG_TELINK_OT_SPINEL_RX_BUFFER_COUNT];

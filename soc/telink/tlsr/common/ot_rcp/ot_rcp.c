@@ -59,13 +59,7 @@ static void openthread_rcp_hdlc_transmission(uint8_t bt, const void *ctx)
 {
 	struct openthread_rcp_data *ot_rcp = (struct openthread_rcp_data *)ctx;
 
-	if (ot_rcp->tx_buffer.data_size < sizeof(ot_rcp->tx_data)) {
-		ot_rcp->tx_buffer.data[ot_rcp->tx_buffer.data_size] = bt;
-		ot_rcp->tx_buffer.data_size++;
-	} else {
-		LOG_ERR("rcp tx buffer overflow");
-		ot_rcp->tx_buffer.data_size = 0;
-	}
+	rcp_transport_put_byte(&ot_rcp->rcp_transport, bt);
 }
 
 static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp,
@@ -73,26 +67,8 @@ static int openthread_rcp_process_start(struct openthread_rcp_data *ot_rcp,
 {
 	hdlc_coder_out_finish(&ot_rcp->hdlc, true);
 
-	int result = 0;
-	const uint8_t *tx_ptr = ot_rcp->tx_buffer.data;
-	size_t tx_len = ot_rcp->tx_buffer.data_size;
+	int result = rcp_transport_transmit(&ot_rcp->rcp_transport);
 
-	while (tx_len) {
-		int r = rcp_transport_transmit(&ot_rcp->rcp_transport, tx_ptr, tx_len);
-
-		if (r < 0) {
-			result = r;
-			break;
-		}
-		tx_ptr += r;
-		tx_len -= r;
-		result += r;
-	}
-	if (result != ot_rcp->tx_buffer.data_size) {
-		LOG_ERR("rcp rcp_transport transmission error %u", result);
-		result = result < 0 ? result : -EIO;
-	}
-	ot_rcp->tx_buffer.data_size = 0;
 	if (result >= 0) {
 		*start_time =
 			sys_timepoint_calc(K_MSEC(CONFIG_TELINK_OT_SPINEL_RESPONSE_TIMEOUT_MS));
@@ -235,8 +211,6 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const void *transpor
 		k_mutex_init(&ot_rcp->time_lock);
 #endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 		k_mutex_init(&ot_rcp->tx_lock);
-		ot_rcp->tx_buffer.data = ot_rcp->tx_data;
-		ot_rcp->tx_buffer.data_size = 0;
 		hdlc_coder_init(&ot_rcp->hdlc, ot_rcp);
 		hdlc_coder_out_data_set(&ot_rcp->hdlc, openthread_rcp_hdlc_transmission);
 		hdlc_coder_inp_data_set(&ot_rcp->hdlc, openthread_rcp_reception_byte);
@@ -254,7 +228,6 @@ int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const void *transpor
 		}
 		rcp_transport_reception_handler_set(&ot_rcp->rcp_transport,
 						    openthread_rcp_reception_handler);
-		rcp_transport_irq_enable(&ot_rcp->rcp_transport);
 	} while (0);
 
 	return result;
@@ -272,7 +245,6 @@ int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp)
 	int result = 0;
 
 	do {
-		rcp_transport_irq_disable(&ot_rcp->rcp_transport);
 		if (rcp_transport_deinit(&ot_rcp->rcp_transport)) {
 			LOG_ERR("can't reset serial isr");
 			result = -EIO;

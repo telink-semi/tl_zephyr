@@ -18,10 +18,13 @@ config OPENTHREAD_RADIO_WORKQUEUE_STACK_SIZE
 
 choice TELINK_OT_RCP_TRANSPORT
 	bool "Transport for the OT RCP"
-	default TELINK_OT_RCP_UART
+	default TELINK_OT_RCP_TRANSPORT_UART
 
-	config TELINK_OT_RCP_UART
+	config TELINK_OT_RCP_TRANSPORT_UART
 		bool "Set UART as a transport for the OT RCP"
+
+	config TELINK_OT_RCP_TRANSPORT_DUMMY
+		bool "Set dummy as a transport for the OT RCP"
 
 endchoice # TELINK_OT_RCP_TRANSPORT
 
