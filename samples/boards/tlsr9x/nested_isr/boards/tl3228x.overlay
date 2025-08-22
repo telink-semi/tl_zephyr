@@ -1,0 +1,10 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2023 Telink Semiconductor (Shanghai) Co., Ltd.
+ */
+
+&gpiog {
+	interrupts = <49 3>;
+	status = "okay";
+};

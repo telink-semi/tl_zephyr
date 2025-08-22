@@ -20,6 +20,10 @@ config RISCV_SOC_INTERRUPT_INIT
 	bool
 	default y
 
+config RISCV_MTVEC_VECTORED_MODE
+	bool
+	default y
+
 config RISCV_HAS_CPU_IDLE
 	bool
 	default y
