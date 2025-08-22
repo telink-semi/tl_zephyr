@@ -14,6 +14,7 @@
 
 #include "hdlc_coder.h"
 #include "spinel_drv.h"
+#include "transport/rcp_transport.h"
 
 typedef void (*openthread_rcp_reception)(const struct spinel_frame_data *frame, const void *ctx);
 
@@ -23,13 +24,8 @@ struct openthread_rcp_buffer {
 };
 
 struct openthread_rcp_data {
-	const struct device *uart;
-	struct k_work work;
-	uint8_t rb_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
-	struct ring_buf rb;
+	struct rcp_transport_data rcp_transport;
 	struct k_mutex tx_lock;
-	uint8_t tx_data[CONFIG_TELINK_OT_RCP_BUFFER_SIZE];
-	struct openthread_rcp_buffer tx_buffer;
 	struct hdlc_coder hdlc;
 	struct openthread_rcp_buffer spinel_rx_buffer;
 	struct openthread_rcp_buffer spinel_msgq_buffer[CONFIG_TELINK_OT_SPINEL_RX_BUFFER_COUNT];
@@ -46,7 +42,7 @@ struct openthread_rcp_data {
 #endif /* CONFIG_NET_PKT_TIMESTAMP || CONFIG_NET_PKT_TXTIME */
 };
 
-int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const struct device *uart);
+int openthread_rcp_init(struct openthread_rcp_data *ot_rcp, const void *transport_device);
 void openthread_rcp_reception_set(struct openthread_rcp_data *ot_rcp,
 				  openthread_rcp_reception reception, const void *ctx);
 int openthread_rcp_deinit(struct openthread_rcp_data *ot_rcp);
