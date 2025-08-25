@@ -14,10 +14,6 @@
 #include <zephyr/drivers/interrupt_controller/riscv_plic.h>
 #include <timer.h>
 
-#define TIMER0_ISR_NUMBER   4
-#define TIMER1_ISR_NUMBER   3
-#define GPIO_ISR_NUMBER   25
-
 /*
  * Get button configuration from the devicetree sw0 alias. This is mandatory.
  */
@@ -143,7 +139,7 @@ int main(void)
 
 	gpio_init_callback(&button_cb_data, button_pressed, BIT(button.pin));
 	gpio_add_callback(button.port, &button_cb_data);
-	riscv_plic_set_priority(GPIO_ISR_NUMBER, 3);
+	riscv_plic_set_priority(IRQ_GPIO_IRQ3, 3);
 	printk("Set up button at %s pin %d\n", button.port->name, button.pin);
 
 	if (led.port && !device_is_ready(led.port)) {
@@ -203,18 +199,18 @@ int main(void)
 		timer_set_cap_tick(TIMER0, 1000*sys_clk.pclk * 300);	//300ms
 		timer_set_mode(TIMER0, TIMER_MODE_SYSCLK);
 		timer_set_irq_mask(FLD_TMR0_MODE_IRQ);
-		IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + TIMER0_ISR_NUMBER, 2, timer0_isr, &led, 0);
-		riscv_plic_set_priority(TIMER0_ISR_NUMBER, 1);
-		riscv_plic_irq_enable(TIMER0_ISR_NUMBER);
+		IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER0, 2, timer0_isr, &led, 0);
+		riscv_plic_set_priority(IRQ_TIMER0, 1);
+		riscv_plic_irq_enable(IRQ_TIMER0);
 
 		/* Timer1 configuration */
 		timer_set_init_tick(TIMER1, 0);
 		timer_set_cap_tick(TIMER1, 1000*sys_clk.pclk * 150);	//150ms
 		timer_set_mode(TIMER1, TIMER_MODE_SYSCLK);
 		timer_set_irq_mask(FLD_TMR1_MODE_IRQ);
-		IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + TIMER1_ISR_NUMBER, 2, timer1_isr, &led2, 0);
-		riscv_plic_set_priority(TIMER1_ISR_NUMBER, 2);
-		riscv_plic_irq_enable(TIMER1_ISR_NUMBER);
+		IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER1, 2, timer1_isr, &led2, 0);
+		riscv_plic_set_priority(IRQ_TIMER1, 2);
+		riscv_plic_irq_enable(IRQ_TIMER1);
 
 		/* Start timers */
 		timer_start(TIMER0);
