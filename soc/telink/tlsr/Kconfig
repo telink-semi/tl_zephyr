@@ -9,6 +9,7 @@ rsource "common/ot_rcp/Kconfig.ot_rcp"
 endif # IEEE802154
 if SOC_RISCV_TELINK_W9X
 rsource "common/otbr/Kconfig.otbr"
+rsource "common/opus/Kconfig.opus"
 endif # SOC_RISCV_TELINK_W9X
 
 endif # SOC_FAMILY_TELINK_TLSR

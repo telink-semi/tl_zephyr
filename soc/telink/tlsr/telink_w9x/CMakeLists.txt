@@ -65,6 +65,7 @@ zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm.ld)
 set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
 zephyr_cc_option_ifdef(CONFIG_ANDES_CODENSE -mexecit)
 zephyr_ld_option_ifdef(CONFIG_ANDES_CODENSE -Wl,--mexecit)
+zephyr_ld_option_ifdef(CONFIG_ANDES_HWDSP -ldsp)
 
 # Wrap allocator functions
 zephyr_link_libraries(
@@ -103,8 +104,15 @@ zephyr_link_libraries(
 endif()
 
 if(CONFIG_TELINK_W91_FETCH_N22_BIN)
+
+if(CONFIG_TELINK_OPUS_REMOTE)
+	set(FETCH_N22_BIN_REVISION "opus_${CONFIG_TELINK_W91_FETCH_N22_BIN_REVISION}")
+else()
+	set(FETCH_N22_BIN_REVISION "${CONFIG_TELINK_W91_FETCH_N22_BIN_REVISION}")
+endif()
+
 	set_property(GLOBAL APPEND PROPERTY extra_post_build_commands COMMAND
-		${ZEPHYR_BASE}/scripts/utils/telink_w91_post_build ${ZEPHYR_BINARY_DIR} ${CONFIG_TELINK_W91_FETCH_N22_BIN_REVISION}
+		${ZEPHYR_BASE}/scripts/utils/telink_w91_post_build ${ZEPHYR_BINARY_DIR} ${FETCH_N22_BIN_REVISION}
 		$<IF:$<BOOL:${CONFIG_TELINK_W91_N22_MATTER_OTA_LAYOUT}>,1,0>
 	)
 endif()

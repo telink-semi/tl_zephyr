@@ -1,6 +1,10 @@
 # Copyright (c) 2025 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
+config ANDES_GCC
+	bool
+	default y
+
 config NEWLIB_LIBC_SUPPORTED
 	def_bool y
 	help
