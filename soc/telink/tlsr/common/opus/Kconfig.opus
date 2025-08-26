@@ -1,0 +1,76 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config TELINK_OPUS_REMOTE
+	bool "Telink OPUS codec IPC remote backend"
+	select TELINK_W91_IPC_DISPATCHER
+	help
+		This option enables Telink OPUS codec IPC remote backend.
+
+if TELINK_OPUS_REMOTE
+
+config TELINK_OPUS_REMOTE_LIB
+	string "Telink OPUS codec library"
+	default "libtelink-opus.a"
+	help
+		This option defines Telink OPUS codec library.
+
+config TELINK_OPUS_REMOTE_LIB_SHA256
+	string "Telink OPUS codec library SHA256"
+	default "da9987dd74b166ed55d734f2810303d9bdb4b84d627f9510b98e643def9ccecf"
+	help
+		This option defines Telink OPUS codec library SHA256.
+
+config TELINK_OPUS_REMOTE_LIB_HEADER
+	string "Telink OPUS codec library header"
+	default "tlka_opus_api.h"
+	help
+		This option defines Telink OPUS codec library header.
+
+config TELINK_OPUS_REMOTE_LIB_HEADER_SHA256
+	string "Telink OPUS codec library header SHA256"
+	default "cb859ea3f64707fd1a4f01d85380abf4a17b250f3ccc3a16505622620437e325"
+	help
+		This option defines Telink OPUS codec library header SHA256.
+
+choice
+	prompt "Telink OPUS codec IPC remote backend log level"
+	default TELINK_OPUS_REMOTE_LOG_LEVEL_INFO
+	help
+		This option selects log level for OPUS codec IPC remote backend.
+
+config TELINK_OPUS_REMOTE_LOG_LEVEL_CRIT
+	bool "Critical"
+config TELINK_OPUS_REMOTE_LOG_LEVEL_WARN
+	bool "Warning"
+config TELINK_OPUS_REMOTE_LOG_LEVEL_INFO
+	bool "Informational"
+config TELINK_OPUS_REMOTE_LOG_LEVEL_DEBG
+	bool "Debug"
+endchoice
+
+config TELINK_OTBR_LOG_LEVEL
+	int
+	default 1 if TELINK_OPUS_REMOTE_LOG_LEVEL_CRIT
+	default 2 if TELINK_OPUS_REMOTE_LOG_LEVEL_WARN
+	default 3 if TELINK_OPUS_REMOTE_LOG_LEVEL_INFO
+	default 4 if TELINK_OPUS_REMOTE_LOG_LEVEL_DEBG
+	default 0
+
+config TELINK_OPUS_REMOTE_INIT_PRIO
+	int "Startup priority for the Telink OPUS codec IPC remote backend"
+	default 90
+
+config TELINK_OPUS_REMOTE_THREAD_PRIORITY
+	int "Telink OPUS codec IPC remote backend thread priority"
+	default 0
+	help
+		This option sets Telink OPUS codec IPC remote backend thread priority.
+
+config TELINK_OPUS_REMOTE_THREAD_STACK_SIZE
+	int "Telink OPUS codec IPC remote backend thread stack size"
+	default 20480
+	help
+		This option sets Telink OPUS codec IPC remote backend thread stack size.
+
+endif # TELINK_OPUS_REMOTE

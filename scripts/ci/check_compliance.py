@@ -996,6 +996,7 @@ flagged.
         # zephyr-keep-sorted-start re(^\s+")
         "ALSO_MISSING",
         "ANDES_CODENSE",
+        "ANDES_GCC",
         "ANDES_HWDSP",
         "APP_LINK_WITH_",
         "APP_LOG_LEVEL", # Application log level is not detected correctly as
