@@ -195,7 +195,7 @@
 			interrupt-parent = <&cpu0>;
 			reg = < 0xc4000000 0x00210000>;
 			riscv,max-priority = <3>;
-			riscv,ndev = <52>;
+			riscv,ndev = <64>;
 		};
 
 		uart0: serial@80140080 {
@@ -292,9 +292,9 @@
 
 		pinctrl: pinctrl@80140cb0 {
 			compatible = "telink,tlx-pinctrl";
-			reg = <0x80140cb0 0x30
-			       0x80140c06 0x30
-			       0x00000017 0x0C>;
+			reg = <0x80140cb0 0x40
+			       0x80140c06 0x90
+			       0x00000017 0x12>;
 			reg-names = "pin_mux",
 				    "gpio_en",
 				    "pull_up_en";

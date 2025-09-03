@@ -65,8 +65,13 @@ static int i2c_tlx_configure(const struct device *dev, uint32_t dev_config)
 	}
 
 	/* init i2c */
+#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+	i2c_master_init(I2C0);
+	i2c_set_master_clk(I2C0, (unsigned char)(sys_clk.pclk * 1000 * 1000 / (4 * i2c_speed)));
+#else
 	i2c_master_init();
 	i2c_set_master_clk((unsigned char)(sys_clk.pclk * 1000 * 1000 / (4 * i2c_speed)));
+#endif
 
 	return 0;
 }
@@ -95,13 +100,26 @@ static int i2c_tlx_transfer(const struct device *dev,
 
 		/* config stop bit */
 		send_stop = msgs[i].flags & I2C_MSG_STOP ? 1 : 0;
+#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+		i2c_master_send_stop(I2C0, send_stop);
+#else
 		i2c_master_send_stop(send_stop);
 
+#endif
 		/* transfer data */
 		if (msgs[i].flags & I2C_MSG_READ) {
+#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+			status = i2c_master_read(I2C0, addr << 1, msgs[i].buf, msgs[i].len);
+#else
 			status = i2c_master_read(addr << 1, msgs[i].buf, msgs[i].len);
+
+#endif
 		} else {
+#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+			status = i2c_master_write(I2C0, addr << 1, msgs[i].buf, msgs[i].len);
+#else
 			status = i2c_master_write(addr << 1, msgs[i].buf, msgs[i].len);
+#endif
 		}
 
 		/* check status */
@@ -135,15 +153,12 @@ static int i2c_tlx_init(const struct device *dev)
 		LOG_ERR("Failed to configure I2C on init");
 		return status;
 	}
-
-	// /* configure pins */
-	// status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
-	// if (status < 0) {
-	// 	LOG_ERR("Failed to configure I2C pins");
-	// 	return status;
-	// }
-	// workaround: use driver api because pinctrl_apply_state does not work correctly
-	i2c_set_pin(GPIO_FC_PE1, GPIO_FC_PE0);
+	/* configure pins */
+	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+	if (status < 0) {
+		LOG_ERR("Failed to configure I2C pins");
+		return status;
+	}
 
 #ifdef CONFIG_PM
 	const pinctrl_soc_pin_t *i2cPinsMux = cfg->pcfg->states->pins;

@@ -5,6 +5,7 @@
  */
 
 #include "analog.h"
+#include "gpio.h"
 #include <zephyr/drivers/pinctrl.h>
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 #include <zephyr/dt-bindings/pinctrl/tl321x-pinctrl.h>
@@ -188,6 +189,9 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 	uint8_t func = TLX_PINMUX_GET_FUNC(*pinctrl);
 	uint32_t pin = TLX_PINMUX_GET_PIN(*pinctrl);
 	uint8_t pull_up_en_addr = reg_pull_up_en(pin);
+
+	/* set input enable */
+	gpio_input_en(pin);
 
 	/* calculate offset and mask for the func and pull values */
 	status = pinctrl_tlx_get_offset(pin, &offset);
