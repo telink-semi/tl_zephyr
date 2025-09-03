@@ -323,12 +323,7 @@ static int uart_tlx_driver_init(const struct device *dev)
 	data->tx_byte_index = 0;
 
 	/* configure pins */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	//  workaround: use driver api because pinctrl_apply_state does not work correctly
-	uart_set_pin(0, GPIO_FC_PA0, GPIO_FC_PA1);
-#endif
 	if (status < 0) {
 		return status;
 	}
