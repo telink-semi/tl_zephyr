@@ -251,7 +251,7 @@
 	status = "okay";
 	vref-internal-mv = <1200>;
 	sample-freq = <DT_FREQ_K(96)>;
-	pinctrl-0 = <&adc_pb1_default>;
+	pinctrl-0 = <&adc_pc1_default>;
 	pinctrl-names = "default";
 };
 

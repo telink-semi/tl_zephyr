@@ -11,7 +11,11 @@
 #include "adc_context.h"
 
 /* Zephyr Device Tree headers */
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 #include <zephyr/dt-bindings/adc/tlx-adc.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#include <zephyr/dt-bindings/adc/tl322x-adc.h>
+#endif
 
 /* Zephyr Logging headers */
 #include <zephyr/logging/log.h>
@@ -99,13 +103,47 @@ static int adc_tlx_validate_sequence(const struct adc_sequence *sequence)
 	return 0;
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+static uint16_t adc_tlx_get_pin(uint8_t dt_pin, bool positive)
+{
+    if (positive) {
+        /* adc_input_pch_e */
+        switch (dt_pin) {
+        case DT_ADC_GPIO_PC0: return ADC0_GPIO_PC0P;
+        case DT_ADC_GPIO_PC1: return ADC0_GPIO_PC1P;
+        case DT_ADC_GPIO_PC2: return ADC0_GPIO_PC2P;
+        case DT_ADC_GPIO_PC3: return ADC0_GPIO_PC3P;
+        case DT_ADC_GPIO_PC4: return ADC0_GPIO_PC4P;
+        case DT_ADC_GPIO_PC5: return ADC0_GPIO_PC5P;
+        case DT_ADC_GPIO_PC6: return ADC0_GPIO_PC6P;
+        case DT_ADC_GPIO_PC7: return ADC0_GPIO_PC7P;
+        case DT_ADC_VBAT:     return ADC_VBAT_P;  
+        default:              return 0;
+        }
+    } else {
+        /* adc_input_nch_e */
+        switch (dt_pin) {
+        case DT_ADC_GPIO_PC0: return ADC0_GPIO_PC0N;
+        case DT_ADC_GPIO_PC1: return ADC0_GPIO_PC1N;
+        case DT_ADC_GPIO_PC2: return ADC0_GPIO_PC2N;
+        case DT_ADC_GPIO_PC3: return ADC0_GPIO_PC3N;
+        case DT_ADC_GPIO_PC4: return ADC0_GPIO_PC4N;
+        case DT_ADC_GPIO_PC5: return ADC0_GPIO_PC5N;
+        case DT_ADC_GPIO_PC6: return ADC0_GPIO_PC6N;
+        case DT_ADC_GPIO_PC7: return ADC0_GPIO_PC7N;
+        case DT_ADC_VBAT:     return ADC_GND_N; 
+        default:              return 0;
+        }
+    }
+}
+#else
 /* Convert dts pin to tlx SDK pin */
 static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 {
 	adc_input_pin_def_e adc_pin;
 
 	switch (dt_pin) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X
 	case DT_ADC_GPIO_PB0:
 		adc_pin = ADC_GPIO_PB0;
 		break;
@@ -138,31 +176,6 @@ static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 	case DT_ADC_GPIO_PD1:
 		adc_pin = ADC_GPIO_PD1;
 		break;
-// #elif CONFIG_SOC_RISCV_TELINK_TL322X
-// 	case DT_ADC_GPIO_PC0:
-// 		adc_pin = ADC_GPIO_PC0;
-// 		break;
-// 	case DT_ADC_GPIO_PC1:
-// 		adc_pin = ADC_GPIO_PC1;
-// 		break;
-// 	case DT_ADC_GPIO_PC2:
-// 		adc_pin = ADC_GPIO_PC2;
-// 		break;
-// 	case DT_ADC_GPIO_PC3:
-// 		adc_pin = ADC_GPIO_PC3;
-// 		break;
-// 	case DT_ADC_GPIO_PC4:
-// 		adc_pin = ADC_GPIO_PC4;
-// 		break;
-// 	case DT_ADC_GPIO_PC5:
-// 		adc_pin = ADC_GPIO_PC5;
-// 		break;
-// 	case DT_ADC_GPIO_PC6:
-// 		adc_pin = ADC_GPIO_PC6;
-// 		break;
-// 	case DT_ADC_GPIO_PC7:
-// 		adc_pin = ADC_GPIO_PC7;
-// 		break;
 #endif
 	case DT_ADC_VBAT:
 		adc_pin = ADC_VBAT;
@@ -175,6 +188,7 @@ static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 
 	return adc_pin;
 }
+#endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 /* Get ADC value */
@@ -194,7 +208,7 @@ static signed short adc_tlx_get_code(void)
 static signed short adc_tlx_get_code(adc_num_e sar_adc_num)
 {
 	signed short adc_code;
-	adc_code = adc_get_code(sar_adc_num);
+	adc_code = adc_get_raw_code(sar_adc_num);
 	return adc_code;
 }
 #endif
@@ -351,8 +365,13 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	adc_sample_freq_e sample_freq;
 	adc_pre_scale_e pre_scale;
 	adc_sample_cycle_e sample_cycl;
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 	adc_input_pin_def_e input_positive;
 	adc_input_pin_def_e input_negative;
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	adc_input_pch_e input_positive;
+	adc_input_nch_e input_negative;
+#endif	
 	struct tlx_adc_data *data = dev->data;
 	const struct tlx_adc_cfg *config = dev->config;
 
@@ -364,7 +383,7 @@ static int adc_tlx_channel_setup(const struct device *dev,
 
 	/* Check internal reference */
 	switch (config->vref_internal_mv) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X
 	case 900:
 		vref_internal_mv = ADC_VREF_0P9V;
 		break;
@@ -374,6 +393,10 @@ static int adc_tlx_channel_setup(const struct device *dev,
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 	case 1200:
 		vref_internal_mv = ADC_VREF_ANTI_AGING;
+		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	case 1200:
+		vref_internal_mv = ADC_VREF_1P2V;
 		break;
 #endif
 	default:
@@ -412,9 +435,9 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		LOG_ERR("Selected ADC gain is not supported.");
 		return -EINVAL;
 	}
-
 	/* Check acquisition time */
 	switch (channel_cfg->acquisition_time) {
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 3):
 		sample_cycl = ADC_SAMPLE_CYC_3;
 		break;
@@ -444,8 +467,64 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	default:
 		LOG_ERR("Selected ADC acquisition time is not supported.");
 		return -EINVAL;
-	}
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 4):
+		sample_cycl = ADC_SAMPLE_CYC_4;
+		break;
+	case ADC_ACQ_TIME_DEFAULT:
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 6):
+		sample_cycl = ADC_SAMPLE_CYC_6;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 8):
+		sample_cycl = ADC_SAMPLE_CYC_8;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 10):
+		sample_cycl = ADC_SAMPLE_CYC_10;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 12):
+		sample_cycl = ADC_SAMPLE_CYC_12;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 14):
+		sample_cycl = ADC_SAMPLE_CYC_14;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 16):
+		sample_cycl = ADC_SAMPLE_CYC_16;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 18):
+		sample_cycl = ADC_SAMPLE_CYC_18;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 20):
+		sample_cycl = ADC_SAMPLE_CYC_20;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 22):
+		sample_cycl = ADC_SAMPLE_CYC_22;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 24):
+		sample_cycl = ADC_SAMPLE_CYC_24;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 26):
+		sample_cycl = ADC_SAMPLE_CYC_26;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 28):
+		sample_cycl = ADC_SAMPLE_CYC_28;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 30):
+		sample_cycl = ADC_SAMPLE_CYC_30;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 32):
+		sample_cycl = ADC_SAMPLE_CYC_32;
+		break;
+	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 34):
+		sample_cycl = ADC_SAMPLE_CYC_34;
+		break;
 
+	default:
+		LOG_ERR("Selected ADC acquisition time is not supported.");
+		return -EINVAL;
+	}
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	/* Check for valid pins configuration */
 	input_positive = adc_tlx_get_pin(channel_cfg->input_positive);
 	input_negative = adc_tlx_get_pin(channel_cfg->input_negative);
@@ -457,6 +536,20 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		LOG_ERR("Negative input is not selected.");
 		return -EINVAL;
 	}
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+
+    input_positive = (adc_input_pch_e)adc_tlx_get_pin(channel_cfg->input_positive, true);
+    input_negative = (adc_input_nch_e)adc_tlx_get_pin(channel_cfg->input_negative, false);
+
+    if ((input_positive == (uint16_t)ADC_VBAT_P || input_negative == (uint16_t)ADC_GND_N) &&
+        channel_cfg->differential) {
+        LOG_ERR("VBAT or GND is not available for differential mode.");
+        return -EINVAL;
+    } else if (channel_cfg->differential && (input_negative == (uint16_t)0)) {
+        LOG_ERR("Negative input is not selected.");
+        return -EINVAL;
+    }
+#endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 	adc_init(NDMA_M_CHN);
@@ -466,40 +559,52 @@ static int adc_tlx_channel_setup(const struct device *dev,
 
 	data->differential = channel_cfg->differential;
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 	if (channel_cfg->differential) {
 		/* Differential pins configuration */
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_set_diff_pin(ADC_M_CHANNEL, input_positive, input_negative);
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-		adc_set_diff_pin(ADC0, ADC_M_CHANNEL, input_positive, input_negative);
-#endif
+
 	} else if (input_positive == (uint8_t)ADC_VBAT) {
 		/* VBAT pin configuration */
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_vbat_sample_init(ADC_M_CHANNEL);
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-		adc_vbat_sample_init(ADC0, ADC_M_CHANNEL);
-#endif
 	} else {
 		/* Single-ended GPIO pin configuration */
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
 		adc_gpio_cfg_t adc_gpio_cfg_m = {
 				.v_ref			=	vref_internal_mv,
 				.pre_scale		=	pre_scale,
 				.sample_freq		=	sample_freq,
 				.pin			=	input_positive,
 		};
-#endif
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
 		adc_gpio_sample_init(ADC_M_CHANNEL, adc_gpio_cfg_m);
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-		adc_gpio_sample_init(ADC0, ADC_M_CHANNEL, adc_gpio_cfg_m);
-#endif
 	}
-
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
+	if (channel_cfg->differential) {
+		/* Differential pins configuration */
+		/* The adc_channel_sample_init function has been configured and will not be configured here. */
+		// adc_pin_config(input_positive);	
+    	// adc_pin_config(input_negative);	
+		adc_set_diff_input(ADC0, ADC_M_CHANNEL, input_positive, input_negative);
+	} else if (input_positive == (uint8_t)ADC_VBAT_P) {
+		/* VBAT pin configuration */
+		adc_chn_cfg_t adc_vbat_cfg_m = {
+				.pre_scale		=	pre_scale,
+				.sample_freq		=	sample_freq,
+				.input_p	=	input_positive,
+				.input_n	=	ADC_GND_N,
+		};
+		adc_channel_sample_init(ADC0, ADC_VBAT_MODE, ADC_M_CHANNEL, &adc_vbat_cfg_m);
+	} else {
+		/* Single-ended GPIO pin configuration */
+		adc_chn_cfg_t adc_gpio_cfg_m = {
+				.pre_scale		=	pre_scale,
+				.sample_freq		=	sample_freq,
+				.input_p	=	input_positive,
+				.input_n	=	ADC_GND_N,
+		};
+		adc_channel_sample_init(ADC0, ADC_GPIO_MODE, ADC_M_CHANNEL, &adc_gpio_cfg_m);
+	}
+#endif
 	return 0;
 }
 
