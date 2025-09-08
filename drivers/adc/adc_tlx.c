@@ -104,7 +104,7 @@ static int adc_tlx_validate_sequence(const struct adc_sequence *sequence)
 }
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-static uint16_t adc_tlx_get_pin(uint8_t dt_pin, bool positive)
+static uint16_t adc_tlx_get_pin(uint16_t dt_pin, bool positive)
 {
     if (positive) {
         /* adc_input_pch_e */
@@ -136,7 +136,7 @@ static uint16_t adc_tlx_get_pin(uint8_t dt_pin, bool positive)
         }
     }
 }
-#else
+#elif CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 /* Convert dts pin to tlx SDK pin */
 static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
 {
@@ -250,6 +250,23 @@ static int adc_tlx_adc_start_read(const struct device *dev, const struct adc_seq
 
 	/* Set resolution */
 	switch (sequence->resolution) {
+#if  CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+	case 12:
+		adc_set_resolution(ADC_RES12);
+		data->resolution_divider = 4;
+		break;
+	case 10:
+		adc_set_resolution(ADC_RES10);
+		data->resolution_divider = 16;
+		break;
+	case 8:
+		adc_set_resolution(ADC_RES8);
+		data->resolution_divider = 64;
+		break;
+	default:
+		LOG_ERR("Selected ADC resolution is not supported.");
+		return -EINVAL;
+#elif CONFIG_SOC_RISCV_TELINK_TL322X
 	case 12:
 		adc_set_resolution(ADC0, ADC_RES12);
 		data->resolution_divider = 4;
@@ -265,6 +282,7 @@ static int adc_tlx_adc_start_read(const struct device *dev, const struct adc_seq
 	default:
 		LOG_ERR("Selected ADC resolution is not supported.");
 		return -EINVAL;
+#endif		
 	}
 
 	/* Save buffer */
@@ -352,6 +370,21 @@ static int adc_tlx_init(const struct device *dev)
 	return 0;
 }
 
+/* API implementation: read */
+static int adc_tlx_read(const struct device *dev,
+			const struct adc_sequence *sequence)
+{
+	int status;
+	struct tlx_adc_data *data = dev->data;
+
+	adc_context_lock(&data->ctx, false, NULL);
+	status = adc_tlx_adc_start_read(dev, sequence);
+	adc_context_release(&data->ctx, status);
+
+	return status;
+}
+
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 /* API implementation: channel_setup */
 static int adc_tlx_channel_setup(const struct device *dev,
 				 const struct adc_channel_cfg *channel_cfg)
@@ -360,13 +393,8 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	adc_sample_freq_e sample_freq;
 	adc_pre_scale_e pre_scale;
 	adc_sample_cycle_e sample_cycl;
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 	adc_input_pin_def_e input_positive;
 	adc_input_pin_def_e input_negative;
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	adc_input_pch_e input_positive;
-	adc_input_nch_e input_negative;
-#endif	
 	struct tlx_adc_data *data = dev->data;
 	const struct tlx_adc_cfg *config = dev->config;
 
@@ -388,10 +416,6 @@ static int adc_tlx_channel_setup(const struct device *dev,
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 	case 1200:
 		vref_internal_mv = ADC_VREF_VBAT_1P2V;
-		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	case 1200:
-		vref_internal_mv = ADC_VREF_1P2V;
 		break;
 #endif
 	default:
@@ -430,9 +454,9 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		LOG_ERR("Selected ADC gain is not supported.");
 		return -EINVAL;
 	}
+
 	/* Check acquisition time */
 	switch (channel_cfg->acquisition_time) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 3):
 		sample_cycl = ADC_SAMPLE_CYC_3;
 		break;
@@ -462,7 +486,107 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	default:
 		LOG_ERR("Selected ADC acquisition time is not supported.");
 		return -EINVAL;
+	}
+
+	/* Check for valid pins configuration */
+	input_positive = adc_tlx_get_pin(channel_cfg->input_positive);
+	input_negative = adc_tlx_get_pin(channel_cfg->input_negative);
+	if ((input_positive == (uint8_t)ADC_VBAT || input_negative == (uint8_t)ADC_VBAT) &&
+		channel_cfg->differential) {
+		LOG_ERR("VBAT pin is not available for differential mode.");
+		return -EINVAL;
+	} else if (channel_cfg->differential && (input_negative == (uint8_t)NOINPUTN)) {
+		LOG_ERR("Negative input is not selected.");
+		return -EINVAL;
+	}
+
+	adc_init(NDMA_M_CHN);
+
+	data->differential = channel_cfg->differential;
+
+	if (channel_cfg->differential) {
+		/* Differential pins configuration */
+		adc_set_diff_pin(ADC_M_CHANNEL, input_positive, input_negative);
+	} else if (input_positive == (uint8_t)ADC_VBAT) {
+		/* VBAT pin configuration */
+		adc_vbat_sample_init(ADC_M_CHANNEL);
+	} else {
+		/* Single-ended GPIO pin configuration */
+		adc_gpio_cfg_t adc_gpio_cfg_m = {
+				.v_ref			=	vref_internal_mv,
+				.pre_scale		=	pre_scale,
+				.sample_freq		=	sample_freq,
+				.pin			=	input_positive,
+		};
+		adc_gpio_sample_init(ADC_M_CHANNEL, adc_gpio_cfg_m);
+	}
+
+	return 0;
+}
+
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
+/* API implementation: channel_setup */
+static int adc_tlx_channel_setup(const struct device *dev,
+				 const struct adc_channel_cfg *channel_cfg)
+{
+	adc_ref_vol_e vref_internal_mv;
+	adc_sample_freq_e sample_freq;
+	adc_pre_scale_e pre_scale;
+	adc_sample_cycle_e sample_cycl;
+
+	adc_input_pch_e input_positive;
+	adc_input_nch_e input_negative;
+	struct tlx_adc_data *data = dev->data;
+	const struct tlx_adc_cfg *config = dev->config;
+
+	/* Check reference */
+	if (channel_cfg->reference != ADC_REF_INTERNAL) {
+		LOG_ERR("Selected ADC reference is not supported.");
+		return -EINVAL;
+	}
+
+	/* Check internal reference */
+	switch (config->vref_internal_mv) {
+	case 1200:
+		vref_internal_mv = ADC_VREF_1P2V;
+		break;
+
+	default:
+		LOG_ERR("Selected reference voltage is not supported.");
+		return -EINVAL;
+	}
+
+	/* Check sample frequency */
+	switch (config->sample_freq) {
+	case 23000:
+		sample_freq = ADC_SAMPLE_FREQ_23K;
+		break;
+	case 48000:
+		sample_freq = ADC_SAMPLE_FREQ_48K;
+		break;
+	case 96000:
+		sample_freq = ADC_SAMPLE_FREQ_96K;
+		break;
+	default:
+		LOG_ERR("Selected sample frequency is not supported.");
+		return -EINVAL;
+	}
+
+	/* Check gain */
+	switch (channel_cfg->gain) {
+	case ADC_GAIN_1:
+		pre_scale = ADC_PRESCALE_1;
+		break;
+	case ADC_GAIN_1_4:
+		pre_scale = ADC_PRESCALE_1F4;
+		break;
+
+	default:
+		LOG_ERR("Selected ADC gain is not supported.");
+		return -EINVAL;
+	}
+	/* Check acquisition time */
+	switch (channel_cfg->acquisition_time) {
 	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 4):
 		sample_cycl = ADC_SAMPLE_CYC_4;
 		break;
@@ -517,25 +641,9 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		LOG_ERR("Selected ADC acquisition time is not supported.");
 		return -EINVAL;
 	}
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
-	/* Check for valid pins configuration */
-	input_positive = adc_tlx_get_pin(channel_cfg->input_positive);
-	input_negative = adc_tlx_get_pin(channel_cfg->input_negative);
-	if ((input_positive == (uint8_t)ADC_VBAT || input_negative == (uint8_t)ADC_VBAT) &&
-		channel_cfg->differential) {
-		LOG_ERR("VBAT pin is not available for differential mode.");
-		return -EINVAL;
-	} else if (channel_cfg->differential && (input_negative == (uint8_t)NOINPUTN)) {
-		LOG_ERR("Negative input is not selected.");
-		return -EINVAL;
-	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
 
     input_positive = (adc_input_pch_e)adc_tlx_get_pin(channel_cfg->input_positive, true);
     input_negative = (adc_input_nch_e)adc_tlx_get_pin(channel_cfg->input_negative, false);
-
     if ((input_positive == (uint16_t)ADC_VBAT_P || input_negative == (uint16_t)ADC_GND_N) &&
         channel_cfg->differential) {
         LOG_ERR("VBAT or GND is not available for differential mode.");
@@ -544,43 +652,18 @@ static int adc_tlx_channel_setup(const struct device *dev,
         LOG_ERR("Negative input is not selected.");
         return -EINVAL;
     }
-#endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
-	adc_init(NDMA_M_CHN);
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
 	adc_init(ADC0, NDMA_M_CHN);
-#endif
 
 	data->differential = channel_cfg->differential;
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
-	if (channel_cfg->differential) {
-		/* Differential pins configuration */
-		adc_set_diff_pin(ADC_M_CHANNEL, input_positive, input_negative);
-
-	} else if (input_positive == (uint8_t)ADC_VBAT) {
-		/* VBAT pin configuration */
-		adc_vbat_sample_init(ADC_M_CHANNEL);
-	} else {
-		/* Single-ended GPIO pin configuration */
-
-		adc_gpio_cfg_t adc_gpio_cfg_m = {
-				.v_ref			=	vref_internal_mv,
-				.pre_scale		=	pre_scale,
-				.sample_freq		=	sample_freq,
-				.pin			=	input_positive,
-		};
-		adc_gpio_sample_init(ADC_M_CHANNEL, adc_gpio_cfg_m);
-	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
 	if (channel_cfg->differential) {
 		/* Differential pins configuration */
 		/* The adc_channel_sample_init function has been configured and will not be configured here. */
 		// adc_pin_config(input_positive);	
-    	// adc_pin_config(input_negative);	
+    	// adc_pin_config(input_negative);
 		adc_set_diff_input(ADC0, ADC_M_CHANNEL, input_positive, input_negative);
-	} else if (input_positive == (uint8_t)ADC_VBAT_P) {
+	} else if (input_positive == (uint16_t)ADC_VBAT_P) {
 		/* VBAT pin configuration */
 		adc_chn_cfg_t adc_vbat_cfg_m = {
 				.pre_scale		=	pre_scale,
@@ -599,23 +682,9 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		};
 		adc_channel_sample_init(ADC0, ADC_GPIO_MODE, ADC_M_CHANNEL, &adc_gpio_cfg_m);
 	}
-#endif
 	return 0;
 }
-
-/* API implementation: read */
-static int adc_tlx_read(const struct device *dev,
-			const struct adc_sequence *sequence)
-{
-	int status;
-	struct tlx_adc_data *data = dev->data;
-
-	adc_context_lock(&data->ctx, false, NULL);
-	status = adc_tlx_adc_start_read(dev, sequence);
-	adc_context_release(&data->ctx, status);
-
-	return status;
-}
+#endif
 
 #ifdef CONFIG_ADC_ASYNC
 /* API implementation: read_async */
