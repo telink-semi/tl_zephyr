@@ -57,6 +57,8 @@ set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
 zephyr_cc_option_ifdef(CONFIG_ANDES_CODENSE -mexecit)
 zephyr_ld_option_ifdef(CONFIG_ANDES_CODENSE -Wl,--mexecit)
 
+zephyr_cc_option((-ftrivial-auto-var-init=zero))
+
 if(CONFIG_TELINK_B9X_MATTER_RETENTION_LAYOUT)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention.ld)
 endif()
