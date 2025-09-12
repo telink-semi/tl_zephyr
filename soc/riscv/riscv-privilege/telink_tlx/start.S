@@ -208,7 +208,7 @@ retention_entry:
 retention_start:
 
 	/* Select PLIC mode */
-#ifdef CONFIG_RISCV_VECTORED_MODE
+#ifdef CONFIG_RISCV_MTVEC_VECTORED_MODE
 	csrsi  NDS_MMISC_CTL, 2
 
 	/* Enable vector feture enable address */
@@ -224,7 +224,7 @@ retention_start:
 	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
 	li     t1 ,0x00
 	sw     t1 ,0x0(t0)
-#endif /* CONFIG_RISCV_VECTORED_MODE */
+#endif /* CONFIG_RISCV_MTVEC_VECTORED_MODE */
 
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
