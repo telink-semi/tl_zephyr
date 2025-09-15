@@ -731,9 +731,34 @@ static void opus_check(const void *data, size_t len, void *param)
 	}
 }
 
+static void opus_init_library(void)
+{
+	LOG_DBG("%s", __func__);
+
+	extern const void _TELINK_OPUS_DATA_VMA_START, _TELINK_OPUS_DATA_VMA_END,
+		_TELINK_OPUS_DATA_LMA_START;
+
+	if (&_TELINK_OPUS_DATA_VMA_START != &_TELINK_OPUS_DATA_LMA_START) {
+		memcpy((void *)&_TELINK_OPUS_DATA_VMA_START, &_TELINK_OPUS_DATA_LMA_START,
+		       (uintptr_t)&_TELINK_OPUS_DATA_VMA_END -
+			       (uintptr_t)&_TELINK_OPUS_DATA_VMA_START);
+	}
+
+	extern const void _TELINK_OPUS_FAST_CODE_VMA_START, _TELINK_OPUS_FAST_CODE_VMA_END,
+		_TELINK_OPUS_FAST_CODE_LMA_START;
+
+	if (&_TELINK_OPUS_FAST_CODE_VMA_START != &_TELINK_OPUS_FAST_CODE_LMA_START) {
+		memcpy((void *)&_TELINK_OPUS_FAST_CODE_VMA_START, &_TELINK_OPUS_FAST_CODE_LMA_START,
+		       (uintptr_t)&_TELINK_OPUS_FAST_CODE_VMA_END -
+			       (uintptr_t)&_TELINK_OPUS_FAST_CODE_VMA_START);
+	}
+}
+
 static int opus_init_process(void)
 {
 	LOG_DBG("%s", __func__);
+
+	opus_init_library();
 
 	static K_KERNEL_STACK_DEFINE(opus_work_q_stack,
 				     CONFIG_TELINK_OPUS_REMOTE_THREAD_STACK_SIZE);
