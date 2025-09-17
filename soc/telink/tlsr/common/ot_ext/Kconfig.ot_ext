@@ -1,0 +1,32 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+if NET_L2_OPENTHREAD
+
+choice OPENTHREAD_IMPLEMENTATION
+	default OPENTHREAD_SOURCES
+
+config OPENTHREAD_TELINK_LIB
+	bool "OpenThread link against Telink library"
+	help
+	  Use Zephyr's OpenThread Telink library.
+
+endchoice
+
+if OPENTHREAD_TELINK_LIB
+
+config TELINK_OPENTHREAD_LIB
+	string "Telink openthread library"
+	default "libtelink-openthread-3ae741f95e7dfb391dec35c48742862049eb62e8-001-strip.a"
+	help
+		This option defines Telink openthread library.
+
+config TELINK_OPENTHREAD_LIB_SHA256
+	string "Telink openthread library SHA256"
+	default "24ebfd46e256d2aafcc1e7e10d4b3bd0980dc3637ae93c6b4afdae700e4967a2"
+	help
+		This option defines Telink openthread library SHA256.
+
+endif # OPENTHREAD_TELINK_LIB
+
+endif # NET_L2_OPENTHREAD
