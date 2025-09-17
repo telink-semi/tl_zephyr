@@ -90,3 +90,25 @@ message(FATAL_ERROR "CONFIG_TELINK_OPUS_REMOTE feature requires Andes GCC")
 endif()
 
 endif()
+
+# This component is for openthread to use precompiled library
+if(CONFIG_OPENTHREAD_TELINK_LIB)
+
+message(STATUS "Downloading libtelink-openthread.a … (this may take a while)")
+file(DOWNLOAD
+	https://doc.telink-semi.cn/Zephyr/binaries/public/openthread_lib/${CONFIG_TELINK_OPENTHREAD_LIB}
+	${CMAKE_BINARY_DIR}/zephyr/openthread/libtelink-openthread.a
+	EXPECTED_HASH SHA256=${CONFIG_TELINK_OPENTHREAD_LIB_SHA256}
+)
+message(STATUS "Download finished")
+
+zephyr_include_directories(
+	${ZEPHYR_OPENTHREAD_MODULE_DIR}/include
+	${ZEPHYR_OPENTHREAD_MODULE_DIR}/examples/platforms
+)
+
+target_link_libraries(app PRIVATE
+	${CMAKE_BINARY_DIR}/zephyr/openthread/libtelink-openthread.a
+)
+
+endif()
