@@ -5366,6 +5366,14 @@ West:
   labels:
     - "area: OpenThread"
 
+"West project: openthread_telink_lib":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
+
 "West project: percepio":
   status: maintained
   maintainers:
