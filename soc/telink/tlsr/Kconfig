@@ -4,9 +4,6 @@
 if SOC_FAMILY_TELINK_TLSR
 
 rsource "*/Kconfig"
-if NET_L2_OPENTHREAD
-rsource "common/ot_ext/Kconfig.ot_ext"
-endif # NET_L2_OPENTHREAD
 if IEEE802154
 rsource "common/ot_rcp/Kconfig.ot_rcp"
 endif # IEEE802154
