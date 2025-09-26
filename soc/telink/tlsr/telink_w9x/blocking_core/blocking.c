@@ -1,148 +1,60 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2024 - 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <zephyr/init.h>
-#include <zephyr/sys/atomic.h>
 #include <ipc/ipc_based_driver.h>
+#include <soc.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(blocking_core_w91);
 
-#define MTIME_REG    DT_REG_ADDR(DT_INST(0, riscv_machine_timer))
-#define BLOCKING_THREAD_PRIORITY (CONFIG_NUM_PREEMPT_PRIORITIES - 1)
-
 enum {
-	IPC_DISPATCHER_BLOCKING_SET_STATE_ADDR = IPC_DISPATCHER_BLOCKING,
-	IPC_DISPATCHER_BLOCKING_STOP_CORE_REQ,
+	BLOCKING_CORE_STATE_INVALID = 0,
+	BLOCKING_CORE_STATE_INITED,
+	BLOCKING_CORE_STATE_BLOCK_READY
 };
 
-enum {
-	BLOCKING_INVALID_STATE,
-	BLOCKING_INITIATED_STATE,
-	BLOCKING_CORE_ACTIVE_STATE,
-	BLOCKING_CORE_STOP_REQ_STATE,
-	BLOCKING_CORE_STOPPED_STATE,
-	BLOCKING_CORE_ACTIVE_REQ_STATE,
-};
-
-static atomic_t __GENERIC_SECTION(.ram_code_data) blocking_state = BLOCKING_INVALID_STATE;
-static struct ipc_based_driver ipc_data;    /* ipc driver data part */
-
-/* API implementation: get Machine Timer value */
-static uint64_t __GENERIC_SECTION(.ram_code) get_mtime(void)
+static void __GENERIC_SECTION(.ram_code) __attribute__((noinline))
+blocking_w91_wait(volatile uint32_t *addr)
 {
-	const volatile uint32_t *const rl = (const volatile uint32_t *const)MTIME_REG;
-	const volatile uint32_t *const rh =
-		(const volatile uint32_t *const)(MTIME_REG + sizeof(uint32_t));
-	uint32_t mtime_l, mtime_h;
-
-	do {
-		mtime_h = *rh;
-		mtime_l = *rl;
-	} while (mtime_h != *rh);
-
-	return (((uint64_t)mtime_h) << 32) | mtime_l;
+	*addr = BLOCKING_CORE_STATE_BLOCK_READY;
+	while (*addr != BLOCKING_CORE_STATE_INITED) {
+		__asm("nop");
+	}
 }
 
-/* APIs implementation: set address of blocking state */
-static size_t pack_blocking_w91_set_state_addr(uint8_t inst, void *unpack_data, uint8_t *pack_data)
+static void blocking_w91_request(const void *data, size_t len, void *param)
 {
-	uint32_t *p_set_state_addr_req = unpack_data;
-	size_t pack_data_len = sizeof(uint32_t) + sizeof(uint32_t);
+	volatile uint32_t *blocking_state = (volatile uint32_t *)param;
+	uint32_t key = irq_lock();
 
-	if (pack_data != NULL) {
-		uint32_t id = IPC_DISPATCHER_MK_ID(IPC_DISPATCHER_BLOCKING_SET_STATE_ADDR, inst);
-
-		IPC_DISPATCHER_PACK_FIELD(pack_data, id);
-		IPC_DISPATCHER_PACK_FIELD(pack_data, *p_set_state_addr_req);
-	}
-
-	return pack_data_len;
-}
-
-IPC_DISPATCHER_UNPACK_FUNC_ONLY_WITH_ERROR_PARAM(blocking_w91_set_state_addr);
-
-static int blocking_w91_set_state_addr(uint32_t addr)
-{
-	int err;
-
-	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0,
-			blocking_w91_set_state_addr, &addr, &err,
-			CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
-
-	return err;
-}
-
-/* APIs implementation: core stop request event */
-static void __GENERIC_SECTION(.ram_code) __attribute__((noinline)) blocking_w91_stop_core(void)
-{
-	unsigned int key;
-
-	bool blocking_timeout = false;
-	uint64_t start_ticks;
-	uint64_t timeout_ticks = (uint64_t)CONFIG_BLOCKING_CORE_TELINK_W91_CORE_STOP_TIMEOUT_MS *
-			CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC / MSEC_PER_SEC;
-
-	if (atomic_get(&blocking_state) != BLOCKING_CORE_STOP_REQ_STATE) {
-		assert(0);
-		return;
-	}
-
-	key = irq_lock();
-
-	atomic_set(&blocking_state, BLOCKING_CORE_STOPPED_STATE);
-
-	start_ticks = get_mtime();
-
-	while (atomic_get(&blocking_state) != BLOCKING_CORE_ACTIVE_REQ_STATE) {
-		if ((get_mtime() - start_ticks) >= timeout_ticks) {
-			blocking_timeout = true;
-			break;
-		}
-	}
-
-	atomic_set(&blocking_state, BLOCKING_CORE_ACTIVE_STATE);
-
+	__asm("csrci " STRINGIFY(NDS_MMISC_CTL) ", (1<<3)");
+	blocking_w91_wait(blocking_state);
+	__asm("csrsi " STRINGIFY(NDS_MMISC_CTL) ", (1<<3)");
 	irq_unlock(key);
-
-	if (blocking_timeout) {
-		LOG_ERR("Blocking core timeout");
-	}
-}
-
-static void blocking_w91_stop_core_req(const void *data, size_t len, void *param)
-{
-	ARG_UNUSED(data);
-	ARG_UNUSED(len);
-	ARG_UNUSED(param);
-
-	blocking_w91_stop_core();
 }
 
 static int blocking_w91_init(void)
 {
-	int err;
+	static volatile uint32_t __GENERIC_SECTION(.ram_code_data) blocking_state =
+		BLOCKING_CORE_STATE_INVALID;
 
-	ipc_based_driver_init(&ipc_data);
+	uint32_t out[2] = {IPC_DISPATCHER_MK_ID(IPC_DISPATCHER_BLOCKING, 0),
+			   (uint32_t)&blocking_state};
 
-	ipc_dispatcher_add(IPC_DISPATCHER_MK_ID(IPC_DISPATCHER_BLOCKING_STOP_CORE_REQ, 0),
-		blocking_w91_stop_core_req, NULL);
-
-	err = blocking_w91_set_state_addr((uint32_t)&blocking_state);
-	if (err < 0) {
-		return err;
+	ipc_dispatcher_add(IPC_DISPATCHER_MK_ID(IPC_DISPATCHER_BLOCKING, 0), blocking_w91_request,
+			   (void *)&blocking_state);
+	if (ipc_dispatcher_send(out, sizeof(out)) != sizeof(out)) {
+		LOG_ERR("blocking core can't share address");
+		return -EIO;
 	}
-
-	if (atomic_get(&blocking_state) != BLOCKING_INITIATED_STATE) {
-		LOG_ERR("Incorrect state of blocking_state");
-		return -EINVAL;
+	while (blocking_state != BLOCKING_CORE_STATE_INITED) {
+		__asm("nop");
 	}
-
-	atomic_set(&blocking_state, BLOCKING_CORE_ACTIVE_STATE);
-
+	LOG_DBG("blocking core shared %p", (void *)&blocking_state);
 	return 0;
 }
 
