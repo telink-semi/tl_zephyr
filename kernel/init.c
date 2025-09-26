@@ -284,6 +284,17 @@ static void z_sys_init_run_level(enum init_level level)
 
 extern void boot_banner(void);
 
+#if CONFIG_WATCHDOG
+#include <watchdog.h>
+#include <zephyr/drivers/watchdog.h>
+#include "ext_driver/ext_pm.h"
+#if CONFIG_SOC_RISCV_TELINK_B92
+#include "lib/include/pm.h"
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#include "lib/include/pm/pm.h"
+#endif /* CONFIG_SOC_RISCV_TELINK_B92 */
+#endif /* CONFIG_WATCHDOG */
+
 /**
  * @brief Mainline for kernel's background thread
  *
@@ -337,6 +348,47 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 #ifdef CONFIG_MMU
 	z_mem_manage_boot_finish();
 #endif /* CONFIG_MMU */
+
+#if CONFIG_WATCHDOG && CONFIG_MCUBOOT
+#if CONFIG_SOC_RISCV_TELINK_B92
+	if ((pm_get_mcu_status() == MCU_STATUS_REBOOT_BACK) && wd_get_status())
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+	/* Needs to be manually refresh MCU status */
+	pm_update_status_info(1);
+
+	if (pm_get_mcu_status() == MCU_HW_REBOOT_TIMER_WATCHDOG)
+#endif /* CONFIG_SOC_RISCV_TELINK_B92 */
+	{
+		printk("### Watchdog Reset ###\r\n");
+	}
+#endif /* CONFIG_WATCHDOG && CONFIG_MCUBOOT */
+
+#if CONFIG_WATCHDOG
+	int err;
+	int wdt_channel_id;
+	const struct device *const wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
+
+	struct wdt_timeout_cfg wdt_config = {
+		/* Reset SoC when watchdog timer expires. */
+		.flags = WDT_FLAG_RESET_SOC,
+
+		/* Expire watchdog after max window */
+		.window.min = 0,
+		.window.max = CONFIG_TELINK_WDT_TIMEOUT,
+	};
+
+	wdt_channel_id = wdt_install_timeout(wdt, &wdt_config);
+	if (wdt_channel_id < 0) {
+		printk("Watchdog install error\n");
+		return;
+	}
+
+	err = wdt_setup(wdt, WDT_OPT_PAUSE_HALTED_BY_DBG);
+	if (err < 0) {
+		printk("Watchdog setup error\n");
+		return;
+	}
+#endif /* CONFIG_WATCHDOG */
 
 	extern int main(void);
 
