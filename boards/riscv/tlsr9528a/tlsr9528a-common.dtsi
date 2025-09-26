@@ -161,7 +161,11 @@
 		};
 		storage_partition: partition@f4000 {
 			label = "storage";
-			reg = <0xf4000 0x0000a000>;
+			reg = <0xf4000 0x00009000>;
+		};
+		user_para_partition: partition@fd000 {
+			label = "user-para";
+			reg = <0xfd000 0x1000>;
 		};
 
 		/* region <0xfe000 0x2000> is used for Telink B9x RF parameters */

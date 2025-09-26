@@ -131,6 +131,17 @@ static int soc_b9x_init(void)
 	blc_pm_select_internal_32k_crystal();
 #endif /* CONFIG_PM  */
 
+	/* Clean rf module after switch from zigbee */
+#if CONFIG_DUAL_MODE
+	/* Reset Radio */
+	rf_radio_reset();
+#if CONFIG_SOC_RISCV_TELINK_B91 || CONFIG_SOC_RISCV_TELINK_B92
+	rf_reset_dma();
+	rf_baseband_reset();
+#endif /* CONFIG_SOC_RISCV_TELINK_B91 || CONFIG_SOC_RISCV_TELINK_B92 */
+	rf_clr_irq_status(FLD_RF_IRQ_ALL);
+#endif /* CONFIG_DUAL_MODE */
+
 	/* system init */
 #if CONFIG_SOC_RISCV_TELINK_B91
 	sys_init(POWER_MODE, VBAT_TYPE);
