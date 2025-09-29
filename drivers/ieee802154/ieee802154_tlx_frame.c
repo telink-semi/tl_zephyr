@@ -80,6 +80,7 @@
 
 /* IE header types */
 #define IEEE802154_FRAME_IE_HEADER_TYPE_TERM       (0x7f)
+#define IEEE802154_FRAME_IE_HEADER_TYPE_CSL        (0x1a)
 
 /* elements lengths */
 #define IEEE802154_FRAME_LENGTH_FCF                (2)
@@ -115,6 +116,7 @@ struct ieee802154_frame {
 		uint8_t type;
 		bool ack_req;
 		bool fp_bit;
+		bool se_bit;
 	} general;
 	const uint8_t *header;
 	size_t header_len;
@@ -377,6 +379,7 @@ tlx_ieee802154_frame_parse(const uint8_t *buf, size_t bul_len,
 		(buf[0] & IEEE802154_FRAME_FCF_SECURITY_EN_MASK) ==
 			IEEE802154_FRAME_FCF_SECURITY_EN_ON) {
 		if (bul_len >= pos + IEEE802154_FRAME_LENGTH_SEC_HEADER) {
+			frame->general.se_bit = true;
 			switch (buf[pos] & IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_MASK) {
 			case IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_0:
 				if (bul_len >= pos + IEEE802154_FRAME_LENGTH_SEC_HEADER_MODE_0) {
@@ -431,6 +434,7 @@ tlx_ieee802154_frame_parse(const uint8_t *buf, size_t bul_len,
 		}
 		pos += IEEE802154_FRAME_LENGTH_SEC_HEADER;
 	} else {
+		frame->general.se_bit = false;
 		frame->sec_header = NULL;
 	}
 	frame->header_len = pos;
@@ -599,6 +603,60 @@ tlx_ieee802154_get_data(const uint8_t *payload,
 	return result;
 }
 
+ALWAYS_INLINE static uint8_t *tlx_ieee802154_ie_csl_search(const uint8_t *payload,
+							   size_t payload_len)
+{
+	uint8_t *result = NULL;
+	size_t pos = 0; /* current buffer position */
+
+	while (payload && payload_len >= pos + 1) {
+
+		uint8_t ie_type = ((payload[pos + 1] & IEEE802154_FRAME_IE_HEADER_TYPE_H_MASK)
+				   << IEEE802154_FRAME_IE_HEADER_TYPE_H_OFS) |
+				  ((payload[pos] & IEEE802154_FRAME_IE_HEADER_TYPE_L_MASK) >>
+				   IEEE802154_FRAME_IE_HEADER_TYPE_L_OFS);
+		uint8_t ie_len = IEEE802154_FRAME_LENGTH_IE_HEADER +
+				 (payload[pos] & IEEE802154_FRAME_IE_HEADER_LEN_MASK);
+
+		if (ie_type == IEEE802154_FRAME_IE_HEADER_TYPE_TERM) {
+			break;
+		} else if (ie_type == IEEE802154_FRAME_IE_HEADER_TYPE_CSL) {
+			if (pos + ie_len < payload_len) {
+				if (ie_len == 4 + IEEE802154_FRAME_LENGTH_IE_HEADER) {
+					result = (uint8_t *)&payload
+						[pos + IEEE802154_FRAME_LENGTH_IE_HEADER];
+				}
+			}
+			break;
+		}
+		pos += ie_len;
+	}
+	return result;
+}
+
+ALWAYS_INLINE static void tlx_ieee802154_ie_csl_commit_at(uint8_t *csl_pos, uint16_t aCslPeriod,
+							  uint16_t aCslPhase)
+{
+	if (csl_pos) {
+		csl_pos[0] = aCslPhase & 0xff;
+		csl_pos[1] = aCslPhase >> 8;
+		csl_pos[2] = aCslPeriod & 0xff;
+		csl_pos[3] = aCslPeriod >> 8;
+	}
+}
+
+ALWAYS_INLINE static bool tlx_ieee802154_ie_csl_commit(uint8_t *payload, size_t payload_len,
+						       uint16_t aCslPeriod, uint16_t aCslPhase)
+{
+	bool result = false;
+	uint8_t *csl_data = tlx_ieee802154_ie_csl_search(payload, payload_len);
+
+	if (csl_data) {
+		tlx_ieee802154_ie_csl_commit_at(csl_data, aCslPeriod, aCslPhase);
+		result = true;
+	}
+	return result;
+}
 
 /*
  * Cryptography functionality

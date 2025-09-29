@@ -336,12 +336,23 @@ static void tlx_mac_keys_frame_cnt_inc(struct tlx_mac_keys *mac_keys_data, uint8
 
 #endif
 
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+static uint16_t ALWAYS_INLINE tlx_get_csl_phase(struct tlx_data *tlx)
+{
+	uint32_t csl_period_us = tlx->csl_period * 160;
+	int64_t cur_time_us = k_ticks_to_us_floor64(k_uptime_ticks());
+	int64_t diff_us = tlx->csl_sample_time_us - cur_time_us;
+
+	diff_us = diff_us < 0 ? diff_us % csl_period_us + csl_period_us : diff_us % csl_period_us;
+
+	return (uint16_t)(diff_us / 160 + 1);
+}
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+
 /* Disable power management by device */
-static void tlx_disable_pm(const struct device *dev)
+static void tlx_disable_pm(struct tlx_data *tlx)
 {
 #ifdef CONFIG_PM_DEVICE
-	struct tlx_data *tlx = dev->data;
-
 	if (atomic_test_and_set_bit(&tlx->current_pm_lock, 0) == 0) {
 		pm_policy_state_lock_get(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
 	}
@@ -349,16 +360,14 @@ static void tlx_disable_pm(const struct device *dev)
 		pm_policy_state_lock_get(PM_STATE_STANDBY, PM_ALL_SUBSTATES);
 	}
 #else
-	ARG_UNUSED(dev);
+	ARG_UNUSED(tlx);
 #endif /* CONFIG_PM_DEVICE */
 }
 
 /* Enable power management by device */
-static void tlx_enable_pm(const struct device *dev)
+static void tlx_enable_pm(struct tlx_data *tlx)
 {
 #ifdef CONFIG_PM_DEVICE
-	struct tlx_data *tlx = dev->data;
-
 	if (atomic_test_and_clear_bit(&tlx->current_pm_lock, 0) == 1) {
 		pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
 	}
@@ -366,7 +375,7 @@ static void tlx_enable_pm(const struct device *dev)
 		pm_policy_state_lock_put(PM_STATE_STANDBY, PM_ALL_SUBSTATES);
 	}
 #else
-	ARG_UNUSED(dev);
+	ARG_UNUSED(tlx);
 #endif /* CONFIG_PM_DEVICE */
 }
 
@@ -590,12 +599,23 @@ ALWAYS_INLINE tlx_send_ack(const struct device *dev, struct ieee802154_frame *fr
 
 	if (frame->general.ver == IEEE802154_FRAME_FCF_VER_2015) {
 		key = tlx_mac_keys_get(tlx->mac_keys, 1);
-		if (key && frame->payload) {
-			memcpy(payload, frame->payload, frame->payload_len);
+		if (frame->general.se_bit) {
 			frame->sec_header = sec_header;
 			frame->sec_header_len = sizeof(sec_header);
+		}
+
+		if (frame->payload) {
+			memcpy(payload, frame->payload, frame->payload_len);
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+			if (tlx->csl_period > 0) {
+				(void)tlx_ieee802154_ie_csl_commit(payload, frame->payload_len,
+								   tlx->csl_period,
+								   tlx_get_csl_phase(tlx));
+			}
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 			frame->payload = payload;
-			frame->payload_len = sizeof(payload);
+			frame->payload_len =
+				frame->general.se_bit ? frame->payload_len + 4 : frame->payload_len;
 		}
 	}
 #endif
@@ -737,36 +757,37 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 			bool enh_ack = (frame.general.ver == IEEE802154_FRAME_FCF_VER_2015);
 			uint8_t *ack_ie_header = NULL;
 			size_t ack_ie_header_len = 0;
+			bool ack_se_bit = false;
 #if CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
 			if (enh_ack) {
+				ack_se_bit = frame.general.se_bit ? true : false;
 				int idx = tlx_enh_ack_table_search(tlx->enh_ack_table,
 					frame.src_addr_ext ? NULL : frame.src_addr,
 					frame.src_addr_ext ? frame.src_addr : NULL);
 				if (idx >= 0) {
 					ack_ie_header =
 						(uint8_t *)&tlx->enh_ack_table->item[idx].ie_header;
-					ack_ie_header_len = sizeof(struct ieee802154_header_ie);
+					ack_ie_header_len =
+						tlx->enh_ack_table->item[idx].ie_header.length + 2;
 				}
 			}
 #endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 			struct ieee802154_frame ack_frame = {
-				.general = {
-					.valid = true,
-					.ver = enh_ack ? IEEE802154_FRAME_FCF_VER_2015 :
-						IEEE802154_FRAME_FCF_VER_2003,
-					.type = IEEE802154_FRAME_FCF_TYPE_ACK,
-					.fp_bit = frame_pending
-				},
+				.general = {.valid = true,
+					    .ver = enh_ack ? IEEE802154_FRAME_FCF_VER_2015
+							   : IEEE802154_FRAME_FCF_VER_2003,
+					    .type = IEEE802154_FRAME_FCF_TYPE_ACK,
+					    .fp_bit = frame_pending,
+					    .se_bit = ack_se_bit},
 				.sn = frame.sn,
-				.dst_panid = enh_ack ?
-					(frame.src_panid ? frame.src_panid : frame.dst_panid) :
-					NULL,
+				.dst_panid = enh_ack ? (frame.src_panid ? frame.src_panid
+									: frame.dst_panid)
+						     : NULL,
 				.dst_addr = enh_ack ? frame.src_addr : NULL,
 				.dst_addr_ext = enh_ack ? frame.src_addr_ext : false,
 				.payload = ack_ie_header,
 				.payload_len = ack_ie_header_len,
-				.payload_ie = true
-			};
+				.payload_ie = true};
 			tlx_send_ack(dev, &ack_frame);
 		}
 		pkt = net_pkt_rx_alloc_with_buffer(tlx->iface, length, AF_UNSPEC, 0, K_NO_WAIT);
@@ -847,6 +868,118 @@ static void __GENERIC_SECTION(.ram_code) tlx_rf_isr(const struct device *dev)
 	}
 }
 
+volatile bool tlx_rf_zigbee_250K_mode;
+
+static int tlx_start_radio(struct tlx_data *tlx)
+{
+	tlx_disable_pm(tlx);
+	/* check if RF is already started */
+	if (!tlx->is_started) {
+#ifdef CONFIG_DYNAMIC_INTERRUPTS
+		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
+				    (void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
+		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
+#endif /* CONFIG_DYNAMIC_INTERRUPTS */
+		if (!tlx_rf_zigbee_250K_mode) {
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+			ske_dig_en();
+#endif
+#endif
+			if (tlx->rf_mode_154 == false) {
+				rf_baseband_reset();
+				rf_reset_dma();
+				tlx->rf_mode_154 = true;
+			}
+#if CONFIG_SOC_RISCV_TELINK_TL321X
+			rf_mode_init();
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
+			rf_zigbee_mode_init();
+#endif
+			rf_set_zigbee_250K_mode();
+			tlx_rf_zigbee_250K_mode = true;
+		}
+		rf_set_tx_dma(1, TLX_TRX_LENGTH);
+		rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
+		if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
+			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(tlx->current_channel));
+		}
+		if (tlx->current_dbm != TLX_TX_PWR_NOT_SET) {
+			rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
+		}
+		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
+		riscv_plic_irq_enable(DT_INST_IRQN(0));
+		rf_set_rxmode();
+		tlx->is_started = true;
+	}
+	return 0;
+}
+
+static int tlx_stop_radio(struct tlx_data *tlx)
+{
+	/* check if RF is already stopped */
+	if (tlx->is_started) {
+		if (tlx->ack_sending) {
+			if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
+				tlx->ack_sending = false;
+			}
+		}
+		riscv_plic_irq_disable(DT_INST_IRQN(0));
+		rf_set_tx_rx_off();
+#ifdef CONFIG_PM_DEVICE
+		/* Reset Radio */
+		rf_radio_reset();
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+		rf_reset_dma();
+		rf_baseband_reset();
+#endif
+		tlx_rf_zigbee_250K_mode = false;
+#endif /* CONFIG_PM_DEVICE */
+		tlx->is_started = false;
+	}
+	tlx_enable_pm(tlx);
+
+	return 0;
+}
+
+static int tlx_set_channel_radio(struct tlx_data *tlx, uint16_t channel)
+{
+	if (channel < 11 || channel > 26) {
+		return -EINVAL;
+	}
+	if (tlx->current_channel != channel) {
+		tlx->current_channel = channel;
+		if (tlx->is_started) {
+			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(channel));
+			rf_set_rxmode();
+		}
+	}
+	return 0;
+}
+
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+
+static void tlx_csl_rx_work(struct k_work *item)
+{
+	struct tlx_data *tlx =
+		CONTAINER_OF(k_work_delayable_from_work(item), struct tlx_data, csl_rx_work);
+
+	if (tlx->csl_rx_duration_us) {
+		uint16_t current_channel = tlx->current_channel;
+
+		(void)tlx_set_channel_radio(tlx, tlx->csl_rx_channel);
+		(void)tlx_start_radio(tlx);
+		(void)k_work_reschedule(&tlx->csl_rx_work, K_USEC(tlx->csl_rx_duration_us));
+		tlx->csl_rx_duration_us = 0;
+		tlx->csl_rx_channel = current_channel;
+	} else {
+		(void)tlx_stop_radio(tlx);
+		(void)tlx_set_channel_radio(tlx, tlx->csl_rx_channel);
+	}
+}
+
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+
 /* Driver initialization */
 static int tlx_init(const struct device *dev)
 {
@@ -881,6 +1014,11 @@ static int tlx_init(const struct device *dev)
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	tlx_mac_keys_data_clean(tlx->mac_keys);
 #endif
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+	k_work_init_delayable(&tlx->csl_rx_work, tlx_csl_rx_work);
+	tlx->csl_rx_duration_us = 0;
+	tlx->csl_rx_channel = TLX_TX_CH_NOT_SET;
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 	return 0;
 }
 
@@ -909,6 +1047,9 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+	caps |= IEEE802154_HW_RXTIME;
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	caps |= IEEE802154_HW_TX_SEC;
 #endif
@@ -947,20 +1088,7 @@ static int tlx_cca(const struct device *dev)
 /* API implementation: set_channel */
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
-	struct tlx_data *tlx = dev->data;
-
-	if (channel < 11 || channel > 26) {
-		return -EINVAL;
-	}
-
-	if (tlx->current_channel != channel) {
-		tlx->current_channel = channel;
-		if (tlx->is_started) {
-			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(channel));
-		}
-	}
-
-	return 0;
+	return tlx_set_channel_radio(dev->data, channel);
 }
 
 /* API implementation: filter */
@@ -1007,7 +1135,6 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 	return 0;
 }
 
-volatile bool tlx_rf_zigbee_250K_mode;
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 extern bool isThreadCommissioned;
 
@@ -1023,79 +1150,13 @@ _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 /* API implementation: start */
 static int tlx_start(const struct device *dev)
 {
-	struct tlx_data *tlx = dev->data;
-
-	tlx_disable_pm(dev);
-	/* check if RF is already started */
-	if (!tlx->is_started) {
-#ifdef CONFIG_DYNAMIC_INTERRUPTS
-		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
-			(void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
-		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
-#endif /* CONFIG_DYNAMIC_INTERRUPTS */
-		if (!tlx_rf_zigbee_250K_mode) {
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
-			ske_dig_en();
-#endif
-#endif
-			if (tlx->rf_mode_154 == false) {
-				rf_baseband_reset();
-				rf_reset_dma();
-				tlx->rf_mode_154 = true;
-			}
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-			rf_mode_init();
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-			rf_zigbee_mode_init();
-#endif
-			rf_set_zigbee_250K_mode();
-			tlx_rf_zigbee_250K_mode = true;
-		}
-		rf_set_tx_dma(1, TLX_TRX_LENGTH);
-		rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
-		if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
-			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(tlx->current_channel));
-		}
-		if (tlx->current_dbm != TLX_TX_PWR_NOT_SET) {
-			rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
-		}
-		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
-		riscv_plic_irq_enable(DT_INST_IRQN(0));
-		tlx->is_started = true;
-	}
-
-	return 0;
+	return tlx_start_radio(dev->data);
 }
 
 /* API implementation: stop */
 static int tlx_stop(const struct device *dev)
 {
-	struct tlx_data *tlx = dev->data;
-
-	/* check if RF is already stopped */
-	if (tlx->is_started) {
-		if (tlx->ack_sending) {
-			if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
-				tlx->ack_sending = false;
-			}
-		}
-		riscv_plic_irq_disable(DT_INST_IRQN(0));
-		rf_set_tx_rx_off();
-#ifdef CONFIG_PM_DEVICE
-		/* Reset Radio */
-		rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
-		rf_reset_dma();
-		rf_baseband_reset();
-#endif
-		tlx_rf_zigbee_250K_mode = false;
-#endif /* CONFIG_PM_DEVICE */
-		tlx->is_started = false;
-	}
-	tlx_enable_pm(dev);
-
-	return 0;
+	return tlx_stop_radio(dev->data);
 }
 
 /* API implementation: tx */
@@ -1136,9 +1197,18 @@ static int tlx_tx(const struct device *dev,
 
 	do {
 
+		uint8_t enc_rounds = 1;
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+		uint8_t *ie_csl_pos = NULL;
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 		if (net_pkt_ieee802154_mac_hdr_rdy(pkt)) {
-			LOG_WRN("The packet is encrypted and sent directly\n");
-			break;
+			if (frame.payload_ie &&
+			    tlx_ieee802154_ie_csl_search(frame.payload, frame.payload_len)) {
+				enc_rounds = 2;
+			} else {
+				LOG_WRN("The packet is encrypted and sent directly\n");
+				break;
+			}
 		}
 
 		net_pkt_set_ieee802154_frame_secured(pkt, false);
@@ -1233,7 +1303,18 @@ static int tlx_tx(const struct device *dev,
 					LOG_WRN("invalid payload length MIC");
 					break;
 				}
-
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+				if (tlx->csl_period > 0 && frame.payload_ie) {
+					if (private_data) {
+						ie_csl_pos = tlx_ieee802154_ie_csl_search(
+							private_data, tag_data - private_data);
+					} else {
+						key_id = 0;
+						LOG_WRN("failed to insert CSL IE");
+						break;
+					}
+				}
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 				if (frame.payload_ie) {
 					/* IE header should be open */
 					if (private_data) {
@@ -1268,19 +1349,29 @@ static int tlx_tx(const struct device *dev,
 				}
 
 				/* here open_data && tag_data - valid, private_data possible NULL */
-				if (!ieee802154_tlx_crypto_encrypt(key, src_addr,
-						tlx_mac_keys_frame_cnt_get(tlx->mac_keys, key_id),
-						sec_level,
-						open_data, private_data ?
-							private_data - open_data :
-							tag_data - open_data,
-						private_data, private_data ?
-							tag_data - private_data : 0,
-						private_data, tag_data, tag_len)) {
-					key_id = 0;
-					LOG_WRN("encrypt failed %u", sec_level);
+				for (uint8_t i = 0; i < enc_rounds; i++) {
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+					if (i == enc_rounds - 1) {
+						tlx_ieee802154_ie_csl_commit_at(
+							ie_csl_pos, tlx->csl_period,
+							tlx_get_csl_phase(tlx));
+					}
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+					if (!ieee802154_tlx_crypto_encrypt(
+						    key, src_addr,
+						    tlx_mac_keys_frame_cnt_get(tlx->mac_keys,
+									       key_id),
+						    sec_level, open_data,
+						    private_data ? private_data - open_data
+								 : tag_data - open_data,
+						    private_data,
+						    private_data ? tag_data - private_data : 0,
+						    private_data, tag_data, tag_len)) {
+						key_id = 0;
+						LOG_WRN("encrypt failed %u", sec_level);
+						break;
+					}
 				}
-
 			} while (0);
 			break;
 		default:
@@ -1414,7 +1505,7 @@ static int tlx_configure(const struct device *dev,
 		}
 		break;
 #endif /* CONFIG_OPENTHREAD_FTD */
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
+#if CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
 	case IEEE802154_CONFIG_ENH_ACK_HEADER_IE:
 		{
 			uint8_t short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
@@ -1434,9 +1525,32 @@ static int tlx_configure(const struct device *dev,
 		}
 		break;
 #endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
-	case IEEE802154_CONFIG_EVENT_HANDLER:
-		tlx->event_handler = config->event_handler;
-		break;
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+		case IEEE802154_CONFIG_EXPECTED_RX_TIME: {
+			tlx->csl_sample_time_us = config->expected_rx_time / NSEC_PER_USEC;
+		} break;
+		case IEEE802154_CONFIG_RX_SLOT: {
+			uint64_t rx_start_us = config->rx_slot.start / NSEC_PER_USEC;
+
+			tlx->csl_rx_duration_us = config->rx_slot.duration / NSEC_PER_USEC;
+			tlx->csl_rx_channel = config->rx_slot.channel;
+
+			uint64_t now_us = k_ticks_to_us_near64(k_uptime_ticks());
+			uint64_t delay_us = (rx_start_us > now_us) ? (rx_start_us - now_us) : 0;
+			/* reduce by 1 tick, better to turn radio earlier (resolution is 1 tick) */
+			delay_us =
+				(delay_us > USEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
+					? delay_us - USEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC
+					: 0;
+			(void)k_work_reschedule(&tlx->csl_rx_work, K_USEC(delay_us));
+		} break;
+		case IEEE802154_CONFIG_CSL_PERIOD: {
+			tlx->csl_period = config->csl_period;
+		} break;
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+		case IEEE802154_CONFIG_EVENT_HANDLER:
+			tlx->event_handler = config->event_handler;
+			break;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	case IEEE802154_CONFIG_MAC_KEYS:
 		{
