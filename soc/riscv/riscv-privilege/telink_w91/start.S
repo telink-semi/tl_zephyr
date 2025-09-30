@@ -99,8 +99,8 @@ _start_n22:
 	li     t0, 0x2
 	csrs   NDS_MCACHE_CTL, t0               #/ enable D-Cache
 #endif
-	li     t0, (1 << 6) | (1 << 3)
-	csrs   NDS_MMISC_CTL, t0                #/ Enable Misaligned access and branch prediction
+	li     t0, (1 << 6)
+	csrs   NDS_MMISC_CTL, t0                #/ Enable Misaligned access
 
 #if DT_HAS_CHOSEN(zephyr_aux_ram)
 
