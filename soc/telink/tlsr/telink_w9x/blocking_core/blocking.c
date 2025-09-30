@@ -31,9 +31,7 @@ static void blocking_w91_request(const void *data, size_t len, void *param)
 	volatile uint32_t *blocking_state = (volatile uint32_t *)param;
 	uint32_t key = irq_lock();
 
-	__asm("csrci " STRINGIFY(NDS_MMISC_CTL) ", (1<<3)");
 	blocking_w91_wait(blocking_state);
-	__asm("csrsi " STRINGIFY(NDS_MMISC_CTL) ", (1<<3)");
 	irq_unlock(key);
 }
 
