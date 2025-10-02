@@ -87,7 +87,8 @@ static void opus_decoder_work(struct k_work *item)
 {
 	struct opus_decoder *dec = CONTAINER_OF(item, struct opus_decoder, work);
 
-	int frames = tlka_opus_decode(dec->decoder, dec->inp.data, dec->inp.length, &dec->out[8],
+	int frames = tlka_opus_decode(dec->decoder, dec->inp.data, dec->inp.length,
+				      (opus_int16 *)((uint8_t *)dec->out + 8),
 				      dec->param.samples_per_frame, 0, dec->scratch);
 
 	if (frames != dec->param.samples_per_frame) {
