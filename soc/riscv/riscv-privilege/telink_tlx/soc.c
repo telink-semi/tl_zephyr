@@ -239,9 +239,9 @@ static int soc_tlx_init(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X
-	case CLK_96MHZ:
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
-		break;
+	// case CLK_96MHZ:
+	// 	PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
+	// 	break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
@@ -358,9 +358,9 @@ void soc_tlx_restore(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X
-	case CLK_96MHZ:
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
-		break;
+	// case CLK_96MHZ:
+	// 	PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
+	// 	break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
