@@ -39,7 +39,7 @@ static size_t pack_pm_w91_enable(uint8_t inst, void *unpack_data, uint8_t *pack_
 	struct pm_w91_enable_req *p_pm_enable_req = unpack_data;
 
 	size_t pack_data_len = sizeof(uint32_t) + sizeof(p_pm_enable_req->enable) +
-		sizeof(p_pm_enable_req->resume_addr);
+			       sizeof(p_pm_enable_req->resume_addr);
 
 	if (pack_data != NULL) {
 		uint32_t id = IPC_DISPATCHER_MK_ID(IPC_DISPATCHER_PM_ENABLE, inst);
@@ -95,7 +95,6 @@ static int pm_w91_set_wakeup_time(uint64_t *p_time)
 static int pm_w91_init(void)
 {
 	ipc_based_driver_init(&ipc_data);
-
 	if (!pm_w91_enable(true)) {
 		pm_w91_initialized = true;
 	}
@@ -128,7 +127,7 @@ static uint64_t get_mtime(void)
 static void set_mtime_compare(uint64_t time_cmp)
 {
 	*(volatile uint64_t *const)((uint32_t)(MTIMECMP_REG +
-		(_current_cpu->id * sizeof(uint64_t)))) = time_cmp;
+					       (_current_cpu->id * sizeof(uint64_t)))) = time_cmp;
 }
 
 /* PM state set API implementation */
