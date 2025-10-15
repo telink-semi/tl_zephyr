@@ -1,0 +1,10 @@
+boards:
+- name: tl3238x
+  vendor: telink
+  socs:
+  - name: telink_tl323x
+
+- name: tl3238x_retention
+  vendor: telink
+  socs:
+  - name: telink_tl323x

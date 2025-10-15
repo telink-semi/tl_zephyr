@@ -7,7 +7,7 @@
 /dts-v1/;
 
 #include <zephyr/dt-bindings/adc/adc.h>
-#include <zephyr/dt-bindings/adc/tl322x-adc.h>
+#include <zephyr/dt-bindings/adc/tlx-adc.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/dt-bindings/i2c/i2c.h>
 #include <zephyr/dt-bindings/pwm/pwm.h>
@@ -21,7 +21,7 @@
 		#size-cells = <0>;
 		cpu0: cpu@0 {
 			reg = <0>;
-			clock-frequency = <64000000>;
+			clock-frequency = <24000000>;
 			compatible ="telink,tlx", "riscv";
 			riscv,isa = "rv32imac_zicsr_zifencei";
 			hlic: interrupt-controller {
@@ -38,7 +38,7 @@
 		state0: state0 {
 			compatible = "zephyr,power-state";
 			power-state-name = "suspend-to-idle";
-			min-residency-us = <10000>;
+			min-residency-us = <20000>;
 			exit-latency-us = <3000>;
 		};
 	};
@@ -46,14 +46,14 @@
 	soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
-		compatible = "telink,telink_tl322x-soc";
+		compatible = "telink,telink_tl323x-soc";
 		ranges;
 
-		ram_ilm: memory@0 {
+		ram_ilm: memory@68000 {
 			compatible = "mmio-sram";
 		};
 
-		ram_dlm: memory@80000 {
+		ram_ilm_non_retention: memory@80000 {
 			compatible = "mmio-sram";
 		};
 
@@ -65,18 +65,9 @@
 			interrupt-parent = <&hlic>;
 		};
 
-		mbox: mbox@80101c00 {
-			compatible = "telink,mbox-ipc-tl322x";
-			#mbox-cells = <1>;
-			reg = <0x80101c00 0x36>;
-			interrupt-parent = <&plic0>;
-			interrupts = <58 1>;
-			status = "okay";
-		};
-
-		flash_mspi: flash-controller@a3ffff00 {
+		flash_mspi: flash-controller@A3FFFF00 {
 			compatible = "telink,tlx-flash-controller";
-			reg = <0xa3ffff00 0x100>;
+			reg = <0xA3FFFF00 0x100>;
 
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -89,7 +80,7 @@
 		};
 
 		power: power@80140180 {
-			compatible = "telink,tl322x-power";
+			compatible = "telink,tl323x-power";
 			reg = <0x80140180 0x40>;
 			power-mode = "DCDC_1P25_LDO_1P8";
 			vbat-type = "VBAT_MAX_VALUE_GREATER_THAN_3V6";
@@ -156,36 +147,6 @@
 			#gpio-cells = <2>;
 		};
 
-		gpiog: gpio@80140c60 {
-			compatible = "telink,tlx-gpio";
-			gpio-controller;
-			interrupt-parent = <&plic0>;
-			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c60 0x10>;
-			status = "disabled";
-			#gpio-cells = <2>;
-		};
-
-		gpioh: gpio@80140c70 {
-			compatible = "telink,tlx-gpio";
-			gpio-controller;
-			interrupt-parent = <&plic0>;
-			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c70 0x10>;
-			status = "disabled";
-			#gpio-cells = <2>;
-		};
-
-		gpioi: gpio@80140c80 {
-			compatible = "telink,tlx-gpio";
-			gpio-controller;
-			interrupt-parent = <&plic0>;
-			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c80 0x10>;
-			status = "disabled";
-			#gpio-cells = <2>;
-		};
-
 		plic0: interrupt-controller@c4000000 {
 			compatible = "sifive,plic-1.0.0";
 			#address-cells = <0>;
@@ -195,7 +156,7 @@
 			interrupt-parent = <&cpu0>;
 			reg = < 0xc4000000 0x00210000>;
 			riscv,max-priority = <3>;
-			riscv,ndev = <65>;
+			riscv,ndev = <46>;
 		};
 
 		uart0: serial@80140080 {
@@ -233,30 +194,18 @@
 			status = "disabled";
 		};
 
-		pwm0: pwm@80140e00 {
+		pwm0: pwm@80140400 {
 			compatible = "telink,tlx-pwm";
-			reg = <0x80140e00 0x80>;
+			reg = <0x80140400 0x80>;
 			channels = <6>;
 			status = "disabled";
 			#pwm-cells = <3>;
 		};
 
-		gspi: spi@8bffff00 {
-			compatible = "telink,tl322x-spi";
-			reg = <0x8bffff00 0x100>;
+		gspi: spi@8BFFFF00 {
+			compatible = "telink,tl323x-spi";
+			reg = <0x8BFFFF00 0x100>;
 			peripheral-id = "GSPI_MODULE";
-			cs0-pin = "0";
-			cs1-pin = "0";
-			cs2-pin = "0";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-
-		lspi: spi@87ffff00 {
-			compatible = "telink,tl322x-spi";
-			reg = <0x87ffff00 0x100>;
-			peripheral-id = "LSPI_MODULE";
 			cs0-pin = "0";
 			cs1-pin = "0";
 			cs2-pin = "0";
@@ -281,23 +230,14 @@
 			#io-channel-cells = <1>;
 		};
 
-		usbd: usbd@80280000 {
-			compatible = "telink,tl322x-usbd";
-			reg = <0x80280000 0x6000c>;
-			interrupts = <26 1>;
-			interrupt-parent = <&plic0>;
-			num-bidir-endpoints = <9>;
-			status = "disabled";
-		};
-
-		pinctrl: pinctrl@80140cb0 {
+		pinctrl: pinctrl@80140c70 {
 			compatible = "telink,tlx-pinctrl";
-			reg = <0x80140cb0 0x40
-			       0x80140c06 0x90
-			       0x00000017 0x12>;
+			reg = <0x80140c70 0x30
+				   0x80140c06 0x30
+				   0x00000017 0x0C>;
 			reg-names = "pin_mux",
-				    "gpio_en",
-				    "pull_up_en";
+						"gpio_en",
+						"pull_up_en";
 			status = "okay";
 		};
 

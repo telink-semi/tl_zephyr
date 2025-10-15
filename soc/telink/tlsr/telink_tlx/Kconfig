@@ -44,6 +44,13 @@ config TELINK_TL322X_PMP
 	help
 		This option enables Telink TL322X PMP(memory protection) module.
 
+config TELINK_TL323X_PMP
+	bool "Support Hardware Memory Protection"
+	depends on SOC_RISCV_TELINK_TL323X
+	select RISCV_PMP
+	help
+		This option enables Telink TL323X PMP(memory protection) module.
+
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
 	depends on SOC_SERIES_RISCV_TELINK_TLX && MBEDTLS
@@ -137,8 +144,8 @@ config COMPRESS_LZMA_DICTIONARY_SIZE
 
 # Fix ram overflow during bootloader compilation after config LZMA
 config TELINK_TLX_MATTER_RETENTION_LAYOUT
-	bool "link mcu_boot_tlx.ld for tl321X or tl322x"
-	default y if SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL322X
+	bool "link mcu_boot_tlx.ld for tl321X/tl322x/tl323x"
+	default y if SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL322X || SOC_RISCV_TELINK_TL323X
 	default n
 	help
 		This option link mcu_boot_tlx.ld to optimize RAM usage

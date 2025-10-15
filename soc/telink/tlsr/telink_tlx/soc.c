@@ -41,6 +41,10 @@
 	#define CLK_72MHZ                   72000000u
 	#define CLK_96MHZ                   96000000u
 	#define CLK_192MHZ                  192000000u
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	#define CLK_24MHZ                   24000000u
+	#define CLK_48MHZ                   48000000u
+	#define CLK_96MHZ                   96000000u
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #define CLK_40MHZ  40000000u
 #define CLK_48MHZ  48000000u
@@ -72,6 +76,16 @@
 		#error "Wrong value for power-mode parameter"
 	#endif
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
+	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
+		#define POWER_MODE      LDO_1P25_LDO_1P8
+	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
+		#define POWER_MODE      DCDC_1P25_LDO_1P8
+	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 2
+		#define POWER_MODE      DCDC_1P25_DCDC_1P8
+	#else
+	#error "Wrong value for power-mode parameter"
+	#endif
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
 	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
 		#define POWER_MODE      LDO_1P25_LDO_1P8
 	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
@@ -116,6 +130,12 @@
 		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ) && \
 		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_192MHZ))
 		#error "Invalid clock-frequency. Supported values: 48,64,72,96,192 MHz"
+	#endif
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) && \
+		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
+		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
+		#error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 	#endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_40MHZ) &&	  \
@@ -200,12 +220,19 @@ void soc_early_init_hook(void)
 	case CLK_24MHZ:
 		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
 		break;
-#endif /* CONFIG_SOC_RISCV_TELINK_TL321X */
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	case CLK_24MHZ:
+		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		break;
+#endif
+
 	case CLK_48MHZ:
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 		PLL_192M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 	case CLK_60MHZ:
 		PLL_240M_CCLK_60M_HCLK_60M_PCLK_15M_MSPI_48M;
@@ -309,12 +336,19 @@ void soc_tlx_restore(void)
 	case CLK_24MHZ:
 		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
 		break;
-#endif /* CONFIG_SOC_RISCV_TELINK_TL321X */
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	case CLK_24MHZ:
+		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		break;
+#endif
+
 	case CLK_48MHZ:
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 		PLL_192M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
@@ -415,7 +449,7 @@ unsigned char flash_set_4line_read_write(mspi_slave_device_num_e device_num, uns
 
 	return status;
 }
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 #include "flash/flash_common.h"
 #include "flash_base.h"
 /**
@@ -447,7 +481,7 @@ static int soc_tlx_check_flash(void)
 	flash_capacity_e hw_flash_cap;
 	uint32_t mid;
 
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	mid = flash_read_mid();
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 	mid = flash_read_mid_with_device_num(SLAVE0);
@@ -457,7 +491,7 @@ static int soc_tlx_check_flash(void)
 	hw_flash_cap = (flash_capacity_e)((mid & FLASH_MID_SIZE_MASK) >> FLASH_MID_SIZE_OFFSET);
 
 	/* Enable Quad SPI (4x) read and write mode */
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	if (flash_set_4line_read_write(mid) != 1) {
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {

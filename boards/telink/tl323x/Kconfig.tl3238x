@@ -1,5 +1,5 @@
 # Copyright (c) 2025 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-config BOARD_TL3228X_RETENTION
-	bool "Telink TL322X Platform with retention"
+config BOARD_TL3238X
+	bool "Telink TL323X Platform"
