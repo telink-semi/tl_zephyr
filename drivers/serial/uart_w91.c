@@ -714,7 +714,7 @@ static const struct uart_driver_api uart_w91_driver_api = {
                                                                                                    \
 	static struct uart_w91_data uart_w91_data_##n;                                             \
                                                                                                    \
-	DEVICE_DT_INST_DEFINE(n, uart_w91_driver_init, PM_DEVICE_DT_INST_GET(n),                   \
+	DEVICE_DT_INST_DEFINE(n, uart_w91_driver_init, NULL,                   \
 			      &uart_w91_data_##n, &uart_w91_cfg_##n, POST_KERNEL,                  \
 			      CONFIG_TELINK_W91_IPC_DRIVERS_INIT_PRIORITY,                         \
 			      (void *)&uart_w91_driver_api);

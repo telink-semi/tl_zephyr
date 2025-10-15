@@ -43,6 +43,7 @@
 	};
 
 	/* Short TL_Key1 (J20 pin 11) to ground (J20 pin 25-35) */
+	/* During deep sleep, need to use GPIO0 - GPIO7, they are AON */
 	keys {
 		compatible = "gpio-keys";
 
