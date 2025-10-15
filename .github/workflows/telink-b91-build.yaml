@@ -1,6 +1,8 @@
 name: Telink B91 build examples
 
-on: pull_request
+on: 
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   telink_build_examples:
