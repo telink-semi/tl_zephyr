@@ -17,7 +17,7 @@
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 #define GPIO_IRQ_REG reg_gpio_irq_ctrl
 #include "gpio.h"
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 #define GPIO_IRQ_REG reg_gpio_irq_ctrl
 #define GPIO_IRQ_LEVEL_REG reg_gpio_irq_level
 #define GPIO_IRQ_SRC_MASK_REG reg_gpio_irq_src_mask
@@ -46,7 +46,7 @@
 /* Check that gpio is port C */
 #define IS_PORT_C(gpio)         ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpioc)))
 
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 /* Check that gpio is port B */
 #define IS_PORT_B(gpio)         ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpiob)))
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -55,21 +55,21 @@
 #endif
 
 /* Check that gpio is port F */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 #define IS_PORT_F(gpio)         ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpiof)))
 #else
 #define IS_PORT_F(gpio)         0
 #endif
 
 /* Check that gpio is port G */
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 #define IS_PORT_G(gpio)         0
-#elif CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X 
 #define IS_PORT_G(gpio)         ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpiog)))
 #endif
 
 /* Check that gpio is port H & I */
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL323X
 #define IS_PORT_H(gpio)         0
 #define IS_PORT_I(gpio)         0
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
@@ -90,7 +90,7 @@
 #endif
 
 /* GPIO Wakeup Enable registers */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 #define reg_wakeup_trig_pol_base 0x3f
 #define reg_wakeup_trig_en_base  0x45
 
@@ -113,7 +113,7 @@
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 #define IRQ_GPIO2_RISC0          ((uint8_t)26u)
 #define IRQ_GPIO2_RISC1          ((uint8_t)27u)
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 #define IRQ_GPIO0                ((uint8_t)34u)
 #define IRQ_GPIO1                ((uint8_t)35u)
 #define IRQ_GPIO2                ((uint8_t)36u)
@@ -144,7 +144,7 @@ struct gpio_tlx_t {
 	uint8_t output_toggle;          /* Output: GPIO output toggle */
 	uint8_t rsvd2;                  /* reserve */
 };
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 struct gpio_tlx_t {
 	uint8_t input;                  /* Input: read GPI input */
 	uint8_t ie;                     /* IE: input enable, high active. 1: enable, 0: disable */
@@ -220,7 +220,7 @@ struct gpio_tlx_retention_data {
 	uint8_t level_irq_conf;
 	uint8_t src_mask_irq_conf;
 };
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 struct gpio_tlx_retention_data {
 	struct gpio_tlx_t gpio_tlx_periph_config;
 	uint8_t gpio_tlx_irq_conf;
@@ -296,7 +296,7 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 	} else {
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	if (irq == IRQ_GPIO0) {
 		BM_SET(gpio->irq0, BIT(pin));
 	} else if (irq == IRQ_GPIO1) {
@@ -356,7 +356,7 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 	} else if (irq == IRQ_GPIO2_RISC1) {
 		BM_CLR(reg_irq_risc1_en(GET_PORT_NUM(gpio)), BIT(pin));
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	if (irq == IRQ_GPIO0) {
 		BM_CLR(gpio->irq0, BIT(pin));
 	} else if (irq == IRQ_GPIO1) {
@@ -419,7 +419,7 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 	} else if (irq == IRQ_GPIO2_RISC1) {
 		status = reg_irq_risc1_en(GET_PORT_NUM(gpio));
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	if (irq == IRQ_GPIO0) {
 		status = gpio->irq0;
 	} else if (irq == IRQ_GPIO1) {
@@ -475,7 +475,7 @@ static inline void gpio_tlx_irq_status_clr(uint8_t irq)
 		status = FLD_GPIO_IRQ_GPIO2RISC1_CLR;
 	}
 	reg_gpio_irq_clr = status;
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	gpio_irq_e status = 0;
 
 	if (irq == IRQ_GPIO0) {
@@ -542,7 +542,7 @@ void gpio_tlx_irq_set(const struct device *dev, gpio_pin_t pin,
 	}
 	gpio_tlx_irq_status_clr(irq_num);
 	BM_SET(GPIO_IRQ_REG, irq_mask);
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	gpio_tlx_irq_status_clr(irq_num);
 
 	/* Get level and mask based on IRQ number */
@@ -614,7 +614,7 @@ static void gpio_tlx_up_down_res_set(volatile struct gpio_tlx_t *gpio,
 
 	pin = BIT(pin);
 	val = up_down_res & 0x03;
-#if CONFIG_SOC_RISCV_TELINK_TL321X 
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	if ((IS_PORT_F(gpio)) || (IS_PORT_G(gpio))) {
 		return;
 	}
@@ -672,7 +672,7 @@ static void gpio_tlx_config_in_out(volatile struct gpio_tlx_t *gpio,
 	/* Port C and D Input Enable registers are located in another place: analog */
 	if (IS_PORT_C(gpio)) {
 		ie_addr = areg_gpio_pc_ie;
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	} else if (IS_PORT_B(gpio) && ((pin >= 4) && (pin <= 7))) {
 		ie_addr = areg_gpio_pb_ie;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -734,7 +734,7 @@ static int gpio_tlx_pin_configure(const struct device *dev,
 		return -ENOTSUP;
 	}
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
 	/* Avoid pulls in TL721X SoC in PF[0:5] due to silicone limitation */
 	if (IS_PORT_F(gpio) && (flags & (GPIO_PULL_UP | GPIO_PULL_DOWN))
 	&& (pin != 6) && (pin != 7)) {
@@ -778,7 +778,7 @@ static int gpio_tlx_port_set_masked_raw(const struct device *dev,
 					gpio_port_value_t value)
 {
 	volatile struct gpio_tlx_t *gpio = GET_GPIO(dev);
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	gpio->output_clr = (mask);
 	gpio->output = (value & mask);
 #endif
@@ -790,7 +790,7 @@ static int gpio_tlx_port_set_bits_raw(const struct device *dev,
 				      gpio_port_pins_t mask)
 {
 	volatile struct gpio_tlx_t *gpio = GET_GPIO(dev);
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	gpio->output = (mask);
 #endif
 	return 0;
@@ -801,7 +801,7 @@ static int gpio_tlx_port_clear_bits_raw(const struct device *dev,
 					gpio_port_pins_t mask)
 {
 	volatile struct gpio_tlx_t *gpio = GET_GPIO(dev);
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	gpio->output_clr = (mask);
 #endif
 	return 0;
@@ -812,7 +812,7 @@ static int gpio_tlx_port_toggle_bits(const struct device *dev,
 				     gpio_port_pins_t mask)
 {
 	volatile struct gpio_tlx_t *gpio = GET_GPIO(dev);
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint8_t bits = (mask & 0xff);
 
 	gpio->output_toggle = bits;
@@ -948,7 +948,7 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 				if (IS_PORT_C(gpio)) {
 					analog_write_reg8(areg_gpio_pc_ie,
 					data->gpio_tlx_retention.analog_in_conf);
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 				} else if (IS_PORT_B(gpio)) {
 					analog_write_reg8(areg_gpio_pb_ie,
 					data->gpio_tlx_retention.analog_in_conf);
@@ -976,7 +976,7 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 				= data->gpio_tlx_retention.risc0_irq_conf;
 				reg_irq_risc1_en(GET_PORT_NUM(gpio))
 				= data->gpio_tlx_retention.risc1_irq_conf;
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 				GPIO_IRQ_LEVEL_REG
 				= data->gpio_tlx_retention.level_irq_conf;
 				GPIO_IRQ_SRC_MASK_REG
@@ -1024,7 +1024,7 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 		= reg_irq_risc0_en(GET_PORT_NUM(gpio));
 		data->gpio_tlx_retention.risc1_irq_conf
 		= reg_irq_risc1_en(GET_PORT_NUM(gpio));
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		data->gpio_tlx_retention.level_irq_conf
 		= GPIO_IRQ_LEVEL_REG;
 		data->gpio_tlx_retention.src_mask_irq_conf
@@ -1033,7 +1033,7 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 		if (IS_PORT_C(gpio)) {
 			data->gpio_tlx_retention.analog_in_conf
 			= analog_read_reg8(areg_gpio_pc_ie);
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		} else if (IS_PORT_B(gpio)) {
 			data->gpio_tlx_retention.analog_in_conf
 			= analog_read_reg8(areg_gpio_pb_ie);
@@ -1137,7 +1137,7 @@ static void gpio_tlx_irq_connect_4(void)
 }
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 /* If instance 5 is present and has interrupt enabled, connect IRQ */
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 5
 static void gpio_tlx_irq_connect_5(void)

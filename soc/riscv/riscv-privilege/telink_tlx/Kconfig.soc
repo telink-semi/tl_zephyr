@@ -35,7 +35,14 @@ config TELINK_TL322X_PMP
 	depends on SOC_RISCV_TELINK_TL322X
 	select RISCV_PMP
 	help
-		This option enables Telink TL721X PMP(memory protection) module.
+		This option enables Telink TL322X PMP(memory protection) module.
+
+config TELINK_TL323X_PMP
+	bool "Support Hardware Memory Protection"
+	depends on SOC_RISCV_TELINK_TL323X
+	select RISCV_PMP
+	help
+		This option enables Telink TL323X PMP(memory protection) module.
 
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
@@ -69,6 +76,11 @@ config SOC_RISCV_TELINK_TL322X
 	bool "Telink TL322X SoC implementation"
 	select ATOMIC_OPERATIONS_BUILTIN
 	select CPU_HAS_FPU
+	select INCLUDE_RESET_VECTOR
+
+config SOC_RISCV_TELINK_TL323X
+	bool "Telink TL323X SoC implementation"
+	select ATOMIC_OPERATIONS_BUILTIN
 	select INCLUDE_RESET_VECTOR
 
 endchoice
