@@ -8,6 +8,11 @@
 
 #include "soc.h"
 
+#define mmisc_ctl    NDS_MMISC_CTL
+#define mcache_ctl   NDS_MCACHE_CTL
+#define mxstatus     NDS_MXSTATUS
+#define mdcause      NDS_MDCAUSE
+
 GTEXT(pm_w91_sleep)
 GTEXT(pm_w91_wakeup)
 
@@ -157,16 +162,16 @@ SECTION_VAR(ram_code, pm_w91_context_backup_registers)
 	csrr   x31, mtvec
 	sw     x31, (35 * 4)(x30)
 
-	csrr   x31, NDS_MMISC_CTL
+	csrr   x31, mmisc_ctl
 	sw     x31, (36 * 4)(x30)
 
 	csrr   x31, mstatus
 	sw     x31, (37 * 4)(x30)
 
-	csrr   x31, NDS_MXSTATUS
+	csrr   x31, mxstatus
 	sw     x31, (38 * 4)(x30)
 
-	csrr   x31, NDS_MDCAUSE
+	csrr   x31, mdcause
 	sw     x31, (39 * 4)(x30)
 
 	csrr   x31, mip
@@ -175,41 +180,50 @@ SECTION_VAR(ram_code, pm_w91_context_backup_registers)
 	csrr   x31, mie
 	sw     x31, (41 * 4)(x30)
 
+#if defined(CONFIG_ICACHE) || defined(CONFIG_DCACHE)
+	csrr   x31, mcache_ctl
+	sw     x31, (42 * 4)(x30)
+#endif
+
+	li      t0, D25_RESET_VECTOR
+	lw      x31, 0(t0)
+	sw      x31, (43 * 4)(x30)
+
 #ifdef __riscv_flen
 	frcsr  x31
-	fsw    f0, (42 * 4)(x30)
-	fsw    f1, (43 * 4)(x30)
-	fsw    f2, (44 * 4)(x30)
-	fsw    f3, (45 * 4)(x30)
-	fsw    f4, (46 * 4)(x30)
-	fsw    f5, (47 * 4)(x30)
-	fsw    f6, (48 * 4)(x30)
-	fsw    f7, (49 * 4)(x30)
-	fsw    f8, (50 * 4)(x30)
-	fsw    f9, (51 * 4)(x30)
-	fsw    f10, (52 * 4)(x30)
-	fsw    f11, (53 * 4)(x30)
-	fsw    f12, (54 * 4)(x30)
-	fsw    f13, (55 * 4)(x30)
-	fsw    f14, (56 * 4)(x30)
-	fsw    f15, (57 * 4)(x30)
-	fsw    f16, (58 * 4)(x30)
-	fsw    f17, (59 * 4)(x30)
-	fsw    f18, (60 * 4)(x30)
-	fsw    f19, (61 * 4)(x30)
-	fsw    f20, (62 * 4)(x30)
-	fsw    f21, (63 * 4)(x30)
-	fsw    f22, (64 * 4)(x30)
-	fsw    f23, (65 * 4)(x30)
-	fsw    f24, (66 * 4)(x30)
-	fsw    f25, (67 * 4)(x30)
-	fsw    f26, (68 * 4)(x30)
-	fsw    f27, (69 * 4)(x30)
-	fsw    f28, (70 * 4)(x30)
-	fsw    f29, (71 * 4)(x30)
-	fsw    f30, (72 * 4)(x30)
-	fsw    f31, (73 * 4)(x30)
-	sw     x31, (74 * 4)(x30)
+	fsw    f0, (44 * 4)(x30)
+	fsw    f1, (45 * 4)(x30)
+	fsw    f2, (46 * 4)(x30)
+	fsw    f3, (47 * 4)(x30)
+	fsw    f4, (48 * 4)(x30)
+	fsw    f5, (49 * 4)(x30)
+	fsw    f6, (50 * 4)(x30)
+	fsw    f7, (51 * 4)(x30)
+	fsw    f8, (52 * 4)(x30)
+	fsw    f9, (53 * 4)(x30)
+	fsw    f10, (54 * 4)(x30)
+	fsw    f11, (55 * 4)(x30)
+	fsw    f12, (56 * 4)(x30)
+	fsw    f13, (57 * 4)(x30)
+	fsw    f14, (58 * 4)(x30)
+	fsw    f15, (59 * 4)(x30)
+	fsw    f16, (60 * 4)(x30)
+	fsw    f17, (61 * 4)(x30)
+	fsw    f18, (62 * 4)(x30)
+	fsw    f19, (63 * 4)(x30)
+	fsw    f20, (64 * 4)(x30)
+	fsw    f21, (65 * 4)(x30)
+	fsw    f22, (66 * 4)(x30)
+	fsw    f23, (67 * 4)(x30)
+	fsw    f24, (68 * 4)(x30)
+	fsw    f25, (69 * 4)(x30)
+	fsw    f26, (70 * 4)(x30)
+	fsw    f27, (71 * 4)(x30)
+	fsw    f28, (72 * 4)(x30)
+	fsw    f29, (73 * 4)(x30)
+	fsw    f30, (74 * 4)(x30)
+	fsw    f31, (75 * 4)(x30)
+	sw     x31, (76 * 4)(x30)
 #endif
 
 	/* save x31 - t6 */
@@ -250,16 +264,16 @@ SECTION_VAR(ram_code, pm_w91_context_backup_registers)
 	csrw   mtvec, x30
 
 	lw     x30, (36 * 4)(x31)
-	csrw   NDS_MMISC_CTL, x30
+	csrw   mmisc_ctl, x30
 
 	lw     x30, (37 * 4)(x31)
 	csrw   mstatus, x30
 
 	lw     x30, (38 * 4)(x31)
-	csrw   NDS_MXSTATUS, x30
+	csrw   mxstatus, x30
 
 	lw     x30, (39 * 4)(x31)
-	csrw   NDS_MDCAUSE, x30
+	csrw   mdcause, x30
 
 	lw     x30, (40 * 4)(x31)
 	csrw   mip, x30
@@ -267,40 +281,49 @@ SECTION_VAR(ram_code, pm_w91_context_backup_registers)
 	lw     x30, (41 * 4)(x31)
 	csrw   mie, x30
 
+#if defined(CONFIG_ICACHE) || defined(CONFIG_DCACHE)
+	lw     x30, (42 * 4)(x31)
+	csrw   mcache_ctl, x30
+#endif
+
+	li      t0, D25_RESET_VECTOR
+	lw      x30, (43 * 4)(x31)
+	sw      x30, 0(t0)
+
 #ifdef __riscv_flen
-	flw    f0, (42 * 4)(x31)
-	flw    f1, (43 * 4)(x31)
-	flw    f2, (44 * 4)(x31)
-	flw    f3, (45 * 4)(x31)
-	flw    f4, (46 * 4)(x31)
-	flw    f5, (47 * 4)(x31)
-	flw    f6, (48 * 4)(x31)
-	flw    f7, (49 * 4)(x31)
-	flw    f8, (50 * 4)(x31)
-	flw    f9, (51 * 4)(x31)
-	flw    f10, (52 * 4)(x31)
-	flw    f11, (53 * 4)(x31)
-	flw    f12, (54 * 4)(x31)
-	flw    f13, (55 * 4)(x31)
-	flw    f14, (56 * 4)(x31)
-	flw    f15, (57 * 4)(x31)
-	flw    f16, (58 * 4)(x31)
-	flw    f17, (59 * 4)(x31)
-	flw    f18, (60 * 4)(x31)
-	flw    f19, (61 * 4)(x31)
-	flw    f20, (62 * 4)(x31)
-	flw    f21, (63 * 4)(x31)
-	flw    f22, (64 * 4)(x31)
-	flw    f23, (65 * 4)(x31)
-	flw    f24, (66 * 4)(x31)
-	flw    f25, (67 * 4)(x31)
-	flw    f26, (68 * 4)(x31)
-	flw    f27, (69 * 4)(x31)
-	flw    f28, (70 * 4)(x31)
-	flw    f29, (71 * 4)(x31)
-	flw    f30, (72 * 4)(x31)
-	flw    f31, (73 * 4)(x31)
-	lw     x30, (74 * 4)(x31)
+	flw    f0, (44 * 4)(x31)
+	flw    f1, (45 * 4)(x31)
+	flw    f2, (46 * 4)(x31)
+	flw    f3, (47 * 4)(x31)
+	flw    f4, (48 * 4)(x31)
+	flw    f5, (49 * 4)(x31)
+	flw    f6, (50 * 4)(x31)
+	flw    f7, (51 * 4)(x31)
+	flw    f8, (52 * 4)(x31)
+	flw    f9, (53 * 4)(x31)
+	flw    f10, (54 * 4)(x31)
+	flw    f11, (55 * 4)(x31)
+	flw    f12, (56 * 4)(x31)
+	flw    f13, (57 * 4)(x31)
+	flw    f14, (58 * 4)(x31)
+	flw    f15, (59 * 4)(x31)
+	flw    f16, (60 * 4)(x31)
+	flw    f17, (61 * 4)(x31)
+	flw    f18, (62 * 4)(x31)
+	flw    f19, (63 * 4)(x31)
+	flw    f20, (64 * 4)(x31)
+	flw    f21, (65 * 4)(x31)
+	flw    f22, (66 * 4)(x31)
+	flw    f23, (67 * 4)(x31)
+	flw    f24, (68 * 4)(x31)
+	flw    f25, (69 * 4)(x31)
+	flw    f26, (70 * 4)(x31)
+	flw    f27, (71 * 4)(x31)
+	flw    f28, (72 * 4)(x31)
+	flw    f29, (73 * 4)(x31)
+	flw    f30, (74 * 4)(x31)
+	flw    f31, (75 * 4)(x31)
+	lw     x30, (76 * 4)(x31)
 	fscsr  x30
 #endif
 
