@@ -244,7 +244,7 @@ static void spi_tlx_txrx(const struct device *dev, uint32_t len)
 		}
 
 		/* clear TX and RX fifo */
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_TXF_CLR_LEVEL);
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_RXF_CLR_LEVEL);
 #endif

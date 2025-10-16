@@ -651,7 +651,7 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
 		SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -1188,7 +1188,34 @@ static int tlx_start(const struct device *dev)
 /* API implementation: stop */
 static int tlx_stop(const struct device *dev)
 {
-	return tlx_stop_radio(dev->data);
+	struct tlx_data *tlx = dev->data;
+
+	/* check if RF is already stopped */
+	if (tlx->is_started) {
+		if (tlx->ack_sending) {
+			if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
+				tlx->ack_sending = false;
+			}
+		}
+		riscv_plic_irq_disable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
+		rf_set_tx_rx_off();
+#ifdef CONFIG_PM_DEVICE
+	/* Reset Radio */
+	rf_radio_reset();
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||
+	rf_reset_dma();
+	rf_baseband_reset();
+#endif
+		tlx_rf_zigbee_250K_mode = false;
+#endif /* CONFIG_PM_DEVICE */
+		tlx->is_started = false;
+		if (tlx->event_handler) {
+			tlx->event_handler(dev, IEEE802154_EVENT_SLEEP, NULL);
+		}
+	}
+	tlx_enable_pm(dev);
+
+	return 0;
 }
 
 /* API implementation: tx */

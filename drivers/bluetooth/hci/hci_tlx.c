@@ -206,6 +206,8 @@ static int hci_tlx_open(const struct device *dev, bt_hci_recv_t recv)
 	LOG_DBG("TL321X BT started");
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 	LOG_DBG("TL322X BT started");
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+	LOG_DBG("TL323X BT started");
 #endif
 
 	return 0;
