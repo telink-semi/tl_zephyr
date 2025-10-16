@@ -651,7 +651,7 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
 		SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -1105,7 +1105,7 @@ static int tlx_stop(const struct device *dev)
 #ifdef CONFIG_PM_DEVICE
 	/* Reset Radio */
 	rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||
 	rf_reset_dma();
 	rf_baseband_reset();
 #endif
