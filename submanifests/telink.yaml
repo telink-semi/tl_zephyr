@@ -10,5 +10,5 @@ manifest:
 
     - name: openthread_telink_lib
       url: https://github.com/telink-semi/openthread_telink_lib
-      revision: tags/v4.1.0
+      revision: tags/v4.1.1
       path: modules/lib/openthread_telink_lib
