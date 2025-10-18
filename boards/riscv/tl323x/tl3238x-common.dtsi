@@ -67,19 +67,19 @@
 		compatible = "gpio-keys";
 		key_1: button_1 {
 			label = "User KEY1";
-			gpios = <&gpiob 3 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpioc 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 		key_2: button_2 {
 			label = "User KEY2";
-			gpios = <&gpiob 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpioc 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 		key_3: button_3 {
 			label = "User KEY3";
-			gpios = <&gpiob 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpioc 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 		key_4: button_4 {
 			label = "User KEY4";
-			gpios = <&gpiob 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpioc 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 		key_dfu: button_dfu {
 			label = "USB DFU";
@@ -92,8 +92,8 @@
 		compatible = "gpio-keys";
 
 		inp {
-			gpios = <&gpiob 3 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
-				<&gpiob 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpioc 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpioc 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 	};
 
@@ -101,13 +101,13 @@
 		compatible = "gpio-keys";
 
 		col {
-			gpios = <&gpiob 6 GPIO_ACTIVE_HIGH>,
-				<&gpiob 7 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioc 6 GPIO_ACTIVE_HIGH>,
+				<&gpioc 7 GPIO_ACTIVE_HIGH>;
 		};
 
 		row {
-			gpios = <&gpiob 3 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
-				<&gpiob 5 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpioc 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+				<&gpioc 5 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
 		};
 	};
 
@@ -182,10 +182,12 @@
 };
 
 &gpioc {
+	interrupts = <46 1>;
 	status = "okay";
 };
 
 &gpiod {
+	interrupts = <50 1>;
 	status = "okay";
 };
 

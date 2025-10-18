@@ -977,6 +977,7 @@ static int tlx_set_channel(const struct device *dev, uint16_t channel)
 		tlx->current_channel = channel;
 		if (tlx->is_started) {
 			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(channel));
+			rf_set_rxmode();
 		}
 	}
 
@@ -1082,6 +1083,7 @@ static int tlx_start(const struct device *dev)
 		}
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
 		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
+		rf_set_rxmode();
 		tlx->is_started = true;
 	}
 

@@ -42,7 +42,7 @@
 		compatible = "telink,telink_tl323x-soc";
 		ranges;
 
-		ram_ilm: memory@0 {
+		ram_ilm: memory@68000 {
 			compatible = "mmio-sram";
 		};
 
