@@ -8,9 +8,9 @@ and service registry to enable DNS-based service discovery.
 
 Main diagram
 ************
-Telink Thread border router consists of two boards: tlsr9518adk80d as main router and tlsr9528a as RCP.
+Telink Thread border router consists of two boards: tlsr9118bdk40d as main router and tlsr9528a as RCP.
 
-Wi-Fi network <-*Wi-Fi*-> **tlsr9518adk80d** <-*UART Spinel*-> **tlsr9528a** <-*Thread*-> Thread network
+Wi-Fi network <-*Wi-Fi*-> **tlsr9118bdk40d** <-*UART Spinel*-> **tlsr9528a** <-*Thread*-> Thread network
 
 Building RCP FW (*tlsr9528a*)
 *****************************
@@ -23,7 +23,7 @@ Under Zephyr environment build and flash RCP
 	west flash --erase -d build_ot_rcp
 
 
-Building Main OTBR FW (*tlsr9518adk80d*)
+Building Main OTBR FW (*tlsr9118bdk40d*)
 ****************************************
 Under Zephyr environment build and flash as usual (no any special options).
 Select tlsr9118bdk40d_v1 or tlsr9118bdk40d depending on your hardware.
@@ -46,7 +46,7 @@ The pinout is defined in the next overlays:
 Which without modification corresponds to
 
 =====================  =====================
-*tlsr9518adk80d*       *tlsr9528a*
+*tlsr9118bdk40d*       *tlsr9528a*
 =====================  =====================
 **tx** p16 (J20 16)    **rx** pc7 (J5 4)
 **rx** p15 (J20 18)    **tx** pc6 (J5 2)
@@ -70,7 +70,7 @@ Set the next configs according to your Wi-Fi network and required Thread network
 
 Using border router
 *******************
-Power on tlsr9528a and tlsr9518adk80d boards. Use tlsr9518adk80d console (Flashing UART).
+Power on tlsr9528a and tlsr9118bdk40d boards. Use tlsr9118bdk40d console (Flashing UART).
 And wait boot process: connecting Wi-Fi, creating Thread network...
 
 .. code-block:: console
