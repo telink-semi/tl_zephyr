@@ -22,6 +22,7 @@
 #define TL323X_FUNC_PWM3_N             10
 #define TL323X_FUNC_PWM4_N             11
 #define TL323X_FUNC_PWM5_N             12
+
 /* I2C */
 #define TL323X_FUNC_I2C_SCL_IO         13
 #define TL323X_FUNC_I2C_SDA_IO         14

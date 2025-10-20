@@ -44,8 +44,8 @@
 
 	/* PWM Channel 0 (PE4) */
 
-	pwm_ch0_pb2_default: pwm_ch0_pb2_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_B, TLX_PIN_2, TL323X_FUNC_PWM0)>;
+	pwm_ch0_pc1_default: pwm_ch0_pc1_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_1, TL323X_FUNC_PWM0)>;
 	};
 
 	/* Note:TL323X only supports gspi!!!*/
