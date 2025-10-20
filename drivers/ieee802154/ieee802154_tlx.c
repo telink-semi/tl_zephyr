@@ -1217,7 +1217,7 @@ static int tlx_stop(const struct device *dev)
 #ifdef CONFIG_PM_DEVICE
 	/* Reset Radio */
 	rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL323X
 	rf_reset_dma();
 	rf_baseband_reset();
 #endif
