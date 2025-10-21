@@ -70,7 +70,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 */
 # if ((defined(CONFIG_BT_B9X) && defined(CONFIG_SOC_RISCV_TELINK_B92)) || \
 	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL321X)) || \
-	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X))) || \
+	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X)) || \
 	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)))
 		extern uint32_t blc_ll_checkBleRfFsmIsBusy(void);
 
