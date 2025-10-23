@@ -28,6 +28,16 @@
 # endif
 #endif
 
+/* Drivers changes , so should not change castart.s, add external*/
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+_attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
+__attribute__((section(".ram_code_retention"))) __attribute__((noinline)) 
+void pm_retention_register_recover(void)
+{
+   
+}
+#endif
+
 /* Power Mode value */
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 	/* List of supported CCLK frequencies */
