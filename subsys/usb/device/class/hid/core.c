@@ -131,38 +131,6 @@ struct usb_hid_config {
 	}
 #endif
 
-#ifdef CONFIG_ENABLE_HID_INT_OUT_EP
-USBD_USER_DESCR_DEFINE(primary)				\
-	struct usb_hid_config user = {				\
-	/* Interface descriptor */					\
-	.if0 = INITIALIZER_IF,						\
-	.if0_hid = INITIALIZER_IF_HID,					\
-	.if0_int_in_ep = INITIALIZER_IF_EP(AUTO_EP_IN,				\
-				  USB_DC_EP_INTERRUPT,			\
-				  CONFIG_HID_INTERRUPT_EP_MPS),		\
-	.if0_int_out_ep = INITIALIZER_IF_EP(AUTO_EP_OUT,				\
-				  USB_DC_EP_INTERRUPT,			\
-				  CONFIG_HID_INTERRUPT_EP_MPS),		\
-	.if0.bDescriptorType = 0,
-	.if0_hid.bDescriptorType = 0,
-	.if0_int_in_ep.bDescriptorType = 0,
-	.if0_int_out_ep.bDescriptorType = 0,
-	};
-#else
-USBD_USER_DESCR_DEFINE(primary)				\
-	struct usb_hid_config user = {				\
-	/* Interface descriptor */					\
-	.if0 = INITIALIZER_IF,						\
-	.if0_hid = INITIALIZER_IF_HID,					\
-	.if0_int_in_ep = INITIALIZER_IF_EP(AUTO_EP_IN,				\
-				  USB_DC_EP_INTERRUPT,			\
-				  CONFIG_HID_INTERRUPT_EP_MPS),		\
-	.if0.bDescriptorType = 0,
-	.if0_hid.bDescriptorType = 0,
-	.if0_int_in_ep.bDescriptorType = 0,
-	};
-#endif
-
 struct hid_device_info {
 	const uint8_t *report_desc;
 	size_t report_size;

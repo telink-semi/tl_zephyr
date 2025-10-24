@@ -6,13 +6,13 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/uart.h>
+// #include <zephyr/drivers/uart.h>
 #include <string.h>
 #include <zephyr/random/rand32.h>
 
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/class/usb_hid.h>
-#include <zephyr/usb/class/usb_cdc.h>
+// #include <zephyr/usb/class/usb_cdc.h>
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(main);
@@ -145,33 +145,6 @@ static uint8_t chr_ptr_mouse, chr_ptr_kbd, str_pointer;
 #define MOUSE_BTN_LEFT		BIT(0)
 #define MOUSE_BTN_RIGHT		BIT(1)
 #define MOUSE_BTN_MIDDLE	BIT(2)
-
-static const char *welcome	=	"Welcome to ";
-static const char *banner0	=	"\r\n"
-					"Supported commands:\r\n"
-					"up    - moves the mouse up\r\n"
-					"down  - moves the mouse down\r\n"
-					"right - moves the mouse to right\r\n"
-					"left  - moves the mouse to left\r\n";
-static const char *banner1	=	"\r\n"
-					"Enter a string and terminate "
-					"it with ENTER.\r\n"
-					"It will be sent via HID "
-					"when BUTTON 2 is pressed.\r\n"
-					"You can modify it by sending "
-					"a new one here.\r\n";
-static const char *gpio0	=	"Button 0 pressed\r\n";
-static const char *gpio1	=	"Button 1 pressed\r\n";
-static const char *gpio2	=	"Button 2 pressed\r\n";
-static const char *gpio3	=	"Button 3 pressed\r\n";
-static const char *unknown	=	"Command not recognized.\r\n";
-static const char *up		=	"Mouse up\r\n";
-static const char *down		=	"Mouse down\r\n";
-static const char *left		=	"Mouse left\r\n";
-static const char *right	=	"Mouse right\r\n";
-static const char *evt_fail	=	"Unknown event detected!\r\n";
-static const char *set_str	=	"String set to: ";
-static const char *endl		=	"\r\n";
 
 static void in_ready_cb(const struct device *dev)
 {
@@ -359,107 +332,6 @@ static void flush_buffer_kbd(void)
 	memset(data_buf_kbd, 0, sizeof(data_buf_kbd));
 }
 
-static void write_data(const struct device *dev, const char *buf, int len)
-{
-	uart_irq_tx_enable(dev);
-
-	while (len) {
-		int written;
-
-		data_transmitted = false;
-		written = uart_fifo_fill(dev, (const uint8_t *)buf, len);
-		while (data_transmitted == false) {
-			k_yield();
-		}
-
-		len -= written;
-		buf += written;
-	}
-
-	uart_irq_tx_disable(dev);
-}
-
-static void cdc_mouse_int_handler(const struct device *dev, void *user_data)
-{
-	ARG_UNUSED(user_data);
-
-	uart_irq_update(dev);
-
-	if (uart_irq_tx_ready(dev)) {
-		data_transmitted = true;
-	}
-
-	if (!uart_irq_rx_ready(dev)) {
-		return;
-	}
-	uint32_t bytes_read;
-
-	while ((bytes_read = uart_fifo_read(dev,
-		(uint8_t *)data_buf_mouse+chr_ptr_mouse,
-		sizeof(data_buf_mouse)-chr_ptr_mouse))) {
-		chr_ptr_mouse += bytes_read;
-		if (data_buf_mouse[chr_ptr_mouse - 1] == '\r') {
-			/* ENTER */
-			struct app_evt_t *ev = app_evt_alloc();
-
-			data_buf_mouse[chr_ptr_mouse - 1] = '\0';
-
-			if (!strcmp(data_buf_mouse, "up")) {
-				ev->event_type = CDC_UP;
-			} else if (!strcmp(data_buf_mouse, "down")) {
-				ev->event_type = CDC_DOWN;
-			} else if (!strcmp(data_buf_mouse, "right")) {
-				ev->event_type = CDC_RIGHT;
-			} else if (!strcmp(data_buf_mouse, "left")) {
-				ev->event_type = CDC_LEFT;
-			} else {
-				ev->event_type = CDC_UNKNOWN;
-			}
-			flush_buffer_mouse();
-			app_evt_put(ev);
-			k_sem_give(&evt_sem);
-		}
-
-		if (chr_ptr_mouse >= sizeof(data_buf_mouse)) {
-			LOG_WRN("Buffer overflow");
-			flush_buffer_mouse();
-		}
-	}
-}
-
-static void cdc_kbd_int_handler(const struct device *dev, void *user_data)
-{
-	ARG_UNUSED(user_data);
-
-	uart_irq_update(dev);
-
-	if (uart_irq_tx_ready(dev)) {
-		data_transmitted = true;
-	}
-
-	if (!uart_irq_rx_ready(dev)) {
-		return;
-	}
-	uint32_t bytes_read;
-
-	while ((bytes_read = uart_fifo_read(dev,
-		(uint8_t *)data_buf_kbd+chr_ptr_kbd,
-		sizeof(data_buf_kbd)-chr_ptr_kbd))) {
-		chr_ptr_kbd += bytes_read;
-		if (data_buf_kbd[chr_ptr_kbd - 1] == '\r') {
-			/* ENTER */
-			struct app_evt_t *ev = app_evt_alloc();
-
-			data_buf_kbd[chr_ptr_kbd - 1] = '\0';
-			strcpy(string, data_buf_kbd);
-			ev->event_type = CDC_STRING;
-			flush_buffer_kbd();
-			app_evt_put(ev);
-			k_sem_give(&evt_sem);
-		}
-	}
-}
-
 /* Devices */
 
 static void btn0(const struct device *gpio, struct gpio_callback *cb,
@@ -536,10 +408,6 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 
 int main(void)
 {
-	const struct device *cdc_dev[] = {
-		DT_FOREACH_STATUS_OKAY(zephyr_cdc_acm_uart, DEVICE_AND_COMMA)
-	};
-	BUILD_ASSERT(ARRAY_SIZE(cdc_dev) >= 2, "Not enough CDC ACM instances");
 	const struct device *hid0_dev, *hid1_dev;
 	struct app_evt_t *ev;
 	uint32_t dtr = 0U;
@@ -557,14 +425,6 @@ int main(void)
 	if (hid1_dev == NULL) {
 		LOG_ERR("Cannot get USB HID 1 Device");
 		return 0;
-	}
-
-	for (int idx = 0; idx < ARRAY_SIZE(cdc_dev); idx++) {
-		if (!device_is_ready(cdc_dev[idx])) {
-			LOG_ERR("CDC ACM device %s is not ready",
-				cdc_dev[idx]->name);
-			return 0;
-		}
 	}
 
 	if (callbacks_configure(&sw0_gpio, &btn0, &callback[0])) {
@@ -610,40 +470,6 @@ int main(void)
 		return 0;
 	}
 
-	/* Initialize CDC ACM */
-	for (int idx = 0; idx < ARRAY_SIZE(cdc_dev); idx++) {
-		LOG_INF("Wait for DTR on %s", cdc_dev[idx]->name);
-		while (1) {
-			uart_line_ctrl_get(cdc_dev[idx],
-					   UART_LINE_CTRL_DTR,
-					   &dtr);
-			if (dtr) {
-				break;
-			} else {
-				/* Give CPU resources to low priority threads. */
-				k_sleep(K_MSEC(100));
-			}
-		}
-
-		LOG_INF("DTR on device %s", cdc_dev[idx]->name);
-	}
-
-	/* Wait 1 sec for the host to do all settings */
-	k_busy_wait(USEC_PER_SEC);
-
-	uart_irq_callback_set(cdc_dev[0], cdc_mouse_int_handler);
-	uart_irq_callback_set(cdc_dev[1], cdc_kbd_int_handler);
-
-	write_data(cdc_dev[0], welcome, strlen(welcome));
-	write_data(cdc_dev[0], cdc_dev[0]->name, strlen(cdc_dev[0]->name));
-	write_data(cdc_dev[0], banner0, strlen(banner0));
-	write_data(cdc_dev[1], welcome, strlen(welcome));
-	write_data(cdc_dev[1], cdc_dev[1]->name, strlen(cdc_dev[1]->name));
-	write_data(cdc_dev[1], banner1, strlen(banner1));
-
-	uart_irq_rx_enable(cdc_dev[0]);
-	uart_irq_rx_enable(cdc_dev[1]);
-
 	while (true) {
 		k_sem_take(&evt_sem, K_FOREVER);
 
@@ -658,38 +484,10 @@ int main(void)
 				k_sem_take(&usb_sem, K_FOREVER);
 				hid_int_ep_write(hid0_dev, rep,
 						 sizeof(rep), NULL);
-				write_data(cdc_dev[0], gpio0, strlen(gpio0));
 				clear_mouse_report();
 				break;
 			}
 			case GPIO_BUTTON_1:
-			{
-				/* Press left mouse button */
-				uint8_t rep[] = {0x00, 0x00, 0x00, 0x00};
-
-				rep[MOUSE_BTN_REPORT_POS] |= MOUSE_BTN_LEFT;
-				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid0_dev, rep,
-						 sizeof(rep), NULL);
-				write_data(cdc_dev[0], gpio1, strlen(gpio1));
-				clear_mouse_report();
-				break;
-			}
-			case GPIO_BUTTON_2:
-			{
-				/* Send string on HID keyboard */
-				write_data(cdc_dev[1], gpio2, strlen(gpio2));
-				if (strlen(string) > 0) {
-					struct app_evt_t *ev = app_evt_alloc();
-
-					ev->event_type = HID_KBD_STRING,
-					app_evt_put(ev);
-					str_pointer = 0U;
-					k_sem_give(&evt_sem);
-				}
-				break;
-			}
-			case GPIO_BUTTON_3:
 			{
 				/* Toggle CAPS LOCK */
 				uint8_t rep[] = {0x00, 0x00, 0x00, 0x00,
@@ -699,73 +497,7 @@ int main(void)
 				k_sem_take(&usb_sem, K_FOREVER);
 				hid_int_ep_write(hid1_dev, rep,
 						 sizeof(rep), NULL);
-				write_data(cdc_dev[1], gpio3, strlen(gpio3));
 				clear_kbd_report();
-				break;
-			}
-			case CDC_UP:
-			{
-				/* Mouse up */
-				uint8_t rep[] = {0x00, 0x00, 0xE0, 0x00};
-
-				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid0_dev, rep,
-						 sizeof(rep), NULL);
-				write_data(cdc_dev[0], up, strlen(up));
-				clear_mouse_report();
-				break;
-			}
-			case CDC_DOWN:
-			{
-				/* Mouse down */
-				uint8_t rep[] = {0x00, 0x00, 0x20, 0x00};
-
-				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid0_dev, rep,
-						 sizeof(rep), NULL);
-				write_data(cdc_dev[0], down, strlen(down));
-				clear_mouse_report();
-				break;
-			}
-			case CDC_RIGHT:
-			{
-				/* Mouse right */
-				uint8_t rep[] = {0x00, 0x20, 0x00, 0x00};
-
-				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid0_dev, rep,
-						 sizeof(rep), NULL);
-				write_data(cdc_dev[0], right, strlen(right));
-				clear_mouse_report();
-				break;
-			}
-			case CDC_LEFT:
-			{
-				/* Mouse left */
-				uint8_t rep[] = {0x00, 0xE0, 0x00, 0x00};
-
-				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid0_dev, rep,
-						 sizeof(rep), NULL);
-				write_data(cdc_dev[0], left, strlen(left));
-				clear_mouse_report();
-				break;
-			}
-			case CDC_UNKNOWN:
-			{
-				write_data(cdc_dev[0], unknown, strlen(unknown));
-				write_data(cdc_dev[1], unknown, strlen(unknown));
-				break;
-			}
-			case CDC_STRING:
-			{
-				write_data(cdc_dev[0], set_str, strlen(set_str));
-				write_data(cdc_dev[0], string, strlen(string));
-				write_data(cdc_dev[0], endl, strlen(endl));
-
-				write_data(cdc_dev[1], set_str, strlen(set_str));
-				write_data(cdc_dev[1], string, strlen(string));
-				write_data(cdc_dev[1], endl, strlen(endl));
 				break;
 			}
 			case HID_MOUSE_CLEAR:
@@ -789,48 +521,9 @@ int main(void)
 						 sizeof(rep), NULL);
 				break;
 			}
-			case HID_KBD_STRING:
-			{
-				int ch = ascii_to_hid(string[str_pointer]);
-
-				if (ch == -1) {
-					LOG_WRN("Unsupported character: %d",
-						string[str_pointer]);
-				} else {
-					uint8_t rep[] = {0x00, 0x00, 0x00, 0x00,
-						      0x00, 0x00, 0x00, 0x00};
-					if (needs_shift(string[str_pointer])) {
-						rep[0] |=
-						HID_KBD_MODIFIER_RIGHT_SHIFT;
-					}
-					rep[7] = ch;
-
-					k_sem_take(&usb_sem, K_FOREVER);
-					hid_int_ep_write(hid1_dev, rep,
-							sizeof(rep), NULL);
-				}
-
-				str_pointer++;
-
-				if (strlen(string) > str_pointer) {
-					struct app_evt_t *ev = app_evt_alloc();
-
-					ev->event_type = HID_KBD_STRING,
-					app_evt_put(ev);
-					k_sem_give(&evt_sem);
-				} else if (strlen(string) == str_pointer) {
-					clear_kbd_report();
-				}
-
-				break;
-			}
 			default:
 			{
 				LOG_ERR("Unknown event to execute");
-				write_data(cdc_dev[0], evt_fail,
-					   strlen(evt_fail));
-				write_data(cdc_dev[1], evt_fail,
-					   strlen(evt_fail));
 				break;
 			}
 			break;

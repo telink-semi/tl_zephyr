@@ -35,10 +35,6 @@ LOG_MODULE_REGISTER(usb_descriptor, CONFIG_USB_DEVICE_LOG_LEVEL);
 /* Linker-defined symbols bound the USB descriptor structs */
 extern struct usb_desc_header __usb_descriptor_start[];
 extern struct usb_desc_header __usb_descriptor_end[];
-extern struct usb_desc_header __usb_class_descr_start[];
-extern struct usb_desc_header __usb_class_descr_end[];
-extern struct usb_desc_header __usb_user_descr_start[];
-extern struct usb_desc_header __usb_user_descr_end[];
 
 /* Structure representing the global USB description */
 struct common_descriptor {
@@ -46,55 +42,9 @@ struct common_descriptor {
 	struct usb_cfg_descriptor cfg_descr;
 } __packed;
 
-struct misc_descriptor {
-	struct usb_device_qualifier_descriptor qualifier_descr;
-	struct usb_cfg_descriptor speed_descr;
-} __packed;
-
 #define USB_DESC_MANUFACTURER_IDX			1
 #define USB_DESC_PRODUCT_IDX				2
 #define USB_DESC_SERIAL_NUMBER_IDX			3
-
-USBD_MISC_DESCR_DEFINE(primary) struct misc_descriptor user_desc = {
-	/* Qualifier descriptor */
-		.qualifier_descr = {
-		.bLength = sizeof(struct usb_device_qualifier_descriptor),
-		.bDescriptorType = USB_DESC_DEVICE_QUALIFIER,
-#ifdef CONFIG_USB_DEVICE_BOS
-		.bcdUSB = sys_cpu_to_le16(USB_SRN_2_1),
-#else
-		.bcdUSB = sys_cpu_to_le16(USB_SRN_2_0),
-#endif
-#ifdef CONFIG_USB_COMPOSITE_DEVICE
-		.bDeviceClass = USB_BCC_MISCELLANEOUS,
-		.bDeviceSubClass = 0x02,
-		.bDeviceProtocol = 0x01,
-#else
-		.bDeviceClass = 0,
-		.bDeviceSubClass = 0,
-		.bDeviceProtocol = 0,
-#endif
-		.bMaxPacketSize0 = USB_MAX_CTRL_MPS,
-		.bNumConfigurations = 0X01,
-		.bReserved = 0X00,
-	},
-	/* Often Speed descriptor */
-	.speed_descr = {
-		.bLength = sizeof(struct usb_cfg_descriptor),
-		.bDescriptorType = USB_DESC_OTHER_SPEED,
-		/*wTotalLength will be fixed in usb_fix_descriptor() */
-		.wTotalLength = 0,
-		.bNumInterfaces = 1,
-		.bConfigurationValue = 1,
-		.iConfiguration = 0,
-		.bmAttributes = USB_SCD_RESERVED |
-				COND_CODE_1(CONFIG_USB_SELF_POWERED,
-					    (USB_SCD_SELF_POWERED), (0)) |
-				COND_CODE_1(CONFIG_USB_DEVICE_REMOTE_WAKEUP,
-					    (USB_SCD_REMOTE_WAKEUP), (0)),
-		.bMaxPower = CONFIG_USB_MAX_POWER,
-	},
-};
 
 /*
  * Device and configuration descriptor placed in the device section,
@@ -443,16 +393,12 @@ static void usb_desc_update_mps0(struct usb_device_descriptor *const desc)
 static int usb_fix_descriptor(struct usb_desc_header *head)
 {
 	struct usb_cfg_descriptor *cfg_descr = NULL;
-	struct usb_cfg_descriptor *speed_descr = NULL;
 	struct usb_if_descriptor *if_descr = NULL;
 	struct usb_cfg_data *cfg_data = NULL;
 	struct usb_ep_descriptor *ep_descr = NULL;
-	uint16_t dev_qualifier_len = 0U;
-	uint16_t other_speed_len = 0U;
 	uint8_t numof_ifaces = 0U;
 	uint8_t str_descr_idx = 0U;
 	uint32_t requested_ep = BIT(16) | BIT(0);
-	size_t class_descr_len = (uint8_t *)__usb_class_descr_end - (uint8_t *)__usb_class_descr_start;
 
 	while (head->bLength != 0U) {
 		switch (head->bDescriptorType) {
@@ -508,15 +454,7 @@ static int usb_fix_descriptor(struct usb_desc_header *head)
 			}
 
 			break;
-		case USB_DESC_DEVICE_QUALIFIER:
-			LOG_DBG("Qualifier descriptor %p", head);
-			dev_qualifier_len = head->bLength;
-			break;
-		case USB_DESC_OTHER_SPEED:
-			LOG_DBG("Other Speed descriptor %p", head);
-			speed_descr = (struct usb_cfg_descriptor *)head;
-			other_speed_len = head->bLength;
-			break;
+		case 0:
 		case USB_DESC_STRING:
 			/*
 			 * Copy runtime SN string descriptor first, if has
@@ -533,29 +471,16 @@ static int usb_fix_descriptor(struct usb_desc_header *head)
 			if (str_descr_idx) {
 				ascii7_to_utf16le(head);
 			} else {
-				if (!(cfg_descr || speed_descr)) {
+				if (!(cfg_descr)) {
 					LOG_ERR("Incomplete device descriptor");
 					return -1;
 				}
 
-				size_t total_len = (uint8_t *)head - (uint8_t *)cfg_descr - dev_qualifier_len \
-									- other_speed_len - class_descr_len;
-				
-				if (cfg_descr) {
-					LOG_DBG("Now the wTotalLength is %zd", total_len);
-					cfg_descr->bNumInterfaces = numof_ifaces;
-					sys_put_le16(total_len, (uint8_t *)&cfg_descr->wTotalLength);
-				}
-				if (speed_descr) {
-					LOG_DBG("Now the wTotalLength is %zd", total_len);
-					speed_descr->bNumInterfaces = numof_ifaces;
-					sys_put_le16(total_len, (uint8_t *)&speed_descr->wTotalLength);
-					if (((uint8_t *)__usb_user_descr_end - (uint8_t *)__usb_user_descr_start) < class_descr_len) {
-						LOG_ERR("Memory insufficient");
-						return -2;
-					}
-					memcpy(__usb_user_descr_start, __usb_class_descr_start, class_descr_len);
-				}
+				LOG_DBG("Now the wTotalLength is %zd",
+				(uint8_t *)head - (uint8_t *)cfg_descr);
+				sys_put_le16((uint8_t *)head - (uint8_t *)cfg_descr,
+				(uint8_t *)&cfg_descr->wTotalLength);
+				cfg_descr->bNumInterfaces = numof_ifaces;
 			}
 
 			str_descr_idx += 1U;
