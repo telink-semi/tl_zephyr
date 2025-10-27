@@ -155,8 +155,6 @@ struct tlx_usbd_ep_buf {
 struct tlx_usbd_ep_ctx {
 	struct tlx_usbd_ep_cfg cfg;
 	struct tlx_usbd_ep_buf buf;
-	bool reading;
-	uint8_t writing_len;
 	struct k_timer retry_timer;
 };
 
@@ -411,8 +409,6 @@ static void ep_ctx_reset(enum usbd_endpoint_index_e ep_idx)
 	ep_ctx->buf.current_pos = ep_ctx->buf.data;
 	ep_ctx->buf.total_len = 0;
 	ep_ctx->buf.left_len = 0;
-	ep_ctx->reading = false;
-	ep_ctx->writing_len = 0;
 }
 
 static void ep_buf_clear(uint8_t ep)
@@ -448,8 +444,12 @@ static uint32_t ep_write(uint8_t ep, const uint8_t *data, uint32_t data_len)
 		valid_len = data_len;
 	}
 
-	ep_ctx->writing_len = valid_len;
 	usb0hw_write_ep_data(ep_idx, data, valid_len);
+
+	if (data_len == ep_ctx->cfg.max_sz) {
+		usb0hw_write_ep_data(ep_idx, 0, 0);
+	}
+
 	submit_usbd_event(USBD_EVT_EP_WRITE_COMPLETE, ep);
 
 	k_mutex_unlock(&ctx->drv_lock);

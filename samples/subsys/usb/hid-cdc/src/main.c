@@ -129,6 +129,7 @@ static inline struct app_evt_t *app_evt_alloc(void)
 
 static const uint8_t hid_mouse_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 static const uint8_t hid_kbd_report_desc[] = HID_KEYBOARD_REPORT_DESC();
+static const uint8_t hid_kb_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 
 static K_SEM_DEFINE(evt_sem, 0, 1);	/* starts off "not available" */
 static K_SEM_DEFINE(usb_sem, 1, 1);	/* starts off "available" */
@@ -408,7 +409,7 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 
 int main(void)
 {
-	const struct device *hid0_dev, *hid1_dev;
+	const struct device *hid0_dev, *hid1_dev, *hid2_dev;
 	struct app_evt_t *ev;
 	uint32_t dtr = 0U;
 	int ret;
@@ -424,6 +425,12 @@ int main(void)
 	hid1_dev = device_get_binding("HID_1");
 	if (hid1_dev == NULL) {
 		LOG_ERR("Cannot get USB HID 1 Device");
+		return 0;
+	}
+
+	hid2_dev = device_get_binding("HID_2");
+	if (hid2_dev == NULL) {
+		LOG_ERR("Cannot get USB HID 2 Device");
 		return 0;
 	}
 
@@ -461,8 +468,12 @@ int main(void)
 	usb_hid_register_device(hid1_dev, hid_kbd_report_desc,
 				sizeof(hid_kbd_report_desc), &ops);
 
+	usb_hid_register_device(hid2_dev, hid_kb_report_desc,
+				sizeof(hid_kb_report_desc), &ops);
+
 	usb_hid_init(hid0_dev);
 	usb_hid_init(hid1_dev);
+	usb_hid_init(hid2_dev);
 
 	ret = usb_enable(status_cb);
 	if (ret != 0) {
