@@ -68,11 +68,13 @@
 #define IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_2     (0x10)
 #define IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_3     (0x18)
 #define THREAD_DEFAULT_KEY_ID_MODE_2_KEY_INDEX     (0xff)
+#define THREAD_FRAME_SECCTRL_MIC_LENGTH            (4)
 
 /* IE header byte 0 */
 #define IEEE802154_FRAME_IE_HEADER_LEN_MASK        (0x7f)
 #define IEEE802154_FRAME_IE_HEADER_TYPE_L_MASK     (0x80)
 #define IEEE802154_FRAME_IE_HEADER_TYPE_L_OFS      (7)
+#define IEEE802154_FRAME_IE_HEADER_LENGTH          (2)
 
 /* IE header byte 1 */
 #define IEEE802154_FRAME_IE_HEADER_TYPE_H_MASK     (0x7f)
@@ -569,6 +571,14 @@ tlx_ieee802154_frame_build(const struct ieee802154_frame *frame,
 			}
 		}
 
+		if (frame->sec_header != NULL) {
+
+			if (bul_len < *o_len + THREAD_FRAME_SECCTRL_MIC_LENGTH) {
+				break;
+			}
+			*o_len += THREAD_FRAME_SECCTRL_MIC_LENGTH;
+		}
+
 		result = true;
 	} while (0);
 
@@ -621,7 +631,7 @@ ALWAYS_INLINE static uint8_t *tlx_ieee802154_ie_csl_search(const uint8_t *payloa
 		if (ie_type == IEEE802154_FRAME_IE_HEADER_TYPE_TERM) {
 			break;
 		} else if (ie_type == IEEE802154_FRAME_IE_HEADER_TYPE_CSL) {
-			if (pos + ie_len < payload_len) {
+			if (pos + ie_len <= payload_len) {
 				if (ie_len == 4 + IEEE802154_FRAME_LENGTH_IE_HEADER) {
 					result = (uint8_t *)&payload
 						[pos + IEEE802154_FRAME_LENGTH_IE_HEADER];

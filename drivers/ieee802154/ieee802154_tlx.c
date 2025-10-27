@@ -586,36 +586,37 @@ ALWAYS_INLINE tlx_send_ack(const struct device *dev, struct ieee802154_frame *fr
 	size_t ack_len;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	const uint8_t *key = NULL;
-	uint32_t frame_cnt = tlx_mac_keys_frame_cnt_get(tlx->mac_keys, 1);
-	const uint8_t sec_header[] = {
+	uint32_t frame_cnt;
+	uint8_t sec_header[] = {
 		IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5 | IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_1,
-		frame_cnt,
-		frame_cnt >> 8,
-		frame_cnt >> 16,
-		frame_cnt >> 24,
+		0,
+		0,
+		0,
+		0,
 		1
 	};
-	uint8_t payload[frame->payload_len + 4];
 
 	if (frame->general.ver == IEEE802154_FRAME_FCF_VER_2015) {
-		key = tlx_mac_keys_get(tlx->mac_keys, 1);
 		if (frame->general.se_bit) {
+			tlx_mac_keys_frame_cnt_inc(tlx->mac_keys, 1);
+			frame_cnt = tlx_mac_keys_frame_cnt_get(tlx->mac_keys, 1);
+			sec_header[1] = frame_cnt;
+			sec_header[2] = frame_cnt >> 8;
+			sec_header[3] = frame_cnt >> 16;
+			sec_header[4] = frame_cnt >> 24;
 			frame->sec_header = sec_header;
 			frame->sec_header_len = sizeof(sec_header);
+			key = tlx_mac_keys_get(tlx->mac_keys, 1);
 		}
 
 		if (frame->payload) {
-			memcpy(payload, frame->payload, frame->payload_len);
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 			if (tlx->csl_period > 0) {
-				(void)tlx_ieee802154_ie_csl_commit(payload, frame->payload_len,
-								   tlx->csl_period,
-								   tlx_get_csl_phase(tlx));
+				(void)tlx_ieee802154_ie_csl_commit(
+					(uint8_t *)frame->payload, frame->payload_len,
+					tlx->csl_period, tlx_get_csl_phase(tlx));
 			}
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
-			frame->payload = payload;
-			frame->payload_len =
-				frame->general.se_bit ? frame->payload_len + 4 : frame->payload_len;
 		}
 	}
 #endif
@@ -625,16 +626,13 @@ ALWAYS_INLINE tlx_send_ack(const struct device *dev, struct ieee802154_frame *fr
 		k_sem_reset(&tlx->tx_wait);
 		rf_set_txmode();
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-		if (frame->sec_header) {
-			if (ieee802154_tlx_crypto_encrypt(key, tlx->filter_ieee_addr,
-				frame_cnt,
-				IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5,
-				ack_buf, ack_len - 4,
-				NULL, 0,
-				NULL,
-				&ack_buf[ack_len - 4], 4)) {
-				tlx_mac_keys_frame_cnt_inc(tlx->mac_keys, 1);
-			} else {
+		if (frame->general.se_bit) {
+			if (!ieee802154_tlx_crypto_encrypt(
+				    key, tlx->filter_ieee_addr, frame_cnt,
+				    IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5, ack_buf,
+				    ack_len - THREAD_FRAME_SECCTRL_MIC_LENGTH, NULL, 0, NULL,
+				    &ack_buf[ack_len - THREAD_FRAME_SECCTRL_MIC_LENGTH],
+				    THREAD_FRAME_SECCTRL_MIC_LENGTH)) {
 				LOG_WRN("encrypt ack failed");
 			}
 		} else {
@@ -768,7 +766,8 @@ static void ALWAYS_INLINE tlx_rf_rx_isr(const struct device *dev)
 					ack_ie_header =
 						(uint8_t *)&tlx->enh_ack_table->item[idx].ie_header;
 					ack_ie_header_len =
-						tlx->enh_ack_table->item[idx].ie_header.length + 2;
+						tlx->enh_ack_table->item[idx].ie_header.length +
+						IEEE802154_FRAME_IE_HEADER_LENGTH;
 				}
 			}
 #endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
@@ -1267,6 +1266,10 @@ static int tlx_tx(const struct device *dev,
 			break;
 		}
 
+		if (enc_rounds == 1) {
+			tlx_mac_keys_frame_cnt_inc(tlx->mac_keys, key_id);
+		}
+
 		uint8_t *frame_cnt =
 			(uint8_t *)&frame.sec_header[IEEE802154_FRAME_LENGTH_SEC_HEADER];
 
@@ -1449,11 +1452,6 @@ static int tlx_tx(const struct device *dev,
 		}
 		tlx->ack_handler_en = false;
 	}
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-	if (!status) {
-		tlx_mac_keys_frame_cnt_inc(tlx->mac_keys, key_id);
-	}
-#endif
 
 	return status;
 }

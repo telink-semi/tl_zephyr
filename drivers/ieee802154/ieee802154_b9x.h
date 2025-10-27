@@ -120,6 +120,13 @@ struct b9x_data {
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	struct b9x_mac_keys *mac_keys;
 #endif
+#ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
+	uint32_t csl_period;
+	int64_t csl_sample_time_us;
+	struct k_work_delayable csl_rx_work;
+	uint32_t csl_rx_duration_us;
+	uint16_t csl_rx_channel;
+#endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 };
 
 #endif
