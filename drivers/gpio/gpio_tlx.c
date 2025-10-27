@@ -836,6 +836,15 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 			extern volatile bool tlx_deep_sleep_retention;
 
 			if (tlx_deep_sleep_retention) {
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+				if (irq_num == IRQ_GPIO) {
+					BM_SET(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
+				} else if (irq_num == IRQ_GPIO2_RISC0) {
+					BM_SET(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
+				} else if (irq_num == IRQ_GPIO2_RISC1) {
+					BM_SET(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
+				}
+#endif
 				memcpy(gpio, &data->gpio_tlx_retention.gpio_tlx_periph_config,
 				sizeof(data->gpio_tlx_retention.gpio_tlx_periph_config));
 				if (IS_PORT_C(gpio)) {
@@ -875,34 +884,10 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 				GPIO_IRQ_SRC_MASK_REG
 				= data->gpio_tlx_retention.src_mask_irq_conf;
 #endif
-				/* The idea behind this code is to set the pending IRQ based on
-				 * pin level. The wakeup by GPIO doesn't set the interrupt pending
-				 * bit so we need to trigger the IRQ manually. To achieve this we
-				 * temporary switch the IRQ trigger to level mode, getting the
-				 * pending bit and restoring the edge mode
-				 */
 				irq_num -= CONFIG_2ND_LVL_ISR_TBL_OFFSET;
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-				if (irq_num == IRQ_GPIO) {
-					BM_SET(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
-				} else if (irq_num == IRQ_GPIO2_RISC0) {
-					BM_SET(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
-				} else if (irq_num == IRQ_GPIO2_RISC1) {
-					BM_SET(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
-				}
-#endif
 
 				riscv_plic_irq_enable(irq_num);
 				riscv_plic_set_priority(irq_num, irq_priority);
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-				if (irq_num == IRQ_GPIO) {
-					BM_CLR(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
-				} else if (irq_num == IRQ_GPIO2_RISC0) {
-					BM_CLR(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
-				} else if (irq_num == IRQ_GPIO2_RISC1) {
-					BM_CLR(GPIO_IRQ_REG, FLD_GPIO_CORE_INTERRUPT_EN);
-				}
-#endif
 			}
 		}
 		break;
