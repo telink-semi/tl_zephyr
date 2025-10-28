@@ -575,13 +575,13 @@ ALWAYS_INLINE b9x_send_ack(const struct device *dev, struct ieee802154_frame *fr
 	size_t ack_len;
 #ifdef CONFIG_IEEE802154_2015
 	const uint8_t *key = NULL;
-	uint32_t frame_cnt = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, 1);
-	const uint8_t sec_header[] = {
+	uint32_t frame_cnt;
+	uint8_t sec_header[] = {
 		IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5 | IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_1,
-		frame_cnt,
-		frame_cnt >> 8,
-		frame_cnt >> 16,
-		frame_cnt >> 24,
+		0,
+		0,
+		0,
+		0,
 		1
 	};
 	uint8_t payload[frame->payload_len + 4];
@@ -589,6 +589,12 @@ ALWAYS_INLINE b9x_send_ack(const struct device *dev, struct ieee802154_frame *fr
 	if (frame->general.ver == IEEE802154_FRAME_FCF_VER_2015) {
 		key = b9x_mac_keys_get(b9x->mac_keys, 1);
 		if (key && frame->payload) {
+			b9x_mac_keys_frame_cnt_inc(b9x->mac_keys, 1);
+			frame_cnt = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, 1);
+			sec_header[1] = frame_cnt;
+			sec_header[2] = frame_cnt >> 8;
+			sec_header[3] = frame_cnt >> 16;
+			sec_header[4] = frame_cnt >> 24;
 			memcpy(payload, frame->payload, frame->payload_len);
 			frame->sec_header = sec_header;
 			frame->sec_header_len = sizeof(sec_header);
@@ -604,15 +610,13 @@ ALWAYS_INLINE b9x_send_ack(const struct device *dev, struct ieee802154_frame *fr
 		rf_set_txmode();
 #ifdef CONFIG_IEEE802154_2015
 		if (frame->sec_header) {
-			if (ieee802154_b9x_crypto_encrypt(key, b9x->filter_ieee_addr,
+			if (!ieee802154_b9x_crypto_encrypt(key, b9x->filter_ieee_addr,
 				frame_cnt,
 				IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5,
 				ack_buf, ack_len - 4,
 				NULL, 0,
 				NULL,
 				&ack_buf[ack_len - 4], 4)) {
-				b9x_mac_keys_frame_cnt_inc(b9x->mac_keys, 1);
-			} else {
 				LOG_WRN("encrypt ack failed");
 			}
 		} else {
@@ -1177,6 +1181,8 @@ static int b9x_tx(const struct device *dev,
 			break;
 		}
 
+		b9x_mac_keys_frame_cnt_inc(b9x->mac_keys, key_id);
+
 		uint8_t *frame_cnt =
 			(uint8_t *)&frame.sec_header[IEEE802154_FRAME_LENGTH_SEC_HEADER];
 
@@ -1312,11 +1318,6 @@ static int b9x_tx(const struct device *dev,
 		}
 		b9x->ack_handler_en = false;
 	}
-#ifdef CONFIG_IEEE802154_2015
-	if (!status) {
-		b9x_mac_keys_frame_cnt_inc(b9x->mac_keys, key_id);
-	}
-#endif /* CONFIG_IEEE802154_2015 */
 
 	return status;
 }
