@@ -253,7 +253,7 @@ manifest:
         - hal 
     - name: tl_ble_sdk
       url: git@192.168.48.36:sdk_app/ble/tl_ble_sdk.git
-      revision: 3a23e6007d50de125274aa422b4567b0eedd177a
+      revision: 6559bba6974d6596597217c1e3b1fdb881c03df7
       path: modules/hal/telink/tl_ble_sdk
       groups:
         - hal
