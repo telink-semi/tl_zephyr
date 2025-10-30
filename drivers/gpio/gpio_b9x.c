@@ -558,6 +558,13 @@ static int gpio_b9x_pin_interrupt_configure(const struct device *dev,
 	switch (mode) {
 	case GPIO_INT_MODE_DISABLED:                /* GPIO interrupt disable */
 		gpio_b9x_irq_en_clr(dev, pin);
+		BM_CLR(cfg->pin_irq_state->irq_en_rising, BIT(pin));
+		BM_CLR(cfg->pin_irq_state->irq_en_falling, BIT(pin));
+		BM_CLR(cfg->pin_irq_state->irq_en_both, BIT(pin));
+		if (!cfg->pin_irq_state->irq_en_rising && !cfg->pin_irq_state->irq_en_falling &&
+		    !cfg->pin_irq_state->irq_en_both) {
+			riscv_plic_irq_disable(GET_IRQ_NUM(dev) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
+		}
 		break;
 
 	case GPIO_INT_MODE_EDGE:
@@ -672,7 +679,11 @@ static int gpio_b9x_pm_action(const struct device *dev, enum pm_device_action ac
 					BM_SET(GPIO_IRQ_REG, FLD_GPIO_IRQ_LVL_GPIO2RISC1);
 				}
 
-				riscv_plic_irq_enable(irq_num);
+				if (cfg->pin_irq_state->irq_en_rising ||
+				    cfg->pin_irq_state->irq_en_falling ||
+				    cfg->pin_irq_state->irq_en_both) {
+					riscv_plic_irq_enable(irq_num);
+				}
 				riscv_plic_set_priority(irq_num, irq_priority);
 
 				if (irq_num == IRQ_GPIO) {
@@ -745,7 +756,9 @@ static void gpio_b9x_irq_connect_0(void)
 	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(0), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+				DT_INST_IRQ(0, priority));
+#endif
 }
 #endif
 
@@ -757,7 +770,9 @@ static void gpio_b9x_irq_connect_1(void)
 	IRQ_CONNECT(DT_INST_IRQN(1), DT_INST_IRQ(1, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(1), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(1) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+				DT_INST_IRQ(1, priority));
+#endif
 }
 #endif
 
@@ -769,7 +784,9 @@ static void gpio_b9x_irq_connect_2(void)
 	IRQ_CONNECT(DT_INST_IRQN(2), DT_INST_IRQ(2, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(2), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(2) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+				DT_INST_IRQ(2, priority));
+#endif
 }
 #endif
 
@@ -781,7 +798,9 @@ static void gpio_b9x_irq_connect_3(void)
 	IRQ_CONNECT(DT_INST_IRQN(3), DT_INST_IRQ(3, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(3), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(3) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+				DT_INST_IRQ(3, priority));
+#endif
 }
 #endif
 
@@ -793,7 +812,9 @@ static void gpio_b9x_irq_connect_4(void)
 	IRQ_CONNECT(DT_INST_IRQN(4), DT_INST_IRQ(4, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(4), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(4) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+				DT_INST_IRQ(4, priority));
+#endif
 }
 #endif
 
