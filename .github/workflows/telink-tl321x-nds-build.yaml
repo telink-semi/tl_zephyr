@@ -22,8 +22,8 @@ jobs:
     - name: Setup Andes toolchain
       run: |
         mkdir ~/nds-gcc
-        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f.tar.gz
-        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f.tar.gz -C ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_14.2.0.txz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_14.2.0.txz -C ~/nds-gcc
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -38,7 +38,7 @@ jobs:
         west init -l zephyr
         west update
         west blobs fetch hal_telink
-        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_tl321x_Os.a$' && exit 1
+        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_tl321x.a$' && exit 1
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 
