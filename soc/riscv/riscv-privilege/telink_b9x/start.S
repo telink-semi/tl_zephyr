@@ -8,7 +8,11 @@
 #define NDS_MMISC_CTL                0x7d0
 #define NDS_UITB                     0x800
 
+#define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
+#define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
+
 #include <zephyr/toolchain.h>
+#include <zephyr/devicetree.h>
 
 	.option push
 	.option norelax
@@ -60,11 +64,12 @@ start:
 #endif
 
 	/* Disable vector mode */
-	csrci  0x7d0, 2
+	csrci  NDS_MMISC_CTL, 2
 	/* Disable vector feture enable address */
-	lui t0 ,0xe4000
-	li  t1 ,0x00
-	sw  t1 ,0x0(t0)
+	lui    t0, %hi(PLIC_BASE_ADDRESS)
+	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
+	li     t1, 0
+	sw     t1, 0(t0)
 
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
@@ -198,6 +203,19 @@ retention_start:
 	sb     t1, 0x501(t0)
 #endif
 
+	csrci  NDS_MMISC_CTL, 2
+	/* Zero PLIC PRI */
+	lui    t0, %hi(PLIC_BASE_ADDRESS)
+	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
+	addi   t1, t0, PLIC_PRI_SIZE
+	li     t2, 0
+_ZERO_PLIC_PRIO_BEGIN:
+	bltu   t1, t0, _CORE_FEATURES_SETUP
+	sw     t2, 0(t0)
+	addi   t0, t0, 4
+	j      _ZERO_PLIC_PRIO_BEGIN
+
+_CORE_FEATURES_SETUP:
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
 	ori    t0, t0, 1                #/ I-Cache
