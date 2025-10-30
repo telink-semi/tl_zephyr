@@ -34,16 +34,56 @@ if(NOT DEFINED NOSYSDEF_CFLAG)
   set(NOSYSDEF_CFLAG -undef)
 endif()
 
-foreach(file_name include/stddef.h include-fixed/limits.h)
-  execute_process(
-    COMMAND ${CMAKE_C_COMPILER} --print-file-name=${file_name}
-    OUTPUT_VARIABLE _OUTPUT
-    )
-  get_filename_component(_OUTPUT "${_OUTPUT}" DIRECTORY)
-  string(REGEX REPLACE "\n" "" _OUTPUT "${_OUTPUT}")
+# === GCC 13+/14 include-fixed handling ========================================
 
-  list(APPEND NOSTDINC ${_OUTPUT})
+# GCC 13+ no longer ships include-fixed/limits.h; pick the right header and make paths absolute
+execute_process(
+  COMMAND ${CMAKE_C_COMPILER} -dumpversion
+  OUTPUT_VARIABLE GCC_VER OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+set(_fix limits.h)
+if(${GCC_VER} VERSION_LESS 13)
+  set(_fix include-fixed/limits.h)
+else()
+  set(_fix include/limits.h)
+endif()
+
+foreach(_hdr include/stddef.h ${_fix})
+  execute_process(
+    COMMAND ${CMAKE_C_COMPILER} --print-file-name=${_hdr}
+    OUTPUT_VARIABLE _p OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  get_filename_component(_d "${_p}" DIRECTORY)
+  if(IS_DIRECTORY "${_d}")
+    list(APPEND NOSTDINC "${_d}")
+  endif()
 endforeach()
+
+# Convert any relative implicit include dirs (e.g. "include-fixed") to absolute
+foreach(_var CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
+  if(DEFINED ${_var})
+    set(_new "")
+    foreach(_dir IN LISTS ${_var})
+      if(IS_ABSOLUTE "${_dir}")
+        list(APPEND _new "${_dir}")
+      else()
+        execute_process(
+          COMMAND ${CMAKE_C_COMPILER} --print-file-name=${_dir}
+          OUTPUT_VARIABLE _abs OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        get_filename_component(_abs "${_abs}" DIRECTORY)
+        if(IS_DIRECTORY "${_abs}")
+          list(APPEND _new "${_abs}")
+        else()
+          list(APPEND _new "${_dir}")
+        endif()
+      endif()
+    endforeach()
+    set(${_var} "${_new}" CACHE INTERNAL "" FORCE)
+  endif()
+endforeach()
+
+# ============================================================================
 
 include(${ZEPHYR_BASE}/cmake/gcc-m-cpu.cmake)
 include(${ZEPHYR_BASE}/cmake/gcc-m-fpu.cmake)
