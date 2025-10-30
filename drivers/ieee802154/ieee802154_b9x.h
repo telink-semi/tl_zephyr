@@ -65,7 +65,7 @@ struct b9x_src_match_table {
 };
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* radio ACK table type */
 struct b9x_enh_ack_table {
 	struct {
@@ -75,9 +75,7 @@ struct b9x_enh_ack_table {
 		struct ieee802154_header_ie ie_header;
 	} item[CONFIG_OPENTHREAD_MAX_CHILDREN];
 };
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* radio MAC keys type */
 struct b9x_mac_keys {
 	struct {
@@ -110,14 +108,12 @@ struct b9x_data {
 #ifdef CONFIG_OPENTHREAD_FTD
 	struct b9x_src_match_table *src_match_table;
 #endif /* CONFIG_OPENTHREAD_FTD */
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
-	struct b9x_enh_ack_table *enh_ack_table;
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 #ifdef CONFIG_PM_DEVICE
 	atomic_t current_pm_lock;
 #endif /* CONFIG_PM_DEVICE */
 	ieee802154_event_cb_t event_handler;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+	struct b9x_enh_ack_table *enh_ack_table;
 	struct b9x_mac_keys *mac_keys;
 #endif
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER

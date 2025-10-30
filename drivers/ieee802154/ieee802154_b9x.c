@@ -48,12 +48,10 @@ static const struct device *flash_device =
 static struct b9x_src_match_table src_match_table;
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* B9X radio ACK table structure */
 static struct b9x_enh_ack_table enh_ack_table;
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* mac keys data */
 static struct b9x_mac_keys mac_keys;
 #endif
@@ -63,10 +61,8 @@ static struct b9x_data data = {
 #ifdef CONFIG_OPENTHREAD_FTD
 	.src_match_table = &src_match_table,
 #endif /* CONFIG_OPENTHREAD_FTD */
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
-	.enh_ack_table = &enh_ack_table,
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+	.enh_ack_table = &enh_ack_table,
 	/* mac keys data */
 	.mac_keys = &mac_keys,
 #endif
@@ -186,7 +182,7 @@ ALWAYS_INLINE b9x_require_pending_bit(const struct ieee802154_frame *frame)
 
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 
 /* clean radio search match table */
 static void b9x_enh_ack_table_clean(struct b9x_enh_ack_table *table)
@@ -262,10 +258,6 @@ static void b9x_enh_ack_table_remove(
 		}
 	}
 }
-
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
-
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 
 /* Clean mac keys data */
 static void b9x_mac_keys_data_clean(struct b9x_mac_keys *mac_keys_data)
@@ -740,7 +732,7 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 			uint8_t *ack_ie_header = NULL;
 			size_t ack_ie_header_len = 0;
 			bool ack_se_bit = false;
-#if CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 			if (enh_ack) {
 				ack_se_bit = frame.general.se_bit ? true : false;
 				int idx = b9x_enh_ack_table_search(b9x->enh_ack_table,
@@ -754,7 +746,7 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 						IEEE802154_FRAME_IE_HEADER_LENGTH;
 				}
 			}
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
+#endif
 			struct ieee802154_frame ack_frame = {
 				.general = {.valid = true,
 					    .ver = enh_ack ? IEEE802154_FRAME_FCF_VER_2015
@@ -973,11 +965,9 @@ static int b9x_init(const struct device *dev)
 	b9x_src_match_table_clean(b9x->src_match_table);
 	b9x->src_match_table->enabled = true;
 #endif /* CONFIG_OPENTHREAD_FTD */
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
-	b9x_enh_ack_table_clean(b9x->enh_ack_table);
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 	b9x->event_handler = NULL;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+	b9x_enh_ack_table_clean(b9x->enh_ack_table);
 	b9x_mac_keys_data_clean(b9x->mac_keys);
 #endif
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
@@ -1432,26 +1422,6 @@ static int b9x_configure(const struct device *dev,
 		}
 		break;
 #endif /* CONFIG_OPENTHREAD_FTD */
-#ifdef CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT
-	case IEEE802154_CONFIG_ENH_ACK_HEADER_IE:
-		{
-			uint8_t short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
-			uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT];
-
-			sys_put_le16(config->ack_ie.short_addr, short_addr);
-			sys_memcpy_swap(ext_addr, config->ack_ie.ext_addr,
-				IEEE802154_FRAME_LENGTH_ADDR_EXT);
-			if (!config->ack_ie.purge_ie) {
-				b9x_enh_ack_table_add(b9x->enh_ack_table,
-					short_addr, ext_addr,
-					config->ack_ie.header_ie);
-			} else {
-				b9x_enh_ack_table_remove(b9x->enh_ack_table,
-					short_addr, ext_addr);
-			}
-		}
-		break;
-#endif /* CONFIG_OPENTHREAD_LINK_METRICS_SUBJECT */
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 		case IEEE802154_CONFIG_EXPECTED_RX_TIME: {
 			b9x->csl_sample_time_us = config->expected_rx_time / NSEC_PER_USEC;
@@ -1503,6 +1473,31 @@ static int b9x_configure(const struct device *dev,
 		break;
 	case IEEE802154_CONFIG_FRAME_COUNTER:
 		b9x->mac_keys->frame_cnt = config->frame_counter;
+		break;
+	case IEEE802154_CONFIG_ENH_ACK_HEADER_IE:
+		{
+			uint8_t short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
+			uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT];
+
+			sys_put_le16(config->ack_ie.short_addr, short_addr);
+			sys_memcpy_swap(ext_addr, config->ack_ie.ext_addr,
+				IEEE802154_FRAME_LENGTH_ADDR_EXT);
+			if (!config->ack_ie.purge_ie) {
+				if (config->ack_ie.header_ie &&
+					config->ack_ie.header_ie->length) {
+					b9x_enh_ack_table_add(b9x->enh_ack_table,
+						short_addr, ext_addr,
+						config->ack_ie.header_ie);
+				} else {
+					b9x_enh_ack_table_remove(b9x->enh_ack_table,
+						short_addr, ext_addr);
+				}
+
+			} else {
+				b9x_enh_ack_table_remove(b9x->enh_ack_table,
+					short_addr, ext_addr);
+			}
+		}
 		break;
 #endif
 	default:
