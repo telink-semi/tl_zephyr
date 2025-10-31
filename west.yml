@@ -247,19 +247,19 @@ manifest:
       path: modules/hal/tdk
     - name: hal_telink
       url: git@192.168.48.36:src/open_platform/telink_hal_zephyr_src.git
-      revision: 9fd9b2a48f6cf45759e63eb316a0cfecaab8dce7
+      revision: 576024e8cd171202a021be0218e6e47540527865
       path: modules/hal/telink
       groups:
         - hal 
     - name: tl_ble_sdk
       url: git@192.168.48.36:sdk_app/ble/tl_ble_sdk.git
-      revision: 6df5825c58c454356441a08459b6e6af2267ef44
+      revision: 833ae8559e7050b9ab1de066344aa5b2757a016d
       path: modules/hal/telink/tl_ble_sdk
       groups:
         - hal
     - name: tl_ble_src
       url: git@192.168.48.36:src/ble/telink_b91m_ble_multi_connection_src.git
-      revision: c75d1e6e7b96f48eb4bdc5d88259d0c347c441bb
+      revision: 518bb6d96dc248fc58e1a600206525b9c160356e
       path: modules/hal/telink/tl_ble_src
       groups:
         - hal
