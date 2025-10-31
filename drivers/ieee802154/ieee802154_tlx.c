@@ -13,6 +13,7 @@
 #include "plic.h"
 #include "clock.h"
 #include "tlx_bt.h"
+#include "drivers.h"
 
 #define LOG_MODULE_NAME ieee802154_tlx
 #if defined(CONFIG_IEEE802154_DRIVER_LOG_LEVEL)
@@ -1060,6 +1061,13 @@ static int tlx_start(const struct device *dev)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+				pm_set_dig_module_power_switch(FLD_PD_ZB_EN,PM_POWER_UP);
+
+				extern void rf_zb_init(void);
+				rf_zb_init();
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
+
 				rf_baseband_reset();
 				rf_reset_dma();
 				tlx->rf_mode_154 = true;
