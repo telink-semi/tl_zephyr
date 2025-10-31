@@ -24,7 +24,7 @@
 /* List of supported CCLK frequencies */
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 # if TLK_ONLY_BLE_HOST
-	#include "stack/multiCoreComm/comm.h"
+	#include "stack/multicore_comm/service/service_d25f.h"
 # endif
 #endif
 
