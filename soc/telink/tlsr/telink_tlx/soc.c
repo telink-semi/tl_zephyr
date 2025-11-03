@@ -318,6 +318,8 @@ void soc_early_init_hook(void)
 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
 #if DEBUG_GPIO_ENABLE
 	gpio_init(!deepRetWakeUp);
+#else
+	(void)deepRetWakeUp;	// remove warning
 #endif
 
 }
@@ -429,6 +431,8 @@ void soc_tlx_restore(void)
 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
 #if DEBUG_GPIO_ENABLE
 	gpio_init(!deepRetWakeUp);
+#else
+	(void)deepRetWakeUp;	// remove warning
 #endif
 }
 
