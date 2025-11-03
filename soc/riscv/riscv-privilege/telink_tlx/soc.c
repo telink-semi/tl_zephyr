@@ -281,7 +281,7 @@ static int soc_tlx_init(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	// Need to set PLL_CLK to 96MHz
 	case CLK_96MHZ:
-		PLL_96M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
 
@@ -418,7 +418,7 @@ void soc_tlx_restore(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	// Need to set PLL_CLK to 96MHz
 	case CLK_96MHZ:
-		PLL_96M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
 
