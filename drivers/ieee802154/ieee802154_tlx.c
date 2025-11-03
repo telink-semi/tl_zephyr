@@ -6,15 +6,6 @@
 
 #define DT_DRV_COMPAT telink_tlx_zb
 
-#include "rf_common.h"
-#include "stimer.h"
-#include "tl_rf_power.h"
-#include "gpio.h"
-#include "plic.h"
-#include "clock.h"
-#include "tlx_bt.h"
-#include "drivers.h"
-
 #define LOG_MODULE_NAME ieee802154_tlx
 #if defined(CONFIG_IEEE802154_DRIVER_LOG_LEVEL)
 #define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
@@ -38,6 +29,15 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "ieee802154_tlx.h"
 
 #include "ieee802154_tlx_frame.c"
+
+#include "rf_common.h"
+#include "stimer.h"
+#include "tl_rf_power.h"
+#include "gpio.h"
+#include "plic.h"
+#include "clock.h"
+#include "tlx_bt.h"
+#include "drivers.h"
 
 #if defined(CONFIG_IEEE802154_TLX_MAC_FLASH)
 #include <zephyr/drivers/flash.h>
