@@ -17,6 +17,10 @@ zephyr_sources(
 	sys_heap_alloc_wrap.c
 )
 
+zephyr_sources(
+	idle.c
+)
+
 zephyr_sources_ifdef(CONFIG_PM
 	power.c
 )
