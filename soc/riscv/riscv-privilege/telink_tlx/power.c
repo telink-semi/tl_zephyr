@@ -144,7 +144,10 @@ __weak void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	ARG_UNUSED(substate_id);
 
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-	tlx_deep_sleep_retention = false;
+	if (tlx_deep_sleep_retention) {
+		csr_clear(mip, MIP_MEIP);
+		tlx_deep_sleep_retention = false;
+	}
 #endif
 
 	/*
