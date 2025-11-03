@@ -273,10 +273,9 @@ void soc_early_init_hook(void)
 	// 	PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
 	// 	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
-	// Need to set PLL_CLK to 96MHz
-	// case CLK_96MHZ:
-	// 	PLL_96M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
-	// 	break;
+	case CLK_96MHZ:
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
@@ -406,10 +405,9 @@ void soc_tlx_restore(void)
 	// 	PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
 	// 	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
-	// Need to set PLL_CLK to 96MHz
-	// case CLK_96MHZ:
-	// 	PLL_96M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
-	// 	break;
+	case CLK_96MHZ:
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
