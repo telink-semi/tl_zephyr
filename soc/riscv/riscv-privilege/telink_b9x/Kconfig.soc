@@ -127,16 +127,23 @@ config DUAL_MODE
 	help
 		This option enables dual mode
 
+config WATCHDOG_AUTO
+	bool "Support auto watchdog"
+	depends on WATCHDOG
+	default y
+	help
+		This option enables auto watchdog
+
 config TELINK_WDT_TIMEOUT
 	int "Watchdog timeout in milliseconds"
-	depends on WATCHDOG
+	depends on WATCHDOG_AUTO
 	default 30000
 	help
 		This option supports setting the watchdog timeout
 
 config TELINK_WDT_FEED_TIME
 	int "Feed watchdog time in milliseconds"
-	depends on WATCHDOG
+	depends on WATCHDOG_AUTO
 	default 1000
 	help
 		This option supports feeding the watchdog

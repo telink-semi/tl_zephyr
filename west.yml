@@ -142,7 +142,7 @@ manifest:
         - hal
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 2abd901ef24eb46c3fb0b44b8db04bccfea793ba
+      revision: 3ea94cf921af6ed2fd55b17985904d99dedbbbbf
       path: modules/hal/telink
       groups:
         - hal
