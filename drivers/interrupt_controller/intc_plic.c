@@ -27,7 +27,7 @@
 #define PLIC_REG	DT_INST_REG_ADDR_BY_NAME(0, reg)
 
 #define PLIC_IRQS        (CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET)
-#define PLIC_EN_SIZE     ((PLIC_IRQS >> 5) + 1)
+#define PLIC_EN_SIZE     ((PLIC_IRQS + 31) >> 5)
 
 struct plic_regs_t {
 	uint32_t threshold_prio;
@@ -189,7 +189,7 @@ static int plic_init(void)
 
 	/* Set priority of each interrupt line to 0 initially */
 	prio++; /* no zero ISR, it's reserved for PLIC features */
-	for (i = 0; i < PLIC_IRQS; i++) {
+	for (i = 1; i < PLIC_IRQS; i++) {
 		*prio = 0U;
 		prio++;
 	}

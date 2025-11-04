@@ -38,7 +38,8 @@ config RISCV_GP
 
 config NUM_IRQS
 	int
-	default 65
+	default 65 if SOC_RISCV_TELINK_TL721X
+	default 65 if SOC_RISCV_TELINK_TL321X
 
 config 2ND_LVL_ISR_TBL_OFFSET
 	int
