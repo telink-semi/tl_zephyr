@@ -142,7 +142,7 @@ manifest:
         - hal
     - name: hal_telink
       url: git@192.168.48.36:src/open_platform/telink_hal_zephyr_src.git
-      revision: 576024e8cd171202a021be0218e6e47540527865
+      revision: e45fbff0e2c017f783e0a2ddc01719476d9cccd7
       path: modules/hal/telink
       groups:
         - hal 
