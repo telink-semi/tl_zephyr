@@ -284,7 +284,7 @@ static void z_sys_init_run_level(enum init_level level)
 
 extern void boot_banner(void);
 
-#if CONFIG_WATCHDOG
+#if CONFIG_WATCHDOG_AUTO
 #include <watchdog.h>
 #include <zephyr/drivers/watchdog.h>
 #include "ext_driver/ext_pm.h"
@@ -293,7 +293,7 @@ extern void boot_banner(void);
 #elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 #include "lib/include/pm/pm.h"
 #endif /* CONFIG_SOC_RISCV_TELINK_B92 */
-#endif /* CONFIG_WATCHDOG */
+#endif /* CONFIG_WATCHDOG_AUTO */
 
 /**
  * @brief Mainline for kernel's background thread
@@ -349,7 +349,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	z_mem_manage_boot_finish();
 #endif /* CONFIG_MMU */
 
-#if CONFIG_WATCHDOG && CONFIG_MCUBOOT
+#if CONFIG_WATCHDOG_AUTO && CONFIG_MCUBOOT
 #if CONFIG_SOC_RISCV_TELINK_B92
 	if ((pm_get_mcu_status() == MCU_STATUS_REBOOT_BACK) && wd_get_status())
 #elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
@@ -361,9 +361,9 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	{
 		printk("### Watchdog Reset ###\r\n");
 	}
-#endif /* CONFIG_WATCHDOG && CONFIG_MCUBOOT */
+#endif /* CONFIG_WATCHDOG_AUTO && CONFIG_MCUBOOT */
 
-#if CONFIG_WATCHDOG
+#if CONFIG_WATCHDOG_AUTO
 	int err;
 	int wdt_channel_id;
 	const struct device *const wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
@@ -388,7 +388,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 		printk("Watchdog setup error\n");
 		return;
 	}
-#endif /* CONFIG_WATCHDOG */
+#endif /* CONFIG_WATCHDOG_AUTO */
 
 	extern int main(void);
 
