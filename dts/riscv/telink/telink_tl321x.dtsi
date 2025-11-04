@@ -156,7 +156,7 @@
 			interrupt-parent = <&cpu0>;
 			reg = <0xc4000000 0x00210000>;
 			riscv,max-priority = <3>;
-			riscv,ndev = <52>;
+			riscv,ndev = <53>;
 		};
 
 		uart0: serial@80140080 {

@@ -19,10 +19,12 @@ config 2ND_LVL_ISR_TBL_OFFSET
 	default 12
 
 config NUM_IRQS
-	default 59
+	default 59 if SOC_RISCV_TELINK_B92
+	default 76 if SOC_RISCV_TELINK_B91
 
 config MAX_IRQ_PER_AGGREGATOR
-	default 59
+	default 59 if SOC_RISCV_TELINK_B92
+	default 76 if SOC_RISCV_TELINK_B91
 
 config XIP
 	default n

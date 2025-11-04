@@ -132,7 +132,7 @@ static inline uint32_t get_plic_enabled_size(const struct device *dev)
 {
 	const struct plic_config *config = dev->config;
 
-	return local_irq_to_reg_index(config->nr_irqs) + 1;
+	return local_irq_to_reg_index(config->nr_irqs + PLIC_REG_SIZE - 1);
 }
 
 static ALWAYS_INLINE uint32_t get_hart_context(const struct device *dev, uint32_t hartid)
@@ -602,7 +602,7 @@ static int plic_init(const struct device *dev)
 	}
 
 	/* Set priority of each interrupt line to 0 initially */
-	for (uint32_t i = 1; i <= config->nr_irqs; i++) {
+	for (uint32_t i = 1; i < config->nr_irqs; i++) {
 		sys_write32(0U, prio_addr + (i * sizeof(uint32_t)));
 	}
 
