@@ -1061,15 +1061,14 @@ static int tlx_start(const struct device *dev)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-				pm_set_dig_module_power_switch(FLD_PD_ZB_EN,PM_POWER_UP);
+				if(tl_rf_is_inited()){
+					rf_baseband_reset();
+					rf_reset_dma();
+				}
+				else{
+					tl_rf_change_to_inited();
+				}
 
-				extern void rf_zb_init(void);
-				rf_zb_init();
-#endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
-
-				rf_baseband_reset();
-				rf_reset_dma();
 				tlx->rf_mode_154 = true;
 			}
 #if CONFIG_SOC_RISCV_TELINK_TL322X
