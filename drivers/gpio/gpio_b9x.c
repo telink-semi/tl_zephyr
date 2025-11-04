@@ -558,6 +558,13 @@ static int gpio_b9x_pin_interrupt_configure(const struct device *dev,
 	switch (mode) {
 	case GPIO_INT_MODE_DISABLED:                /* GPIO interrupt disable */
 		gpio_b9x_irq_en_clr(dev, pin);
+		BM_CLR(cfg->pin_irq_state->irq_en_rising, BIT(pin));
+		BM_CLR(cfg->pin_irq_state->irq_en_falling, BIT(pin));
+		BM_CLR(cfg->pin_irq_state->irq_en_both, BIT(pin));
+		if (!cfg->pin_irq_state->irq_en_rising && !cfg->pin_irq_state->irq_en_falling &&
+		    !cfg->pin_irq_state->irq_en_both) {
+			riscv_plic_irq_disable(IRQ_TO_L2(GET_IRQ_NUM(dev)));
+		}
 		break;
 
 	case GPIO_INT_MODE_EDGE:
@@ -670,7 +677,11 @@ static int gpio_b9x_pm_action(const struct device *dev, enum pm_device_action ac
 					BM_SET(GPIO_IRQ_REG, FLD_GPIO_IRQ_LVL_GPIO2RISC1);
 				}
 
-				riscv_plic_irq_enable(IRQ_TO_L2(irq_num));
+				if (cfg->pin_irq_state->irq_en_rising ||
+				    cfg->pin_irq_state->irq_en_falling ||
+				    cfg->pin_irq_state->irq_en_both) {
+					riscv_plic_irq_enable(IRQ_TO_L2(irq_num));
+				}
 				riscv_plic_set_priority(IRQ_TO_L2(irq_num), irq_priority);
 
 				if (irq_num == IRQ_GPIO) {
@@ -739,11 +750,12 @@ static const struct gpio_driver_api gpio_b9x_driver_api = {
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 0
 static void gpio_b9x_irq_connect_0(void)
 {
-	#if IS_INST_IRQ_EN(0)
+#if IS_INST_IRQ_EN(0)
 	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(0), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
+#endif
 }
 #endif
 
@@ -751,11 +763,12 @@ static void gpio_b9x_irq_connect_0(void)
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 1
 static void gpio_b9x_irq_connect_1(void)
 {
-	#if IS_INST_IRQ_EN(1)
+#if IS_INST_IRQ_EN(1)
 	IRQ_CONNECT(DT_INST_IRQN(1), DT_INST_IRQ(1, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(1), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(1), DT_INST_IRQ(1, priority));
+#endif
 }
 #endif
 
@@ -763,11 +776,12 @@ static void gpio_b9x_irq_connect_1(void)
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 2
 static void gpio_b9x_irq_connect_2(void)
 {
-	#if IS_INST_IRQ_EN(2)
+#if IS_INST_IRQ_EN(2)
 	IRQ_CONNECT(DT_INST_IRQN(2), DT_INST_IRQ(2, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(2), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(2), DT_INST_IRQ(2, priority));
+#endif
 }
 #endif
 
@@ -775,11 +789,12 @@ static void gpio_b9x_irq_connect_2(void)
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 3
 static void gpio_b9x_irq_connect_3(void)
 {
-	#if IS_INST_IRQ_EN(3)
+#if IS_INST_IRQ_EN(3)
 	IRQ_CONNECT(DT_INST_IRQN(3), DT_INST_IRQ(3, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(3), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(3), DT_INST_IRQ(3, priority));
+#endif
 }
 #endif
 
@@ -787,11 +802,12 @@ static void gpio_b9x_irq_connect_3(void)
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 4
 static void gpio_b9x_irq_connect_4(void)
 {
-	#if IS_INST_IRQ_EN(4)
+#if IS_INST_IRQ_EN(4)
 	IRQ_CONNECT(DT_INST_IRQN(4), DT_INST_IRQ(4, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(4), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(4), DT_INST_IRQ(4, priority));
+#endif
 }
 #endif
 

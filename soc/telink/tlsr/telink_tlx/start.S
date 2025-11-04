@@ -8,6 +8,7 @@
 #define NDS_MMISC_CTL                0x7d0
 #define NDS_UITB                     0x800
 #define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
+#define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
 
 #include <zephyr/toolchain.h>
 #include <zephyr/devicetree.h>
@@ -49,16 +50,16 @@ start:
 	/* Enable vector feture enable address */
 	lui    t0, %hi(PLIC_BASE_ADDRESS)
 	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
-	li     t1 ,0x03
-	sw     t1 ,0x0(t0)
+	li     t1, 3
+	sw     t1, 0(t0)
 #else
 	csrci  NDS_MMISC_CTL, 2
 
 	/* Disable vector feture enable address */
 	lui    t0, %hi(PLIC_BASE_ADDRESS)
 	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
-	li     t1 ,0x00
-	sw     t1 ,0x0(t0)
+	li     t1, 0
+	sw     t1, 0(t0)
 #endif /* CONFIG_RISCV_VECTORED_MODE */
 
 	/* Enable I/D-Cache */
@@ -192,18 +193,32 @@ retention_start:
 	/* Enable vector feture enable address */
 	lui    t0, %hi(PLIC_BASE_ADDRESS)
 	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
-	li     t1 ,0x03
-	sw     t1 ,0x0(t0)
+	addi   t1, t0, PLIC_PRI_SIZE
+	li     t2, 3
+	sw     t2, 0(t0)
+	addi   t0, t0, 4
+	li     t2, 0
+_ZERO_PLIC_PRIO_BEGIN:
+	bltu   t1, t0, _CORE_FEATURES_SETUP
+	sw     t2, 0(t0)
+	addi   t0, t0, 4
+	j      _ZERO_PLIC_PRIO_BEGIN
 #else
 	csrci  NDS_MMISC_CTL, 2
 
 	/* Disable vector feture enable address */
 	lui    t0, %hi(PLIC_BASE_ADDRESS)
 	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
-	li     t1 ,0x00
-	sw     t1 ,0x0(t0)
+	addi   t1, t0, PLIC_PRI_SIZE
+	li     t2, 0
+_ZERO_PLIC_PRIO_BEGIN:
+	bltu   t1, t0, _CORE_FEATURES_SETUP
+	sw     t2, 0(t0)
+	addi   t0, t0, 4
+	j      _ZERO_PLIC_PRIO_BEGIN
 #endif /* CONFIG_RISCV_VECTORED_MODE */
 
+_CORE_FEATURES_SETUP:
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
 	ori    t0, t0, 1                #/ I-Cache
