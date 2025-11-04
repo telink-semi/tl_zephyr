@@ -9,6 +9,7 @@
 SECTION_DATA_PROLOGUE(ram_code,,)
 {
 	. = ALIGN(4);
+	KEEP(*(.ram_code.halt))
 	*(.ram_code)
 	*(".ram_code.*")
 	*(.ram_code_data)

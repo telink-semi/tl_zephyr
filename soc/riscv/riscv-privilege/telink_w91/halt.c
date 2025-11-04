@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <assert.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/reboot.h>
 
@@ -19,11 +20,12 @@ FUNC_NORETURN void arch_system_halt(unsigned int reason)
 #ifdef CONFIG_TELINK_SOC_REBOOT_ON_FAULT
 #if CONFIG_TELINK_SOC_REBOOT_ON_FAULT_DELAY
 	printk("!!! reboot in %u mS\n", CONFIG_TELINK_SOC_REBOOT_ON_FAULT_DELAY);
-	uint64_t start_tick  = sys_clock_cycle_get_64();
+	uint64_t start_tick = sys_clock_cycle_get_64();
 
 	while (sys_clock_cycle_get_64() - start_tick <
-		((uint64_t)CONFIG_TELINK_SOC_REBOOT_ON_FAULT_DELAY *
-		CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / 1000) {
+	       ((uint64_t)CONFIG_TELINK_SOC_REBOOT_ON_FAULT_DELAY *
+		CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) /
+		       1000) {
 	}
 
 #endif /* CONFIG_TELINK_SOC_REBOOT_ON_FAULT_DELAY */
@@ -35,4 +37,10 @@ FUNC_NORETURN void arch_system_halt(unsigned int reason)
 		/* Spin endlessly */
 		__asm volatile("nop");
 	}
+}
+
+void __GENERIC_SECTION(.ram_code.halt) __attribute__((noinline)) halt_w91_null_ram_func(void)
+{
+	printk("!!! null ram function called\n");
+	assert(0);
 }
