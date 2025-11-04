@@ -1,0 +1,384 @@
+/** @file
+ *  @brief app_24g.h
+ */
+
+/*
+ * Copyright (c) 2016 Intel Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#ifndef __APP_2P4G_H__
+#define __APP_2P4G_H__
+
+#include "app_common_config.h"
+
+typedef void (*p24g_sm_cmd_handler_t)(uint8_t *data, uint16_t len);
+
+// enum {
+//     EMPTY_DATA_CMD=0,
+//     PAIR_DATA_CMD=1,
+//     RECONNECT_DATA_CMD=2,
+//     MOUSE_DATA=3,
+//     SPP_DATA=4,
+//     SPP_DATA_ACK=5,
+//     NORMAL_KB_DATA_CMD=6,
+//     CONSUME_KB_DATA_CMD=7,
+//     SYSTEM_KB_DATA_CMD=8,
+//     ALL_KB_DATA_CMD=9,
+// };
+
+/* Definition of mailbox 2.4g packet types */
+typedef enum {
+    P24G_MB_CMD_NONE = 0x00,
+    P24G_MB_CMD_USB  = 0x01,
+} p24g_mailbox_cmd_e;
+
+typedef enum {
+    P24G_USB_OP_EP_WRITE = 0x00,
+    P24G_USB_OP_EP_READ  = 0x01,
+} p24g_usb_opcode_e;
+
+/* Generic event header */
+typedef struct p24g_evt
+{
+    uint8_t type;
+    uint8_t opcode;
+    uint8_t len;
+    uint8_t data[0];
+} __attribute__((packed)) p24g_evt_t;
+
+/* USB packet header */
+typedef struct p24g_usb_packet_header
+{
+    uint8_t ep_addr;
+    uint8_t len;
+    uint8_t data[0];
+} __attribute__((packed)) p24g_usb_pkt_t;
+
+extern volatile p24g_device_status_e g_state;
+
+
+typedef struct {
+    uint8_t mac[MAC_ADDR_LEN];
+} app_ctx_t;
+extern app_ctx_t app_ctx;
+
+/**
+ * @brief   Register a shared memory (SM) command handler for the 2.4GHz protocol
+ *
+ * This function registers a handler function for a specified SM command in the
+ * 2.4GHz protocol stack. When the given command is received through the SM
+ * (shared memory) communication channel, the registered handler will be invoked
+ * with the associated data buffer.
+ *
+ * @param[in] cmd       Command identifier of type @ref p24g_sm_cmd_e
+ * @param[in] handler   Callback function pointer of type @ref p24g_sm_cmd_handler_t
+ *
+ * @return   0: success
+ *           Other: fail
+ *
+ * @note     If a handler for the same command is already registered, it will
+ *           be overwritten by the new handler.
+ */
+uint8_t p24g_register_sm_cmd_handler(p24g_sm_cmd_e cmd, p24g_sm_cmd_handler_t handler);
+
+
+/**
+ * @brief     Shared memory (SM) receive callback for 2.4GHz D25F core
+ *
+ * This callback function is invoked when the shared memory (SM) interface
+ * receives data from another MCU core in an dual-core system. It is
+ * part of the inter-core communication mechanism used by the 2.4GHz protocol
+ * stack running on the d25f core.
+ *
+ * @param[in] data  Pointer to the received data buffer
+ * @param[in] len   Length of the received data in bytes
+ *
+ * @note      The buffer pointed by @p data is only valid during the callback
+ *            execution. If the data needs to be stored for later processing,
+ *            it must be copied to a safe memory area before the callback returns.
+ *
+ * @return    None
+ */
+void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint32_t len);
+
+
+/**
+ * @brief     Send a shared memory (SM) message in the 2.4GHz protocol
+ *
+ * This function sends a message to the 2.4GHz protocol layer through the
+ * shared memory (SM) interface. The SM interface is used for inter-core
+ * communication in dual-core systems, enabling fast and low-latency data
+ * exchange between the application processor d25f and the RF protocol core n22.
+ *
+ * @param[in] type  Message type identifier
+ * @param[in] op    Message operation code
+ * @param[in] data  Pointer to the message data buffer
+ * @param[in] len   Length of the message data in bytes
+ * 
+ * @return    0 if sending is successful, non-zero error code if failed
+ *
+ * @note      The buffer pointed by @p data must remain valid until the message
+ *            is fully copied or processed by the receiving core.
+ *
+ */
+uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op,  uint8_t *data, uint8_t len);
+
+
+
+/**
+ * @brief     Send SPP (Serial Port Profile) data through 2.4GHz protocol
+ *
+ * This function sends SPP-format data via the 2.4GHz protocol layer to
+ * the connected peer device. SPP data is typically used for generic data
+ * transmission (non-HID) between two devices over the 2.4GHz link.
+ *
+ * @param[in] cmd   SPP data command identifier
+ * @param[in] data  Pointer to the SPP data buffer
+ * @param[in] len   Length of the SPP data in bytes
+ *
+ * @return    0 if sending is successful, non-zero error code if failed
+ *
+ */
+uint8_t p24g_send_spp_data(uint8_t cmd, unsigned char *data, unsigned char len);
+
+/**
+ * @brief     Enable or disable pairing mode for the 2.4GHz protocol
+ *
+ * This function enables or disables the pairing mode in the 2.4GHz protocol stack.
+ * When pairing mode is enabled, the device will search for and allow connections
+ * from compatible peer devices. When disabled, pairing requests will be ignored.
+ *
+ * @param[in] enable  true to enable pairing mode, false to disable pairing mode
+ *
+ * @return    0 if the operation is successful, non-zero error code if failed
+ *
+ * @note      This API only controls the pairing state in the protocol stack.
+ * 
+ */
+uint8_t p24g_enable_pairing(bool enable);
+
+
+/**
+ * @brief     Terminate the current 2.4GHz connection
+ *
+ * This function is used to actively terminate the existing 2.4GHz wireless
+ * connection. It can be called by the application layer when the device
+ * needs to disconnect from the host or exit the current session.
+ *
+ * After a successful disconnection, the device status callback will be invoked
+ * with @ref STATE_DISCONNECTED, and the disconnection reason will be reported
+ * as @ref P24G_LL_CONN_TERMINATION_BY_LOCAL.
+ *
+ * @param     None
+ *
+ * @return    0: success  
+ *            Other: failure
+ *
+ * @note      A reconnection procedure may be required if communication
+ *            is needed again.
+ */
+uint8_t p24g_terminate_connect(void);
+
+
+/**
+ * @brief     Put the 2.4GHz RF module into idle state
+ *
+ * This function actively transitions the 2.4GHz RF module to idle state,
+ * stopping ongoing RF communication and freeing RF resources.
+ *
+ * After a successful operation, the device status callback will be invoked
+ * with @ref STATE_RF_IDLE, indicating that the RF module is now in idle state.
+ *
+ * @param     None
+ *
+ * @return    0: success  
+ *            Other: failure
+ *
+ * @note      Use this function when the application needs to temporarily stop
+ *            RF communication or release RF resources. Communication must be
+ *            re-enabled or reconnected if needed again.
+ */
+uint8_t p24g_rf_enter_idle(void);
+
+
+/**
+ * @brief     Enable or disable the 2.4GHz automatic reconnection feature
+ *
+ * This function enables or disables the automatic reconnection mechanism
+ * in the 2.4GHz protocol stack. 
+ *
+ * @param[in] enable    true: enable reconnection  
+ *                      false: disable reconnection
+ *
+ * @return    0: success  
+ *            Other: failure (e.g., invalid parameter or operation not allowed)
+ *
+ * @note      This function should be called after the device has been paired.
+ * 
+ */
+uint8_t p24g_enable_reconn(bool enable);
+
+
+
+
+
+
+void app_2p4g_init(void);
+void app_2p4g_main_loop(void);
+
+void app_2p4g_mb_km_data_cb(uint8_t* data);
+
+static inline  p24g_device_status_e app_d24p_get_state(void)
+{
+    return g_state;
+}
+
+static inline  void app_d24p_set_state(p24g_device_status_e state)
+{
+    g_state = state;
+}
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+// typedef enum
+// {
+//     STATE_POWERON                       =   0,
+//     STATE_PAIRING,
+//     STATE_RECONNECT,
+//     STATE_NORMAL,
+//     STATE_CONNECTED,
+//     STATE_DISCONNECTED,
+//     STATE_RF_IDLE,
+//     STATE_PAIRING_TIMEOUT,
+//     STATE_NONE,
+
+//     STATE_PAIR_NONE                     =   0,
+//     STATE_PAIR_INIT,
+//     STATE_PAIR_RSP,
+//     STATE_PAIR_CFM,
+//     STATE_REJOIN,
+// } p24g_device_status_e;
+
+// typedef enum {
+
+//     P24G_SM_CMD_PAIRING                 =   0x00,
+//     P24G_SM_CMD_LL_CONTROL,
+//     P24G_SM_CMD_MOUSE_DRAW,
+//     P24G_SM_CMD_SET_STATE,
+//     P24G_SM_CMD_SAVE_PAIR_INFO,
+//     P24G_SM_CMD_SET_KB_MODE,
+//     P24G_SM_CMD_DATA_TYPE_SPP,
+//     P24G_SM_CMD_MISC,
+//     P24G_SM_CMD_REPORT_RATE_CHANGE,
+//     P24G_SM_CMD_MAX,
+//     P24G_SM_CMD_NONE                    =   0xFF,
+
+// } p24g_sm_cmd_e;
+ 
+// typedef enum {
+//     P24G_SM_OP_NONE                     =   0x00,
+//     P24G_SM_OP_TERMINATE_CONN           =   0x51,
+//     P24G_SM_OP_ENTER_RF_IDLE            =   0x52,
+//     P24G_SM_OP_MISC_TRANS_MAC           =   0x53,
+//     P24G_SM_OP_MISC_PEER_INFO           =   0x54,
+//     P24G_SM_OP_ENABLE_RECONN            =   0x55,
+//     P24G_SM_OP_MISC_STOP_STIMER         =   0x56,
+//     P24G_SM_OP_MISC_REPORT_RATE         =   0x57,
+//     P24G_SM_OP_MISC_SAVE_REPORT_RATE    =   0x58,
+// } p24g_sm_op_e;
+
+
+// typedef enum
+// {
+//     P24G_SPP_NONE                       =   0x60,
+//     P24G_SPP_LED_STATUS                 =   0x61,
+//     P24G_SPP_REPORT_RATE                =   0x62,
+//     P24G_SPP_BATT_CAP                   =   0x63,
+//     P24G_SPP_CHG_STATUS                 =   0x64,
+//     P24G_SPP_TEST_DATA                  =   0x65,
+//     P24G_SPP_ALL_KEY_DATA               =   0x66,
+//     P24G_SPP_CONSUME_KEY_DATA           =   0x67,
+// } p24g_spp_cmd_e;
+
+
+// typedef enum
+// {
+//     P24G_LL_CMD_NONE                    =   0x70,
+//     P24G_LL_CMD_TERMINATE_CONN          =   0x71,
+//     P24G_LL_CMD_TERMINATE_CONN_RSP      =   0x72,
+// } p24g_ll_cmd_e;
+
+
+// typedef enum {
+//     P24G_KB_MODE_USB                    =   0x00,
+//     P24G_KB_MODE_2P4G                   =   0x01,
+
+//     P24G_FLOW_SN                        =   0x01,
+//     P24G_FLOW_NESN                      =   0x02,
+
+//     P24G_LL_CONN_TIMEOUT                =   0x01,
+//     P24G_LL_CONN_TERMINATION_BY_PEER    =   0x02,
+//     P24G_LL_CONN_TERMINATION_BY_LOCAL   =   0x03,
+
+//     P24G_8K_KM_SLOT                     =   0x00,
+//     P24G_8K_SPP_SLOT                    =   0x01,
+//     P24G_8K_SLOT_POS                    =   0x03,
+
+//     DEVICE_TYPE_KB                      =   BIT(0),
+//     DEVICE_TYPE_MS                      =   BIT(1),
+
+// };
+
+// typedef enum
+// {
+//     REPORT_RATE_8K = BIT(7),
+//     REPORT_RATE_4K = BIT(0),
+//     REPORT_RATE_2K = BIT(1),
+//     REPORT_RATE_1K = BIT(2),
+//     REPORT_RATE_500 = BIT(3),
+//     REPORT_RATE_250 = BIT(4),
+//     REPORT_RATE_125 = BIT(5),
+// } report_rate_t;
+
+// enum {
+//     EMPTY_DATA_CMD=0,
+//     PAIR_DATA_CMD=1,
+//     RECONNECT_DATA_CMD=2,
+//     MOUSE_DATA=3,
+//     SPP_DATA=4,
+//     SPP_DATA_ACK=5,
+//     NORMAL_KB_DATA_CMD=6,
+//     CONSUME_KB_DATA_CMD=7,
+//     SYSTEM_KB_DATA_CMD=8,
+//     ALL_KB_DATA_CMD=9,
+// };
+
+
+// extern volatile p24g_device_status_e g_state;
+
+// void app_2p4g_init(void);
+// void app_2p4g_main_loop(void);
+
+// void app_2p4g_mb_km_data_cb(uint8_t* data);
+
+// static inline  p24g_device_status_e app_d24p_get_state(void)
+// {
+//     return g_state;
+// }
+
+// static inline  void app_d24p_set_state(p24g_device_status_e state)
+// {
+//     g_state = state;
+// }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // __APP_2P4G_H__
