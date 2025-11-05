@@ -1297,7 +1297,11 @@ int bt_id_reset(uint8_t id, bt_addr_le_t *addr, uint8_t *irk)
 		return -EINVAL;
 	}
 
+#if defined(CONFIG_BT_ID_FOR_KMD)
+	if (id >= bt_dev.id_count) {
+#else
 	if (id == BT_ID_DEFAULT || id >= bt_dev.id_count) {
+#endif
 		return -EINVAL;
 	}
 
