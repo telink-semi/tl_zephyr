@@ -33,6 +33,21 @@ LOG_MODULE_REGISTER(main);
 
 int main(void)
 {
+	gpio_function_en(GPIO_PH1);
+	gpio_output_en(GPIO_PH1);
+	gpio_input_dis(GPIO_PH1);
+
+	gpio_function_en(GPIO_PG7);
+	gpio_output_en(GPIO_PG7);
+	gpio_input_dis(GPIO_PG7);
+
+	gpio_function_en(GPIO_PB4);
+	gpio_output_en(GPIO_PB4);
+	gpio_input_dis(GPIO_PB4);
+
+	gpio_function_en(GPIO_PB5);
+	gpio_output_en(GPIO_PB5);
+	gpio_input_dis(GPIO_PB5);
 
 	keyboard_comm_init();
 
