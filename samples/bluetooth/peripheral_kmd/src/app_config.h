@@ -41,7 +41,7 @@ extern "C" {
 
 #define BATT_CHECK_ENABLE                   0
 
-#define TOGGLE_DEBUG_IO_ENABLE				1
+#define TOGGLE_DEBUG_IO_ENABLE				0
 #define USE_K_TIMER_LOOP                    1
 #define USER_K_TIMER_SCAN_LOOP_INTERVAL_MS  50      //50ms
 
