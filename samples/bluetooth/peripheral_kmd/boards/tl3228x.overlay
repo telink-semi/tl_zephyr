@@ -12,9 +12,30 @@
 	current-speed = <2000000>;			/* Baud rate for serial port logging */
 };
 
+&gpioa {
+       status = "okay";
+};
+
+
 / {
 
 	aliases {
+
+		/delete-property/ led0;
+		/delete-property/ led1;
+		/delete-property/ led2;
+		/delete-property/ led3;
+
+		/delete-property/ mcuboot-button0;
+		/delete-property/ mcuboot-led0;
+
+		/delete-property/ sw0;
+		/delete-property/ sw1;
+		/delete-property/ sw2;
+		/delete-property/ sw3;
+
+		/delete-property/ pwm-led0;
+		/delete-property/ pwm0;
 
 		toggle4 = &toggle_b4_pin;
 		toggle5 = &toggle_b5_pin;
@@ -25,6 +46,8 @@
 
 	};
 
+	/delete-node/ leds;
+	/delete-node/ pwm_leds;
 
 	leds {
 		compatible = "gpio-leds";
@@ -53,6 +76,11 @@
 			label = "MODE BLE SLECT";
 		};
 	};
+
+	/delete-node/ keys;
+	/delete-node/ key_pool;
+	/delete-node/ led_pool;
+	/delete-node/ pwm_pool;
 
 	key_matrix {
 		compatible = "gpio-keys";
@@ -183,4 +211,27 @@
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_7,
 			(TL322X_FUNC_UART0_RTX_IO))>;
 	};
+};
+
+&pwm0 {
+	status = "disabled";
+};
+
+&gspi {
+	status = "disabled";
+};
+
+&i2c {
+	status = "disabled";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c_scl_pe0_default &i2c_sda_pe1_default>;
+	pinctrl-names = "default";
+};
+
+&adc {
+	status = "okay";
+	vref-internal-mv = <1200>;
+	sample-freq = <DT_FREQ_K(96)>;
+	pinctrl-0 = <&adc_pc0_default>;
+	pinctrl-names = "default";
 };
