@@ -1180,6 +1180,18 @@ static void gpio_tlx_irq_connect_7(void)
 }
 #endif
 
+#if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 8
+static void gpio_tlx_irq_connect_8(void)
+{
+        #if IS_INST_IRQ_EN(8)
+        IRQ_CONNECT(DT_INST_IRQN(8), DT_INST_IRQ(8, priority),
+                    gpio_tlx_irq_handler,
+                    DEVICE_DT_INST_GET(8), 0);
+        #endif
+}
+#endif
+
+
 #endif
 
 #if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
