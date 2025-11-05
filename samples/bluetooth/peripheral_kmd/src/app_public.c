@@ -1,4 +1,4 @@
-/* main.c - Application main entry point */
+/* app_public.c - Application main entry point */
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -170,7 +170,7 @@ unsigned short consumer_list[]={
     
 0xE9,       //0xb3 C_VOL_INC
 0xEA,       //0xb4 C_VOL_DEC    
-0x00,       //0xb5 telink�Զ����??
+0x00,       //0xb5 telink Զ    ??
 0x22D,      //0xb6 USAGE ZOOM IN
 0x22E,      //0xb7   USAGE ZOOM OUT 
 0x236,      //0xb8   USAGE PAN LEFT
@@ -458,7 +458,7 @@ static void p24g_pairing_info_check(void)
     {
         // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
         // app_d24g_enable_pairing(true);
-        LOG_INFO("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+        LOG_INF("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
         // p24g_send_sm_msg(P24G_SM_CMD_PAIRING, true, 0, 0);
 
         // p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_PEER_INFO, flash_dev_info.peer_addr, MAC_ADDR_LEN);
@@ -466,7 +466,7 @@ static void p24g_pairing_info_check(void)
     }
     else
     {
-        LOG_INFO("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+        LOG_INF("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
     }
 
     dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
@@ -474,7 +474,7 @@ static void p24g_pairing_info_check(void)
     if (dev_other_info_idx >= 0)
     {
         // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
-        LOG_INFO("read flash get report rate: %x\n", flash_dev_other_info.side_id);
+        LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
     }
 }
 
@@ -497,7 +497,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
         case PRESS_PAIR_BTN_FLAG:
                 if(fun_mode==KB_MODE_2P4G)
                 {
-                    LOG_INFO("2p4g mode pair start\r\n");
+                    LOG_INF("2p4g mode pair start\r\n");
                     // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PA6);
                     p24g_enable_pairing(true);
                 }
@@ -521,10 +521,10 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
                     //ret = app_2p4g_set_stack_report_rate(REPORT_RATE_8K);
 
                     if (TLK_SUCCESS == ret) {
-                        //LOG_INFO("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
-                        LOG_INFO("report rate change()...\n");
+                        //LOG_INF("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
+                        LOG_INF("report rate change()...\n");
                     } else {
-                        LOG_INFO("report rate change failed(ret %d)\n", ret);
+                        LOG_INF("report rate change failed(ret %d)\n", ret);
                     }
                 }
             }
@@ -537,10 +537,10 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
                     //ret = app_2p4g_set_stack_report_rate(REPORT_RATE_125);
 
                     if (TLK_SUCCESS == ret) {
-                        //LOG_INFO("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
-                        LOG_INFO("report rate change...\n");
+                        //LOG_INF("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
+                        LOG_INF("report rate change...\n");
                     } else {
-                        LOG_INFO("report rate change failed(ret %d)\n", ret);
+                        LOG_INF("report rate change failed(ret %d)\n", ret);
                     }
                 }
             }
@@ -802,10 +802,10 @@ static void peripheral_comm_init(void)
 
     ret = nvs_mount(&user_fs);
     if (ret) {
-        LOG_INFO("Error: NVS init failed: %d\n", ret);
+        LOG_INF("Error: NVS init failed: %d\n", ret);
         return;
     }
-    LOG_INFO("NVS initialized successfully.\n");
+    LOG_INF("NVS initialized successfully.\n");
 
     ret = nvs_read(&user_fs, USER_STORAGE_APP_BLE_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
     if (ret == -ENOENT) {
@@ -821,10 +821,10 @@ static void peripheral_comm_init(void)
         ble_app_pip_info.mast_id = 0;
         save_ble_app_info();
     }
-    LOG_INFO("nvs read USER_STORAGE_APP_BLE_INFO_ID: %d\n", ret);
-    LOG_INFO("slave_mac_addr: %x %x %x %x\n", ble_app_pip_info.slave_mac_addr[0], ble_app_pip_info.slave_mac_addr[1], \
+    LOG_INF("nvs read USER_STORAGE_APP_BLE_INFO_ID: %d\n", ret);
+    LOG_INF("slave_mac_addr: %x %x %x %x\n", ble_app_pip_info.slave_mac_addr[0], ble_app_pip_info.slave_mac_addr[1], \
                                             ble_app_pip_info.slave_mac_addr[2], ble_app_pip_info.slave_mac_addr[3]);
-    LOG_INFO("mast_id: %d\n", ble_app_pip_info.mast_id);
+    LOG_INF("mast_id: %d\n", ble_app_pip_info.mast_id);
 
 
     if (!gpio_is_ready_dt(&mode_2p4_pin)) {
@@ -855,20 +855,20 @@ static void peripheral_comm_init(void)
     }
     ret = gpio_pin_configure_dt(&vbus_check_pin, GPIO_INPUT);
     if (ret != 0) {
-        LOG_INFO("Error: failed to configure vbus check io \n");
+        LOG_INF("Error: failed to configure vbus check io \n");
     }
-    LOG_INFO("configure vbus_check_pin io ok\n");
+    LOG_INF("configure vbus_check_pin io ok\n");
 
 #if TOGGLE_DEBUG_IO_ENABLE
     if (!gpio_is_ready_dt(&toggle_pin)) {
-        LOG_INFO("toggle io is not ready\n");
+        LOG_INF("toggle io is not ready\n");
          return -ENODEV;
     }
     ret = gpio_pin_configure_dt(&toggle_pin, GPIO_OUTPUT);
     if (ret != 0) {
-        LOG_INFO("Error: failed to configure toogle io \n");
+        LOG_INF("Error: failed to configure toogle io \n");
     }
-    LOG_INFO("configure toogle io ok\n");
+    LOG_INF("configure toogle io ok\n");
 #endif
 
     #if BATT_CHECK_ENABLE
@@ -891,20 +891,30 @@ static void peripheral_comm_init(void)
 
 static int soc_tlx_mcc_init(void)
 {
-	IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
-		    mailbox_n22_to_d25_irq_handler, 0, 0);
-#ifdef TLK_ONLY_BLE_HOST
-	volatile uint32_t key = arch_irq_lock();
-	// gpio_toggle(GPIO_PH1);
-	sys_n22_start();
+// 	IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
+// 		    mb_irq_handler, 0, 0);
+// #ifdef TLK_ONLY_BLE_HOST
+// 	volatile uint32_t key = arch_irq_lock();
+// 	// gpio_toggle(GPIO_PH1);
+// 	sys_n22_start();
 
-	// gpio_toggle(GPIO_PB4);
-	tlk_mailbox_service_init();
-	// gpio_toggle(GPIO_PB5);
-	tlk_share_memory_service_init();
-	// gpio_toggle(GPIO_PG7);
+// 	// gpio_toggle(GPIO_PB4);
+// 	//tlk_mailbox_service_init();
+// 	// gpio_toggle(GPIO_PB5);
+// 	//tlk_share_memory_service_init();
+// 	// gpio_toggle(GPIO_PG7);
+//     mcc_d25f_service_init();
+// 	arch_irq_unlock(key);
+// #endif /* TLK_ONLY_BLE_HOST */
+
+    IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
+	volatile uint32_t key = arch_irq_lock();
+	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
+    sys_n22_start();
+    mcc_d25f_service_init();
 	arch_irq_unlock(key);
-#endif /* TLK_ONLY_BLE_HOST */
+
+	ske_dig_en();
 }
 
 int keyboard_comm_init(void)
@@ -1006,7 +1016,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
     #if (BATT_CHECK_ENABLE)
         if ((k_uptime_get_32() - lowBattDet_tick) > 5000)
         {
-            LOG_INFO("battery check\r\n");
+            LOG_INF("battery check\r\n");
             lowBattDet_tick = k_uptime_get_32();
             app_battery_check(0);
         }

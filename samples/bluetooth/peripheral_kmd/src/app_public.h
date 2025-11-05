@@ -49,7 +49,7 @@ extern pl_fifo_t tx_fifo;
 extern pl_fifo_t d25fKbTxFifo;
 extern pl_fifo_t d25fSppTxFifo;
 
-extern void mailbox_n22_to_d25_irq_handler(void);
+extern void mb_irq_handler(void);
 
 //ZH_TODO
 typedef struct
