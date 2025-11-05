@@ -18,6 +18,7 @@ extern "C" {
 
 #define HW_BOARD_TYPE                       HW_DIGIT_KEYBOARD
 
+#define HW_EVK_BOARD   0
 
 #if (HW_BOARD_TYPE == HW_PRJ_KEYBOARD )
     #define  ALLOW_SWITCH_BLE_2P4G_MODE     1

@@ -45,30 +45,14 @@ app_ctx_t app_ctx;
 //ZH_TODO
 _attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag)
 {
-    uint8_t cmd[7]={0};
-    cmd[0] = (uint8_t)mode_flag;
-
     volatile uint32_t key = arch_irq_lock();
     
-    uint32_t timeout_tick = clock_time();
+    uint8_t cmd[8] = {0};
 
-    fence_iorw;
-    mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_MODE,cmd);
-    // Memory barrier: ensure mailbox data is sent before proceeding
-    fence_iorw;
+    cmd[0] = TLK_MB_D25F_TO_N22_MODE;
+    cmd[1] = mode_flag;
 
-    while(mailbox_get_irq_status() != FLD_MAILBOX_N22_TO_D25F_IRQ)
-    {
-        // Check for timeout condition
-        if (clock_time_exceed(timeout_tick, TL_KB_MODE_SYNC_TIMEOUT_US)) {
-            start_reboot();
-            break;
-        }
-    }
-    uint8_t msg[8] = {0};
-    mailbox_get_msg((unsigned int*)msg);
-    mailbox_clr_irq_status();
-    //tlk_mailbox_receive_hook(msg);
+    mb_send_with_polling(cmd);
 	arch_irq_unlock(key);
 }
 
@@ -206,7 +190,7 @@ _attribute_ram_code_sec_ uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint
     
     if (!mcc_d25f_shm_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len, TLK_SHM_MSG_2P4G))
     {
-        //         if(!tlk_n22_sync_send_message(TLK_SHARE_MEMORY_MESSAGE_TYPE_BLE, TxBuf, sizeof(p24g_evt_t) + p_evt->len)) {
+        //if(!tlk_n22_sync_send_message(TLK_SHARE_MEMORY_MESSAGE_TYPE_BLE, TxBuf, sizeof(p24g_evt_t) + p_evt->len)) {
         tlkapi_printf(1, "d25f send sm message success\n");
         //tlkapi_printk(TLK_LOG_EN, "d25f send sm message success %x %x\n", type, op);
     }
@@ -375,7 +359,7 @@ void app_2p4g_dual_core_comm_init(void)
     d25fKbTxFifo.p[0] = 0x51;
     d25fKbTxFifo.p[1] = 0x52;
 #endif
-    //tlkapi_printk(APP_LOG_EN, "d25fKbTxFifo %x\n",&d25fKbTxFifo);
+    printk("d25fKbTxFifo %x\n",&d25fKbTxFifo);
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_KB_TX_ADDRESS, cmd);
 
 

@@ -879,6 +879,8 @@ static void peripheral_comm_init(void)
     k_busy_wait(5000); // wait for 5ms
     check_mode();
 
+    fun_mode = KB_MODE_2P4G;
+
     if (fun_mode == KB_MODE_2P4G)
     {
         uint8_t mac_public[6];
@@ -922,6 +924,8 @@ int keyboard_comm_init(void)
     peripheral_comm_init();
 
     soc_tlx_mcc_init();
+
+    tlk_d25f_to_n22_mode_info(KB_MODE_2P4G);
 
     if (fun_mode == KB_MODE_2P4G)
     {
@@ -985,6 +989,8 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 
     loop_cnt++;
 
+    fun_mode = KB_MODE_2P4G;
+
     if(app_get_kb_mode() == KB_MODE_BLE)
     {
         app_ble_main_loop();
@@ -1026,7 +1032,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
         app_usb_status_check();
 #endif
 
-        check_mode();
+        // check_mode();
 
         if (fun_mode != last_fun_mode) {
             printk("fun_mode change %d \n", fun_mode);
