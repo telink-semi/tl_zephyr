@@ -66,7 +66,7 @@ unsigned char map_digit[COL_CNT][ROW_CNT] = {\
 static  unsigned int last_result[ROW_CNT]={0};
 static  unsigned int debug_result[ROW_CNT]={0};
 
-static KEY_MATRIX_DEFINE(key_matrix);
+//static KEY_MATRIX_DEFINE(key_matrix);
 
 // 全局变量
 static struct k_timer scan_timer;
@@ -296,7 +296,7 @@ _attribute_ram_code_sec_noinline_ void digit_keyscan_handle(void)
     }
 }
 
-#endif
+
 
 
 _attribute_ram_code_sec_noinline_ unsigned int get_scan_gpio_value(void)
@@ -408,18 +408,5 @@ int matrix_keypad_init(void)
     LOG_INF("Matrix keypad initialized");
     return 0;
 }
-
-// 停止按键扫描
-void matrix_keypad_stop(void)
-{
-    scanning_active = false;
-#if (USE_K_TIMER_SCAN_MATRIX)
-    k_timer_stop(&scan_timer);
-#else
 #endif
-    LOG_INF("Matrix keypad scanning stopped");
-}
-
-
-
 #endif

@@ -30,6 +30,11 @@ extern "C" {
     #define ALG_KEYSCAN_APP_FUN_ENABLE      0
     #define USB_APP_FUN_ENABLE              1
     #define HARDWARE_MODULE_SCAN_ENABLE     1
+
+    #define CAP_LED_PIN   GPIO_PB4
+    #define NUM_LED_PIN   GPIO_PB5
+    #define MODE_LED_PIN  GPIO_PH1
+    #define PAIR_LED_PIN  GPIO_PG7
 #endif
 
 #define APP_PM_ENABLE                       1
