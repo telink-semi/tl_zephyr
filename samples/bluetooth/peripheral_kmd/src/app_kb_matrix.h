@@ -255,8 +255,6 @@ struct key_matrix_data {
 	void                         *context;
 	struct k_work_delayable       work;
 };
-
-
 /*
  * Declare struct key_matrix_data variable base on data from .dts.
  * The name of variable should correspond to .dts node name.
@@ -304,7 +302,6 @@ struct key_matrix_data {
 				DT_PROP_LEN(DT_PATH_INTERNAL(DT_CHILD(name, row)), gpios), 8)),  \
 			(0))]) {},                                                           \
 	}
-
 
 
 
