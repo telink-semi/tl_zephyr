@@ -879,8 +879,6 @@ static void peripheral_comm_init(void)
     k_busy_wait(5000); // wait for 5ms
     check_mode();
 
-    // fun_mode = KB_MODE_2P4G;
-
     if (fun_mode == KB_MODE_2P4G)
     {
         uint8_t mac_public[6];
@@ -891,39 +889,10 @@ static void peripheral_comm_init(void)
     } 
 }
 
-// static int soc_tlx_mcc_init(void)
-// {
-// // 	IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
-// // 		    mb_irq_handler, 0, 0);
-// // #ifdef TLK_ONLY_BLE_HOST
-// // 	volatile uint32_t key = arch_irq_lock();
-// // 	// gpio_toggle(GPIO_PH1);
-// // 	sys_n22_start();
-
-// // 	// gpio_toggle(GPIO_PB4);
-// // 	//tlk_mailbox_service_init();
-// // 	// gpio_toggle(GPIO_PB5);
-// // 	//tlk_share_memory_service_init();
-// // 	// gpio_toggle(GPIO_PG7);
-// //     mcc_d25f_service_init();
-// // 	arch_irq_unlock(key);
-// // #endif /* TLK_ONLY_BLE_HOST */
-
-//     IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
-// 	volatile uint32_t key = arch_irq_lock();
-// 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
-//     sys_n22_start();
-//     mcc_d25f_service_init();
-// 	arch_irq_unlock(key);
-
-// 	ske_dig_en();
-// }
 
 int keyboard_comm_init(void)
 {
     peripheral_comm_init();
-
-    // soc_tlx_mcc_init();
 
     tlk_d25f_to_n22_mode_info(fun_mode);
 
@@ -931,7 +900,7 @@ int keyboard_comm_init(void)
     {
 	    p24g_user_init_normal();
     } 
-    else
+    else if (fun_mode == KB_MODE_BLE)
     {
         ble_init();
     }
@@ -989,7 +958,6 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 
     loop_cnt++;
 
-    // fun_mode = KB_MODE_2P4G;
 
     if(app_get_kb_mode() == KB_MODE_BLE)
     {
