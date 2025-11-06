@@ -876,7 +876,7 @@ static void peripheral_comm_init(void)
     app_battery_check_init();
     #endif
 
-    k_busy_wait(5000); // wait for 5ms
+    k_busy_wait(1000); // wait for 5ms
     check_mode();
 
     if (fun_mode == KB_MODE_2P4G)
@@ -889,11 +889,25 @@ static void peripheral_comm_init(void)
     } 
 }
 
+extern void mb_irq_handler(void);
+static int soc_tlx_mcc_init(void)
+{
+    IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
+	volatile uint32_t key = arch_irq_lock();
+	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
+    sys_n22_start();
+    mcc_d25f_service_init();
+	arch_irq_unlock(key);
+
+	ske_dig_en();
+
+}
+
 
 int keyboard_comm_init(void)
 {
     peripheral_comm_init();
-
+    soc_tlx_mcc_init();
     tlk_d25f_to_n22_mode_info(fun_mode);
 
     if (fun_mode == KB_MODE_2P4G)
@@ -974,7 +988,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
             printk("vbus_status %d \n", vbus_status);
             printk("ble_status %d \n", ble_status);
             printk("mast_id %d \n", ble_app_pip_info.mast_id);
-
+            printk("usb_connected_ok %d \n", usb_connected_ok);
         }
 
         if (BIT_IS_SET(user_active_disconnect, BLE_SWITCH_PIPE)) { 
