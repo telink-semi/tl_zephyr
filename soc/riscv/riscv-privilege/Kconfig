@@ -35,6 +35,7 @@ config TELINK_TLX_MATTER_RETENTION_LAYOUT
 	bool "link mcu_boot_tlx.ld for tl3218x"
 	default y if BOARD_TL3218X
 	default y if BOARD_TL3238X
+	default y if BOARD_TL3238X_RETENTION
 	default n
 	help
 	  link mcu_boot_tlx.ld for tl3218x
