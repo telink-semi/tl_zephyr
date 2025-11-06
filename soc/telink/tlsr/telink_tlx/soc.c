@@ -496,34 +496,6 @@ unsigned char flash_set_4line_read_write(unsigned int flash_mid)
 	return status;
 }
 #endif
-extern void mb_irq_handler(void);
-static int soc_tlx_mcc_init(void)
-{
-// 	IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
-// 		    mb_irq_handler, 0, 0);
-// #ifdef TLK_ONLY_BLE_HOST
-// 	volatile uint32_t key = arch_irq_lock();
-// 	// gpio_toggle(GPIO_PH1);
-// 	sys_n22_start();
-
-// 	// gpio_toggle(GPIO_PB4);
-// 	//tlk_mailbox_service_init();
-// 	// gpio_toggle(GPIO_PB5);
-// 	//tlk_share_memory_service_init();
-// 	// gpio_toggle(GPIO_PG7);
-//     mcc_d25f_service_init();
-// 	arch_irq_unlock(key);
-// #endif /* TLK_ONLY_BLE_HOST */
-
-    IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
-	volatile uint32_t key = arch_irq_lock();
-	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
-    sys_n22_start();
-    mcc_d25f_service_init();
-	arch_irq_unlock(key);
-
-	ske_dig_en();
-}
 
 
 /**
@@ -582,7 +554,6 @@ static int soc_tlx_check_flash(void)
 		abort();
 	}
 
-	soc_tlx_mcc_init();
 	return 0;
 }
 
