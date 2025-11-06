@@ -333,6 +333,8 @@ static int uart_tlx_driver_init(const struct device *dev)
 
 	/* configure pins for TL323X */
 #if CONFIG_SOC_RISCV_TELINK_TL323X
+	(void)status;
+
     TLX_UART_PINMUX_EXTRACT(uart0, tx_mux, rx_mux);
     uint32_t tx_gpio = TLX_PINMUX_TO_GPIO(tx_mux);
     uint32_t rx_gpio = TLX_PINMUX_TO_GPIO(rx_mux);
