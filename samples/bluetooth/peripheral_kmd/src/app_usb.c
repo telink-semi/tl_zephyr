@@ -242,6 +242,12 @@ int usb_hw_init(void)
 	LOG_INF("Enable USB, usb hw init");
 }
 
+void app_usb_mode_exit(void)
+{
+    usb_disable();
+    usb_connected_ok = 0;
+    printk("usb mode exit\r\n");
+}
 
 _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
 {
