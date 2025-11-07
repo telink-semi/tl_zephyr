@@ -878,7 +878,7 @@ static void peripheral_comm_init(void)
 
     k_busy_wait(1000); // wait for 5ms
     check_mode();
-
+    last_fun_mode = fun_mode;
     if (fun_mode == KB_MODE_2P4G)
     {
         uint8_t mac_public[6];
@@ -1023,22 +1023,36 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 
             if (fun_mode == KB_MODE_2P4G){
                 if (last_fun_mode == KB_MODE_USB) {
+                    printk("usb mode_exit enter 2p4g mode\r\n");
                     // app_usb_mode_exit();
+                    sys_reboot(SYS_REBOOT_COLD);
                 } else if (last_fun_mode == KB_MODE_BLE) {
+                    printk("ble_mode_exit enter 2p4g mode\r\n");
                     // ble_mode_exit();
+                    sys_reboot(SYS_REBOOT_COLD);
                 }
             } else if (fun_mode == KB_MODE_BLE){
                 if (last_fun_mode == KB_MODE_USB) {
+                    printk("app_usb_mode_exit  enter ble mode\r\n");
                     // app_usb_mode_exit();
-                } else if (last_fun_mode == KB_MODE_2P4G) { 
+                    //ble_init();
+                    sys_reboot(SYS_REBOOT_COLD);
+                } else if (last_fun_mode == KB_MODE_2P4G) {
+                    printk("app_usb_mode_exit enter 2p4g mode\r\n");
                     // app_2p4g_mode_exit();
+                    sys_reboot(SYS_REBOOT_COLD);
                 }
                 // ble_mode_enter();
             } else if (fun_mode == KB_MODE_USB){
                 if (last_fun_mode == KB_MODE_2P4G) {
+                    printk("2p4g mode exit enter usb mode\r\n");
                     // app_2p4g_mode_exit();
-                } else if (last_fun_mode == KB_MODE_BLE) {                    
-                    // ble_mode_exit();
+                    sys_reboot(SYS_REBOOT_COLD);
+                } else if (last_fun_mode == KB_MODE_BLE) {
+                    printk("ble mode exit enter usb mode\r\n");
+                     //ble_mode_exit();
+                     //bt_disable();
+                     sys_reboot(SYS_REBOOT_COLD);
                 }
                 if (vbus_status == 1) {
                      // app_usb_mode_enter();
