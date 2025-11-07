@@ -334,13 +334,8 @@ _attribute_ram_code_ void p24g_user_init_deepRetn(void)
 
 void app_2p4g_dual_core_comm_init(void)
 {
-    //    DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
-    // delay_ms(300);
-//    irq_enable();
-    // tlk_multi_core_communication_init();
 
     mcc_mb_register_cb(TLK_MB_N22_TO_D25F_KM_DATA, app_2p4g_mb_km_data_cb);
-
     mcc_shm_register_cb(TLK_SHM_MSG_2P4G, app_2p4g_d25f_sm_rx_cb);
 
     uint8_t cmd[7] = {0};
@@ -350,18 +345,8 @@ void app_2p4g_dual_core_comm_init(void)
     cmd[5] = (uint8_t)(address >> 16 & 0xff);
     cmd[6] = (uint8_t)(address >> 24 & 0xff);
 
-#if 0
-    d25fKbTxFifo.size = 0x11;
-    d25fKbTxFifo.num = 0x22;
-    d25fKbTxFifo.wptr = 1;
-    d25fKbTxFifo.rptr = 2;
-
-    d25fKbTxFifo.p[0] = 0x51;
-    d25fKbTxFifo.p[1] = 0x52;
-#endif
     printk("d25fKbTxFifo %x\n",&d25fKbTxFifo);
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_KB_TX_ADDRESS, cmd);
-
 
     address = (u32)&d25fSppTxFifo;
     cmd[3] = (uint8_t)(address & 0xff);
@@ -381,25 +366,13 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
 
     if (p_evt->type == P24G_SM_CMD_SAVE_PAIR_INFO)
     {
-        // tlkapi_send_string_data(APP_LOG_EN, "save pairing info", data, len);
-        // tlkapi_printk(TLK_LOG_EN, "save pairing info %x %x %x %x", data[0], data[1], data[2], data[3]);
-        // return;
-        // uint32_t side_id = p_evt->data[0] | (p_evt->data[1] << 8) | (p_evt->data[2] << 16) | (p_evt->data[3] << 24);
-        // app_inf.side_id = fnv1a_hash(app_inf.peer_mac, MAC_ADDR_LEN);
-        // uint8_t peer_mac[MAC_ADDR_LEN];
-        // tmemcpy(peer_mac, &p_evt->data[0], MAC_ADDR_LEN);
         memcpy(flash_dev_info.peer_addr, p_evt->data, MAC_ADDR_LEN);
         uint32_t side_id = fnv1a_hash(flash_dev_info.peer_addr, MAC_ADDR_LEN);
         
-        // app_inf.pair_success_flag = 0;
-
         if (flash_dev_info.side_id != side_id)
         {
-
             flash_dev_info.side_id = side_id;
-            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PD6);
             save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
-            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PD6);
         }
         
     }
@@ -415,9 +388,8 @@ _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
         {
             flash_dev_other_info.side_id = side_id;
             tlkapi_send_string_data(APP_LOG_EN, "saving other info", &flash_dev_other_info.side_id, 5);
-            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PD6);
+
             save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
-            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PD6);
         }
     }
 }
@@ -426,8 +398,6 @@ volatile uint32_t spp_tick = 0;
 
 _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, uint16_t len)
 {
-    // tlkapi_send_string_data(APP_LOG_EN, "app_2p4g_handle_set_state", data, len);
-
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
     if (p_evt->type == P24G_SM_CMD_SET_STATE)
     {
@@ -435,16 +405,12 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         
         if (p_evt->opcode == STATE_CONNECTED)
         {
-            ; // device connected
             tlkapi_send_string_data(APP_LOG_EN, "connected", data, len);
 
             spp_tick = stimer_get_tick() | 1;
         }
         else if (p_evt->opcode == STATE_DISCONNECTED)
         {
-            ; // device disconnected
-
-            // tlkapi_send_string_data(APP_LOG_EN, "disconnect", data, len);
              if(p_evt->data[0] == P24G_LL_CONN_TIMEOUT)
             {
                 p24g_enable_reconn(true);
@@ -452,13 +418,12 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         }
         else if (p_evt->opcode == STATE_PAIRING)
         {
-            ; // device pairing
+
         }else if (p_evt->opcode == STATE_RF_IDLE)
         {
-            // tlkapi_send_string_data(APP_LOG_EN, "RF IDLE", data, len);
+
         }else if (p_evt->opcode == STATE_PAIRING_TIMEOUT)
         {
-            ;//pairing timeout
             p24g_enable_pairing(true);
         }
     }
@@ -509,13 +474,8 @@ static void app_p24g_send_info_2_n22(void)
 
     if (dev_info_idx >= 0)
     {
-        // tlkapi_send_string_data(APP_LOG_EN, "send info", &dev_info_idx, 1);
-        // tlkapi_printk(TLK_LOG_EN, "send info: %x\n", dev_info_idx);
         p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_PEER_INFO, flash_dev_info.peer_addr, MAC_ADDR_LEN);
         p24g_enable_reconn(true); 
-        // p24g_enable_pairing(true);
-        // tlkapi_send_string_data(APP_LOG_EN, "enter reconnect mode", 0, 0);
-        // tlkapi_printk(TLK_LOG_EN, "enter reconnect mode\n");
     }
 
     #if (HW_BOARD_TYPE == HW_EVK_KEYBOARD || HW_EVK_BOARD == 1)
@@ -568,7 +528,6 @@ void p24g_user_init_normal(void)
 
     app_p24g_sm_cmd_hanlder_init();
 
-        // p24g_pairing_info_check();
     app_p24g_send_info_2_n22();//call this fun after sm init
 
     p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
@@ -692,67 +651,18 @@ _attribute_ram_code_sec_ void app_pp_check_connect_status(void)
 //          tlkapi_printf(APP_LOG_EN, "powron\n");
         }
     }
-    // else if(app_inf.dev_now_status==STATE_PAIRING)
     else  if(app_d24p_get_state() == STATE_PAIRING)
     {
-//        unsigned int r = core_interrupt_disable();
-//        if(clock_time_exceed(tick_status, PAIR_TIMEOUT_US))
-//        {
-//            #if 0
-//            //pp_rf_enter_idle(1);
-//            //if(pp_get_rf_link_status()==IDLE_RF_STATUS)
-//            {
-//                //app_enter_sleep(D24G_PAIR_TIMEOUT_SLEEP);
-//                app_inf.dev_now_status=STATE_RECONNECT;
-//            }
-//            #endif
-//
-//            #if (HW_BOARD_TYPE==HW_PRJ_KEYBOARD)
-//            app_d24p_set_state(STATE_POWERON);
-//            #endif
-////          tlkapi_printf(APP_LOG_EN, "pairing timeout\n");
-//
-//        }
-//        core_restore_interrupt(r);
         if(clock_time_exceed(led_tick, 100000))
         {
             led_tick=clock_time();
             DBG_GPIO_TOGGLE(APP_IO_EN, PAIR_LED_PIN);
-//          tlkapi_printf(APP_LOG_EN, "pairing %d \n", app_d24p_get_state());
         }
     }
     if((app_d24p_get_state() == STATE_CONNECTED))
     {
         app_p24g_spp_send_handle();
     }
-    #if 0
-    else if(app_inf.dev_now_status==STATE_NORMAL)
-    {
-        #if 0
-        if((idle_count>CON_NO_ACTIVE_TIMEOUT_S)/*&&(vbus_status==0)*/)
-        {
-            pp_rf_enter_idle(1);
-            if(pp_get_rf_link_status()==IDLE_RF_STATUS)
-            {
-                //app_enter_sleep(D24G_CONNECT_NO_ACTIVE_TIMEOUT_SLEEP);
-            }
-        }
-        #endif
-        #if (PAIR_FUN_ENABLE==1)
-        if(led_tick&&clock_time_exceed(led_tick, 2500000))
-        {
-            led_tick=0;
-            gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
-        }
-        #else
-        if(led_tick&clock_time_exceed(led_tick, 500000))
-        {
-            led_tick=clock_time()|1;
-            DBG_GPIO_TOGGLE(APP_IO_EN, PAIR_LED_PIN);
-        }
-        #endif
-    }
-    #endif
 }
 
 #define SPP_TEST_EN 0
