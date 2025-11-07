@@ -273,13 +273,14 @@ void ble_start_pairing_delayed_work_handler(struct k_work *work)
 	LOG_HEXDUMP_INF(&ble_addr.a.val[0], 6, "bt id reset new mac:");
 	printk("user bt_id_reset %d\n", ble_app_pip_info.ble_id[ble_app_pip_info.mast_id]);
 	// reset bt id with new address
-	err = bt_id_reset(ble_app_pip_info.ble_id[ble_app_pip_info.mast_id], &ble_addr, NULL);
-	if (err) {	
-		printk("bt_id_reset (err %d)\n", err);
+	int new_id = bt_id_reset(ble_app_pip_info.ble_id[ble_app_pip_info.mast_id], &ble_addr, NULL);
+	if (new_id < 0) {
+		printk("bt_id_reset (err %d)\n", new_id);
 		return;
 	}
-	printk("bt_id_reset success\n");
-
+	printk("bt_id %d_reset success\n", new_id);
+	ble_app_pip_info.ble_id[ble_app_pip_info.mast_id] = new_id;
+	adv_param.id = ble_app_pip_info.ble_id[ble_app_pip_info.mast_id];
 	printk("adv_param id %d\n", adv_param.id);
 
 	ble_status = IDLE_BLE_STATUS;
