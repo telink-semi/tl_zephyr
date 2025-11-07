@@ -148,36 +148,48 @@
 
 &flash {
 	reg = <0x20000000 0x200000>;
+	/delete-node/ partitions;
 
 	partitions {
 		compatible = "fixed-partitions";
 		#address-cells = <1>;
 		#size-cells = <1>;
 
+		/*boot_partition: 32k*/
 		boot_partition: partition@0 {
 			label = "mcuboot";
-			reg = <0x00000000 0x20000>;
+			reg = <0x00000000 0x8000>;
 		};
-		slot0_partition: partition@20000 {
+		/*D25F APP 1 partition: 256k*/
+		slot0_partition: partition@8000 {
 			label = "image-0";
-			reg = <0x20000 0x68000>;
+			reg = <0x8000 0x40000>;
 		};
-		slot1_partition: partition@88000 {
+		/*N22 APP 1 partition: 128k*/
+		n22_1_partition: partition@48000 {
 			label = "image-1";
-			reg = <0x88000 0x68000>;
+			reg = <0x48000 0x20000>;
 		};
-		scratch_partition: partition@f0000 {
-			label = "image-scratch";
-			reg = <0xf0000 0x4000>;
+		/*D25F APP 2 partition: 256k*/
+		slot1_partition: partition@68000 {
+			label = "image-2";
+			reg = <0x68000 0x40000>;
 		};
-		storage_partition: partition@f4000 {
-			label = "storage";
-			reg = <0xf4000 0x0000a000>;
+		/*N22 APP 2 partition: 128k*/
+		n22_2_partition: partition@A8000 {
+			label = "image-3";
+			reg = <0xA8000 0x20000>;
 		};
 
-		user_kb_partition: partition@1f0000 {
+		user_app_partition: partition@C8000 {
+			label = "app-storage";
+			reg = <0xC8000 0x00002000>;
+		};
+
+		/*BLE SMP storage partition*/
+		storage_partition: partition@CA000 {
 			label = "storage";
-			reg = <0x1f0000 0x0000a000>;
+			reg = <0xCA000 0x0000a000>;
 		};
 
 		/* region <0xfe000 0x2000> is used for Telink TLx RF parameters */
@@ -187,7 +199,7 @@
 		/* For 16M MCU - the partition address is 0xffe000 */
 		vendor_partition: partition@fe000 {
 			label = "vendor-data";
-			reg = <0x1fe000 0x2000>;
+			reg = <0xfe000 0x2000>;
 		};
 	};
 };

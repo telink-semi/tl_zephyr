@@ -136,7 +136,8 @@ extern uint32_t  flash_sector_2p4_other_inf;
 // #define APP_IO_EN                   1 //app
 
 extern struct nvs_fs user_fs;
-#define USER_STORAGE_APP_BLE_INFO_ID            1
+#define USER_STORAGE_APP_INFO_ID                1
+#define APP_2P4G_PAIRINFO_ID                    2
 
 // typedef enum {
 //     KB_MODE_2P4G                        =   0,
