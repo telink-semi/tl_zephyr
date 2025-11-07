@@ -388,7 +388,7 @@ void disconnect_current_connection(void)
 
 void save_ble_app_info(void)
 {
-	int ret = nvs_write(&user_fs, USER_STORAGE_APP_BLE_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
+	int ret = nvs_write(&user_fs, USER_STORAGE_APP_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
     printk("NVS Write result: %d\n", ret);
 }
 

@@ -75,13 +75,13 @@ struct gpio_dt_spec toggle_pin_b5 = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle5), gpios
 
 
 /* 定义NVS使用的Flash存储分区 */
-#define NVS_USER_PARTITION user_kb_partition
+#define NVS_USER_PARTITION user_app_partition
 #define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_USER_PARTITION)
 #define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_USER_PARTITION)
 /* NVS扇区大小，需与Flash的擦除页大小匹配 */
 #define NVS_SECTOR_SIZE (4096)
 /* NVS扇区数量 */
-#define NVS_SECTOR_COUNT (10)
+#define NVS_SECTOR_COUNT (2)
 /* 定义NVS实例 */
 struct nvs_fs user_fs;
 
@@ -807,9 +807,9 @@ static void peripheral_comm_init(void)
     }
     LOG_INF("NVS initialized successfully.\n");
 
-    ret = nvs_read(&user_fs, USER_STORAGE_APP_BLE_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
+    ret = nvs_read(&user_fs, USER_STORAGE_APP_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
     if (ret == -ENOENT) {
-        printk("NVS USER_STORAGE_APP_BLE_INFO_ID naver saved\n");
+        printk("NVS USER_STORAGE_APP_INFO_ID naver saved\n");
         ble_app_pip_info.slave_mac_addr[0] = 0;
         ble_app_pip_info.slave_mac_addr[1] = 0;
         ble_app_pip_info.slave_mac_addr[2] = 0;
@@ -821,7 +821,7 @@ static void peripheral_comm_init(void)
         ble_app_pip_info.mast_id = 0;
         save_ble_app_info();
     }
-    LOG_INF("nvs read USER_STORAGE_APP_BLE_INFO_ID: %d\n", ret);
+    LOG_INF("nvs read USER_STORAGE_APP_INFO_ID: %d\n", ret);
     LOG_INF("slave_mac_addr: %x %x %x %x\n", ble_app_pip_info.slave_mac_addr[0], ble_app_pip_info.slave_mac_addr[1], \
                                             ble_app_pip_info.slave_mac_addr[2], ble_app_pip_info.slave_mac_addr[3]);
     LOG_INF("mast_id: %d\n", ble_app_pip_info.mast_id);
