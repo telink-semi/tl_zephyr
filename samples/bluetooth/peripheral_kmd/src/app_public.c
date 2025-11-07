@@ -1018,6 +1018,9 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 
         if (fun_mode != last_fun_mode) {
             printk("fun_mode change %d \n", fun_mode);
+            pp_fifo_reset(&tx_fifo);
+            pp_fifo_reset(&d25fKbTxFifo);
+
             if (fun_mode == KB_MODE_2P4G){
                 if (last_fun_mode == KB_MODE_USB) {
                     // app_usb_mode_exit();
