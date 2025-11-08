@@ -349,6 +349,15 @@ _attribute_ram_code_sec_ void keyscan_loop(void);
 void start_change_ble_pipe_by_delay_work(void);
 _attribute_ram_code_sec_noinline_ void app_ble_main_loop(void);
 
+static inline kb_mode_t  app_get_kb_mode(void)
+{
+    #if (HW_BOARD_TYPE==HW_EVK_KEYBOARD)
+    return KB_MODE_2P4G;
+    #else
+    return fun_mode;
+    #endif
+}
+
 #ifdef __cplusplus
 }
 #endif

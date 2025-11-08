@@ -31,15 +31,27 @@ extern pl_fifo_t d25fKbTxFifo;
 
 #define WDT_INTV_MS     (300)    
 
+#define APP_SLEEP_PREPARE_COUNT             (4)
+#define APP_SUSPEND_LIMIT_MIN_TIME_US       (1500)
+#define APP_SUSPEND_LONG_TIME_MIN_US        (8000)
+#define APP_DELAY_ENTER_SUSPEND_TIME_US     (0)
+#define APP_WAKEUP_EARLY_TIME_US            (50)
+#define APP_WFI_WAKEUP_EARLY_TIME_US        (20)
+
+
 extern volatile bool n22_rssi_scan_done;
 
 volatile p24g_device_status_e g_state = STATE_POWERON;
+static volatile p24g_device_status_e g_work_state = STATE_NONE;
+static volatile p24g_device_status_e g_power_state = STATE_NONE;
+static volatile uint32_t g_wakeup_stick = 0;
+static volatile uint32_t spp_tick = 0;
+static uint8_t g_report_rate = REPORT_RATE_8K;
 
 volatile p24g_device_status_e last_connect_status = STATE_NONE;
 volatile unsigned int tick_status;
 app_ctx_t app_ctx;
 
-#define TL_KB_MODE_SYNC_TIMEOUT_US (1000000)
 
 
 //ZH_TODO
@@ -61,6 +73,66 @@ _attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag)
  * @brief share memory message handler table
  */
 static p24g_sm_cmd_handler_t p24g_cmd_table[P24G_SM_CMD_MAX] = {0};
+uint8_t g_app_suspend_ret_flag = 0;
+
+static inline void app_wdt_init()
+{
+    if (wd_get_status()) {
+        wd_clear_status();
+    }
+    wd_set_interval_ms(WDT_INTV_MS);
+    /**
+     * Wd_clear() must be executed before each call to wd_start() to avoid abnormal watchdog reset time because the initial count value is not 0.
+     * For example, the watchdog is reset soon or a few minutes later.
+     */
+    wd_clear();
+    wd_start();
+}
+static inline void app_timer1_start(uint32_t sys_tick)
+{
+    unsigned int tick = sys_tick * sys_clk.pclk / SYSTEM_TIMER_TICK_1US;
+    timer_set_init_tick(TIMER1, 0);
+    timer_set_cap_tick(TIMER1, tick);
+    timer_start(TIMER1);
+}
+static inline void app_timer1_stop(void)
+{
+    timer_stop(TIMER1);
+}
+static inline void app_timer1_init(void)
+{
+    timer_set_init_tick(TIMER1, 0);
+
+    timer_set_mode(TIMER1, TIMER_MODE_SYSCLK);
+
+    timer_set_irq_mask(FLD_TMR1_MODE_IRQ);
+    tlkapi_printf(APP_LOG_EN, "timer1 init\r\n");
+
+#if defined(MCU_CORE_TL322X_N22)
+    clic_interrupt_enable(IRQ_TIMER1);
+#else
+    plic_interrupt_enable(IRQ_TIMER1);
+#endif
+}
+_attribute_ram_code_sec_ static void app_2p4g_set_power_state(p24g_device_status_e state, uint32_t tick)
+{
+    // if ((state == STATE_TO_IDLE) && (g_power_state != STATE_TO_SLEEP)) {
+    //     g_power_state = STATE_TO_IDLE;
+    //     if (tick) {
+    //         app_timer1_start((tick - stimer_get_tick() - APP_WFI_WAKEUP_EARLY_TIME_US * SYSTEM_TIMER_TICK_1US));
+    //     }
+    // } else if (state == STATE_TO_SLEEP) {
+    //     g_wakeup_stick = tick;
+    //     // app_inf.step_2t2r = STEP_2T2R_NONE;
+    //     g_power_state = STATE_TO_SLEEP;
+    // }
+}
+
+static inline bool app_2p4g_is_work_busy(void)
+{
+    return (g_work_state == STATE_BUSY);
+}
+
 
 static inline char *tl_hex_to_str(const void *buf, uint8_t len)
 {
@@ -399,8 +471,6 @@ _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
     }
 }
 
-volatile uint32_t spp_tick = 0;
-
 _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
@@ -431,6 +501,60 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         {
             p24g_enable_pairing(true);
         }
+        else if (p_evt->opcode == STATE_IDLE)
+        {
+            uint32_t wakeup_stick = 0;
+
+            wakeup_stick = p_evt->data[3];
+            wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
+            wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
+            wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
+
+            app_2p4g_set_power_state(STATE_TO_IDLE, wakeup_stick);
+        }
+        else if (p_evt->opcode == STATE_SLEEP)
+        {
+            uint32_t wakeup_stick = 0;
+
+            wakeup_stick = p_evt->data[3];
+            wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
+            wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
+            wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
+
+            // DBG_GPIO_TOGGLE(STACK_IO_EN, GPIO_PD7);
+            app_2p4g_set_power_state(STATE_TO_SLEEP, wakeup_stick);
+        }
+    }
+}
+
+static inline void app_2p4g_clock_reinit(uint8_t report_rate)
+{
+    g_report_rate = report_rate;
+    if (report_rate == REPORT_RATE_8K) {
+        app_clock_init(CLOCK_CONFIG_1V1_96_96);
+        if (app_get_kb_mode() == KB_MODE_2P4G) {
+            app_wdt_init();
+        }
+    } else {
+        app_clock_init(CLOCK_CONFIG_1V_48_24);
+        if (app_get_kb_mode() == KB_MODE_2P4G) {
+            app_wdt_init();
+        }
+    }
+}
+
+_attribute_ram_code_sec_ void app_2p4g_clock_reover(void)
+{
+    if (g_report_rate == REPORT_RATE_8K) {
+        app_clock_init(CLOCK_CONFIG_1V1_96_96);
+        if (app_get_kb_mode() == KB_MODE_2P4G) {
+            app_wdt_init();
+        }
+    } else {
+        app_clock_init(CLOCK_CONFIG_1V_48_24);
+        if (app_get_kb_mode() == KB_MODE_2P4G) {
+            app_wdt_init();
+        }
     }
 }
 
@@ -452,12 +576,22 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_spp_data(uint8_t *data, uin
 _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
-    switch (p_evt->opcode)
-    {
+    switch (p_evt->opcode) {
+        case P24G_SM_OP_MISC_REPORT_RATE: //report rate changed
+            tlkapi_send_string_data(APP_LOG_EN, "report rate changed", data, len);
+            app_2p4g_clock_reinit(data[3]);
+            break;
+
         case P24G_SM_OP_MISC_SAVE_REPORT_RATE:
             app_2p4g_save_report_rate_info(data[3]);
-            DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
+            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
             tlkapi_send_string_data(APP_LOG_EN, "report rate info saved", data, len);
+            app_2p4g_clock_reinit(data[3]);
+            break;
+
+        case P24G_SM_OP_MISC_RF_MODE:
+            tlkapi_printf(APP_LOG_EN, "rf mode:%x\n", p_evt->data[0]);
+            app_ctx.rf_mode = p_evt->data[0];
             break;
 
     default:
@@ -494,20 +628,6 @@ static void app_p24g_send_info_2_n22(void)
     }
 }
 
-static inline void app_wdt_init()
-{
-    if (wd_get_status())
-    {
-        wd_clear_status();
-    }
-    wd_set_interval_ms(WDT_INTV_MS);
-    /**
-     * Wd_clear() must be executed before each call to wd_start() to avoid abnormal watchdog reset time because the initial count value is not 0.
-     * For example, the watchdog is reset soon or a few minutes later.
-     */
-    wd_clear();
-    wd_start();
-}
 
 static void app_debug_io_init(void)
 {
@@ -537,6 +657,7 @@ void p24g_user_init_normal(void)
 
     p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
  
+    app_timer1_init();
     tlkapi_send_string_data(APP_LOG_EN, "d25f kb _p24g_init end", 0, 0);
 }
 
@@ -683,6 +804,92 @@ _attribute_ram_code_sec_ static void app_spp_send_data(void)
     }
     spp_buf[0]++;
 }
+
+_attribute_ram_code_sec_ void app_timer1_irq_handler(void)
+{
+    if (timer_get_irq_status(FLD_TMR1_MODE_IRQ)) {
+        app_timer1_stop();
+        timer_clr_irq_status(FLD_TMR1_MODE_IRQ); //clear irq status
+    }
+}
+
+_attribute_ram_code_sec_ static void app_2p4g_sleep_check_loop(void)
+{
+    static uint8_t sleep_prepare_cnt = APP_SLEEP_PREPARE_COUNT;
+    #if APP_DELAY_ENTER_SUSPEND_TIME_US
+    static uint32_t stick = 0;
+    #endif
+    uint8_t short_suspend_flag = 1;
+
+    if (app_2p4g_is_work_busy() || app_is_usb_det_in()) {
+        return;
+    }
+
+    if ((g_power_state == STATE_TO_SLEEP)) {
+        #if APP_DELAY_ENTER_SUSPEND_TIME_US
+        if (!stick) {
+            stick = stimer_get_tick() | 1;
+        }
+        #endif
+        if (!sleep_prepare_cnt) {
+            #if APP_DELAY_ENTER_SUSPEND_TIME_US
+            if (stick && tick1_exceed_tick2(stimer_get_tick(), stick + APP_DELAY_ENTER_SUSPEND_TIME_US * SYSTEM_TIMER_TICK_1US)) {
+                stick = 0;
+            #endif
+            g_power_state = STATE_NONE;
+            sleep_prepare_cnt = APP_SLEEP_PREPARE_COUNT;
+            if (tick1_exceed_tick2(g_wakeup_stick, stimer_get_tick() + APP_SUSPEND_LIMIT_MIN_TIME_US * SYSTEM_TIMER_TICK_1US)) {
+                // gpio_set_level(GPIO_PH2, 0);
+                // app_proc_before_sleep();
+                // DBG_GPIO_TOGGLE(APP_IO_EN,  GPIO_PD7);
+                if (tick1_exceed_tick2(g_wakeup_stick, stimer_get_tick() + APP_SUSPEND_LONG_TIME_MIN_US * SYSTEM_TIMER_TICK_1US)) {
+                    short_suspend_flag = 0;
+                    // gpio_set_level(GPIO_PH2, 1);
+                }
+                pm_set_suspend_power_cfg(FLD_PD_ZB_EN, short_suspend_flag);
+
+                g_app_suspend_ret_flag = 1;
+                // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 0);
+                gpio_set_level(GPIO_PB5, 0);
+                pm_sleep_wakeup(SUSPEND_MODE, PM_WAKEUP_TIMER, PM_TICK_STIMER, g_wakeup_stick
+                                - (APP_WAKEUP_EARLY_TIME_US + (short_suspend_flag ? 0 : 600)) * SYSTEM_TIMER_TICK_1US);
+                // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 1);
+                gpio_set_level(GPIO_PB5, 1);
+
+                // DBG_GPIO_TOGGLE(APP_IO_EN,  GPIO_PD7);
+                // app_proc_after_sleep();
+                if (!short_suspend_flag) {
+                    // gpio_set_level(GPIO_PH2, 0);
+                    pm_set_dig_module_power_switch(FLD_PD_ZB_EN, PM_POWER_UP);
+                    p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_LONG_SUSP_RET, 0, 0);
+                } else {
+                    p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_SUSP_RET, 0, 0);
+                }
+                // gpio_set_level(GPIO_PH2, 1);
+                app_2p4g_set_power_state(STATE_TO_IDLE, 0);
+            }
+            #if APP_DELAY_ENTER_SUSPEND_TIME_US
+            }
+            #endif
+        } else {
+            sleep_prepare_cnt--;
+        }
+    } else if (g_power_state == STATE_TO_IDLE) {
+        if (!sleep_prepare_cnt) {
+            g_power_state = STATE_NONE;
+            sleep_prepare_cnt = APP_SLEEP_PREPARE_COUNT;
+            // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 0);
+                // gpio_set_level(GPIO_PG7, 0);
+            core_entry_wfi_mode();
+                // gpio_set_level(GPIO_PG7, 1);
+            // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 1);
+            app_2p4g_set_power_state(STATE_TO_IDLE, 0);
+        } else {
+            sleep_prepare_cnt--;
+        }
+    }
+}
+
 /**
  * @brief     BLE main loop
  * @param[in]  none.
@@ -700,6 +907,7 @@ _attribute_no_inline_ void app_2p4g_main_loop(void)
 
     app_pp_check_connect_status();
 
+    gpio_toggle(GPIO_PH1);
     wd_clear();
 
 #if SPP_TEST_EN
@@ -709,4 +917,5 @@ _attribute_no_inline_ void app_2p4g_main_loop(void)
     }
 #endif
 
+    app_2p4g_sleep_check_loop();
 }
