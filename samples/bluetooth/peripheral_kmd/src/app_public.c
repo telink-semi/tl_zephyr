@@ -38,6 +38,9 @@ volatile unsigned char fun_mode = 0;
 static unsigned char last_fun_mode = 1;
 unsigned char  mode_pin_level = 0;
 
+unsigned char  g_report_rate_pin_level=0;
+static unsigned char  g_last_report_rate_pin_level=0;
+
 extern struct bt_conn *connected_handle;
 volatile uint32_t user_active_disconnect = 0;
 
@@ -474,6 +477,24 @@ static void p24g_pairing_info_check(void)
     }
 }
 
+
+_attribute_ram_code_sec_ uint8_t app_2p4g_set_stack_report_rate(uint8_t report_rate)
+{
+    uint8_t ret = TLK_SUCCESS;
+
+    if (app_d24p_get_state() == STATE_CONNECTED) {
+        ret = p24g_send_spp_data(P24G_SPP_REPORT_RATE, &report_rate, 1);
+        if (TLK_SUCCESS == ret) {
+            ret = p24g_send_sm_msg(P24G_SM_CMD_REPORT_RATE_CHANGE, report_rate, 0, 0);
+            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
+        }
+    } else {
+        ret = TLK_ERR_INVALID_STATE;
+    }
+
+    return ret;
+}
+
 _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
 {
     uint8_t ret;
@@ -514,7 +535,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             {
                 if(fun_mode==KB_MODE_2P4G)
                 {
-                    //ret = app_2p4g_set_stack_report_rate(REPORT_RATE_8K);
+                    uint8_t ret = app_2p4g_set_stack_report_rate(REPORT_RATE_8K);
 
                     if (TLK_SUCCESS == ret) {
                         //LOG_INF("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
@@ -530,7 +551,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             {
                 if(fun_mode==KB_MODE_2P4G)
                 {
-                    //ret = app_2p4g_set_stack_report_rate(REPORT_RATE_125);
+                    uint8_t ret = app_2p4g_set_stack_report_rate(REPORT_RATE_125);
 
                     if (TLK_SUCCESS == ret) {
                         //LOG_INF("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
@@ -596,12 +617,6 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             break;  
     }
 }
-
-static inline kb_mode_t  app_get_kb_mode(void)
-{
-    return fun_mode;
-}
-
 
 _attribute_ram_code_sec_noinline_ void key_data_handle(void)
 {
@@ -783,6 +798,57 @@ _attribute_ram_code_sec_ void check_mode(void)
         fun_mode = KB_MODE_USB;
     }
 #endif
+        fun_mode = KB_MODE_2P4G;
+}
+
+_attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
+{
+    static uint8_t last_select = 0xFF;
+
+    if (last_select == select) {
+        return;
+    }
+
+    last_select = select;
+    switch (select) 
+    {
+        case CLOCK_CONFIG_1V1_192_96:
+            pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+            PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M; // 192M 96M
+            break;
+
+        case CLOCK_CONFIG_1V1_96_96:
+            pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+            PLL_192M_D25F_96M_HCLK_N22_96M_PCLK_96M_MSPI_48M; // 96M 96M
+            break;
+
+        case CLOCK_CONFIG_1V1_48_48:
+            pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+            PLL_144M_D25F_48M_HCLK_N22_48M_PCLK_48M_MSPI_48M; // 48M 48M
+            break;
+
+        case CLOCK_CONFIG_1V_72_36:
+            PLL_144M_D25F_72M_HCLK_N22_36M_PCLK_36M_MSPI_48M; // 72M 36M
+            pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
+            break;
+
+        case CLOCK_CONFIG_1V_64_32:
+            PLL_192M_D25F_64M_HCLK_N22_32M_PCLK_32M_MSPI_48M; // 64M 32M
+            pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
+            break;
+
+        case CLOCK_CONFIG_1V_48_24:
+            PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_24M_MSPI_48M; // 48M 24M
+            pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000); //1.0
+            break;
+        
+        default:
+            break;
+    }
+
+    // delay_ms(1);
+
+    // mcc_d25f_to_n22_set_clk_info();
 }
 
 
@@ -879,10 +945,11 @@ static void peripheral_comm_init(void)
     {
         uint8_t mac_public[6];
         uint8_t mac_random_static[6];
+        random_generator_init();
         blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
         memcpy(app_ctx.mac, mac_public, MAC_ADDR_LEN);
         p24g_pairing_info_check();
-    } 
+    }
 }
 
 extern void mb_irq_handler(void);
@@ -913,6 +980,14 @@ int keyboard_comm_init(void)
     else if (fun_mode == KB_MODE_BLE)
     {
         ble_init();
+    }
+    else
+    {
+        app_clock_init(CLOCK_CONFIG_1V1_48_48);
+        #if USB_APP_FUN_ENABLE
+	    /*usb init*/
+	    usb_hw_init();
+	    #endif
     }
 
     #if  DIGIT_KEYSCAN_FUN_ENABL
@@ -967,7 +1042,6 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
     static uint32_t last_time = 0;
 
     loop_cnt++;
-
 
     if(app_get_kb_mode() == KB_MODE_BLE)
     {

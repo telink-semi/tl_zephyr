@@ -39,6 +39,16 @@ typedef enum {
     P24G_USB_OP_EP_READ  = 0x01,
 } p24g_usb_opcode_e;
 
+typedef enum
+{
+    CLOCK_CONFIG_1V1_192_96  = 0,
+    CLOCK_CONFIG_1V1_96_96,
+    CLOCK_CONFIG_1V1_48_48,
+    CLOCK_CONFIG_1V_72_36,
+    CLOCK_CONFIG_1V_64_32,
+    CLOCK_CONFIG_1V_48_24,
+} app_clock_config_e;
+
 /* Generic event header */
 typedef struct p24g_evt
 {
@@ -60,6 +70,7 @@ extern volatile p24g_device_status_e g_state;
 
 
 typedef struct {
+    uint8_t rf_mode;
     uint8_t mac[MAC_ADDR_LEN];
 } app_ctx_t;
 extern app_ctx_t app_ctx;
@@ -226,6 +237,13 @@ uint8_t p24g_enable_reconn(bool enable);
 
 
 void app_2p4g_init(void);
+
+void app_timer1_irq_handler(void);
+/**
+ * @brief     2.4G main loop
+ * @param[in]  none.
+ * @return     none.
+ */
 void app_2p4g_main_loop(void);
 
 void app_2p4g_mb_km_data_cb(uint8_t* data);
@@ -240,6 +258,7 @@ static inline  void app_d24p_set_state(p24g_device_status_e state)
     g_state = state;
 }
 
+void app_2p4g_clock_reover(void);
 
 #ifdef __cplusplus
 extern "C" {

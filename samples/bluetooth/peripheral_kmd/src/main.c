@@ -49,12 +49,11 @@ int main(void)
 	gpio_output_en(GPIO_PB5);
 	gpio_input_dis(GPIO_PB5);
 
-	keyboard_comm_init();
+	
+    gpio_set_level(GPIO_PB5, 1);
+    gpio_set_level(GPIO_PG7, 1);
 
-	#if USB_APP_FUN_ENABLE
-	/*usb init*/
-	usb_hw_init();
-	#endif
+	keyboard_comm_init();
 
 	while(1) {
 
