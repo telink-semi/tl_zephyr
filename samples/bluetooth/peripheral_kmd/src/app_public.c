@@ -957,7 +957,6 @@ static int soc_tlx_mcc_init(void)
 {
     IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
 	volatile uint32_t key = arch_irq_lock();
-	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
     sys_n22_start();
     mcc_d25f_service_init();
 	arch_irq_unlock(key);
