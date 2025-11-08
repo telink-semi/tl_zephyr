@@ -41,7 +41,7 @@ extern "C" {
     #define VBUS_5V_CHECK_PIN_USB_IN_LEVEL  0
 #endif
 
-#define APP_PM_ENABLE                       1
+#define APP_PM_ENABLE                       0
 
 #define BATT_CHECK_ENABLE                   0
 
