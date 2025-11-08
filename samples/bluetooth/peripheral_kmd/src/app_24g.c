@@ -372,7 +372,10 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
         if (flash_dev_info.side_id != side_id)
         {
             flash_dev_info.side_id = side_id;
-            save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
+            //save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
+
+            int ret = nvs_write(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
+            printk("NVS APP_2P4G_PAIR_INFO_ID Write result: %d\n", ret);
         }
         
     }
@@ -389,7 +392,9 @@ _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
             flash_dev_other_info.side_id = side_id;
             tlkapi_send_string_data(APP_LOG_EN, "saving other info", &flash_dev_other_info.side_id, 5);
 
-            save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
+            //save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
+            int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+            printk("NVS APP_2P4G_APP_INFO_ID Write result: %d\n", ret);
         }
     }
 }

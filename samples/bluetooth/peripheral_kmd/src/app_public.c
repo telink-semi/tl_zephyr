@@ -452,28 +452,24 @@ int flash_info_load(unsigned int s_addr, unsigned char *d_addr,  int len)
 
 static void p24g_pairing_info_check(void)
 {
-    dev_info_idx = flash_info_load(flash_sector_2p4_inf, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-    // dev_info_idx = flash_info_load(0x3fd000, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-    if (dev_info_idx >= 0)
-    {
-        // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
-        // app_d24g_enable_pairing(true);
-        LOG_INF("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
-        // p24g_send_sm_msg(P24G_SM_CMD_PAIRING, true, 0, 0);
+    //dev_info_idx = flash_info_load(flash_sector_2p4_inf, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
 
-        // p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_PEER_INFO, flash_dev_info.peer_addr, MAC_ADDR_LEN);
-        // p24g_enable_reconn(true); 
-    }
-    else
-    {
+    int ret = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
+    if (ret == -ENOENT) {
+        printk("NVS APP_2P4G_PAIR_INFO_ID naver saved\n");
         LOG_INF("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+    } else {
+        LOG_INF("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
     }
 
-    dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
 
-    if (dev_other_info_idx >= 0)
-    {
-        // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
+    //dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+
+    ret = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+    if (ret == -ENOENT) {
+        printk("NVS APP_2P4G_APP_INFO_ID naver saved\n");
+
+    } else {
         LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
     }
 }
