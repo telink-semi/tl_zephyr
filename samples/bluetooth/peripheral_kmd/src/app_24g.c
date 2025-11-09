@@ -476,8 +476,10 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
     if (p_evt->type == P24G_SM_CMD_SET_STATE)
     {
-        app_d24p_set_state(p_evt->opcode);
-        
+        if (p_evt->opcode <= STATE_PAIRING_TIMEOUT) {
+            app_d24p_set_state(p_evt->opcode);
+        }
+
         if (p_evt->opcode == STATE_CONNECTED)
         {
             tlkapi_send_string_data(APP_LOG_EN, "connected", data, len);
@@ -850,11 +852,9 @@ _attribute_ram_code_sec_ static void app_2p4g_sleep_check_loop(void)
 
                 g_app_suspend_ret_flag = 1;
                 // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 0);
-                gpio_set_level(GPIO_PB5, 0);
                 pm_sleep_wakeup(SUSPEND_MODE, PM_WAKEUP_TIMER, PM_TICK_STIMER, g_wakeup_stick
                                 - (APP_WAKEUP_EARLY_TIME_US + (short_suspend_flag ? 0 : 600)) * SYSTEM_TIMER_TICK_1US);
                 // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 1);
-                gpio_set_level(GPIO_PB5, 1);
 
                 // DBG_GPIO_TOGGLE(APP_IO_EN,  GPIO_PD7);
                 // app_proc_after_sleep();
