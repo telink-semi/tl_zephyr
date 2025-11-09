@@ -38,7 +38,7 @@ extern "C" {
     #define PAIR_LED_PIN  GPIO_NONE_PIN//GPIO_PG7
 
     #define VBUS_5V_CHECK_PIN  GPIO_PC1
-    #define VBUS_5V_CHECK_PIN_USB_IN_LEVEL  0
+    #define VBUS_5V_CHECK_PIN_USB_IN_LEVEL  1
 #endif
 
 #define APP_PM_ENABLE                       0
