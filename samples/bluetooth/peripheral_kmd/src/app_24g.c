@@ -906,8 +906,7 @@ _attribute_no_inline_ void app_2p4g_main_loop(void)
 
 
     app_pp_check_connect_status();
-
-    gpio_toggle(GPIO_PH1);
+    
     wd_clear();
 
 #if SPP_TEST_EN
