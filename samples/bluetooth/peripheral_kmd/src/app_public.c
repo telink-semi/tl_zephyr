@@ -798,7 +798,6 @@ _attribute_ram_code_sec_ void check_mode(void)
         fun_mode = KB_MODE_USB;
     }
 #endif
-        fun_mode = KB_MODE_2P4G;
 }
 
 _attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
