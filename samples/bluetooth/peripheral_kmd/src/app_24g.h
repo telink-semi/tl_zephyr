@@ -39,6 +39,16 @@ typedef enum {
     P24G_USB_OP_EP_READ  = 0x01,
 } p24g_usb_opcode_e;
 
+typedef enum
+{
+    CLOCK_CONFIG_1V1_192_96  = 0,
+    CLOCK_CONFIG_1V1_96_96,
+    CLOCK_CONFIG_1V1_48_48,
+    CLOCK_CONFIG_1V_72_36,
+    CLOCK_CONFIG_1V_64_32,
+    CLOCK_CONFIG_1V_48_24,
+} app_clock_config_e;
+
 /* Generic event header */
 typedef struct p24g_evt
 {
@@ -60,6 +70,7 @@ extern volatile p24g_device_status_e g_state;
 
 
 typedef struct {
+    uint8_t rf_mode;
     uint8_t mac[MAC_ADDR_LEN];
 } app_ctx_t;
 extern app_ctx_t app_ctx;
@@ -221,161 +232,145 @@ uint8_t p24g_rf_enter_idle(void);
 uint8_t p24g_enable_reconn(bool enable);
 
 
-
-
-
-
+/**
+ * @brief     Initialize 2.4GHz application module
+ *
+ * This function performs initialization of the 2.4GHz application layer,
+ * including RF configuration, state variables setup, and registration
+ * of necessary callbacks. It should be called once during system startup
+ * before any 2.4GHz communication begins.
+ *
+ * @param[in]  None
+ *
+ * @return     None
+ *
+ * @note       Must be called before entering the 2.4GHz main loop or
+ *             handling any RF-related events.
+ */
 void app_2p4g_init(void);
+
+/**
+ * @brief     Timer1 interrupt service routine
+ *
+ * This function is the interrupt handler for Timer1. It is typically used
+ * for time-critical tasks such as RF scheduling, connection supervision,
+ * or periodic event triggering related to the 2.4GHz communication stack.
+ *
+ * @param[in]  None
+ *
+ * @return     None
+ *
+ * @note       This function must be registered as the Timer1 ISR and should
+ *             execute as quickly as possible to avoid interrupt latency.
+ */
+void app_timer1_irq_handler(void);
+
+/**
+ * @brief     2.4GHz main loop
+ *
+ * This function runs the main execution loop of the 2.4GHz protocol.
+ * It handles packet transmission, reception, and state transitions.
+ * The function should be called repeatedly in the system main loop
+ * to maintain RF communication and process queued events.
+ *
+ * @param[in]  None
+ *
+ * @return     None
+ *
+ * @note       This function is non-blocking and should be invoked
+ *             periodically within the main system loop.
+ */
 void app_2p4g_main_loop(void);
 
+/**
+ * @brief     2.4GHz mailbox callback for keyboard/mouse data
+ *
+ * This function is invoked when keyboard or mouse data is received
+ * through the 2.4GHz mailbox channel. The received data is provided
+ * through the input buffer for further processing or forwarding to
+ * higher layers.
+ *
+ * @param[in]  data   Pointer to the received data buffer
+ *
+ * @return     None
+ *
+ * @note       This function should be registered as the mailbox callback
+ *             for keyboard/mouse data reception in the 2.4GHz stack.
+ */
 void app_2p4g_mb_km_data_cb(uint8_t* data);
 
-static inline  p24g_device_status_e app_d24p_get_state(void)
+/**
+ * @brief     Get the current 2.4GHz device state
+ *
+ * This function returns the current operating state of the 2.4GHz device,
+ * which indicates the RF or connection status such as idle, connected,
+ * or disconnected.
+ *
+ * @return    Current device state of type @ref p24g_device_status_e
+ *
+ * @note      Typically used to check the current communication or RF state
+ *            in higher-level application logic.
+ */
+static inline p24g_device_status_e app_d24p_get_state(void)
 {
     return g_state;
 }
 
-static inline  void app_d24p_set_state(p24g_device_status_e state)
+/**
+ * @brief     Set the current 2.4GHz device state
+ *
+ * This function updates the internal state variable that represents
+ * the 2.4GHz device’s current operating status. It is mainly used by
+ * internal modules to synchronize the system state after major events
+ * such as connection, disconnection, or idle transitions.
+ *
+ * @param[in] state   New device state of type @ref p24g_device_status_e
+ *
+ * @return    None
+ *
+ * @note      This function is intended for internal use only. Application
+ *            modules should trigger state transitions via higher-level APIs.
+ */
+static inline void app_d24p_set_state(p24g_device_status_e state)
 {
     g_state = state;
 }
+
+/**
+ * @brief     Adjust 2.4GHz clock settings according to stack usage scenario
+ *
+ * This function switches or reconfigures the 2.4GHz RF clock settings based
+ * on the current usage scenario of the 2.4G protocol stack. Depending on the
+ * stack state and requirements it may:
+ *  - select a high-precision clock source or increase clock frequency for
+ *    timing-critical modes (e.g. continuous TX/RX, high-rate transfers);
+ *  - select a low-power / gated clock configuration for idle or low-activity
+ *    modes to save power;
+ *  - apply timing/phase adjustments required after mode transitions (wake-up,
+ *    role change, channel change, etc.).
+ *
+ * The function should be called whenever the stack transitions between modes
+ * that have different timing/accuracy or power requirements (for example:
+ * entering/exiting active RF operation, switching from idle to heavy TX/RX,
+ * after wakeup from deep sleep, or when preparing for connection procedures).
+ *
+ * @param[in]  None
+ *
+ * @return     None
+ *
+ * @note      This routine must ensure clock changes are performed safely:
+ *            synchronize with ongoing RF operations, avoid abrupt clock changes
+ *            during packet transmission/reception, and reconfigure/handover
+ *            hardware PLLs or clock dividers as required by the platform.
+ */
+void app_2p4g_clock_reover(void);
+
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-// typedef enum
-// {
-//     STATE_POWERON                       =   0,
-//     STATE_PAIRING,
-//     STATE_RECONNECT,
-//     STATE_NORMAL,
-//     STATE_CONNECTED,
-//     STATE_DISCONNECTED,
-//     STATE_RF_IDLE,
-//     STATE_PAIRING_TIMEOUT,
-//     STATE_NONE,
-
-//     STATE_PAIR_NONE                     =   0,
-//     STATE_PAIR_INIT,
-//     STATE_PAIR_RSP,
-//     STATE_PAIR_CFM,
-//     STATE_REJOIN,
-// } p24g_device_status_e;
-
-// typedef enum {
-
-//     P24G_SM_CMD_PAIRING                 =   0x00,
-//     P24G_SM_CMD_LL_CONTROL,
-//     P24G_SM_CMD_MOUSE_DRAW,
-//     P24G_SM_CMD_SET_STATE,
-//     P24G_SM_CMD_SAVE_PAIR_INFO,
-//     P24G_SM_CMD_SET_KB_MODE,
-//     P24G_SM_CMD_DATA_TYPE_SPP,
-//     P24G_SM_CMD_MISC,
-//     P24G_SM_CMD_REPORT_RATE_CHANGE,
-//     P24G_SM_CMD_MAX,
-//     P24G_SM_CMD_NONE                    =   0xFF,
-
-// } p24g_sm_cmd_e;
- 
-// typedef enum {
-//     P24G_SM_OP_NONE                     =   0x00,
-//     P24G_SM_OP_TERMINATE_CONN           =   0x51,
-//     P24G_SM_OP_ENTER_RF_IDLE            =   0x52,
-//     P24G_SM_OP_MISC_TRANS_MAC           =   0x53,
-//     P24G_SM_OP_MISC_PEER_INFO           =   0x54,
-//     P24G_SM_OP_ENABLE_RECONN            =   0x55,
-//     P24G_SM_OP_MISC_STOP_STIMER         =   0x56,
-//     P24G_SM_OP_MISC_REPORT_RATE         =   0x57,
-//     P24G_SM_OP_MISC_SAVE_REPORT_RATE    =   0x58,
-// } p24g_sm_op_e;
-
-
-// typedef enum
-// {
-//     P24G_SPP_NONE                       =   0x60,
-//     P24G_SPP_LED_STATUS                 =   0x61,
-//     P24G_SPP_REPORT_RATE                =   0x62,
-//     P24G_SPP_BATT_CAP                   =   0x63,
-//     P24G_SPP_CHG_STATUS                 =   0x64,
-//     P24G_SPP_TEST_DATA                  =   0x65,
-//     P24G_SPP_ALL_KEY_DATA               =   0x66,
-//     P24G_SPP_CONSUME_KEY_DATA           =   0x67,
-// } p24g_spp_cmd_e;
-
-
-// typedef enum
-// {
-//     P24G_LL_CMD_NONE                    =   0x70,
-//     P24G_LL_CMD_TERMINATE_CONN          =   0x71,
-//     P24G_LL_CMD_TERMINATE_CONN_RSP      =   0x72,
-// } p24g_ll_cmd_e;
-
-
-// typedef enum {
-//     P24G_KB_MODE_USB                    =   0x00,
-//     P24G_KB_MODE_2P4G                   =   0x01,
-
-//     P24G_FLOW_SN                        =   0x01,
-//     P24G_FLOW_NESN                      =   0x02,
-
-//     P24G_LL_CONN_TIMEOUT                =   0x01,
-//     P24G_LL_CONN_TERMINATION_BY_PEER    =   0x02,
-//     P24G_LL_CONN_TERMINATION_BY_LOCAL   =   0x03,
-
-//     P24G_8K_KM_SLOT                     =   0x00,
-//     P24G_8K_SPP_SLOT                    =   0x01,
-//     P24G_8K_SLOT_POS                    =   0x03,
-
-//     DEVICE_TYPE_KB                      =   BIT(0),
-//     DEVICE_TYPE_MS                      =   BIT(1),
-
-// };
-
-// typedef enum
-// {
-//     REPORT_RATE_8K = BIT(7),
-//     REPORT_RATE_4K = BIT(0),
-//     REPORT_RATE_2K = BIT(1),
-//     REPORT_RATE_1K = BIT(2),
-//     REPORT_RATE_500 = BIT(3),
-//     REPORT_RATE_250 = BIT(4),
-//     REPORT_RATE_125 = BIT(5),
-// } report_rate_t;
-
-// enum {
-//     EMPTY_DATA_CMD=0,
-//     PAIR_DATA_CMD=1,
-//     RECONNECT_DATA_CMD=2,
-//     MOUSE_DATA=3,
-//     SPP_DATA=4,
-//     SPP_DATA_ACK=5,
-//     NORMAL_KB_DATA_CMD=6,
-//     CONSUME_KB_DATA_CMD=7,
-//     SYSTEM_KB_DATA_CMD=8,
-//     ALL_KB_DATA_CMD=9,
-// };
-
-
-// extern volatile p24g_device_status_e g_state;
-
-// void app_2p4g_init(void);
-// void app_2p4g_main_loop(void);
-
-// void app_2p4g_mb_km_data_cb(uint8_t* data);
-
-// static inline  p24g_device_status_e app_d24p_get_state(void)
-// {
-//     return g_state;
-// }
-
-// static inline  void app_d24p_set_state(p24g_device_status_e state)
-// {
-//     g_state = state;
-// }
 
 #ifdef __cplusplus
 }

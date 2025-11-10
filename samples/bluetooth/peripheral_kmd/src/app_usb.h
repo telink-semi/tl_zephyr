@@ -53,7 +53,8 @@ extern volatile  unsigned int usb_connected_ok;
 int usb_hw_init(void);
 void usb_test_loop(void);
 void app_usb_main_loop(void);
-_attribute_ram_code_sec_ void app_usb_status_check(void);
+void app_usb_status_check(void);
+uint8_t app_is_usb_det_in(void);
 #ifdef __cplusplus
 }
 #endif

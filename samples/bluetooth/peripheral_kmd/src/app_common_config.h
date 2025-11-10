@@ -138,6 +138,11 @@ typedef enum
     STATE_RF_IDLE,
     STATE_PAIRING_TIMEOUT,
     STATE_NONE,
+    STATE_BUSY,
+    STATE_TO_IDLE,
+    STATE_IDLE,
+    STATE_TO_SLEEP,
+    STATE_SLEEP,
 
     STATE_PAIR_NONE                     =   0,
     STATE_PAIR_INIT,
@@ -172,6 +177,9 @@ typedef enum {
     P24G_SM_OP_MISC_STOP_STIMER         =   0x56,
     P24G_SM_OP_MISC_REPORT_RATE         =   0x57,
     P24G_SM_OP_MISC_SAVE_REPORT_RATE    =   0x58,
+    P24G_SM_OP_MISC_RF_MODE             =   0x59,
+    P24G_SM_OP_MISC_SUSP_RET            =   0x5A,
+    P24G_SM_OP_MISC_LONG_SUSP_RET       =   0x5B,
 } p24g_sm_op_e;
 
 
@@ -193,6 +201,8 @@ typedef enum
     P24G_LL_CMD_NONE                    =   0x70,
     P24G_LL_CMD_TERMINATE_CONN          =   0x71,
     P24G_LL_CMD_TERMINATE_CONN_RSP      =   0x72,
+    P24G_LL_CMD_8K_RR_ADAPT             =   0x73,
+    P24G_LL_CMD_8K_RR_ADAPT_RSP         =   0x74,
 } p24g_ll_cmd_e;
 
 
@@ -218,13 +228,18 @@ typedef enum {
 
 typedef enum
 {
-    REPORT_RATE_8K = BIT(7),
-    REPORT_RATE_4K = BIT(0),
-    REPORT_RATE_2K = BIT(1),
-    REPORT_RATE_1K = BIT(2),
-    REPORT_RATE_500 = BIT(3),
-    REPORT_RATE_250 = BIT(4),
-    REPORT_RATE_125 = BIT(5),
+    REPORT_RATE_8K                      = BIT(7),
+    REPORT_RATE_4K                      = BIT(0),
+    REPORT_RATE_2K                      = BIT(1),
+    REPORT_RATE_1K                      = BIT(2),
+    REPORT_RATE_500                     = BIT(3),
+    REPORT_RATE_250                     = BIT(4),
+    REPORT_RATE_125                     = BIT(5),
+
+    RR_8K_HIGH                          = 0,
+    RR_8K_LOW                           = 1,
+    REPORT_RATE_8K_MODE_LOW             = REPORT_RATE_500,
+    REPORT_RATE_8K_MODE_HIGH            = REPORT_RATE_8K,
 } report_rate_t;
 
 

@@ -26,6 +26,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(app_usb);
 
+#define APP_VBUS_CHECK_DE_JT_CNT   2
 
 //static struct gpio_dt_spec led_caps = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-caps), gpios, {0});
 //static struct gpio_dt_spec led_num = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-num), gpios, {0});
@@ -340,16 +341,40 @@ _attribute_ram_code_sec_ void app_usb_main_loop(void)
     }
 }
 
-
 _attribute_ram_code_sec_ void check_vbus(void)
 {
-#if (HW_BOARD_TYPE == HW_PRJ_KEYBOARD || HW_BOARD_TYPE == HW_DIGIT_KEYBOARD)
-    vbus_status = 1;
-    if(gpio_pin_get_dt(&vbus_check_pin) == 0)
-    {
-        vbus_status = 0;
+    static int8_t vbus_cnt = 0;
+
+    if(gpio_pin_get_dt(&vbus_check_pin) == VBUS_5V_CHECK_PIN_USB_IN_LEVEL) {
+        if (vbus_cnt < APP_VBUS_CHECK_DE_JT_CNT) {
+            vbus_cnt ++;
+        } else {
+            vbus_status=1;
+        }
+    } else {
+        if (vbus_cnt > -APP_VBUS_CHECK_DE_JT_CNT) {
+            vbus_cnt --;
+        } else {
+            vbus_status=0;
+        }
     }
-#endif
+
+}
+
+// _attribute_ram_code_sec_ void check_vbus(void)
+// {
+// #if (HW_BOARD_TYPE == HW_PRJ_KEYBOARD || HW_BOARD_TYPE == HW_DIGIT_KEYBOARD)
+//     vbus_status = 1;
+//     if(gpio_pin_get_dt(&vbus_check_pin) == 0)
+//     {
+//         vbus_status = 0;
+//     }
+// #endif
+// }
+
+_attribute_ram_code_sec_ uint8_t app_is_usb_det_in(void)
+{
+    return (vbus_status == 1);
 }
 
 _attribute_ram_code_sec_ void app_usb_status_check(void)
