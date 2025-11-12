@@ -588,3 +588,18 @@ __attribute__((noinline)) void telink_bt_blc_mac_init(uint8_t *bt_mac)
 SYS_INIT(soc_tlx_init, PRE_KERNEL_1, 0);
 
 SYS_INIT(soc_tlx_check_flash, POST_KERNEL, 0);
+
+#ifdef CONFIG_TELINK_TL322X_ENABLE_N22
+static int soc_tlx_mcc_init(void)
+{
+	extern void mb_irq_handler(void);
+    IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
+	volatile uint32_t key = arch_irq_lock();
+    sys_n22_start();
+    mcc_d25f_service_init();
+	arch_irq_unlock(key);
+
+	return 0;
+}
+SYS_INIT(soc_tlx_mcc_init, POST_KERNEL, 1);
+#endif
