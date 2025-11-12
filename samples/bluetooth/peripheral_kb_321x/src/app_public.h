@@ -196,7 +196,7 @@ extern struct gpio_dt_spec vbus_check_pin;
 void key_fifo(unsigned char key_code);
 unsigned char proc_hotkey(unsigned char key_code);
 unsigned char special_key_press_flag_set(unsigned char key_code);
-static void peripheral_comm_init(void);
+static int peripheral_comm_init(void);
 void special_key_event_handle(void);
 int keyboard_comm_init(void);
 void app_ble_report_to_client(void);
