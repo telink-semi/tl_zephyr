@@ -32,11 +32,6 @@ extern "C" {
     #define USB_APP_FUN_ENABLE              1
     #define HARDWARE_MODULE_SCAN_ENABLE     0
 
-    #define CAP_LED_PIN   GPIO_NONE_PIN//GPIO_PB4
-    #define NUM_LED_PIN   GPIO_NONE_PIN//GPIO_PB5
-    #define MODE_LED_PIN  GPIO_NONE_PIN//GPIO_PH1
-    #define PAIR_LED_PIN  GPIO_NONE_PIN//GPIO_PG7
-
     #define VBUS_5V_CHECK_PIN  GPIO_PC1
     #define VBUS_5V_CHECK_PIN_USB_IN_LEVEL  1
 #endif

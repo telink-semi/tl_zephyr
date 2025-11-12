@@ -51,30 +51,17 @@ int dev_info_idx;
 ST_FLASH_DEV_OTHER_INFO flash_dev_other_info  __attribute__ ((aligned (4)));
 int dev_other_info_idx;
 
-#if (HW_EVK_BOARD == 1)
-_attribute_data_retention_ uint32_t flash_sector_2p4_inf=P24G_PAIR_INF_FLASH_ADDR_4M;
-_attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FLASH_ADDR_4M;
-#else
-_attribute_data_retention_ uint32_t flash_sector_2p4_inf=P24G_PAIR_INF_FLASH_ADDR_2M;
-_attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FLASH_ADDR_2M;
-#endif
-// _attribute_data_retention_ u32 flash_sector_ble_app_smp=BLE_APP_SMP_FLASH_ADDR_1M ;
-// _attribute_data_retention_ u32 flash_sector_ble_app_pipe=BLE_APP_PIPE_FLASH_ADDR_1M;
-//
 
 #if TOGGLE_DEBUG_IO_ENABLE
-struct gpio_dt_spec toggle_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle4), gpios, {0});
-struct gpio_dt_spec toggle_pin_b5 = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle5), gpios, {0});
+struct gpio_dt_spec toggle_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle-sws), gpios, {0});
 #endif
 
-#if (HW_BOARD_TYPE == HW_PRJ_KEYBOARD )
-    struct gpio_dt_spec vbus_check_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(vbuscheck0), gpios, {0});
-    struct gpio_dt_spec mode_slect_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(modeslect0), gpios, {0});
-#elif(HW_BOARD_TYPE== HW_DIGIT_KEYBOARD)
-    struct gpio_dt_spec vbus_check_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(vbuscheck0), gpios, {0});
-    struct gpio_dt_spec mode_2p4_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(mode2p4), gpios, {0});
-    struct gpio_dt_spec mode_ble_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(modeble), gpios, {0});
-#endif
+struct gpio_dt_spec vbus_check_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(vbuscheck0), gpios, {0});
+struct gpio_dt_spec mode_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(modeswitch), gpios, {0});
+struct gpio_dt_spec mos_ctl_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(mos-ctrl), gpios, {0});
+struct gpio_dt_spec led_24g_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-24g), gpios, {0});
+struct gpio_dt_spec led_ble_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-ble), gpios, {0});
+struct gpio_dt_spec led_bat_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-bat), gpios, {0});
 
 
 /* 定义NVS使用的Flash存储分区 */
@@ -638,28 +625,9 @@ void app_pc_kb_led_status(unsigned char status)
 
 _attribute_ram_code_sec_ void check_mode(void)
 {
-#if ((HW_BOARD_TYPE == HW_PRJ_KEYBOARD)||(HW_BOARD_TYPE == HW_DIGIT_KEYBOARD))
+    uint8_t mode_pin_level = gpio_pin_get_dt(&mode_pin);
 
-    uint8_t mode_2p4_pin_level = gpio_pin_get_dt(&mode_2p4_pin);
-    uint8_t mode_ble_pin_level = gpio_pin_get_dt(&mode_ble_pin);
-
-    if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 0)
-    {
-        fun_mode = KB_MODE_USB;
-    }
-    else if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 1)
-    {
-        fun_mode = KB_MODE_2P4G;
-    }
-    else if(mode_2p4_pin_level == 1 && mode_ble_pin_level == 0)
-    {
-        fun_mode = KB_MODE_BLE;
-    }
-    else
-    {
-        fun_mode = KB_MODE_USB;
-    }
-#endif
+    //printk("mode_pin_level %d\n", mode_pin_level);
 }
 
 _attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
@@ -680,7 +648,7 @@ _attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
 }
 
 
-static void peripheral_comm_init(void)
+static int peripheral_comm_init(void)
 {
     int ret;
 
@@ -717,27 +685,16 @@ static void peripheral_comm_init(void)
     LOG_INF("mast_id: %d\n", ble_app_pip_info.mast_id);
 
 
-    if (!gpio_is_ready_dt(&mode_2p4_pin)) {
-        LOG_ERR("mode_2p4_pin gpio not ready");
+    if (!gpio_is_ready_dt(&mode_pin)) {
+        LOG_ERR("mode_pin gpio not ready");
         return -ENODEV;
     }
 
-    ret = gpio_pin_configure_dt(&mode_2p4_pin, GPIO_INPUT);
+    ret = gpio_pin_configure_dt(&mode_pin, GPIO_INPUT);
     if (ret != 0) {
-        printk("Error: failed to configure mode_2p4_pin io \n");
+        printk("Error: failed to configure mode_pin io \n");
     }
-    printk("configure mode_2p4_pin io ok\n");    
-
-    if (!gpio_is_ready_dt(&mode_ble_pin)) {
-        LOG_ERR("mode_ble_pin gpio not ready");
-        return -ENODEV;
-    }
-
-    ret = gpio_pin_configure_dt(&mode_ble_pin, GPIO_INPUT);
-    if (ret != 0) {
-        printk("Error: failed to configure mode_ble_pin io \n");
-    }
-    printk("configure mode_ble_pin io ok\n");    
+    printk("configure mode_pin io ok\n");    
 
     if (!gpio_is_ready_dt(&vbus_check_pin)) {
         LOG_ERR("Vbus check gpio not ready");
@@ -761,6 +718,52 @@ static void peripheral_comm_init(void)
     LOG_INF("configure toogle io ok\n");
 #endif
 
+    if (!gpio_is_ready_dt(&mos_ctl_pin)) {
+        LOG_INF("mos_ctl_pin io is not ready\n");
+         return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&mos_ctl_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_INF("Error: failed to configure mos_ctl_pin io \n");
+    }
+    LOG_INF("configure mos_ctl_pin io ok\n");
+
+    if (!gpio_is_ready_dt(&led_24g_pin)) {
+        LOG_INF("led_24g_pin io is not ready\n");
+         return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&led_24g_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_INF("Error: failed to configure led_24g_pin io \n");
+    }
+    LOG_INF("configure led_24g_pin io ok\n");
+
+    ret = gpio_pin_configure_dt(&mos_ctl_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_INF("Error: failed to configure mos_ctl_pin io \n");
+    }
+    LOG_INF("configure mos_ctl_pin io ok\n");
+
+    if (!gpio_is_ready_dt(&led_ble_pin)) {
+        LOG_INF("led_ble_pin io is not ready\n");
+         return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&led_ble_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_INF("Error: failed to configure led_ble_pin io \n");
+    }
+    LOG_INF("configure led_ble_pin io ok\n");
+
+    if (!gpio_is_ready_dt(&led_bat_pin)) {
+        LOG_INF("led_bat_pin io is not ready\n");
+         return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&led_bat_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_INF("Error: failed to configure led_bat_pin io \n");
+    }
+    LOG_INF("configure led_bat_pin io ok\n");
+
     #if BATT_CHECK_ENABLE
     /*adc init*/
     app_battery_check_init();
@@ -768,6 +771,8 @@ static void peripheral_comm_init(void)
 
     k_busy_wait(1000); // wait for 5ms
     check_mode();
+    fun_mode = KB_MODE_USB;//debug
+
     last_fun_mode = fun_mode;
     if (fun_mode == KB_MODE_2P4G)
     {
@@ -775,8 +780,6 @@ static void peripheral_comm_init(void)
         uint8_t mac_random_static[6];
         random_generator_init();
         blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
-
-        //p24g_pairing_info_check();
     }
 }
 
@@ -794,7 +797,6 @@ int keyboard_comm_init(void)
     }
     else
     {
-        //app_clock_init(CLOCK_CONFIG_1V1_48_48);
         #if USB_APP_FUN_ENABLE
 	    /*usb init*/
 	    usb_hw_init();
@@ -896,7 +898,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 #endif
 
         check_mode();
-
+        #if 0
         if (fun_mode != last_fun_mode) {
             printk("fun_mode change %d \n", fun_mode);
             pp_fifo_reset(&tx_fifo);
@@ -941,5 +943,6 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
             }
             last_fun_mode = fun_mode;
         }
+        #endif
     }
 }

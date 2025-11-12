@@ -33,12 +33,15 @@
 		/delete-property/ pwm-led0;
 		/delete-property/ pwm0;
 
-		toggle4 = &toggle_b4_pin;
-		toggle5 = &toggle_b5_pin;
+		toggle-sws = &toggle_sws_pin;
 
 		vbuscheck0 = &vbus_pin;
-		mode2p4 = &mode_2p4_pin;
-		modeble = &mode_ble_pin;
+		modeswitch = &mode_pin;
+		mos-ctrl = &mos_ctrl_pin;
+
+		led-24g = &p24g_led;
+		led-ble = &ble_led;
+		led-bat = &bat_led;
 
 	};
 
@@ -48,28 +51,39 @@
 	leds {
 		compatible = "gpio-leds";
 
-		toggle_b4_pin: toggle_io_4 {
-			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
-			label = "TOGGLE";
-		};
-
-		toggle_b5_pin: toggle_io_5 {
-			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+		toggle_sws_pin: toggle_io_5 {
+			gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
 			label = "TOGGLE";
 		};
 
 		vbus_pin: vbus_io {
-			gpios = <&gpioc 1 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiod 6 (GPIO_ACTIVE_LOW)>;
 			label = "VBUS CHECK";
 		};
 
-		mode_2p4_pin: mode_2p4_io {
-			gpios = <&gpioe 3 (GPIO_ACTIVE_LOW)>;
-			label = "MODE 2P4 SLECT";
-		};
-		mode_ble_pin: mode_ble_io {
-			gpios = <&gpioe 4 (GPIO_ACTIVE_LOW)>;
+		mode_pin: mode_io {
+			gpios = <&gpioe 2 (GPIO_ACTIVE_LOW)>;
 			label = "MODE BLE SLECT";
+		};
+
+		mos_ctrl_pin: mos_io {
+			gpios = <&gpioe 0 (GPIO_ACTIVE_LOW)>;
+			label = "MOS CTL SLECT";
+		};
+
+		p24g_led: led_24g_io {
+			gpios = <&gpioa 2 (GPIO_ACTIVE_LOW)>;
+			label = "LED 24G";
+		};
+
+		ble_led: led_ble_io {
+			gpios = <&gpioa 3 (GPIO_ACTIVE_LOW)>;
+			label = "LED BLE";
+		};
+
+		bat_led: led_bat_io {
+			gpios = <&gpioa 0 (GPIO_ACTIVE_LOW)>;
+			label = "LED BAT";
 		};
 	};
 
@@ -132,7 +146,7 @@
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
 		zephyr,resolution = <12>;
-		zephyr,input-positive = <DT_ADC_GPIO_PC0>;
+		zephyr,input-positive = <DT_ADC_GPIO_PB0>;
 	};
 };
 
@@ -140,7 +154,7 @@
 	status = "disabled";
 	vref-internal-mv = <1200>;
 	sample-freq = <DT_FREQ_K(96)>;
-	pinctrl-0 = <&adc_pd1_default>;
+	pinctrl-0 = <&adc_pb0_default>;
 	pinctrl-names = "default";
 };
 */

@@ -34,9 +34,9 @@ LOG_MODULE_REGISTER(kb_matrix);
 
 #if DIGIT_KEYSCAN_FUN_ENABL
 
-#define   ROW_CNT                                   6
-#define   COL_CNT                                   20
-
+#define   ROW_CNT                                   8
+#define   COL_CNT                                   18
+#if 0
 unsigned char map_digit[COL_CNT][ROW_CNT] = {\
 /*C00*/{KB_Esc,     KB_dunhao,      KB_Tab,         KB_Caps,        KB_LShift,  KB_LCtrl    },\
 /*C01*/{KB_F1,      KB_1,           KB_Q,           KB_A,           0,          KB_LAlt     },\
@@ -60,7 +60,51 @@ unsigned char map_digit[COL_CNT][ROW_CNT] = {\
 /*C19*/{KB_F19,     KP_chenghao,    KP_9,           KP_6,           KP_3,       KP_Del      },\
        /*R0*/
 };
+#endif
 
+uint8_t const map_digit[COL_CNT][ROW_CNT] =
+{
+    {KB_Pause,	S_POWER,	0,	        S_SLEEP,	KB_RCtrl,	KB_RWin,	KB_LCtrl,	KB_F5},
+    {KB_Q,		KB_Tab,		KB_A,	    KB_Esc,		KB_Z,		KB_LShift,	KB_dunhao,	KB_1},
+    {KB_W,		KB_Caps,	KB_S,		KB_K45,		KB_X,		KB_RShift,	KB_F1,	    KB_2},
+    {KB_E,	    KB_F3,		KB_D,		KB_F4,		KB_C,		KB_LWin,	KB_F2,		KB_3},
+    {KB_R,		KB_T,		KB_F,		KB_G,		KB_V,		KB_B,	    KB_5,	    KB_4},
+    {KB_U,      KB_Y,	    KB_J,		KB_H,	    KB_M,		KB_N,		KB_6,	    KB_7},
+    {KB_I,		KB_Rguohao,	KB_K,		KB_F6,      KB_douhao,	KB_K56,		KB_denghao,	KB_8},
+    {KB_O,      KB_F7,	    KB_L,		0,	        KB_juhao,	KB_APP,	    KB_F8,	    KB_9},
+    {KB_P,		KB_Lguohao,	KB_fenhao,	KB_yinhao,	KB_K42,	    KB_wenhao,	KB_jianhao,	KB_0},
+    {KB_Scroll,	KB_K150,	T_FN,		KB_LAlt,	0,	        KB_RAlt,	KB_K151,	KB_PrtSc},
+    {KB_K14,	KB_Back,	KB_xiegang,	KB_F11,	    KB_Enter,	KB_F12,		KB_F9,	    KB_F10},
+    {KP_7,	    KP_4,		KP_1,		KB_Space,	KB_Num,		KB_Down,    KB_Delete,  S_POWER},
+    {KP_8,	    KP_5,		KP_2,		KP_0,	    KP_chuhao,	KB_Right,	KB_Insert,	S_SLEEP},
+    {KP_9,		KP_6,		KP_3,		KP_Del,     KP_chenghao,KP_jianhao,	KB_PgUp,    KB_PgDown},
+    {KP_jiahao,	KB_K107,    KP_enter,	KB_Up,	    C_Play,	    KB_Left,	KB_Home,	KB_End},
+    {0,	        KB_LShift,	KB_RShift,	C_volDown,	C_volUP,	C_nextTrace,C_prevTrace,C_Media},
+    {0,	        KB_LWin,	C_wForward,	C_wStop,	C_wBack,	C_wRefresh,	0,			C_wSearch},
+    {0,	        0,		    0,		    0,	        C_mute,	    C_computer,	C_wHome,	KB_K151},
+};
+
+uint8_t const map_digit_fn[COL_CNT][ROW_CNT] =
+{
+    {KB_Pause,	S_POWER,	0,	        S_SLEEP,	KB_RCtrl,	KB_RWin,	KB_LCtrl,	C_wRefresh},
+    {KB_Q,		KB_Tab,		KB_A,	    KB_Esc,		KB_Z,		KB_LShift,	KB_dunhao,	KB_1},
+    {KB_W,		KB_Caps,	KB_S,		KB_K45,		KB_X,		KB_RShift,	C_Media,	KB_2},
+    {KB_E,	    C_volUP,	KB_D,		C_mute,		KB_C,		KB_LWin,	C_volDown,	KB_3},
+    {KB_R,		KB_T,		KB_F,		KB_G,		KB_V,		KB_B,	    KB_5,	    KB_4},
+    {KB_U,      KB_Y,	    KB_J,		KB_H,	    KB_M,		KB_N,		KB_6,	    KB_7},
+    {KB_I,		KB_Rguohao,	KB_K,		C_prevTrace,KB_douhao,	KB_K56,		KB_denghao,	KB_8},
+    {KB_O,      C_Play,	    KB_L,		0,	        KB_juhao,	KB_APP,	    C_nextTrace,KB_9},
+    {KB_P,		KB_Lguohao,	KB_fenhao,	KB_yinhao,	KB_K42,	    KB_wenhao,	KB_jianhao,	KB_0},
+    {KB_Scroll,	KB_K150,	T_FN,		KB_LAlt,	0,	        KB_RAlt,	KB_K151,	KB_PrtSc},
+    {KB_K14,	KB_Back,	KB_xiegang,	C_calculator,KB_Enter,	KB_F12,		C_email,	C_wHome},
+    {KP_7,	    KP_4,		KP_1,		KB_Space,	KB_Num,		KB_Down,    KB_Delete,  S_POWER},
+    {KP_8,	    KB_5,		KP_2,		KP_0,	    KP_chuhao,	KB_Right,	KB_Insert,	S_SLEEP},
+    {KP_9,		KB_6,		KP_3,		KP_Del,     KP_chenghao,KP_jianhao,	KB_PgUp,    KB_PgDown},
+    {KP_jiahao,	KB_K107,    KP_enter,	KB_Up,	    C_Play,	    KB_Left,	KB_Home,	KB_End},
+    {0,	        KB_LShift,	KB_RShift,  C_volDown,	C_volUP,	C_nextTrace,C_prevTrace,C_Media},
+    {0,	        KB_LWin,	C_wForward,	C_wStop,	C_wBack,	C_wRefresh,	0,			C_wSearch},
+    {0,	        0,		    0,		    0,	        C_mute,	    C_computer,	C_wHome,	KB_K151},
+};
 
 
 static  unsigned int last_result[ROW_CNT]={0};
@@ -78,135 +122,6 @@ static unsigned int flag_count = 0;
 int debounce_cnt = 0;
 static uint32_t key_change_tick = 0;
 static unsigned char need_debounce_flag=0;
-
-#if  HARDWARE_MODULE_SCAN_ENABLE  //digit hardware  module key scan
-
-
-unsigned char g_ks_row[ROW_CNT] = {KS_PE2, KS_PE1, KS_PE0, KS_PD6, KS_PD4, KS_PD5};
-unsigned char g_ks_col[COL_CNT] = {KS_PE6, KS_PE7, KS_PA0, KS_PA1, KS_PA2,KS_PC6, KS_PC7,KS_PG0, KS_PF7, KS_PF6, KS_PF5, KS_PF4, KS_PB1,KS_PB0, KS_PC4,KS_PC3,KS_PD2,KS_PG1,KS_PG2,KS_PH0};
-unsigned char g_ks_col_map_position[32]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-#define DMA_SIZE (8 * 4)
-
-unsigned int dma_ks_scanning_buff[8] ={0};
-unsigned int last_ks_scanning_buff[8] ={0};
-unsigned int now_ks_scanning_buff[8] ={0};
-
-void digit_keyscan_init(void)
-{
-    for(int i = 0; i < COL_CNT; i++)
-    {
-        g_ks_col_map_position[g_ks_col[i]&0x1f] = i;
-    }
-    keyscan_set_martix(g_ks_row, ROW_CNT, g_ks_col, COL_CNT, KS_INT_PIN_PULLUP);
- 
-    keyscan_init_clk_24m(KEYSCAN_8K,KS_24MXTAL,1);
-    keyscan_dma_enable();
-
-    dma_set_llp_sof_mode(DMA4, 1);
-    keyscan_dma_config_llp(DMA4, dma_ks_scanning_buff, DMA_SIZE);
-    keyscan_set_scan_mode(KEYSCAN_MODE1);
-    
-    keyscan_enable();
-    printk("digit hw keyscan init\r\n");
-
-    #if (USE_K_TIMER_SCAN_MATRIX)
-        k_timer_start(&scan_timer, K_MSEC(SCAN_INTERVAL_MS), 
-                                K_MSEC(SCAN_INTERVAL_MS));
-    #else
-        user_timer_init();
-    #endif
-}
-
-
-_attribute_ram_code_sec_noinline_ void digit_new_key_handle(void)
-{
-    app_key_buf.press_cnt=0;
-    app_key_buf.cnt=0;
-    app_key_buf.special_key_press_f=0;
-    for(int i=0;i<ROW_CNT;i++)
-    {
-        for(int k=0;k<31;k++)
-        {
-            unsigned int now_bit = now_ks_scanning_buff[i]&(1<<k);
-            if(now_bit)
-            {
-                app_key_buf.press_cnt++;
-                key_fifo(map_digit[g_ks_col_map_position[k]][i]);
-            }
-        }
-    }
-
-    key_data_handle();
-    special_key_event_handle();
-}
-
-_attribute_ram_code_sec_noinline_ void digit_keyscan_handle(void)
-{
-    static unsigned int tick = 0;
-    int has_new_evnt_flag = 0;
-
-    if (keyscan_get_rxdone_irq_status())
-    {
-        keyscan_clr_rxdone_irq_status();
-        for(int i=0;i<8;i++)
-        {
-            now_ks_scanning_buff[i] = dma_ks_scanning_buff[i];
-            // printk("%d=%08x\r\n",i,dma_ks_scanning_buff[i]);
-        }
-    }
-    else
-    {
-        return;
-    }
-
-    if(need_debounce_flag == 1)
-    {
-        if ((k_uptime_get_32() - key_change_tick) >= 5)
-        {
-            need_debounce_flag = 0;
-        }
-        else
-        {
-            return;
-        }   
-    }
-
-    for(int i = 0; i < ROW_CNT; i++)
-    {
-        if(last_ks_scanning_buff[i] != now_ks_scanning_buff[i])
-        {
-            has_new_evnt_flag = 1;
-            last_ks_scanning_buff[i]=now_ks_scanning_buff[i];
-        }
-    }
-
-    if(has_new_evnt_flag)
-    {
-        key_change_tick = k_uptime_get_32();
-        if(need_debounce_flag == 0)
-        {
-            debounce_cnt = 2;
-        }
-        else
-        {
-            debounce_cnt = 1;
-        }
-        need_debounce_flag = 1 - need_debounce_flag;
-    }
-
-    if(debounce_cnt)
-    {
-        debounce_cnt++;
-         if(debounce_cnt >= 3)
-        {
-             debounce_cnt = 0;
-             digit_new_key_handle();
-        }
-    }
-}
-
-#else
 
 void digit_keyscan_init(void)
 {
@@ -405,5 +320,6 @@ int matrix_keypad_init(void)
     LOG_INF("Matrix keypad initialized");
     return 0;
 }
-#endif
+
+
 #endif
