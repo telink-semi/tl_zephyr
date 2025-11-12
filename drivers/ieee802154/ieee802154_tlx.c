@@ -630,7 +630,7 @@ ALWAYS_INLINE tlx_send_ack(const struct device *dev, struct ieee802154_frame *fr
 				LOG_WRN("encrypt ack failed");
 			}
 		} else {
-			delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
+				delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
 		}
 #else
 		delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
