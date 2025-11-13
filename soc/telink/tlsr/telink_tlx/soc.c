@@ -15,6 +15,10 @@
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
 
+#if DEBUG_GPIO_ENABLE
+#include "gpio_default.h"
+#endif
+
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 #include "tlx_bt_flash.h"
 #endif
@@ -428,7 +432,11 @@ void soc_tlx_restore(void)
 		break;
 #endif
 	}
-
+	/* pke is not enabled by default on TL323X */
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+	extern void pke_dig_en(void);
+	pke_dig_en();
+#endif
 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
 #if DEBUG_GPIO_ENABLE
 	gpio_init(!deepRetWakeUp);
