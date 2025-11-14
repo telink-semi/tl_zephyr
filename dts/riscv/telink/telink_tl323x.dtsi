@@ -219,8 +219,8 @@
 
 		pinctrl: pinctrl@80140c70 {
 			compatible = "telink,tlx-pinctrl";
-			reg = <0x80140c70 0x30
-				   0x80140c06 0x30
+			reg = <0x80140cb0 0x30
+				   0x80140c06 0x50
 				   0x00000017 0x0C>;
 			reg-names = "pin_mux",
 						"gpio_en",
