@@ -331,21 +331,11 @@ static int uart_tlx_driver_init(const struct device *dev)
 	data->rx_byte_index = 0;
 	data->tx_byte_index = 0;
 
-	/* configure pins for TL323X */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-	(void)status;
-
-    TLX_UART_PINMUX_EXTRACT(uart0, tx_mux, rx_mux);
-    uint32_t tx_gpio = TLX_PINMUX_TO_GPIO(tx_mux);
-    uint32_t rx_gpio = TLX_PINMUX_TO_GPIO(rx_mux);
-    uart_set_pin(0, tx_gpio, rx_gpio);
-#else
 	/* configure pins */
 	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
 	if (status < 0) {
 		return status;
 	}
-#endif
 
 	uart_tlx_cal_div_and_bwpc(cfg->baud_rate, sys_clk.pclk * 1000 * 1000, &divider, &bwpc);
 	uart_tlx_init(uart, divider, bwpc, UART_PARITY_NONE, UART_STOP_BIT_1);

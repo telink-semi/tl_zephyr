@@ -167,15 +167,4 @@
 #define TLX_PINMUX_GET_PIN(pinmux)        ((pinmux >> TLX_PIN_POS) & TLX_PIN_MSK)
 #define TLX_PINMUX_GET_PIN_ID(pinmux)     ((pinmux >> TLX_PIN_POS) & TLX_PIN_ID_MSK)
 
-/* ========== Common Pinmux Decode Helpers for UART ========== */
-
-#define TLX_PINMUX_GET_PORT(pinmux)  (((pinmux) >> TLX_PORT_POS) & TLX_PORT_MSK)
-#define GPIO_FC_PORT_SHIFT 8
-#define GPIO_FC_SET(port, pin_mask)  (((port) << GPIO_FC_PORT_SHIFT) | (pin_mask))
-#define TLX_UART_PINMUX_EXTRACT(uart_node_label, tx_pinmux_var, rx_pinmux_var) \
-    const uint32_t tx_pinmux_var = DT_PROP(DT_PHANDLE_BY_IDX(DT_NODELABEL(uart_node_label), pinctrl_0, 0), pinmux); \
-    const uint32_t rx_pinmux_var = DT_PROP(DT_PHANDLE_BY_IDX(DT_NODELABEL(uart_node_label), pinctrl_0, 1), pinmux);
-#define TLX_PINMUX_TO_GPIO(pinmux_val) \
-    GPIO_FC_SET(TLX_PINMUX_GET_PORT(pinmux_val), TLX_PINMUX_GET_PIN_ID(pinmux_val))
-
 #endif  /* ZEPHYR_TL323X_PINCTRL_COMMON_H_ */

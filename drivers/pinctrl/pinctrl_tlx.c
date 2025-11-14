@@ -83,6 +83,13 @@
  *      pull_up_en + 9:     PORT_E[4-7]
  *      pull_up_en + 10:    PORT_F[0-3]
  *      pull_up_en + 11:    PORT_F[4-7]
+ *      The following resistors are for TL322X
+ *      pull_up_en + 12:    PORT_G[0-3]
+ *      pull_up_en + 13:    PORT_G[4-7]
+ *      pull_up_en + 14:    PORT_H[0-3]
+ *      pull_up_en + 15:    PORT_H[4-7]
+ *      pull_up_en + 16:    PORT_I[0-3]
+ *      pull_up_en + 17:    PORT_I[4-7]
  */
 #define reg_pull_up_en(pin) ((uint8_t)(DT_INST_REG_ADDR_BY_NAME(0, pull_up_en) + \
 				       ((pin >> 8) * 2) +			 \
