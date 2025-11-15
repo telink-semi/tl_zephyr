@@ -185,15 +185,6 @@ pl_fifo_t tx_fifo={
      .p=buf_txfifo,
  };
 
-__aligned(4)  unsigned char kb_buf_txfifo[KB_TX_FIFO_SIZE * KB_TX_FIFO_NUM];
-pl_fifo_t d25fKbTxFifo = {
-    .size = KB_TX_FIFO_SIZE,
-    .num = KB_TX_FIFO_NUM,
-    .wptr = 0,
-    .rptr = 0,
-    .p = kb_buf_txfifo,
-};
-
 #define SPP_TX_FIFO_NUM 8
 _attribute_aligned_(4)  unsigned char spp_buf_txfifo[SPP_TX_FIFO_SIZE_KB * SPP_TX_FIFO_NUM];
 pl_fifo_t d25fSppTxFifo = {
@@ -557,14 +548,7 @@ _attribute_ram_code_sec_noinline_ void key_data_handle(void)
         {
             memcpy(nk_last,app_key_buf.nk,8);
             //unsigned int r = core_interrupt_disable();
-            if ((app_get_kb_mode() == KB_MODE_2P4G) && (usb_connected_ok == 0))
-            {
-                pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], nk_cnt + 2);
-            }
-            else
-            {
-                pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], 8);
-            }
+            pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], 8);
             //core_restore_interrupt(r);
             break;  
         }
@@ -771,21 +755,22 @@ static int peripheral_comm_init(void)
 
     k_busy_wait(1000); // wait for 5ms
     check_mode();
-    fun_mode = KB_MODE_USB;//debug
 
     last_fun_mode = fun_mode;
-    if (fun_mode == KB_MODE_2P4G)
-    {
-        uint8_t mac_public[6];
-        uint8_t mac_random_static[6];
-        random_generator_init();
-        blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
-    }
+    // if (fun_mode == KB_MODE_2P4G)
+    // {
+    //     uint8_t mac_public[6];
+    //     uint8_t mac_random_static[6];
+    //     random_generator_init();
+    //     blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
+    // }
 }
 
 int keyboard_comm_init(void)
 {
     peripheral_comm_init();
+
+    fun_mode = KB_MODE_USB;
 
     if (fun_mode == KB_MODE_2P4G)
     {
@@ -808,7 +793,6 @@ int keyboard_comm_init(void)
     #endif
 
     pp_fifo_reset(&tx_fifo);
-    pp_fifo_reset(&d25fKbTxFifo);
 
     return 0;
 }
@@ -821,7 +805,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 #endif
 {
 #if USB_APP_FUN_ENABLE
-    if (fun_mode == KB_MODE_USB && vbus_status == 1)
+    if (fun_mode == KB_MODE_USB /*&& vbus_status == 1*/)// TODO: vbus_status
     {
         app_usb_main_loop();
     }
@@ -897,12 +881,11 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
         app_usb_status_check();
 #endif
 
-        check_mode();
+        // TODO: check_mode();
         #if 0
         if (fun_mode != last_fun_mode) {
             printk("fun_mode change %d \n", fun_mode);
             pp_fifo_reset(&tx_fifo);
-            pp_fifo_reset(&d25fKbTxFifo);
 
             if (fun_mode == KB_MODE_2P4G){
                 if (last_fun_mode == KB_MODE_USB) {
