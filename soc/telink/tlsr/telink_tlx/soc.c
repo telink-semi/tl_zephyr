@@ -310,10 +310,11 @@ void soc_early_init_hook(void)
 	/* Stop 32k watchdog */
 	wd_32k_stop();
 #if CONFIG_SOC_RISCV_TELINK_TL322X
+#undef N22_FW_DOWNLOAD_FLASH_ADDR
 #if defined(CONFIG_BT_ID_FOR_KMD)
 #define N22_FW_DOWNLOAD_FLASH_ADDR          0x20048000
 #else
-#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20080000
+#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20080000+0x13040
 #endif
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
     #if !defined(TLK_ONLY_BLE_HOST)
