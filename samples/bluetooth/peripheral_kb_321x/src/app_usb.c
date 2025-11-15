@@ -201,9 +201,6 @@ const struct device *hid_dev_kb;
 const struct device *hid_dev_n_key;
 const struct device *hid_vendor;
 
-const struct device *hid_vendor_4;
-const struct device *hid_vendor_5;
-const struct device *hid_vendor_6;
 int usb_hw_init(void)
 {
 	int ret;
@@ -214,25 +211,25 @@ int usb_hw_init(void)
 		return 0;
 	}
 
-	hid_dev_n_key = device_get_binding("HID_1");
-	if (hid_dev_n_key == NULL) {
-		LOG_ERR("Cannot get USB HID 1 Device");
-		return 0;
-	}
+	// hid_dev_n_key = device_get_binding("HID_1");
+	// if (hid_dev_n_key == NULL) {
+	// 	LOG_ERR("Cannot get USB HID 1 Device");
+	// 	return 0;
+	// }
 
-    hid_vendor = device_get_binding("HID_2");
-	if (hid_vendor == NULL) {
-		LOG_ERR("Cannot get USB HID 2 Device");
-		return 0;
-	}
+    // hid_vendor = device_get_binding("HID_2");
+	// if (hid_vendor == NULL) {
+	// 	LOG_ERR("Cannot get USB HID 2 Device");
+	// 	return 0;
+	// }
 
 	usb_hid_register_device(hid_dev_kb, hid_report_kb_desc, sizeof(hid_report_kb_desc), &kbd_ops);
-	usb_hid_register_device(hid_dev_n_key, hid_report_n_keys_desc, sizeof(hid_report_n_keys_desc), &kbd_ops);
-	usb_hid_register_device(hid_vendor, hid_report_vendor_defined, sizeof(hid_report_vendor_defined), &kbd_ops);
+	// usb_hid_register_device(hid_dev_n_key, hid_report_n_keys_desc, sizeof(hid_report_n_keys_desc), &kbd_ops);
+	//usb_hid_register_device(hid_vendor, hid_report_vendor_defined, sizeof(hid_report_vendor_defined), &kbd_ops);
 
 	usb_hid_init(hid_dev_kb);
-	usb_hid_init(hid_dev_n_key);
-	usb_hid_init(hid_vendor);
+	// usb_hid_init(hid_dev_n_key);
+	//usb_hid_init(hid_vendor);
 
 	ret = usb_enable(status_cb);
 	if (ret != 0) {
