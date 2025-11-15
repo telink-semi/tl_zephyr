@@ -253,7 +253,7 @@ const struct hids_report hid_val_irep6_id_map = {
 
 /* HID Output Report Reference - ID, Type */
 const struct hids_report hid_val_orep_id_map = {
-	.id = 0x0a,
+	.id = HIDS_KEYBOARD_INPUT_REPORT_ID,
 	.type = HID_REPORT_TYPE_OUTPUT,
 };
 
