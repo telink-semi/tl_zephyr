@@ -883,11 +883,8 @@ static int tlx_start_radio(struct tlx_data *tlx)
 				rf_reset_dma();
 				tlx->rf_mode_154 = true;
 			}
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+
 			rf_mode_init();
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-			rf_zigbee_mode_init();
-#endif
 			rf_set_zigbee_250K_mode();
 			tlx_rf_zigbee_250K_mode = true;
 		}
@@ -1166,7 +1163,7 @@ static int tlx_start(const struct device *dev)
 			DT_INST_IRQ(0, priority));
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
 		if (!tlx_rf_zigbee_250K_mode) {
-#if CONFIG_IEEE802154_2015
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
@@ -1224,9 +1221,6 @@ static int tlx_stop(const struct device *dev)
 		tlx_rf_zigbee_250K_mode = false;
 #endif /* CONFIG_PM_DEVICE */
 		tlx->is_started = false;
-		if (tlx->event_handler) {
-			tlx->event_handler(dev, IEEE802154_EVENT_SLEEP, NULL);
-		}
 	}
 	tlx_enable_pm(dev);
 
