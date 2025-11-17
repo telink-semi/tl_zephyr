@@ -578,7 +578,7 @@ ALWAYS_INLINE tlx_send_ack(const struct device *dev, struct ieee802154_frame *fr
 	size_t ack_len;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	const uint8_t *key = NULL;
-	uint32_t frame_cnt;
+	uint32_t frame_cnt = 0;
 	uint8_t sec_header[] = {
 		IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5 | IEEE802154_FRAME_SECCTRL_KEY_ID_MODE_1,
 		0,
@@ -590,15 +590,19 @@ ALWAYS_INLINE tlx_send_ack(const struct device *dev, struct ieee802154_frame *fr
 
 	if (frame->general.ver == IEEE802154_FRAME_FCF_VER_2015) {
 		if (frame->general.se_bit) {
-			tlx_mac_keys_frame_cnt_inc(tlx->mac_keys, 1);
-			frame_cnt = tlx_mac_keys_frame_cnt_get(tlx->mac_keys, 1);
-			sec_header[1] = frame_cnt;
-			sec_header[2] = frame_cnt >> 8;
-			sec_header[3] = frame_cnt >> 16;
-			sec_header[4] = frame_cnt >> 24;
-			frame->sec_header = sec_header;
-			frame->sec_header_len = sizeof(sec_header);
 			key = tlx_mac_keys_get(tlx->mac_keys, 1);
+			if (key) {
+				tlx_mac_keys_frame_cnt_inc(tlx->mac_keys, 1);
+				frame_cnt = tlx_mac_keys_frame_cnt_get(tlx->mac_keys, 1);
+				sec_header[1] = frame_cnt;
+				sec_header[2] = frame_cnt >> 8;
+				sec_header[3] = frame_cnt >> 16;
+				sec_header[4] = frame_cnt >> 24;
+				frame->sec_header = sec_header;
+				frame->sec_header_len = sizeof(sec_header);
+			} else {
+				frame->general.se_bit = false;
+			}
 		}
 
 		if (frame->payload) {
