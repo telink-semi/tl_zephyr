@@ -25,6 +25,7 @@ jobs:
         (cd ~/zephyr_sdk && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/sha256.sum | shasum --check --ignore-missing)
         tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_sdk
         (cd ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
