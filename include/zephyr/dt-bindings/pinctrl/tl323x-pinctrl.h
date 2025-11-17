@@ -22,88 +22,85 @@
 #define TL323X_FUNC_PWM3_N             10
 #define TL323X_FUNC_PWM4_N             11
 #define TL323X_FUNC_PWM5_N             12
-#define TL323X_FUNC_MSPI_CN2           13
-#define TL323X_FUNC_MSPI_CN3           14
-#define TL323X_FUNC_MSPI_CN1           15
-#define TL323X_FUNC_GSPI_CN1           16
-#define TL323X_FUNC_GSPI_CN2           17
-#define TL323X_FUNC_GSPI_CN3           18
-#define TL323X_FUNC_GSPI_CN0_IO        19
-#define TL323X_FUNC_GSPI_CK_IO         20
-#define TL323X_FUNC_GSPI_IO3_IO        21
-#define TL323X_FUNC_GSPI_IO2_IO        22
-#define TL323X_FUNC_GSPI_MISO_IO       23
-#define TL323X_FUNC_GSPI_MOSI_IO       24
-#define TL323X_FUNC_I2C_SCL_IO         25
-#define TL323X_FUNC_I2C_SDA_IO         26
-#define TL323X_FUNC_I2C1_SDA_IO        27
-#define TL323X_FUNC_I2C1_SCL_IO        28
-#define TL323X_FUNC_UART0_CTS_I        29
-#define TL323X_FUNC_UART0_RTS          30
-#define TL323X_FUNC_UART0_TX           31
-#define TL323X_FUNC_UART0_RTX_IO       32
-#define TL323X_FUNC_UART1_CTS_I        33
-#define TL323X_FUNC_UART1_RTS          34
-#define TL323X_FUNC_UART1_TX           35
-#define TL323X_FUNC_UART1_RTX_IO       36
-#define TL323X_FUNC_UART2_CTS_I        37
-#define TL323X_FUNC_UART2_RTS          38
-#define TL323X_FUNC_UART2_TX           39
-#define TL323X_FUNC_UART2_RTX_IO       40
-#define TL323X_FUNC_CLK_7816           41
+/* I2C */
+#define TL323X_FUNC_I2C_SCL_IO         13
+#define TL323X_FUNC_I2C_SDA_IO         14
+#define TL323X_FUNC_I2C1_SDA_IO        15
+#define TL323X_FUNC_I2C1_SCL_IO        16
 
-#define TL323X_FUNC_I2S0_BCK_IO        43
-#define TL323X_FUNC_I2S0_LR_OUT_IO     44
-#define TL323X_FUNC_I2S0_DAT_OUT       45
-#define TL323X_FUNC_I2S0_LR_IN_IO      46
-#define TL323X_FUNC_I2S0_DAT_IN_I      47
-#define TL323X_FUNC_I2S0_CLK           48
-#define TL323X_FUNC_DMIC0_CLK          49
-#define TL323X_FUNC_DMIC0_DAT_I        50
-#define TL323X_FUNC_SDM0_P             51
-#define TL323X_FUNC_SDM0_N             52
-#define TL323X_FUNC_SDM1_P             53
-#define TL323X_FUNC_SDM1_N             54
-#define TL323X_FUNC_IR_LEARN_I         55
-#define TL323X_FUNC_SSPI_CN_I          56
-#define TL323X_FUNC_SSPI_CK_I          57
-#define TL323X_FUNC_SSPI_SI_IO         58
-#define TL323X_FUNC_SSPI_SO_IO         59
-#define TL323X_FUNC_KEYS0_IO           60
-#define TL323X_FUNC_TMR0_CMP           61
-#define TL323X_FUNC_TMR1_CMP           62
-#define TL323X_FUNC_RZ_TX              63
-#define TL323X_FUNC_SWM_IO             64
-#define TL323X_FUNC_TX_CYC2PA          65
-#define TL323X_FUNC_WIFI_DENY_I        66
-#define TL323X_FUNC_BT_ACTIVITY        67
-#define TL323X_FUNC_BT_STATUS          68
-#define TL323X_FUNC_ATSEL_0            69
-#define TL323X_FUNC_ATSEL_1            70
-#define TL323X_FUNC_ATSEL_2            71
-#define TL323X_FUNC_ATSEL_3            72
-#define TL323X_FUNC_ATSEL_4            73
-#define TL323X_FUNC_ATSEL_5            74
-#define TL323X_FUNC_RX_CYC2LNA         75
-#define TL323X_FUNC_DBG_PROBE_CLK      76
-#define TL323X_FUNC_DBG_BB0            77
-#define TL323X_FUNC_DBG_BB5_IO         77
-#define TL323X_FUNC_DBG_RX_CLK         77
-#define TL323X_FUNC_DBG_TX_EN_I        77
-#define TL323X_FUNC_DBG_TX_ON_I        77
-#define TL323X_FUNC_DBG_TX_DATA_VALID_I 77
-#define TL323X_FUNC_DBG_TX_CLK_I       77
-#define TL323X_FUNC_DBG_ADC_I_DAT0     78
-#define TL323X_FUNC_DBG_ADC_Q_DAT0     78
-#define TL323X_FUNC_DBG_RATE0_I        78
-#define TL323X_FUNC_DBG_RX_EN_I        78
-#define TL323X_FUNC_DBG_FREQ_CHN_I     78
-#define TL323X_FUNC_DBG_TRNG0          79
-#define TL323X_FUNC_DBG_IR_ANA2DIG     79
-#define TL323X_FUNC_DBG_TX_DAT1_I      79
-#define TL323X_FUNC_DBG_TX_PWR_I       79
-#define TL323X_FUNC_DBG_TX_DAT0_I      79
-#define TL323X_FUNC_DBG_AUDIO_DAC      79
+/* UART0 */
+#define TL323X_FUNC_UART0_CTS_I        17
+#define TL323X_FUNC_UART0_RTS          18
+#define TL323X_FUNC_UART0_TX           19
+#define TL323X_FUNC_UART0_RTX_IO       20
+
+/* UART1 */
+#define TL323X_FUNC_UART1_CTS_I        21
+#define TL323X_FUNC_UART1_RTS          22
+#define TL323X_FUNC_UART1_TX           23
+#define TL323X_FUNC_UART1_RTX_IO       24
+
+/* UART2 */
+#define TL323X_FUNC_UART2_CTS_I        25
+#define TL323X_FUNC_UART2_RTS          26
+#define TL323X_FUNC_UART2_TX           27
+#define TL323X_FUNC_UART2_RTX_IO       28
+
+/* UART3 */
+#define TL323X_FUNC_UART3_CTS_I        29
+#define TL323X_FUNC_UART3_RTS          30
+#define TL323X_FUNC_UART3_TX           31
+#define TL323X_FUNC_UART3_RTX_IO       32
+
+/* UART4 */
+#define TL323X_FUNC_UART4_CTS_I        33
+#define TL323X_FUNC_UART4_RTS          34
+#define TL323X_FUNC_UART4_TX           35
+#define TL323X_FUNC_UART4_RTX_IO       36
+
+/* Misc clock / debug / SPI */
+#define TL323X_FUNC_CLK_7816           37
+#define TL323X_FUNC_TDI_I              38
+#define TL323X_FUNC_TDO_IO             38
+#define TL323X_FUNC_TMS_IO             38
+#define TL323X_FUNC_TCK_I              38
+
+/* SSPI */
+#define TL323X_FUNC_SSPI_CN_I          39
+#define TL323X_FUNC_SSPI_CK_I          40
+#define TL323X_FUNC_SSPI_SI_IO         41
+#define TL323X_FUNC_SSPI_SO_IO         42
+
+/* Misc IOs */
+#define TL323X_FUNC_RZ_TX              43
+#define TL323X_FUNC_SWM_IO             44
+#define TL323X_FUNC_TX_CYC2PA          45
+#define TL323X_FUNC_WIFI_DENY_I        46
+#define TL323X_FUNC_BT_ACTIVITY        47
+#define TL323X_FUNC_BT_STATUS          48
+
+/* ATSEL */
+#define TL323X_FUNC_ATSEL_0            49
+#define TL323X_FUNC_ATSEL_1            50
+#define TL323X_FUNC_ATSEL_2            51
+#define TL323X_FUNC_ATSEL_3            52
+#define TL323X_FUNC_ATSEL_4            53
+#define TL323X_FUNC_ATSEL_5            54
+
+#define TL323X_FUNC_RX_CYC2LNA         55
+#define TL323X_FUNC_DBG_PROBE_CLK      56
+#define TL323X_FUNC_DBG_BB0            57
+#define TL323X_FUNC_DBG_ADC_I_DAT0     58
+#define TL323X_FUNC_DBG_TRNG0          59
+
+/* GSPI */
+#define TL323X_FUNC_GSPI_CN_IO         60
+#define TL323X_FUNC_GSPI_CN0_IO        60
+#define TL323X_FUNC_GSPI_IO3_IO        61
+#define TL323X_FUNC_GSPI_IO2_IO        62
+#define TL323X_FUNC_GSPI_MISO_IO       63
+#define TL323X_FUNC_GSPI_MOSI_IO       64
+#define TL323X_FUNC_GSPI_CK_IO         65
 
 /* IDs for GPIO Ports  */
 

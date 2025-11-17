@@ -145,7 +145,7 @@ struct gpio_tlx_t {
 	uint8_t output_toggle;          /* Output: GPIO output toggle */
 	uint8_t rsvd2;                  /* reserve */
 };
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
 struct gpio_tlx_t {
 	uint8_t input;                  /* Input: read GPI input */
 	uint8_t ie;                     /* IE: input enable, high active. 1: enable, 0: disable */
@@ -164,7 +164,7 @@ struct gpio_tlx_t {
 	uint8_t irq6;                 /* IRQ_EN:GPIO interrupt */
 	uint8_t irq7;                 /* IRQ_EN:GPIO interrupt */
 };
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 struct gpio_tlx_t {
 	uint8_t input;                  /* Input: read GPI input */
 	uint8_t ie;                     /* IE: input enable, high active. 1: enable, 0: disable */
@@ -212,7 +212,7 @@ struct gpio_tlx_retention_data {
 	uint8_t risc0_irq_conf;
 	uint8_t risc1_irq_conf;
 };
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 struct gpio_tlx_retention_data {
 	struct gpio_tlx_t gpio_tlx_periph_config;
 	uint8_t gpio_tlx_irq_conf;
@@ -221,7 +221,7 @@ struct gpio_tlx_retention_data {
 	uint8_t level_irq_conf;
 	uint8_t src_mask_irq_conf;
 };
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
 struct gpio_tlx_retention_data {
 	struct gpio_tlx_t gpio_tlx_periph_config;
 	uint8_t gpio_tlx_irq_conf;
@@ -295,7 +295,7 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 	} else {
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
 	if (irq == IRQ_GPIO0) {
 		BM_SET(gpio->irq0, BIT(pin));
 	} else if (irq == IRQ_GPIO1) {
@@ -315,7 +315,7 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 	} else {
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
 	if (irq == IRQ_GPIO0) {
 		BM_SET(reg_gpio_irq0_en(gpio_pin_elem), BIT(pin));
@@ -353,7 +353,7 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 	} else if (irq == IRQ_GPIO2_RISC1) {
 		BM_CLR(reg_irq_risc1_en(GET_PORT_NUM(gpio)), BIT(pin));
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
 	if (irq == IRQ_GPIO0) {
 		BM_CLR(gpio->irq0, BIT(pin));
 	} else if (irq == IRQ_GPIO1) {
@@ -371,7 +371,7 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 	} else if (irq == IRQ_GPIO7) {
 		BM_CLR(gpio->irq7, BIT(pin));
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
 	if (irq == IRQ_GPIO0) {
 		BM_CLR(reg_gpio_irq0_en(gpio_pin_elem), BIT(pin));
@@ -414,7 +414,7 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 	} else if (irq == IRQ_GPIO2_RISC1) {
 		status = reg_irq_risc1_en(GET_PORT_NUM(gpio));
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
 	if (irq == IRQ_GPIO0) {
 		status = gpio->irq0;
 	} else if (irq == IRQ_GPIO1) {
@@ -432,7 +432,7 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 	} else if (irq == IRQ_GPIO7) {
 		status = gpio->irq7;
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8);
 	if (irq == IRQ_GPIO0) {
 		status = reg_gpio_irq0_en(gpio_pin_elem);

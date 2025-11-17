@@ -1078,7 +1078,21 @@ static int tlx_cca(const struct device *dev)
 /* API implementation: set_channel */
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
-	return tlx_set_channel_radio(dev->data, channel);
+	struct tlx_data *tlx = dev->data;
+
+	if (channel < 11 || channel > 26) {
+		return -EINVAL;
+	}
+
+	if (tlx->current_channel != channel) {
+		tlx->current_channel = channel;
+		if (tlx->is_started) {
+			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(channel));
+			rf_set_rxmode();
+		}
+	}
+
+	return 0;
 }
 
 /* API implementation: filter */
@@ -1179,6 +1193,7 @@ static int tlx_start(const struct device *dev)
 		}
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
 		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
+		rf_set_rxmode();
 		tlx->is_started = true;
 	}
 
