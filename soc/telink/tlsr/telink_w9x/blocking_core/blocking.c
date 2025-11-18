@@ -18,16 +18,29 @@ enum {
 };
 
 static void __GENERIC_SECTION(.ram_code) __attribute__((noinline))
-blocking_w91_request(const void *data, size_t len, void *param)
+blocking_w91_wait(volatile uint32_t *addr)
+{
+	uint32_t cnt = 0;
+
+	/* Bug: waits until core reaches a safe execution point in RAM before flash operations.
+	 * Add 100 nop iterations
+	 */
+	while (cnt++ < 100) {
+		__asm("nop");
+	}
+
+	*addr = BLOCKING_CORE_STATE_BLOCK_READY;
+	while (*addr != BLOCKING_CORE_STATE_INITED) {
+		__asm("nop");
+	}
+}
+
+static void blocking_w91_request(const void *data, size_t len, void *param)
 {
 	volatile uint32_t *blocking_state = (volatile uint32_t *)param;
 	uint32_t key = irq_lock();
 
-	*blocking_state = BLOCKING_CORE_STATE_BLOCK_READY;
-	while (*blocking_state != BLOCKING_CORE_STATE_INITED) {
-		__asm("nop");
-	}
-
+	blocking_w91_wait(blocking_state);
 	irq_unlock(key);
 }
 
