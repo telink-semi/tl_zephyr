@@ -43,9 +43,6 @@ static struct bt_data sd[] = {
 	// BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-ST_BLE_APP_PIPE_INFO ble_app_pip_info;
-
-
 struct bt_conn *connected_handle;
 static struct k_work_delayable ble_change_pipe_delayed_work;
 static struct k_work_delayable ble_start_pairing_delayed_work;
@@ -178,10 +175,10 @@ static void bt_ready(int err)
 
 	ble_status = IDLE_BLE_STATUS;
 	#if 1
-	adv_param.id = ble_app_pip_info.mast_id;
+	adv_param.id = flash_dev_info.mast_id;
 	printk("Bluetooth initialized id %d\n", adv_param.id);
 
-	ble_addr.a.val[5] = 0xD1 + ble_app_pip_info.mast_id;
+	ble_addr.a.val[5] = 0xD1 + flash_dev_info.mast_id;
 	LOG_HEXDUMP_INF(ble_addr.a.val, 6, "ble_addr:");
 	err = bt_le_adv_start(&adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 	if (err) {
@@ -231,14 +228,14 @@ _attribute_ram_code_sec_noinline_ void ble_change_pipe_delayed_work_handler(stru
 
 	uint8_t pipe = (user_active_disconnect - 1);
 
-    if(pipe != ble_app_pip_info.mast_id)
+    if(pipe != flash_dev_info.mast_id)
     {
-        ble_app_pip_info.mast_id = pipe;
+        flash_dev_info.mast_id = pipe;
 		// save info when smp complete
-		//save_ble_app_info();
+		//save_dev_info();
 		bt_le_adv_stop();
-		printk("switch to mast_id: %d\r\n", ble_app_pip_info.mast_id);
-		adv_param.id = ble_app_pip_info.ble_id[ble_app_pip_info.mast_id];
+		printk("switch to mast_id: %d\r\n", flash_dev_info.mast_id);
+		adv_param.id = flash_dev_info.ble_id[flash_dev_info.mast_id];
 		printk("adv_param id %d\n", adv_param.id);
 
 		ble_status = IDLE_BLE_STATUS;
@@ -259,7 +256,7 @@ void ble_start_pairing_delayed_work_handler(struct k_work *work)
 {
 	int err;
 
-    printk("ble_start_pairing_delayed_work_handler mast id %d\r\n", ble_app_pip_info.mast_id);
+    printk("ble_start_pairing_delayed_work_handler mast id %d\r\n", flash_dev_info.mast_id);
 
 	err = bt_le_adv_stop();
 	if (err) {
@@ -267,20 +264,20 @@ void ble_start_pairing_delayed_work_handler(struct k_work *work)
 		return;
 	}
 
-	ble_app_pip_info.slave_mac_addr[ble_app_pip_info.mast_id]++;
-	ble_addr.a.val[4] = ble_app_pip_info.slave_mac_addr[ble_app_pip_info.mast_id];
-	ble_addr.a.val[5] = 0xD1 + ble_app_pip_info.mast_id;
+	flash_dev_info.slave_mac_addr[flash_dev_info.mast_id]++;
+	ble_addr.a.val[4] = flash_dev_info.slave_mac_addr[flash_dev_info.mast_id];
+	ble_addr.a.val[5] = 0xD1 + flash_dev_info.mast_id;
 	LOG_HEXDUMP_INF(&ble_addr.a.val[0], 6, "bt id reset new mac:");
-	printk("user bt_id_reset %d\n", ble_app_pip_info.ble_id[ble_app_pip_info.mast_id]);
+	printk("user bt_id_reset %d\n", flash_dev_info.ble_id[flash_dev_info.mast_id]);
 	// reset bt id with new address
-	int new_id = bt_id_reset(ble_app_pip_info.ble_id[ble_app_pip_info.mast_id], &ble_addr, NULL);
+	int new_id = bt_id_reset(flash_dev_info.ble_id[flash_dev_info.mast_id], &ble_addr, NULL);
 	if (new_id < 0) {
 		printk("bt_id_reset (err %d)\n", new_id);
 		return;
 	}
 	printk("bt_id %d_reset success\n", new_id);
-	ble_app_pip_info.ble_id[ble_app_pip_info.mast_id] = new_id;
-	adv_param.id = ble_app_pip_info.ble_id[ble_app_pip_info.mast_id];
+	flash_dev_info.ble_id[flash_dev_info.mast_id] = new_id;
+	adv_param.id = flash_dev_info.ble_id[flash_dev_info.mast_id];
 	printk("adv_param id %d\n", adv_param.id);
 
 	ble_status = IDLE_BLE_STATUS;
@@ -290,57 +287,57 @@ void ble_init(void)
 {
 	int err;
 
-	if (ble_app_pip_info.ble_id[0] == 0xff) {
+	if (flash_dev_info.ble_id[0] == 0xff) {
 		ble_addr.a.val[4] = 0x00;
 		ble_addr.a.val[5] = 0xD1;
-		ble_app_pip_info.ble_id[0] = bt_id_create(&ble_addr, NULL);
-		printk("New ID created: %d\n", ble_app_pip_info.ble_id[0]);
+		flash_dev_info.ble_id[0] = bt_id_create(&ble_addr, NULL);
+		printk("New ID created: %d\n", flash_dev_info.ble_id[0]);
 	 } else {
-		ble_addr.a.val[4] = ble_app_pip_info.slave_mac_addr[0];
+		ble_addr.a.val[4] = flash_dev_info.slave_mac_addr[0];
 		ble_addr.a.val[5] = 0xD1;
-		ble_app_pip_info.ble_id[0] = bt_id_create(&ble_addr, NULL);
-		printk("ID created: %d\n", ble_app_pip_info.ble_id[0]);
+		flash_dev_info.ble_id[0] = bt_id_create(&ble_addr, NULL);
+		printk("ID created: %d\n", flash_dev_info.ble_id[0]);
 	 }
 
-	if( ble_app_pip_info.ble_id[1] == 0xff) {
+	if( flash_dev_info.ble_id[1] == 0xff) {
 		ble_addr.a.val[4] = 0x00;
 		ble_addr.a.val[5] = 0xD2;
-		ble_app_pip_info.ble_id[1] = bt_id_create(&ble_addr, NULL);
-		printk("New ID2 created: %d\n", ble_app_pip_info.ble_id[1]);
+		flash_dev_info.ble_id[1] = bt_id_create(&ble_addr, NULL);
+		printk("New ID2 created: %d\n", flash_dev_info.ble_id[1]);
 	} else {
-		ble_addr.a.val[4] = ble_app_pip_info.slave_mac_addr[1];
+		ble_addr.a.val[4] = flash_dev_info.slave_mac_addr[1];
 		ble_addr.a.val[5] = 0xD2;
-		ble_app_pip_info.ble_id[1] = bt_id_create(&ble_addr, NULL);
-		printk("ID created: %d\n", ble_app_pip_info.ble_id[1]);
+		flash_dev_info.ble_id[1] = bt_id_create(&ble_addr, NULL);
+		printk("ID created: %d\n", flash_dev_info.ble_id[1]);
 	 }
 
-	if( ble_app_pip_info.ble_id[2] == 0xff) {
+	if( flash_dev_info.ble_id[2] == 0xff) {
 		ble_addr.a.val[4] = 0x00;
 		ble_addr.a.val[5] = 0xD3;
-		ble_app_pip_info.ble_id[2] = bt_id_create(&ble_addr, NULL);
-		printk("New ID3 created: %d\n", ble_app_pip_info.ble_id[2]);
+		flash_dev_info.ble_id[2] = bt_id_create(&ble_addr, NULL);
+		printk("New ID3 created: %d\n", flash_dev_info.ble_id[2]);
 	} else {
-		ble_addr.a.val[4] = ble_app_pip_info.slave_mac_addr[2];
+		ble_addr.a.val[4] = flash_dev_info.slave_mac_addr[2];
 		ble_addr.a.val[5] = 0xD3;
-		ble_app_pip_info.ble_id[2] = bt_id_create(&ble_addr, NULL);
-		printk("ID created: %d\n", ble_app_pip_info.ble_id[2]);
+		flash_dev_info.ble_id[2] = bt_id_create(&ble_addr, NULL);
+		printk("ID created: %d\n", flash_dev_info.ble_id[2]);
 	 }
 
-	if( ble_app_pip_info.ble_id[3] == 0xff) {
+	if( flash_dev_info.ble_id[3] == 0xff) {
 		ble_addr.a.val[4] = 0x00;
 		ble_addr.a.val[5] = 0xD4;
-		ble_app_pip_info.ble_id[3] = bt_id_create(&ble_addr, NULL);
-		printk("New ID4 created: %d\n", ble_app_pip_info.ble_id[3]);
+		flash_dev_info.ble_id[3] = bt_id_create(&ble_addr, NULL);
+		printk("New ID4 created: %d\n", flash_dev_info.ble_id[3]);
 	} else {
-		ble_addr.a.val[4] = ble_app_pip_info.slave_mac_addr[3];
+		ble_addr.a.val[4] = flash_dev_info.slave_mac_addr[3];
 		ble_addr.a.val[5] = 0xD4;
-		ble_app_pip_info.ble_id[3] = bt_id_create(&ble_addr, NULL);
-		printk("ID created: %d\n", ble_app_pip_info.ble_id[3]);
+		flash_dev_info.ble_id[3] = bt_id_create(&ble_addr, NULL);
+		printk("ID created: %d\n", flash_dev_info.ble_id[3]);
 	 }
 
-	save_ble_app_info();
+	save_dev_info();
 
-	adv_param.id = ble_app_pip_info.ble_id[ble_app_pip_info.mast_id];
+	adv_param.id = flash_dev_info.ble_id[flash_dev_info.mast_id];
 	printk("Bluetooth initialized id %d\n", adv_param.id);
 
 	LOG_HEXDUMP_INF(ble_addr.a.val, 6, "ble_addr:");
@@ -414,12 +411,6 @@ void disconnect_current_connection(void)
     }
 }
 
-void save_ble_app_info(void)
-{
-	int ret = nvs_write(&user_fs, USER_STORAGE_APP_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
-    printk("NVS Write result: %d\n", ret);
-}
-
 
 void app_ble_report_to_client(void)
 {
@@ -472,7 +463,7 @@ _attribute_ram_code_sec_noinline_ void app_ble_status_proc(void)
         {
             need_save_info = 0;
             printk("save info\r\n");
-            save_ble_app_info();
+            save_dev_info();
         }
     }
     else if(ble_status == IDLE_BLE_STATUS)

@@ -11,13 +11,25 @@
 #ifndef __APP_2P4G_H__
 #define __APP_2P4G_H__
 
+#define DEVICE_TYPE_INDEX                           2 //1:mouse, 2:keyboard
 
-extern my_fifo_t	fifo_km;
-extern u8 device_channel;
+extern uint8_t device_channel;
 extern volatile unsigned int rf_state;
-extern u8 d24g_ota_status;
-extern u8 deep_flag;
+extern uint8_t d24g_ota_status;
+extern uint8_t deep_flag;
 
+#define BUF_SIZE_KEYBOARD	8
+extern uint8_t keyboard_buf[BUF_SIZE_KEYBOARD];
+
+#define MAX_BTN_CNT 6
+typedef struct
+{
+    uint8_t cnt;
+    uint8_t keycode[MAX_BTN_CNT];
+    uint8_t press_cnt;
+    uint32_t special_key_press_f;
+} keyboard_data_t;
+extern keyboard_data_t key_buf;
 
 typedef enum
 {

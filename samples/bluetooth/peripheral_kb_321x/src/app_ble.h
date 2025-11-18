@@ -12,15 +12,7 @@
 extern "C" {
 #endif
 
-typedef struct
-{
-    unsigned char slave_mac_addr[4];//4
-    int ble_id[4];//20
-    uint8_t temp2[3]; //23
-    uint8_t mast_id;//24
-    int idx;//28
-} ST_BLE_APP_PIPE_INFO;
-extern ST_BLE_APP_PIPE_INFO ble_app_pip_info;
+
 
 #define    PAIR_TIMEOUT_US              60*1000//6s
 #define    RECONN_TIMEOUT_US            60*1000//60s

@@ -38,19 +38,16 @@ volatile unsigned char fun_mode = 0;
 static unsigned char last_fun_mode = 1;
 unsigned char  mode_pin_level = 0;
 
-unsigned char  g_report_rate_pin_level=0;
-static unsigned char  g_last_report_rate_pin_level=0;
-
 extern struct bt_conn *connected_handle;
 volatile uint32_t user_active_disconnect = 0;
 
-//ZH_TODO
 ST_FLASH_DEV_INFO flash_dev_info  __attribute__ ((aligned (4)));
-int dev_info_idx;
 
-ST_FLASH_DEV_OTHER_INFO flash_dev_other_info  __attribute__ ((aligned (4)));
-int dev_other_info_idx;
-
+uint32_t loop_cnt;
+uint32_t idle_tick;
+uint32_t idle_count;
+uint32_t adv_begin_tick;
+uint32_t adv_count = 0;
 
 #if TOGGLE_DEBUG_IO_ENABLE
 struct gpio_dt_spec toggle_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle-sws), gpios, {0});
@@ -185,17 +182,6 @@ pl_fifo_t tx_fifo={
      .p=buf_txfifo,
  };
 
-#define SPP_TX_FIFO_NUM 8
-_attribute_aligned_(4)  unsigned char spp_buf_txfifo[SPP_TX_FIFO_SIZE_KB * SPP_TX_FIFO_NUM];
-pl_fifo_t d25fSppTxFifo = {
-    .size = SPP_TX_FIFO_SIZE_KB,
-    .num = SPP_TX_FIFO_NUM,
-    .wptr = 0,
-    .rptr = 0,
-    .p = spp_buf_txfifo,
-};
-
-
 app_kb_data_t app_key_buf;
 unsigned char fn_flag = 0;
 
@@ -329,31 +315,6 @@ _attribute_ram_code_sec_noinline_ unsigned char special_key_press_flag_set(unsig
 }
 
 
-static void p24g_pairing_info_check(void)
-{
-    //dev_info_idx = flash_info_load(flash_sector_2p4_inf, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-
-    int ret = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-    if (ret == -ENOENT) {
-        printk("NVS APP_2P4G_PAIR_INFO_ID naver saved\n");
-        LOG_INF("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
-    } else {
-        LOG_INF("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
-    }
-
-
-    //dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-
-    ret = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-    if (ret == -ENOENT) {
-        printk("NVS APP_2P4G_APP_INFO_ID naver saved\n");
-
-    } else {
-        LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
-    }
-}
-
-
 _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
 {
 
@@ -378,7 +339,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
                 {
                     printk("ble mode pair start\r\n");
                     user_active_disconnect = 0;
-                    user_active_disconnect += MULTI_DEVICE_PAIR_PIPE_1 + ble_app_pip_info.mast_id;
+                    user_active_disconnect += MULTI_DEVICE_PAIR_PIPE_1 + flash_dev_info.mast_id;
                     if (connected_handle) {
                         BIT_SET(user_active_disconnect, BLE_START_PAIR);
                     } else {
@@ -405,7 +366,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             break;
         case PRESS_BLE_PIPE1_FLAG:
             printk("switch ble pipe 1\r\n");
-            if(fun_mode == KB_MODE_BLE && ble_app_pip_info.mast_id != 0)
+            if(fun_mode == KB_MODE_BLE && flash_dev_info.mast_id != 0)
             {
                 user_active_disconnect = 0;
                 user_active_disconnect += MULTI_DEVICE_CHANGE_PIPE_1;
@@ -419,7 +380,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             break;
         case PRESS_BLE_PIPE2_FLAG:
             printk("switch ble pipe 2\r\n");
-            if(fun_mode == KB_MODE_BLE  && ble_app_pip_info.mast_id != 1)
+            if(fun_mode == KB_MODE_BLE  && flash_dev_info.mast_id != 1)
             {
                 user_active_disconnect = 0;
                 user_active_disconnect += MULTI_DEVICE_CHANGE_PIPE_2;
@@ -432,7 +393,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             break;
         case PRESS_BLE_PIPE3_FLAG:
             printk("switch ble pipe 3\r\n");
-            if(fun_mode==KB_MODE_BLE && ble_app_pip_info.mast_id != 2)
+            if(fun_mode==KB_MODE_BLE && flash_dev_info.mast_id != 2)
             {
                 user_active_disconnect = 0;
                 user_active_disconnect += MULTI_DEVICE_CHANGE_PIPE_3;
@@ -445,7 +406,7 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             break;
         case PRESS_BLE_PIPE4_FLAG:
             printk("switch ble pipe 4\r\n");
-            if(fun_mode==KB_MODE_BLE && ble_app_pip_info.mast_id != 3)
+            if(fun_mode==KB_MODE_BLE && flash_dev_info.mast_id != 3)
             {
                 user_active_disconnect = 0;
                 user_active_disconnect += MULTI_DEVICE_CHANGE_PIPE_4;
@@ -614,23 +575,11 @@ _attribute_ram_code_sec_ void check_mode(void)
     //printk("mode_pin_level %d\n", mode_pin_level);
 }
 
-_attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
+void save_dev_info(void)
 {
-    static uint8_t last_select = 0xFF;
-
-    if (last_select == select) {
-        return;
-    }
-
-    last_select = select;
-    switch (select) 
-    {
-
-        default:
-            break;
-    }
+	int ret = nvs_write(&user_fs, APP_USER_INFO_ID, (uint8_t *)&flash_dev_info.slave_mac_addr[0], sizeof(ST_FLASH_DEV_INFO));
+    printk("NVS Write result: %d\n", ret);
 }
-
 
 static int peripheral_comm_init(void)
 {
@@ -649,24 +598,24 @@ static int peripheral_comm_init(void)
     }
     LOG_INF("NVS initialized successfully.\n");
 
-    ret = nvs_read(&user_fs, USER_STORAGE_APP_INFO_ID, (uint8_t *)&ble_app_pip_info.slave_mac_addr[0], sizeof(ST_BLE_APP_PIPE_INFO));
+    ret = nvs_read(&user_fs, APP_USER_INFO_ID, (uint8_t *)&flash_dev_info.slave_mac_addr[0], sizeof(ST_FLASH_DEV_INFO));
     if (ret == -ENOENT) {
-        printk("NVS USER_STORAGE_APP_INFO_ID naver saved\n");
-        ble_app_pip_info.slave_mac_addr[0] = 0;
-        ble_app_pip_info.slave_mac_addr[1] = 0;
-        ble_app_pip_info.slave_mac_addr[2] = 0;
-        ble_app_pip_info.slave_mac_addr[3] = 0;
-        ble_app_pip_info.ble_id[0] = 0xff;
-        ble_app_pip_info.ble_id[1] = 0xff;
-        ble_app_pip_info.ble_id[2] = 0xff;
-        ble_app_pip_info.ble_id[3] = 0xff;
-        ble_app_pip_info.mast_id = 0;
-        save_ble_app_info();
+        printk("NVS APP_USER_INFO_ID naver saved\n");
+        flash_dev_info.slave_mac_addr[0] = 0;
+        flash_dev_info.slave_mac_addr[1] = 0;
+        flash_dev_info.slave_mac_addr[2] = 0;
+        flash_dev_info.slave_mac_addr[3] = 0;
+        flash_dev_info.ble_id[0] = 0xff;
+        flash_dev_info.ble_id[1] = 0xff;
+        flash_dev_info.ble_id[2] = 0xff;
+        flash_dev_info.ble_id[3] = 0xff;
+        flash_dev_info.mast_id = 0;
+        save_dev_info();
     }
-    LOG_INF("nvs read USER_STORAGE_APP_INFO_ID: %d\n", ret);
-    LOG_INF("slave_mac_addr: %x %x %x %x\n", ble_app_pip_info.slave_mac_addr[0], ble_app_pip_info.slave_mac_addr[1], \
-                                            ble_app_pip_info.slave_mac_addr[2], ble_app_pip_info.slave_mac_addr[3]);
-    LOG_INF("mast_id: %d\n", ble_app_pip_info.mast_id);
+    LOG_INF("nvs read APP_USER_INFO_ID: %d\n", ret);
+    LOG_INF("slave_mac_addr: %x %x %x %x\n", flash_dev_info.slave_mac_addr[0], flash_dev_info.slave_mac_addr[1], \
+                                            flash_dev_info.slave_mac_addr[2], flash_dev_info.slave_mac_addr[3]);
+    LOG_INF("mast_id: %d\n", flash_dev_info.mast_id);
 
 
     if (!gpio_is_ready_dt(&mode_pin)) {
@@ -757,24 +706,26 @@ static int peripheral_comm_init(void)
     check_mode();
 
     last_fun_mode = fun_mode;
-    // if (fun_mode == KB_MODE_2P4G)
-    // {
-    //     uint8_t mac_public[6];
-    //     uint8_t mac_random_static[6];
-    //     random_generator_init();
-    //     blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
-    // }
+
+    uint8_t mac_public[6];
+    uint8_t mac_random_static[6];
+    random_generator_init();
+    //TODO:
+    printk("flash_sector_mac_address %x\n", flash_sector_mac_address);
+    blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
+    LOG_HEXDUMP_INF(mac_public, 6, "mac_addr");
 }
 
 int keyboard_comm_init(void)
 {
     peripheral_comm_init();
 
-    fun_mode = KB_MODE_USB;
+    fun_mode = KB_MODE_2P4G;
 
     if (fun_mode == KB_MODE_2P4G)
     {
-	    //p24g_user_init_normal();
+	     pp_rf_init(1);
+         d24_user_init();
     } 
     else if (fun_mode == KB_MODE_BLE)
     {
@@ -828,7 +779,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 #endif
 
     if(app_get_kb_mode() == KB_MODE_2P4G) {
-        app_2p4g_main_loop();
+         d24_main_loop();
     }
 }
 
@@ -854,7 +805,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
             printk("fun_mode %d \n", fun_mode);
             printk("vbus_status %d \n", vbus_status);
             printk("ble_status %d \n", ble_status);
-            printk("mast_id %d \n", ble_app_pip_info.mast_id);
+            printk("mast_id %d \n", flash_dev_info.mast_id);
             printk("usb_connected_ok %d \n", usb_connected_ok);
         }
 
@@ -928,4 +879,102 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
         }
         #endif
     }
+}
+
+
+
+/**
+ * @brief	The keyboard display the PC status
+ * @param	status, PC status indicator
+ * @return	none
+ */
+_attribute_ram_code_ void kb_led_out(uint8_t status)
+{
+#if HAS_NUM_LED
+	led_num_set((status&0x01)?LED_ON:LED_OFF);
+#endif
+
+#if HAS_CAPS_LED
+	led_caps_set((status&0x02)?LED_ON:LED_OFF);
+#endif
+
+#if HAS_SCROLL_LED
+	led_scroll_set((status&0x04)?LED_ON:LED_OFF);
+#endif
+}
+
+
+/**
+ * @brief	clear_pair_flag
+ * @param	none
+ * @return	none
+ */
+void clear_pair_flag(void)
+{
+    printk("[PUBLIC] clear_pair_flag\n");
+    pair_flag = 0;
+    analog_write(USED_PAIR_ANA_REG, pair_flag);
+}
+
+
+/**
+ * @brief	set_pair_flag
+ * @param	none
+ * @return	none
+ */
+void set_pair_flag(void)
+{
+    pair_flag = 1;
+    printk("[PUBLIC] set_pair_flag %d\n", pair_flag);
+    analog_write(USED_PAIR_ANA_REG, pair_flag);
+}
+
+/**
+ * @brief	clear idle count
+ * @param	none
+ * @return	none
+ */
+_attribute_ram_code_ void reset_idle_status(void)
+{
+	if (pair_flag)
+	{
+		return;
+	}
+	idle_count = 0;
+	loop_cnt = 0;
+	idle_tick = clock_time();
+	adv_begin_tick = idle_tick|1;
+	adv_count = 0;
+}
+
+/**
+ * @brief	idle count poll
+ * @param	none
+ * @return	none
+ */
+_attribute_ram_code_ void idle_status_poll(void)
+{
+    u8 n;
+
+    n = ((u32)(clock_time() - idle_tick)) / SYSTEM_TIMER_TICK_1S;
+
+    idle_tick += n * SYSTEM_TIMER_TICK_1S;
+
+    idle_count += n;
+}
+
+/**
+ * @brief	ADV count poll
+ * @param	none
+ * @return	none
+ */
+_attribute_ram_code_ void adv_count_poll(void)
+{
+    u8 n;
+
+    n = ((u32)(clock_time() - adv_begin_tick)) / SYSTEM_TIMER_TICK_1S;
+
+    adv_begin_tick += n * SYSTEM_TIMER_TICK_1S;
+
+    adv_count += n;
 }

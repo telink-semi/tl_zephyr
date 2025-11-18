@@ -11,6 +11,8 @@
 #ifndef __APP_2P4G_RF_H__
 #define __APP_2P4G_RF_H__
 
+#include "rf_common.h"
+
 #define rf_stimer_get_tick() stimer_get_tick()
 #define RF_SYSTEM_TIMER_TICK_1US   SYSTEM_TIMER_TICK_1US
 
@@ -57,114 +59,68 @@ enum
 
 
 typedef struct{
-    u32 dma_len;//dma len
+    uint32_t dma_len;//dma len
 
-    u8 rf_len; //rf len
-    u8  dat[59];
+    uint8_t rf_len; //rf len
+    uint8_t  dat[59];
 } rf_packet_t;
 
 typedef struct
 {	
-	u8 cmd;//data type
-	u8 seq_no;
-	u8 pno_no;
-	u32 did;//device id
-	u8 key[12]; //key
+	uint8_t cmd;//data type
+	uint8_t seq_no;
+	uint8_t pno_no;
+	uint32_t did;//device id
+	uint8_t key[12]; //key
 } pair_data_t;//pair data struct
 
 typedef struct
 {	
-	u8 cmd;//data type
-	u8 seq_no;
-	u8 pno_no;
+	uint8_t cmd;//data type
+	uint8_t seq_no;
+	uint8_t pno_no;
 	
-	u8 tick_0;
-	u8 tick_1;
-	u8 chn;
-	u8 host_led_status;//host led status
+	uint8_t tick_0;
+	uint8_t tick_1;
+	uint8_t chn;
+	uint8_t host_led_status;//host led status
 	
-	u32 gid;	//dongle ID
-	u32 did;	//Device ID
-	u8 key[12]; //key
+	uint32_t gid;	//dongle ID
+	uint32_t did;	//Device ID
+	uint8_t key[12]; //key
 
 } pair_ack_data_t;	//Paired ACK packet
 
 
 typedef struct
 {
-	u8	cmd;//bit7=0: no aes  =1: aes
-	u8	seq_no;	//The frame serial number
-	u8	pn_no; 	//
+	uint8_t	cmd;//bit7=0: no aes  =1: aes
+	uint8_t	seq_no;	//The frame serial number
+	uint8_t	pn_no; 	//
 
-	u32 did;	//Device ID
+	uint32_t did;	//Device ID
 
-	u8  km_dat[6];//mouse data or kb
-	u8  rsv1[3]; //for aes  16 bytes
+	uint8_t  km_dat[6];//mouse data or kb
+	uint8_t  rsv1[3]; //for aes  16 bytes
 
-	u16 crc16;	//Software CRC16 
+	uint16_t crc16;	//Software CRC16 
 
 } km_data_t;	//Communication packet
 
 typedef struct
 {
 	
-	u8 cmd;//data type
-	u8 seq_no;	//The frame serial number
-	u8 pno_no;
+	uint8_t cmd;//data type
+	uint8_t seq_no;	//The frame serial number
+	uint8_t pno_no;
 	
-	u8 tick_0;
-	u8 tick_1;
-	u8 chn;//chanel
-	u8 host_led_status;//host led status
+	uint8_t tick_0;
+	uint8_t tick_1;
+	uint8_t chn;//chanel
+	uint8_t host_led_status;//host led status
 	
 } km_ack_data_t;//km ack data struct
 
-typedef struct
-{
-	u8	cmd;//bit7=0: no aes  =1: aes
-	u8	seq_no;
-	u8  pno_no;
-	u32 did;
-
-	u8	report_id;
-	u8 	opcode;
-	u16	length;	
-	u8 dat[20]; //include:u16 package_cnt; u8 data[16]; u16 crc16;
-} ota_data_t;
-
-typedef struct
-{
-	u8	cmd;//bit7=0: no aes  =1: aes
-	u8	seq_no;
-	u8  pno_no;
-	u32 did;
-
-	u8	report_id;
-	u8 	opcode;
-	u16	length;	
-	u8 dat[20]; //include:u16 package_cnt; u8 data[16]; u16 crc16;
-} ota_ack_data_t;
-
-typedef struct
-{
-	u16 cmd;
-	u8 buf[16];
-	u16 crc;
-}ota_data_st;
-
-
-typedef enum
-{
-	EMPTY_DATA_CMD=0,
-	PAIR_DATA_CMD=1,
-	RECONNECT_DATA_CMD=2,
-	MOUSE_DATA=3,
-	SPP_DATA=4,
-	SPP_DATA_ACK=5,
-	//TEST_DATA_CMD=0XFE,
-	ERROR_DATA=0X55,
-	
-}M_RF_CMD_ENUM;
 
 typedef enum
 {
@@ -180,34 +136,23 @@ typedef enum
 
 
 typedef struct{
-	u8 map[5];
-	u8 table[37];
-	u8  hop;
-	s8 	idx;
+	uint8_t map[5];
+	uint8_t table[37];
+	uint8_t hop;
+	signed char idx;
 } rf_channel_param_t;
 
 
 
 typedef struct
 {
-	u32 side_id;
+	uint32_t side_id;
 	
-	u8 dev_now_status;
-	u8 pair_success_flag;
-	u8 rsv[2];
+	uint8_t dev_now_status;
+	uint8_t pair_success_flag;
+	uint8_t rsv[2];
 } app_async_st;
 extern app_async_st  app_inf;
-
-typedef	struct {
-	u16		size;
-	u16		num;
-	
-	u16		wptr;
-	u16		rptr;
-	
-	u8*		p;
-}	pl_fifo_t;
-
 
 /**
 *  @brief 	 Passing spp data (not mouse) to the underlying protocol layer
@@ -218,14 +163,14 @@ typedef	struct {
 *  @return	0:success  ,other :fail
 */
 
-int pp_notify_spp(u8 cmd,u8 *buf,int length);
+int pp_notify_spp(uint8_t cmd,uint8_t *buf,int length);
 /**
  * @brief   2.4g rf init
  * @param[in]   none
  * @return  none
  */
 
-void pp_rf_init(u8 init_fastsettle);
+void pp_rf_init(uint8_t init_fastsettle);
 /**
  * @brief   irq_handler for 2.4gE stack and RF interrupt
  * @param[in]   none
@@ -272,12 +217,12 @@ void pp_timer0_init(void);
   *  @return	 fifo  number
  */
 
-u32 pp_get_rf_tx_fifo_num(void);
+uint32_t pp_get_rf_tx_fifo_num(void);
 
 
-_attribute_ram_code_sec_ u8 get_next_channel_with_mask(u32 mask, u8 chn);
+_attribute_ram_code_sec_ uint8_t get_next_channel_with_mask(uint32_t mask, uint8_t chn);
 
-void set_pair_access_code(u32 code);
+void set_pair_access_code(uint32_t code);
 
 /**
  * @brief       This function set data access code
@@ -285,17 +230,17 @@ void set_pair_access_code(u32 code);
  * @return      
  * @note        
  */
-void set_data_access_code(u32 code);
+void set_data_access_code(uint32_t code);
 
-extern u8 rf_rx_process(rf_packet_t *p_rf_data);
+extern uint8_t rf_rx_process(rf_packet_t *p_rf_data);
 
 void irq_device_rx(void);
 
-_attribute_ram_code_ void app_set_rf_power(rf_power_level_index_e idx);
+extern _attribute_ram_code_ void app_set_rf_power(rf_power_level_index_e idx);
 
-_attribute_ram_code_ void app_rf_set_timeout(unsigned short timeout_us);
+extern _attribute_ram_code_ void app_rf_set_timeout(unsigned short timeout_us);
 
-_attribute_ram_code_ void app_rf_set_chn(signed char chn);
+extern _attribute_ram_code_ void app_rf_set_chn(signed char chn);
 
 #ifdef __cplusplus
 extern "C" {
