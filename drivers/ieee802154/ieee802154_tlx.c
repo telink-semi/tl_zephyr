@@ -875,16 +875,24 @@ static int tlx_start_radio(struct tlx_data *tlx)
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
 		if (!tlx_rf_zigbee_250K_mode) {
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 			ske_dig_en();
 #endif
-#endif
 			if (tlx->rf_mode_154 == false) {
-				rf_baseband_reset();
-				rf_reset_dma();
+				if(tl_rf_is_inited()){
+					rf_baseband_reset();
+					rf_reset_dma();
+				}
+				else{
+					tl_rf_change_to_inited();
+				}
+
 				tlx->rf_mode_154 = true;
 			}
-
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+			sys_n22_init(0x20080000);
+			rf_n22_dig_init();
+			rf_clr_irq_mask(FLD_RF_IRQ_ALL);
+#endif
 			rf_mode_init();
 			rf_set_zigbee_250K_mode();
 			tlx_rf_zigbee_250K_mode = true;
@@ -919,7 +927,7 @@ static int tlx_stop_radio(struct tlx_data *tlx)
 #ifdef CONFIG_PM_DEVICE
 		/* Reset Radio */
 		rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL323X
 		rf_reset_dma();
 		rf_baseband_reset();
 #endif
@@ -1076,21 +1084,7 @@ static int tlx_cca(const struct device *dev)
 /* API implementation: set_channel */
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
-	struct tlx_data *tlx = dev->data;
-
-	if (channel < 11 || channel > 26) {
-		return -EINVAL;
-	}
-
-	if (tlx->current_channel != channel) {
-		tlx->current_channel = channel;
-		if (tlx->is_started) {
-			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(channel));
-			rf_set_rxmode();
-		}
-	}
-
-	return 0;
+	return tlx_set_channel_radio(dev->data, channel);
 }
 
 /* API implementation: filter */
@@ -1152,86 +1146,13 @@ _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 /* API implementation: start */
 static int tlx_start(const struct device *dev)
 {
-	struct tlx_data *tlx = dev->data;
-
-	tlx_disable_pm(dev);
-	/* check if RF is already started */
-	if (!tlx->is_started) {
-#ifdef CONFIG_DYNAMIC_INTERRUPTS
-		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
-			(void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
-		riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
-			DT_INST_IRQ(0, priority));
-#endif /* CONFIG_DYNAMIC_INTERRUPTS */
-		if (!tlx_rf_zigbee_250K_mode) {
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-			ske_dig_en();
-#endif
-			if (tlx->rf_mode_154 == false) {
-				if(tl_rf_is_inited()){
-					rf_baseband_reset();
-					rf_reset_dma();
-				}
-				else{
-					tl_rf_change_to_inited();
-				}
-
-				tlx->rf_mode_154 = true;
-			}
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-			    sys_n22_init(0x20080000);
-				rf_n22_dig_init();
-				rf_clr_irq_mask(FLD_RF_IRQ_ALL);
-#endif
-				rf_mode_init();
-				rf_set_zigbee_250K_mode();
-				tlx_rf_zigbee_250K_mode = true;
-		}
-		rf_set_tx_dma(1, TLX_TRX_LENGTH);
-		rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
-		if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
-			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(tlx->current_channel));
-		}
-		if (tlx->current_dbm != TLX_TX_PWR_NOT_SET) {
-			rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
-		}
-		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
-		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
-		rf_set_rxmode();
-		tlx->is_started = true;
-	}
-
-	return 0;
+	return tlx_start_radio(dev->data);
 }
 
 /* API implementation: stop */
 static int tlx_stop(const struct device *dev)
 {
-	struct tlx_data *tlx = dev->data;
-
-	/* check if RF is already stopped */
-	if (tlx->is_started) {
-		if (tlx->ack_sending) {
-			if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
-				tlx->ack_sending = false;
-			}
-		}
-		riscv_plic_irq_disable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
-		rf_set_tx_rx_off();
-#ifdef CONFIG_PM_DEVICE
-	/* Reset Radio */
-	rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL323X
-	rf_reset_dma();
-	rf_baseband_reset();
-#endif
-		tlx_rf_zigbee_250K_mode = false;
-#endif /* CONFIG_PM_DEVICE */
-		tlx->is_started = false;
-	}
-	tlx_enable_pm(dev);
-
-	return 0;
+	return tlx_stop_radio(dev->data);
 }
 
 /* API implementation: tx */
