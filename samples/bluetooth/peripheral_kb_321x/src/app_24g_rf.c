@@ -16,8 +16,9 @@
 
 #include <zephyr/settings/settings.h>
 
-#include "app_24g.h"
+
 #include "app_public.h"
+#include "drivers.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 #include <zephyr/logging/log.h>
@@ -42,7 +43,7 @@ const unsigned char rf_chn[MAX_RF_CHANNEL] =
     FRE_OFFSET + 60, FRE_OFFSET + 65, FRE_OFFSET + 70, FRE_OFFSET + 76,
 };
 
-_attribute_aligned_(4)  u8 buf_rf_rxfifo[64*2];
+_attribute_aligned_(4)  uint8_t buf_rf_rxfifo[64*2];
 _attribute_aligned_(4)  pl_fifo_t  rf_rxfifo =
 {
 	.size = 64,
@@ -72,7 +73,7 @@ _attribute_data_retention_sec_ rf_fast_settle_t fs_cv_2m;
  */
 void rf_fast_settle_get_val(rf_tx_fast_settle_time_e tx_settle_us, rf_rx_fast_settle_time_e rx_settle_us, rf_fast_settle_t *fs_cv)
 {
-	u8 ble_tx_packet[6];
+	uint8_t ble_tx_packet[6];
 	unsigned char rf_data_len = 2;
 	ble_tx_packet[4]=0;
 	ble_tx_packet[5]=0;
@@ -163,7 +164,7 @@ void rf_fast_settle_set_val(rf_tx_fast_settle_time_e tx_settle_us, rf_rx_fast_se
 */
 void rf_fast_settle_setup(rf_tx_fast_settle_time_e tx_settle_us, rf_rx_fast_settle_time_e rx_settle_us)
 {
-	u8 ble_tx_packet[6];
+	uint8_t ble_tx_packet[6];
 	unsigned char rf_data_len = 2;
 	ble_tx_packet[4]=0;
 	ble_tx_packet[5]=0;
@@ -224,7 +225,7 @@ void rf_fast_settle_setup(rf_tx_fast_settle_time_e tx_settle_us, rf_rx_fast_sett
  * @return      
  * @note        
  */
-_attribute_ram_code_sec_ void pp_rf_init(u8 init_fastsettle)
+_attribute_ram_code_sec_ void pp_rf_init(uint8_t init_fastsettle)
 {
     rf_mode_init();
     rf_set_pri_2M_mode();
@@ -266,7 +267,7 @@ _attribute_ram_code_sec_ void pp_rf_init(u8 init_fastsettle)
  * @return      
  * @note        
  */
-void set_pair_access_code(u32 code)
+void set_pair_access_code(uint32_t code)
 {
 	//rf_access_code_comm(code);
 
@@ -283,7 +284,7 @@ void set_pair_access_code(u32 code)
  * @return      
  * @note        
  */
-void set_data_access_code(u32 code)
+void set_data_access_code(uint32_t code)
 {
 	//rf_access_code_comm(code);
     reg_rf_access_code =  ((code & 0xffffff00) | 0x77);
@@ -300,7 +301,7 @@ void set_data_access_code(u32 code)
 *  @return	none
 */
 
-_attribute_ram_code_sec_ void pp_rf_start_srx(unsigned int tick, u32 timeout_us)
+_attribute_ram_code_sec_ void pp_rf_start_srx(unsigned int tick, uint32_t timeout_us)
 {
 	reg_rf_ll_rx_fst_timeout = timeout_us;					// first timeout.
 	reg_rf_ll_cmd_schedule = tick;
@@ -319,16 +320,12 @@ _attribute_ram_code_sec_ void pp_rf_irq_handler()
     if(rf_get_irq_status(FLD_RF_IRQ_RX))
     {
         rf_state = RF_RX_END_STATUS;
-        RF_RX_GPIO_DEBUG_SET(0);
 		rf_clr_irq_status(FLD_RF_IRQ_RX|FLD_RF_IRQ_CMD_DONE);
     }
 
     if(rf_get_irq_status(FLD_RF_IRQ_TX))
     {
         //pp_rf_start_srx(rf_stimer_get_tick() + DELAY_RX_AFTER_TX_US * RF_SYSTEM_TIMER_TICK_1US, 300);
-        RF_TX_GPIO_DEBUG_SET(0);
-        RF_RX_GPIO_DEBUG_SET(1);
-        RF_RX_TIMEOUT_GPIO_DEBUG_SET(1);
         rf_state = RF_RX_START_STATUS;
         //tlkapi_send_string_data(APP_LOG_EN, "TV:", 0, 0);
         rf_clr_irq_status(FLD_RF_IRQ_TX|FLD_RF_IRQ_CMD_DONE);
@@ -355,7 +352,7 @@ _attribute_ram_code_sec_ void pp_rf_irq_handler()
  * @return      
  * @note        
  */
-_attribute_ram_code_sec_  u8 get_next_channel_with_mask(u32 mask, u8 chn)
+_attribute_ram_code_sec_  uint8_t get_next_channel_with_mask(uint32_t mask, uint8_t chn)
 {
 	return (chn+3)%15;
 }
@@ -381,7 +378,7 @@ _attribute_ram_code_ void irq_device_rx(void)
 
 _attribute_ram_code_ void app_set_rf_power(rf_power_level_index_e idx)
 {
-    static u8 last_power = 0xff;
+    static uint8_t last_power = 0xff;
 
     if(last_power != idx) {
         rf_set_power_level_index(idx);

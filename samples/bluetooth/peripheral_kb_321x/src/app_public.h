@@ -17,9 +17,11 @@ extern "C" {
 #include "app_usb.h"
 #include "app_ble.h"
 #include "app_24g.h"
+#include "app_24g_rf.h"
 #include "app_battery.h"
 #include "app_kb_matrix.h"
-#include "app_alg_keyscan.h"
+#include "app_common_config.h"
+
 
 #define BIT_SET(x, n)               ((x) |= BIT(n))
 #define BIT_CLR(x, n)               ((x) &= ~BIT(n))
@@ -46,60 +48,12 @@ int pp_fifo_push(pl_fifo_t * f, unsigned char cmd, unsigned char * buf, unsigned
 void pp_fifo_pop(pl_fifo_t *f);
 
 extern pl_fifo_t tx_fifo;
-extern pl_fifo_t d25fKbTxFifo;
-extern pl_fifo_t d25fSppTxFifo;
+extern unsigned int flash_sector_mac_address;
 
-extern void mb_irq_handler(void);
-
-//ZH_TODO
-typedef struct
-{
-    uint32_t side_id; //4
-
-    // unsigned char key[12];//12
-
-    uint8_t peer_addr[MAC_ADDR_LEN];//6
-
-    // unsigned char mode;
-    // unsigned char mast_id;
-    // unsigned short temp1; //24
-
-    // unsigned char  temp2[8]; //32
-
-} ST_FLASH_DEV_INFO;
-extern ST_FLASH_DEV_INFO flash_dev_info;
-extern int dev_info_idx;
-extern uint32_t  flash_sector_2p4_inf;
-
-typedef struct
-{
-    uint32_t side_id; //4
-    uint8_t report_rate; //1
-
-} ST_FLASH_DEV_OTHER_INFO;
-
-extern ST_FLASH_DEV_OTHER_INFO flash_dev_other_info;
-extern int dev_other_info_idx;
-extern uint32_t  flash_sector_2p4_other_inf;
-
-//
-
-// #define TLK_ERR_BASE_NUM                                    (0x0)    /**< Global error base */
-
-// #define TLK_SUCCESS                                         (TLK_ERR_BASE_NUM + 0)    /**< Successful command */
-// #define TLK_ERR_NULL                                        (TLK_ERR_BASE_NUM + 1)    /**< Null pointer */
-// #define TLK_ERR_INVALID_PARAM                               (TLK_ERR_BASE_NUM + 2)    /**< Invalid parameter */
-// #define TLK_ERR_BUSY                                        (TLK_ERR_BASE_NUM + 3)    /**< Device or resourse Busy */
-// #define TLK_ERR_INVALID_STATE                               (TLK_ERR_BASE_NUM + 4)    /**< Invalid state, operation disallowed in this state */
-// #define TLK_ERR_BUFFER_EMPTY                                (TLK_ERR_BASE_NUM + 5)    /**< Buffer/FIFO is empty */
-// #define TLK_ERR_NO_MEM                                      (TLK_ERR_BASE_NUM + 6)    /**< No memory available for operation */
-// #define TLK_ERR_INVALID_LENGTH                              (TLK_ERR_BASE_NUM + 7)    /**< Invalid length */
-// #define TLK_ERR_TIMEOUT                                     (TLK_ERR_BASE_NUM + 8)    /**< Operation timed out */
-// #define TLK_ERR_INTERNAL                                    (TLK_ERR_BASE_NUM + 9)    /**< Internal error */
-// #define TLK_ERR_DEV_NOT_FOUND                               (TLK_ERR_BASE_NUM + 10)   /**< Destination device not found */
-// #define TLK_ERR_CMD_NOT_SUPPORT                             (TLK_ERR_BASE_NUM + 11)   /**< cmd not supported */
-// #define TLK_ERR_BUFFER_FULL                                 (TLK_ERR_BASE_NUM + 12)   /**< Buffer/FIFO is full */
-
+extern uint32_t loop_cnt;
+extern uint32_t idle_count;
+extern uint32_t adv_begin_tick;
+extern uint32_t adv_count;
 
 #define   LED_IS_ON  0
 #define   LED_IS_OFF 1
@@ -127,9 +81,18 @@ extern uint32_t  flash_sector_2p4_other_inf;
 #define PRESS_BLE_PIPE4_FLAG       (PRESS_T_FN_FLAG|PRESS_KB_4_FLAG)
 
 extern struct nvs_fs user_fs;
-#define USER_STORAGE_APP_INFO_ID                1
-#define APP_2P4G_PAIR_INFO_ID                   2
-#define APP_2P4G_APP_INFO_ID                    3
+#define APP_USER_INFO_ID                1
+
+typedef struct
+{
+    unsigned char slave_mac_addr[4];//4
+    int ble_id[4];//20
+    uint32_t dongle_id;
+    uint8_t temp2[3]; //23
+    uint8_t mast_id;//24
+    int idx;//28
+} ST_FLASH_DEV_INFO;
+extern ST_FLASH_DEV_INFO flash_dev_info;
 
 enum {
     EMPTY_DATA_CMD=0,
@@ -142,8 +105,8 @@ enum {
     CONSUME_KB_DATA_CMD=7,
     SYSTEM_KB_DATA_CMD=8,
     ALL_KB_DATA_CMD=9,
+	ERROR_DATA=0X55,
 };
-
 
 enum {
     MULTI_DEVICE_CMD = 0,
@@ -218,6 +181,14 @@ static inline kb_mode_t  app_get_kb_mode(void)
     return fun_mode;
     #endif
 }
+void save_dev_info(void);
+_attribute_ram_code_ void kb_led_out(uint8_t status);
+_attribute_ram_code_ void reset_idle_status(void);
+_attribute_ram_code_ void idle_status_poll(void);
+_attribute_ram_code_ void adv_count_poll(void);
+
+
+
 
 #ifdef __cplusplus
 }

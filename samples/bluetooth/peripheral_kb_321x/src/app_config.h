@@ -44,6 +44,17 @@ extern "C" {
 #define USE_K_TIMER_LOOP                    1
 #define USER_K_TIMER_SCAN_LOOP_INTERVAL_MS  50      //50ms
 
+#define D24G_PAIR_TIMER_OUT 			350 //unit 1us
+#define D24G_COMMUNICATION_TIMER_OUT	350//240 //unit 1us
+
+#define RF_2P4G_POWER_NORMAL                RF_POWER_INDEX_P5p93dBm
+#define RF_2P4G_POWER_PAIR                  RF_POWER_INDEX_P0p08dBm
+/////////////////// DEEP SAVE FLG //////////////////////////////////
+#define USED_DEEP_ANA_REG                           PM_ANA_REG_POWER_ON_CLR_BUF1 //u8,can save 8 bit info when deep
+#define LOW_BATT_FLG                                BIT(0) //if 1: low battery
+#define CONN_DEEP_FLG                               BIT(1) //if 1: conn deep, 0: adv deep
+#define USED_PAIR_ANA_REG                           PM_ANA_REG_POWER_ON_CLR_BUF2
+
 #ifdef __cplusplus
 }
 #endif
