@@ -177,7 +177,7 @@ static void bt_ready(int err)
 	}
 
 	ble_status = IDLE_BLE_STATUS;
-	#if 0
+	#if 1
 	adv_param.id = ble_app_pip_info.mast_id;
 	printk("Bluetooth initialized id %d\n", adv_param.id);
 
@@ -362,9 +362,36 @@ void ble_init(void)
 	#endif
 }
 
+/* 定义回调函数 */
+static void bond_info_cb(const struct bt_bond_info *info, void *user_data)
+{
+    char addr_str[BT_ADDR_LE_STR_LEN];
+
+    /* 将蓝牙地址转换为可读字符串 */
+    bt_addr_le_to_str(&info->addr, addr_str, sizeof(addr_str));
+
+    /* 打印绑定的设备地址 */
+    printk("bond addr: %s\n", addr_str);
+}
+
+
 void ble_start_adv(void)
 {
 	int err;
+#if 0
+	bt_addr_le_t bond_addr;
+	bt_addr_le_t copy_laste_bonded_addr;
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_copy(&bond_addr, BT_ADDR_LE_NONE);
+	bt_foreach_bond(adv_param.id, bond_info_cb, NULL);
+	
+	bt_addr_le_to_str(&bond_addr, addr, sizeof(addr));
+
+	printk("bond_addr address: %s\n", addr);
+	bt_addr_le_to_str(&copy_laste_bonded_addr, addr, sizeof(addr));
+	printk(" copy_laste_bonded_addr address: %s\n", addr);
+#endif
 
 	err = bt_le_adv_start(&adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 	if (err) {
