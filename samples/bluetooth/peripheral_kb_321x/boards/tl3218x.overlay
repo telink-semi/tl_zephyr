@@ -202,7 +202,7 @@
 		/*BLE SMP storage partition*/
 		storage_partition: partition@CA000 {
 			label = "storage";
-			reg = <0xCA000 0x0000a000>;
+			reg = <0xCA000 0x00002000>;
 		};
 
 		/* region <0xfe000 0x2000> is used for Telink TLx RF parameters */
