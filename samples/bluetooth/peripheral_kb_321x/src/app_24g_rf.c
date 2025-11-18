@@ -220,6 +220,7 @@ void rf_fast_settle_setup(rf_tx_fast_settle_time_e tx_settle_us, rf_rx_fast_sett
 #endif
 }
 
+
 /**
  * @brief       This function set to init rf drv private 2m
  * @return      

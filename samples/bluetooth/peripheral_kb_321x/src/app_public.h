@@ -54,6 +54,7 @@ extern uint32_t loop_cnt;
 extern uint32_t idle_count;
 extern uint32_t adv_begin_tick;
 extern uint32_t adv_count;
+extern uint8_t mac_public[6];
 
 #define   LED_IS_ON  0
 #define   LED_IS_OFF 1
@@ -186,8 +187,8 @@ _attribute_ram_code_ void kb_led_out(uint8_t status);
 _attribute_ram_code_ void reset_idle_status(void);
 _attribute_ram_code_ void idle_status_poll(void);
 _attribute_ram_code_ void adv_count_poll(void);
-
-
+extern _attribute_ram_code_ void rf_irq_handler(const void *param);
+extern _attribute_ram_code_ void stimer_irq_handler(const void *param);
 
 
 #ifdef __cplusplus
