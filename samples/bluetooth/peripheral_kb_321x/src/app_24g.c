@@ -33,24 +33,17 @@ volatile unsigned int rf_state;
 int device_ack_received;
 uint8_t device_channel;
 
-uint8_t pub_key[16]={0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10};
+uint8_t device_status = 0;
+uint32_t dongle_id;
+volatile uint16_t no_ack = 0;
+uint8_t keyboard_send_need_f = 0;
+uint8_t need_suspend_flag = 0;
 
-uint8_t device_status = 0;//device status init0
-uint32_t dongle_id;//did
-volatile uint16_t no_ack = 0;//no ack init 0
-uint8_t keyboard_send_need_f = 0;//init send kb f 0
-uint8_t need_suspend_flag = 0; //need suspend flag init 0
-
-uint8_t private_key[16] =
-{
-    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10
-};
-
-uint32_t tick_loop=0;//tick loop init 0
-uint32_t wakeup_next_tick=0;//next wake up tick init 0
-uint8_t count=0;//count 0
-uint8_t pair_success_flag=0;//pair success init 0
-uint8_t dongle_id_need_save_flag = 0; //0:no need save, 1:need save to flash
+uint32_t tick_loop=0;
+uint32_t wakeup_next_tick=0;
+uint8_t count=0;
+uint8_t pair_success_flag=0;
+uint8_t dongle_id_need_save_flag = 0;
 
 
 uint8_t keyboard_buf[BUF_SIZE_KEYBOARD] = {0};
@@ -148,11 +141,11 @@ _attribute_ram_code_sec_ uint8_t  rf_rx_process(rf_packet_t *p_rf_data)
         	dongle_id = pair_ack_dat_ptr->gid;//dongle id update
         	pair_success_flag = 1;//pair success flag set 1
 			if (pair_ack_dat_ptr->cmd == PAIR_ACK_CMD)
-			{ //Dongle ACK the pairing command
+			{
 				dongle_id_need_save_flag = 1; //save dongle_id
 			}
 			else
-			{ //Dongle ACK the reconnect command
+			{
 				dongle_id_need_save_flag = 0; //not save dongle_id
 			}
 			printk("pairing success--------- %x\n", pair_ack_dat_ptr->gid);//debug gid
@@ -214,8 +207,7 @@ void d24_user_init()
 
     printk("d24_user_init\n");//debug 24g user init
 
-    // TODO:get mac address from flash
-    flash_read_page(flash_sector_mac_address, 4, (uint8_t *)&dev_mac);
+    memcpy((uint8_t *)&dev_mac, mac_public, 4);
 
     uint32_t device_id = ((dev_mac<<8)|DEVICE_TYPE_INDEX);//did set
 
@@ -226,17 +218,14 @@ void d24_user_init()
     p_km_data->cmd = KB_CMD;
     
 	printk("device_id %x\n", device_id);
-    dongle_id = flash_dev_info.dongle_id; //dongleid
+    dongle_id = flash_dev_info.dongle_id;
 	printk("dongle_id %x\n", flash_dev_info.dongle_id);
 
-    memcpy((uint8_t*)&private_key[0], (uint8_t*)&device_id ,4);
+    if ((dongle_id == U32_MAX) || (dongle_id == 0)) {
+        set_pair_flag();
+    }
 
-#if  ENTER_PAIR_WHEN_NEVER_PAIRED_ENABLE //pair flag
-    if ((dongle_id == uint32_t_MAX) || (dongle_id == 0))
-        set_pair_flag(); //set pair
-#endif
-
-    if (pair_flag) // pair flag 1
+    if (pair_flag)
 	{
         device_status = STATE_PAIRING; //device into pair status
 		rf_rx_timeout_us = D24G_PAIR_TIMER_OUT; //pair time out
@@ -311,7 +300,6 @@ _attribute_ram_code_sec_ void check_rf_complet_status()
 		if(no_ack > 125)//no ack>125
 		{
 			connect_ok = 0;//no conn
-			printk("no_ack over 125\n");
 		}
 	}
 }
@@ -365,11 +353,6 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
 
                     p_km_data->pn_no = 1; //pn_no update 1
                     p_km_data->seq_no++;//seq_no ++
-
-				#if (AES_METHOD == 1)//aes 1
-				    memcpy((uint8_t *)&p_km_data_enc->cmd, (uint8_t *)&p_km_data->cmd, sizeof(km_3_c_1_data_t));
-				    aes_encrypt(private_key, &p_km_data->pn_no, &p_km_data_enc->pn_no);
-				#endif
 				}
 			}
 		}
@@ -378,7 +361,6 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
 		{
 			rf_state = RF_TX_START_STATUS;//rf state to TX status
 			device_ack_received = 0;
-
             app_rf_set_timeout(rf_rx_timeout_us);
             app_rf_set_chn(rf_chn[device_channel]);
             //tlkapi_send_string_data(APP_LOG_EN, "t:", ptr, 20);
@@ -391,6 +373,7 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
 	{
         irq_device_rx();//deal rx receive packet
         check_rf_complet_status();//check rf complet 
+        printk("r");
 	}
 	else if (rf_state==RF_RX_TIMEOUT_STATUS)//rf status is timeout status
 	{
@@ -412,7 +395,7 @@ _attribute_ram_code_sec_ void ui_loop_24g()
 	idle_status_poll();//poll idle status parameters
 	
 	//device_led_process();
-	
+
     if((connect_ok==0))//no connect
 	{
 		adv_count_poll();//adv parameter poll
@@ -526,7 +509,7 @@ _attribute_ram_code_sec_ void d24_main_loop()
 
 	d24g_rf_loop();
 
-	if(need_suspend_flag) {
+    if(need_suspend_flag) {
 		ui_loop_24g();
 		tick_loop = clock_time()|1;
 	} else if(clock_time_exceed(tick_loop, SCAN_INTERVAL_TIME*1000)) {

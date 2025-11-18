@@ -40,7 +40,8 @@ unsigned char  mode_pin_level = 0;
 
 extern struct bt_conn *connected_handle;
 volatile uint32_t user_active_disconnect = 0;
-
+uint8_t mac_public[6];
+uint8_t mac_random_static[6];
 ST_FLASH_DEV_INFO flash_dev_info  __attribute__ ((aligned (4)));
 
 uint32_t loop_cnt;
@@ -200,7 +201,7 @@ void user_timer_init(void)
 {
      /* Timer0 configuration */
     timer_set_init_tick(TIMER0, 0);
-    timer_set_cap_tick(TIMER0, 1000 * sys_clk.pclk * 1);	//125uS
+    timer_set_cap_tick(TIMER0, 500 * sys_clk.pclk * 1);	//125uS
     timer_set_mode(TIMER0, TIMER_MODE_SYSCLK);
     timer_set_irq_mask(FLD_TMR0_MODE_IRQ);
     IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER0, 2, timer0_isr, 0, 0);
@@ -585,6 +586,12 @@ static int peripheral_comm_init(void)
 {
     int ret;
 
+    random_generator_init();
+    //TODO:
+    printk("flash_sector_mac_address %x\n", flash_sector_mac_address);
+    blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
+    LOG_HEXDUMP_INF(mac_public, 6, "mac_addr");
+
     /* 初始化NVS文件系统 */
     user_fs.flash_device = NVS_PARTITION_DEVICE;
     user_fs.offset = NVS_PARTITION_OFFSET;
@@ -706,14 +713,32 @@ static int peripheral_comm_init(void)
     check_mode();
 
     last_fun_mode = fun_mode;
+}
 
-    uint8_t mac_public[6];
-    uint8_t mac_random_static[6];
-    random_generator_init();
-    //TODO:
-    printk("flash_sector_mac_address %x\n", flash_sector_mac_address);
-    blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
-    LOG_HEXDUMP_INF(mac_public, 6, "mac_addr");
+/**
+ * @brief    BLE Controller IRQs initialization
+ */
+static void tlx_bt_irq_init()
+{
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	plic_preempt_feature_dis();
+	flash_plic_preempt_config(0,1);
+#endif
+
+    if (fun_mode == KB_MODE_BLE) {
+        /* Init STimer IRQ */
+        IRQ_CONNECT(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, stimer_irq_handler, 0, 0);
+        plic_set_priority(IRQ_SYSTIMER, 2);
+    }
+
+	/* Init RF IRQ */
+#if CONFIG_DYNAMIC_INTERRUPTS
+	irq_connect_dynamic(IRQ_ZB_RT + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, rf_irq_handler, 0, 0);
+#else
+	IRQ_CONNECT(IRQ_ZB_RT + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, rf_irq_handler, 0, 0);
+#endif
+
+	plic_set_priority(IRQ_ZB_RT, 2);
 }
 
 int keyboard_comm_init(void)
@@ -721,6 +746,7 @@ int keyboard_comm_init(void)
     peripheral_comm_init();
 
     fun_mode = KB_MODE_2P4G;
+    tlx_bt_irq_init();
 
     if (fun_mode == KB_MODE_2P4G)
     {
@@ -807,6 +833,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
             printk("ble_status %d \n", ble_status);
             printk("mast_id %d \n", flash_dev_info.mast_id);
             printk("usb_connected_ok %d \n", usb_connected_ok);
+            printk("rf_state %d \n", rf_state);
         }
 
         if (BIT_IS_SET(user_active_disconnect, BLE_SWITCH_PIPE)) { 
@@ -880,7 +907,6 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
         #endif
     }
 }
-
 
 
 /**
