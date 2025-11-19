@@ -22,8 +22,6 @@
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/reboot.h>
 
-
-#include "timer.c"
 #include "app_public.h"
 #include <zephyr/bluetooth/conn.h>
 #include "drivers.h"
@@ -51,15 +49,15 @@ uint32_t adv_begin_tick;
 uint32_t adv_count = 0;
 
 #if TOGGLE_DEBUG_IO_ENABLE
-struct gpio_dt_spec toggle_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle-sws), gpios, {0});
+struct gpio_dt_spec toggle_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(toggle0), gpios, {0});
 #endif
 
 struct gpio_dt_spec vbus_check_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(vbuscheck0), gpios, {0});
 struct gpio_dt_spec mode_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(modeswitch), gpios, {0});
-struct gpio_dt_spec mos_ctl_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(mos-ctrl), gpios, {0});
-struct gpio_dt_spec led_24g_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-24g), gpios, {0});
-struct gpio_dt_spec led_ble_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-ble), gpios, {0});
-struct gpio_dt_spec led_bat_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-bat), gpios, {0});
+struct gpio_dt_spec mos_ctl_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(mosctrl), gpios, {0});
+struct gpio_dt_spec led_24g_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led24g), gpios, {0});
+struct gpio_dt_spec led_ble_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(ledble), gpios, {0});
+struct gpio_dt_spec led_bat_pin = GPIO_DT_SPEC_GET_OR(DT_ALIAS(ledbat), gpios, {0});
 
 
 /* 定义NVS使用的Flash存储分区 */
@@ -186,33 +184,6 @@ pl_fifo_t tx_fifo={
 app_kb_data_t app_key_buf;
 app_kb_data_t key_buf_24g;
 unsigned char fn_flag = 0;
-
-
-/* Timer0 interrupt handler */
-_attribute_ram_code_sec_ void timer0_isr(void)
-{
-    if (timer_get_irq_status(FLD_TMR0_MODE_IRQ)){
-		timer_clr_irq_status(FLD_TMR0_MODE_IRQ); //Clear IRQ status
-
-        keyscan_loop();
-	}
-}
-
-void user_timer_init(void)
-{
-     /* Timer0 configuration */
-    timer_set_init_tick(TIMER0, 0);
-    timer_set_cap_tick(TIMER0, 125 * sys_clk.pclk * 1);	//125uS
-    timer_set_mode(TIMER0, TIMER_MODE_SYSCLK);
-    timer_set_irq_mask(FLD_TMR0_MODE_IRQ);
-    IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER0, 2, timer0_isr, 0, 0);
-    riscv_plic_set_priority(IRQ_TIMER0, 3);
-    riscv_plic_irq_enable(IRQ_TIMER0);
-
-     /* Start timers */
-	timer_start(TIMER0);
-}
-
 
 
 _attribute_ram_code_sec_ void key_fifo(unsigned char key_code)
@@ -673,6 +644,7 @@ static int peripheral_comm_init(void)
     }
     LOG_INF("configure mos_ctl_pin io ok\n");
 
+#if 0 //UART TX/RX
     if (!gpio_is_ready_dt(&led_24g_pin)) {
         LOG_INF("led_24g_pin io is not ready\n");
          return -ENODEV;
@@ -683,11 +655,7 @@ static int peripheral_comm_init(void)
     }
     LOG_INF("configure led_24g_pin io ok\n");
 
-    ret = gpio_pin_configure_dt(&mos_ctl_pin, GPIO_OUTPUT);
-    if (ret != 0) {
-        LOG_INF("Error: failed to configure mos_ctl_pin io \n");
-    }
-    LOG_INF("configure mos_ctl_pin io ok\n");
+#endif
 
     if (!gpio_is_ready_dt(&led_ble_pin)) {
         LOG_INF("led_ble_pin io is not ready\n");
@@ -698,6 +666,7 @@ static int peripheral_comm_init(void)
         LOG_INF("Error: failed to configure led_ble_pin io \n");
     }
     LOG_INF("configure led_ble_pin io ok\n");
+
 
     if (!gpio_is_ready_dt(&led_bat_pin)) {
         LOG_INF("led_bat_pin io is not ready\n");
@@ -792,9 +761,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
         app_usb_main_loop();
     }
 #endif
-#if ALG_KEYSCAN_APP_FUN_ENABLE
-    key_scan();
-#endif
+
 #if  DIGIT_KEYSCAN_FUN_ENABL
      #if TOGGLE_DEBUG_IO_ENABLE
      gpio_pin_set_dt(&toggle_pin, 1);
@@ -808,7 +775,6 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
      gpio_pin_set_dt(&toggle_pin, 0);
      #endif
 #endif
-
     if(app_get_kb_mode() == KB_MODE_2P4G) {
          d24_main_loop();
     }

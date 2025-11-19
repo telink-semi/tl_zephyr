@@ -33,15 +33,15 @@
 		/delete-property/ pwm-led0;
 		/delete-property/ pwm0;
 
-		toggle-sws = &toggle_sws_pin;
+		toggle0 = &toggle_sws_pin;
 
 		vbuscheck0 = &vbus_pin;
 		modeswitch = &mode_pin;
-		mos-ctrl = &mos_ctrl_pin;
+		mosctrl = &mos_ctrl_pin;
 
-		led-24g = &p24g_led;
-		led-ble = &ble_led;
-		led-bat = &bat_led;
+		led24g = &p24g_led;
+		ledble = &ble_led;
+		ledbat = &bat_led;
 
 	};
 

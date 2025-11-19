@@ -375,6 +375,7 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
             //tlkapi_send_string_data(APP_LOG_EN, "t:", ptr, 20);
             rf_start_stx2rx(ptr, rf_stimer_get_tick());
             reg_rf_irq_status = 0xffff;//irq status reset to ffff
+			printk("t");
 		}
 
 	}
