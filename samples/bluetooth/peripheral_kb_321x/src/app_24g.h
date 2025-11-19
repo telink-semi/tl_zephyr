@@ -17,9 +17,7 @@ extern uint8_t device_channel;
 extern volatile unsigned int rf_state;
 extern uint8_t d24g_ota_status;
 extern uint8_t deep_flag;
-
-#define BUF_SIZE_KEYBOARD	8
-extern uint8_t keyboard_buf[BUF_SIZE_KEYBOARD];
+extern uint8_t has_new_key_event;
 
 #define MAX_BTN_CNT 6
 typedef struct

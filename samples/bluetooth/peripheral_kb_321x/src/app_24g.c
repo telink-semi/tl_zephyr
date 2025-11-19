@@ -45,33 +45,30 @@ uint8_t count=0;
 uint8_t pair_success_flag=0;
 uint8_t dongle_id_need_save_flag = 0;
 
-
-uint8_t keyboard_buf[BUF_SIZE_KEYBOARD] = {0};
-uint8_t keyboard_buf_last[BUF_SIZE_KEYBOARD];
 uint8_t has_new_report;
 uint8_t active_disconnect_reason = 0;
-
-keyboard_data_t key_buf;
 
 uint8_t kb_led_status;
 uint8_t connect_ok = 0;
 
 volatile unsigned int rf_rx_timeout_us;//rx timeout 
 volatile uint32_t start_rf_tick = 0; //start rf tick
+uint8_t has_new_key_event = 0;
 
-#define  PAIR_RF_LEN   19
-#define  KM_RF_LEN     13
+
+#define  PAIR_RF_LEN   20
+#define  KM_RF_LEN     16
 volatile rf_packet_t rf_pair_buf =
 {
     rf_tx_packet_dma_len(PAIR_RF_LEN + 1),	// dma_len
-    19,	// rf_len
+    PAIR_RF_LEN,	// rf_len
 };
 pair_data_t *p_pair_dat=(pair_data_t*)&rf_pair_buf.dat[0];//point to pair packet
 
 volatile rf_packet_t rf_km_buf =
 {
     rf_tx_packet_dma_len(KM_RF_LEN + 1),	// dma_len
-    13, // rf_len
+    KM_RF_LEN, // rf_len
  };
 
 km_data_t *p_km_data = (km_data_t*)&rf_km_buf.dat[0];//point to km data packet
@@ -282,8 +279,10 @@ _attribute_ram_code_sec_ void check_rf_complet_status()
 		} 
         else if(device_status == STATE_NORMAL)//normal status
 		{
-			if (keyboard_send_need_f)	// skip to next packet
-				pp_fifo_pop(&tx_fifo);//rprt ++
+			if (keyboard_send_need_f){
+				pp_fifo_pop(&tx_fifo);
+			}
+
             connect_ok=1;//update connect ok
 		}
 
@@ -342,17 +341,27 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
                 uint8_t *p =  pp_fifo_get_ptr(&tx_fifo);//get data
 				if (p)//if have data
 				{
+					//kb data is 8 byte
 					start_rf_tick = clock_time()|1;//update rf tick
 				    keyboard_send_need_f = 2;
-                    uint8_t *tmp = (uint8_t *)&p[0]; //tmp data
+
+#if 0
+                    uint8_t *tmp = (uint8_t *)&p[2]; //tmp data
                     km_data_t *km_dat1; //km data
-
                     uint8_t *src = (uint8_t *)&p_km_data->cmd; //pointer to p_km_data
-                     km_dat1 = (km_data_t*)&src[0];//kmdat1 pointer p_kmdata too
-				    memcpy(&km_dat1->km_dat[0], &tmp[0], 6);//cpy fifo km data to km packet 
-
-                    p_km_data->pn_no = 1; //pn_no update 1
-                    p_km_data->seq_no++;//seq_no ++
+                    km_dat1 = (km_data_t*)&src[0];//kmdat1 pointer p_kmdata too
+				    memcpy(&km_dat1->km_dat[0], &tmp[0], 6);//cpy fifo km data to km packet
+#else
+                    uint8_t *src = (uint8_t *)&p_km_data->cmd;
+					km_data_t *km_dat = (km_data_t*)&src[0];
+					km_dat->key_type = p[1];
+				    memcpy(&km_dat->km_dat[0], &p[2], 8);
+					// printk("%x, %x, %x, %x, %x, %x, %x, %x, %x\n", \
+					// 	km_dat->key_type, km_dat->km_dat[0], km_dat->km_dat[1], km_dat->km_dat[2], \
+					// 	km_dat->km_dat[3], km_dat->km_dat[4], km_dat->km_dat[5], km_dat->km_dat[6], km_dat->km_dat[7]);
+#endif
+                    p_km_data->pn_no = 1;
+                    p_km_data->seq_no++;
 				}
 			}
 		}
@@ -373,7 +382,6 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
 	{
         irq_device_rx();//deal rx receive packet
         check_rf_complet_status();//check rf complet 
-        printk("r");
 	}
 	else if (rf_state==RF_RX_TIMEOUT_STATUS)//rf status is timeout status
 	{
@@ -389,11 +397,8 @@ _attribute_ram_code_sec_ void d24g_rf_loop()//rf state machine loop
  */
 _attribute_ram_code_sec_ void ui_loop_24g()
 {
-
-    uint8_t has_new_key_event = 0;
-
 	idle_status_poll();//poll idle status parameters
-	
+
 	//device_led_process();
 
     if((connect_ok==0))//no connect
@@ -401,16 +406,17 @@ _attribute_ram_code_sec_ void ui_loop_24g()
 		adv_count_poll();//adv parameter poll
 	}
 
- 	 if (device_status == STATE_NORMAL) {//state normal
-		if (has_new_key_event) //if has new keyboard action
-		{
-			has_new_key_event = 0;//reset has new mouse action flag 0
-			reset_idle_status();//reset idle parameters
-            pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, (unsigned char *)&keyboard_buf, 6);
-		} else if((idle_count < 3) || key_buf.press_cnt) {
-       		uint8_t *p = pp_fifo_get_ptr(&tx_fifo);
-			if (p == 0)
-				pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, keyboard_buf, 6);
+ 	if (device_status == STATE_NORMAL) {
+		if (has_new_key_event) {
+			has_new_key_event = 0;
+			reset_idle_status();
+		} else {
+			if((idle_count < 3) || key_buf_24g.cnt || 1) {
+				uint8_t *p = pp_fifo_get_ptr(&tx_fifo);
+				if (p == 0) {
+					pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, &key_buf_24g.nk[0], 8);
+				}
+			}
 		}
 	}
 }

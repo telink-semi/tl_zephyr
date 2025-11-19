@@ -22,6 +22,7 @@
 
 extern int device_ack_received;
 extern const unsigned char rf_chn[];
+extern uint8_t device_status;
 
 
 typedef enum 
@@ -70,6 +71,7 @@ typedef struct
 	uint8_t cmd;//data type
 	uint8_t seq_no;
 	uint8_t pno_no;
+	uint8_t resv;
 	uint32_t did;//device id
 	uint8_t key[12]; //key
 } pair_data_t;//pair data struct
@@ -79,7 +81,7 @@ typedef struct
 	uint8_t cmd;//data type
 	uint8_t seq_no;
 	uint8_t pno_no;
-	
+	uint8_t resv;
 	uint8_t tick_0;
 	uint8_t tick_1;
 	uint8_t chn;
@@ -97,11 +99,9 @@ typedef struct
 	uint8_t	cmd;//bit7=0: no aes  =1: aes
 	uint8_t	seq_no;	//The frame serial number
 	uint8_t	pn_no; 	//
-
+	uint8_t key_type;
 	uint32_t did;	//Device ID
-
-	uint8_t  km_dat[6];//mouse data or kb
-	uint8_t  rsv1[3]; //for aes  16 bytes
+	uint8_t  km_dat[8];//mouse data or kb
 
 	uint16_t crc16;	//Software CRC16 
 
@@ -113,12 +113,11 @@ typedef struct
 	uint8_t cmd;//data type
 	uint8_t seq_no;	//The frame serial number
 	uint8_t pno_no;
-	
 	uint8_t tick_0;
 	uint8_t tick_1;
 	uint8_t chn;//chanel
 	uint8_t host_led_status;//host led status
-	
+	uint8_t resv;
 } km_ack_data_t;//km ack data struct
 
 
