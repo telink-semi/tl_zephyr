@@ -26,6 +26,7 @@
 
 //#include "keyscan.h"
 //#include "keyscan.c"
+#include "timer.c"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 #include <zephyr/logging/log.h>
@@ -252,7 +253,7 @@ _attribute_ram_code_sec_noinline_ unsigned int digit_key_soft_scan(void)
     for(int i = 0; i < ROW_CNT; i++)
     {
         gpio_pin_set_dt(&key_matrix.row[i], 0);
-        k_busy_wait(10);//96M 5us 192M 1.2us
+        k_busy_wait(2);
         scan_result = get_scan_gpio_value();
 
         gpio_pin_set_dt(&key_matrix.row[i], 1);
@@ -322,4 +323,34 @@ int matrix_keypad_init(void)
 }
 
 
+
+
+/* Timer0 interrupt handler */
+_attribute_ram_code_sec_ void timer0_isr(void)
+{
+    if (timer_get_irq_status(FLD_TMR0_MODE_IRQ)){
+		timer_clr_irq_status(FLD_TMR0_MODE_IRQ); //Clear IRQ status
+
+        #if (USE_K_TIMER_SCAN_MATRIX)
+        keyscan_loop(NULL);
+        #else
+        keyscan_loop();
+        #endif
+	}
+}
+
+void user_timer_init(void)
+{
+     /* Timer0 configuration */
+    timer_set_init_tick(TIMER0, 0);
+    timer_set_cap_tick(TIMER0, 1000 * 10 * sys_clk.pclk * 1);	//10MS
+    timer_set_mode(TIMER0, TIMER_MODE_SYSCLK);
+    timer_set_irq_mask(FLD_TMR0_MODE_IRQ);
+    IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER0, 2, timer0_isr, 0, 0);
+    riscv_plic_set_priority(IRQ_TIMER0, 2);
+    riscv_plic_irq_enable(IRQ_TIMER0);
+
+     /* Start timers */
+	timer_start(TIMER0);
+}
 #endif
