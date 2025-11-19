@@ -151,6 +151,8 @@ typedef struct{
 }app_kb_data_t;
 
 extern app_kb_data_t app_key_buf;
+extern app_kb_data_t key_buf_24g;
+
 extern unsigned char    fn_flag;
 extern struct gpio_dt_spec toggle_pin;
 

@@ -184,6 +184,7 @@ pl_fifo_t tx_fifo={
  };
 
 app_kb_data_t app_key_buf;
+app_kb_data_t key_buf_24g;
 unsigned char fn_flag = 0;
 
 
@@ -201,7 +202,7 @@ void user_timer_init(void)
 {
      /* Timer0 configuration */
     timer_set_init_tick(TIMER0, 0);
-    timer_set_cap_tick(TIMER0, 500 * sys_clk.pclk * 1);	//125uS
+    timer_set_cap_tick(TIMER0, 125 * sys_clk.pclk * 1);	//125uS
     timer_set_mode(TIMER0, TIMER_MODE_SYSCLK);
     timer_set_irq_mask(FLD_TMR0_MODE_IRQ);
     IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER0, 2, timer0_isr, 0, 0);
@@ -511,6 +512,10 @@ _attribute_ram_code_sec_noinline_ void key_data_handle(void)
             memcpy(nk_last,app_key_buf.nk,8);
             //unsigned int r = core_interrupt_disable();
             pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], 8);
+            has_new_key_event = 1;
+            memcpy(&key_buf_24g.nk[0], &app_key_buf.nk[0], sizeof(app_kb_data_t));
+            //LOG_HEXDUMP_INF(&app_key_buf.nk[0], 8, "nk");
+            //printk("app_key_buf.cnt %d\n", app_key_buf.cnt);
             //core_restore_interrupt(r);
             break;  
         }
@@ -834,6 +839,7 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
             printk("mast_id %d \n", flash_dev_info.mast_id);
             printk("usb_connected_ok %d \n", usb_connected_ok);
             printk("rf_state %d \n", rf_state);
+            printk("device_status %d\n", device_status);
         }
 
         if (BIT_IS_SET(user_active_disconnect, BLE_SWITCH_PIPE)) { 
