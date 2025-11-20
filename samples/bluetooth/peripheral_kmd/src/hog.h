@@ -1,16 +1,17 @@
-/** @file
- *  @brief HoG Service sample
+/** @file hog.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "stack/ble/service/hids.h"
 
 #define HIDS_MOUSE_INPUT_REPORT_ID              0x01
 #define HIDS_KEYBOARD_INPUT_REPORT_ID           0x02
@@ -39,15 +40,6 @@ struct hids_ccc {
 
 /* HID Spec Version: 1.11 */
 #define HID_VERSION                   0x0111
-
-/* HID Report Types */
-#define HID_REPORT_TYPE_INPUT         0x01
-#define HID_REPORT_TYPE_OUTPUT        0x02
-#define HID_REPORT_TYPE_FEATURE       0x03
-
-/* HID Protocol Mode Types */
-#define HID_PROTOCOL_MODE_BOOT        0x00
-#define HID_PROTOCOL_MODE_REPORT      0x01
 
 /* HID Control Point Values */
 #define HID_CONTROL_POINT_SUSPEND     0x00
@@ -121,10 +113,15 @@ void hog_init(void);
 void hog_button_loop(void);
 
 void hid_set_ccc_table_value(uint16_t handle, uint8_t value);
+
 uint8_t hid_get_ccc_table_value(uint16_t handle);
+
 int ble_nortify_all_key_data(const void *data, uint16_t len);
+
 int ble_nortify_keyboard_data(const void *data, uint16_t len);
+
 int ble_nortify_consumer_data(const void *data, uint16_t len);
+
 #ifdef __cplusplus
 }
 #endif

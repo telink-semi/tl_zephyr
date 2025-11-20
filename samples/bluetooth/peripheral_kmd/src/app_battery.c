@@ -1,7 +1,9 @@
-/* app_battery.c - Application main entry point */
+/** @file app_battery.c
+ *  @brief
+ */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -58,47 +60,45 @@ void app_battery_check_init(void)
 	/* Configure channels individually prior to sampling. */
 	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
 		if (!device_is_ready(adc_channels[i].dev)) {
-			tlkapi_printk(TLK_LOG_EN, "ADC controller device %s not ready\n", adc_channels[i].dev->name);
+			LOG_INF("ADC controller device %s not ready\n", adc_channels[i].dev->name);
 			return 0;
 		}
 
 		err = adc_channel_setup_dt(&adc_channels[i]);
 		if (err < 0) {
-			tlkapi_printk(TLK_LOG_EN, "Could not setup channel #%d (%d)\n", i, err);
+			LOG_INF("Could not setup channel #%d (%d)\n", i, err);
 			return 0;
 		}
 	}
 
-    tlkapi_printk(TLK_LOG_EN, "ADC battery check init\n");
+    LOG_INF("ADC battery check init\n");
 }
 
 _attribute_ram_code_sec_ void app_battery_power_check(uint16_t alarm_vol_mv)
 {
     int err;
 
-    tlkapi_printk(TLK_LOG_EN, "ADC reading:\n");
+    LOG_INF("ADC reading:\n");
     int32_t val_mv;
 
     (void)adc_sequence_init_dt(&adc_channels[0], &sequence);
 
     err = adc_read(adc_channels[0].dev, &sequence);
     if (err < 0) {
-        tlkapi_printk(TLK_LOG_EN, "Could not read (%d)\n", err);
+        LOG_INF("Could not read (%d)\n", err);
     }
 
     val_mv = (int32_t)buf;
 
-    tlkapi_printk(TLK_LOG_EN, "%"PRId32, val_mv);
+    LOG_INF("%"PRId32, val_mv);
     err = adc_raw_to_millivolts_dt(&adc_channels[0],
                         &val_mv);
     /* conversion to mV may not be supported, skip if not */
     if (err < 0) {
-        tlkapi_printk(TLK_LOG_EN, " (value in mV not available)\n");
+        LOG_INF(" (value in mV not available)\n");
     } else {
-        tlkapi_printk(TLK_LOG_EN, " = %"PRId32" mV\n", val_mv);
+        LOG_INF(" = %"PRId32" mV\n", val_mv);
     }
 }
-
-
 
 #endif

@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file hog.c
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -23,6 +23,10 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
 
+#define LOG_LEVEL LOG_LEVEL_DBG
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(hog);
+
 #include "app_public.h"
 
 enum {
@@ -31,22 +35,6 @@ enum {
 };
 
 static uint8_t ctrl_point;
-
-/*! HID Report Type/ID and attribute handle map */
-static const struct hid_report_id_map_t hid_app_report_id_set[] = {
-	/* type                       ID                            handle */
-	{HID_REPORT_TYPE_INPUT,       HIDS_MOUSE_INPUT_REPORT_ID,    HID_INPUT_REPORT_1_HDL},  /* Mouse Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_KEYBOARD_INPUT_REPORT_ID, HID_INPUT_REPORT_2_HDL},     /* Keyboard Input Report */
-	{HID_REPORT_TYPE_OUTPUT,      HIDS_KEYBOARD_INPUT_REPORT_ID, HID_OUTPUT_REPORT_HDL},      /* Keyboard Output Report */
-	{HID_REPORT_TYPE_FEATURE,     HIDS_KEYBOARD_INPUT_REPORT_ID, HID_FEATURE_REPORT_HDL},     /* Keyboard Feature Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_CONSUMER_INPUT_REPORT_ID, HID_INPUT_REPORT_3_HDL},     /* consumer Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_SYSTEM_INPUT_REPORT_ID ,  HID_INPUT_REPORT_4_HDL},     /* system Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_ALL_KEY_INPUT_REPORT_ID , HID_INPUT_REPORT_5_HDL},    /* kb all key Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_VENDOR_INPUT_REPORT_ID ,  HID_INPUT_REPORT_6_HDL},    /* kb all key Input Report */
-	{HID_REPORT_TYPE_INPUT,       HID_KEYBOARD_BOOT_ID,          HID_KEYBOARD_BOOT_IN_HDL},   /* Boot Keyboard Input Report */
-	{HID_REPORT_TYPE_OUTPUT,      HID_KEYBOARD_BOOT_ID,          HID_KEYBOARD_BOOT_OUT_HDL},  /* Boot Keyboard Output Report */
-	{HID_REPORT_TYPE_INPUT,       HID_MOUSE_BOOT_ID,             HID_MOUSE_BOOT_IN_HDL},      /* Boot Mouse Input Report */
-};
 
 static uint8_t hid_report_map[] = {
  //keyboard report in
@@ -325,11 +313,10 @@ static ssize_t read_report_value(struct bt_conn *conn,
 			   const struct bt_gatt_attr *attr, void *buf,
 			   uint16_t len, uint16_t offset)
 {
-	struct hid_report_id_map_t *p_id_map;
-
 	if (offset > HID_MAX_REPORT_LEN)
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	#if 0
+	struct hid_report_id_map_t *p_id_map;
 	/* notify the application */
 	if (hid_cb.p_config->input_cback != NULL) {
 		p_id_map = hid_get_report_id_map(bt_attr_get_id(attr));
@@ -346,15 +333,15 @@ static ssize_t write_report_value(struct bt_conn *conn,
 				const void *buf, uint16_t len, uint16_t offset,
 				uint8_t flags)
 {
-	struct hid_report_id_map_t *p_id_map;
 
-	printk("write_report_value: len %d\r\n", len);
-	printk("write_report_value: buf[0] %x\r\n");
+	LOG_INF("write_report_value: len %d\r\n", len);
+	// LOG_INF("write_report_value: buf[0] %x\r\n");
 
 	if (offset + len > HID_MAX_REPORT_LEN)
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 
 	#if 0
+	struct hid_report_id_map_t *p_id_map;
 	/* notify the application */
 	if (hid_cb.p_config->output_cback != NULL) {
 		p_id_map = hid_get_report_id_map(bt_attr_get_id(attr));
@@ -370,7 +357,7 @@ static void hid_ccc_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
 	hid_set_ccc_table_value(bt_attr_get_id(attr), value);
     connect_complete = 1;
-	printk("handle: %d, ccc_value : %d", bt_attr_get_id(attr), value);
+	LOG_INF("handle: %d, ccc_value : %d", bt_attr_get_id(attr), value);
 }
 
 static ssize_t read_protocol_mode(struct bt_conn *conn,
@@ -524,15 +511,15 @@ static uint8_t bt_attr_get_id(const struct bt_gatt_attr *attr)
 }
 
 struct hids_ccc hids_ccc_table[] = {
-	/* handle                           value*/
-{HID_KEYBOARD_BOOT_IN_CH_CCC_HDL, 0},
-{HID_MOUSE_BOOT_IN_CH_CCC_HDL, 0},
-{HID_INPUT_REPORT_1_CH_CCC_HDL, 0},
-{HID_INPUT_REPORT_2_CH_CCC_HDL, 0},
-{HID_INPUT_REPORT_3_CH_CCC_HDL, 0},
-{HID_INPUT_REPORT_4_CH_CCC_HDL, 0},
-{HID_INPUT_REPORT_5_CH_CCC_HDL, 0},
-{HID_INPUT_REPORT_6_CH_CCC_HDL, 0},
+	/* handle  value*/
+	{HID_KEYBOARD_BOOT_IN_CH_CCC_HDL, 0},
+	{HID_MOUSE_BOOT_IN_CH_CCC_HDL,   0},
+	{HID_INPUT_REPORT_1_CH_CCC_HDL,  0},
+	{HID_INPUT_REPORT_2_CH_CCC_HDL,  0},
+	{HID_INPUT_REPORT_3_CH_CCC_HDL,  0},
+	{HID_INPUT_REPORT_4_CH_CCC_HDL,  0},
+	{HID_INPUT_REPORT_5_CH_CCC_HDL,  0},
+	{HID_INPUT_REPORT_6_CH_CCC_HDL,  0},
 };
 
 void hid_set_ccc_table_value(uint16_t handle, uint8_t value)
@@ -577,7 +564,7 @@ int ble_nortify_keyboard_data(const void *data, uint16_t len)
 	if (hid_get_ccc_table_value(HID_INPUT_REPORT_2_CH_CCC_HDL)) {
 		return  bt_gatt_notify(NULL,  &hog_svc.attrs[HID_INPUT_REPORT_2_HDL], data, len);
 	} else {
-		//printk("k");
+		//LOG_INF("k");
 		return -1;
 	}
 }
@@ -587,7 +574,7 @@ int ble_nortify_consumer_data(const void *data, uint16_t len)
 	if (hid_get_ccc_table_value(HID_INPUT_REPORT_3_CH_CCC_HDL)) {
 		return  bt_gatt_notify(NULL,  &hog_svc.attrs[HID_INPUT_REPORT_3_HDL], data, len);
 	} else {
-		//printk("c");
+		//LOG_INF("c");
 		return -1;
 	}
 }
@@ -597,7 +584,7 @@ int ble_nortify_all_key_data(const void *data, uint16_t len)
 	if (hid_get_ccc_table_value(HID_INPUT_REPORT_5_CH_CCC_HDL)) {
 		return  bt_gatt_notify(NULL,  &hog_svc.attrs[HID_INPUT_REPORT_5_HDL], data, len);
 	} else {
-		//printk("a");
+		//LOG_INF("a");
 		return -1;
 	}
 }

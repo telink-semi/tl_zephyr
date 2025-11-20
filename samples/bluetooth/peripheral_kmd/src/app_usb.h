@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file app_usb.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -51,10 +51,15 @@ extern volatile unsigned int vbus_status;
 extern volatile  unsigned int usb_connected_ok;
 
 int usb_hw_init(void);
+
 void usb_test_loop(void);
+
 void app_usb_main_loop(void);
+
 void app_usb_status_check(void);
+
 uint8_t app_is_usb_det_in(void);
+
 #ifdef __cplusplus
 }
 #endif

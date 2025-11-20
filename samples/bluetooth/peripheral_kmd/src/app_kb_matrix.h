@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file app_kb_matrix.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -311,23 +311,32 @@ void digital_keyscan_init(void);
 //////////////////////////////////////////K_timer scan///////////////////////////////////////////
 
 
-#define SCAN_INTERVAL_MS 1      // 扫描间隔5ms
-#define DEBOUNCE_COUNT   1        // 消抖计数4次(20ms)
+#define SCAN_INTERVAL_MS 1
+#define DEBOUNCE_COUNT   1
 
 #define USE_K_TIMER_SCAN_MATRIX		0
 
-
-// 按键回调函数类型
 typedef void (*key_callback_t)(uint8_t row, uint8_t col);
 
-// 按键扫描初始化
-int matrix_keypad_init(void);
-// 启动按键扫描
-int matrix_keypad_start(void);
-// 停止按键扫描  
-void matrix_keypad_stop(void);
+
+void digit_keyscan_init(void);
+
 void digit_keyscan_handle(void);
+
+void digit_keyscan_enable(void);
+
+ void digit_keyscan_disable(void);
+
+int matrix_keypad_init(void);
+
+int matrix_keypad_start(void);
+
+void matrix_keypad_stop(void);
+
+void digit_keyscan_handle(void);
+
 _attribute_ram_code_sec_noinline_ unsigned int digit_key_soft_scan(void);
+
 #ifdef __cplusplus
 }
 #endif

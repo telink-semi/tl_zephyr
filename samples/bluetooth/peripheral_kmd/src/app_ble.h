@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file app_ble.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,12 +14,13 @@ extern "C" {
 
 typedef struct
 {
-    unsigned char slave_mac_addr[4];//4
-    int ble_id[4];//20
-    uint8_t temp2[3]; //23
-    uint8_t mast_id;//24
-    int idx;//28
+    unsigned char slave_mac_addr[4];    //4
+    int ble_id[4];                      //20
+    uint8_t temp2[3];                   //23
+    uint8_t mast_id;                    //24
+    int idx;                            //28
 } ST_BLE_APP_PIPE_INFO;
+
 extern ST_BLE_APP_PIPE_INFO ble_app_pip_info;
 
 #define    PAIR_TIMEOUT_US              60*1000//6s
@@ -40,16 +41,24 @@ typedef enum
     SLEEP_BLE_STATUS=9,
         
 }BLE_STATUS_APP_ENUM;
+
 extern volatile uint8_t ble_status;
 extern uint8_t connect_complete;
 extern uint32_t tick_connected;
 extern uint8_t pair_flag;
 
+void save_ble_app_info(void);
 
 void ble_init(void);
+
 void ble_start_pairing_delayed_work_handler(struct k_work *work);
+
+void disconnect_current_connection(void);
+
 void start_pairing_by_delay_work(void);
+
 void app_ble_report_to_client(void);
+
 #ifdef __cplusplus
 }
 #endif

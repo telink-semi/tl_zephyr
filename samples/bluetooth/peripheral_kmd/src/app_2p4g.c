@@ -1,7 +1,9 @@
-/* app_24g.c - Application main entry point */
+/** @file app_2p4g.c
+ *  @brief
+ */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,12 +18,12 @@
 
 #include <zephyr/settings/settings.h>
 
-#include "app_24g.h"
+#include "app_2p4g.h"
 #include "app_public.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(app_24g);
+LOG_MODULE_REGISTER(app_2p4g);
 
 
 #include "stack/multicore_comm/service/mcc.h"
@@ -38,7 +40,6 @@ extern pl_fifo_t d25fKbTxFifo;
 #define APP_WAKEUP_EARLY_TIME_US            (50)
 #define APP_WFI_WAKEUP_EARLY_TIME_US        (20)
 
-
 extern volatile bool n22_rssi_scan_done;
 
 volatile p24g_device_status_e g_state = STATE_POWERON;
@@ -52,27 +53,13 @@ volatile p24g_device_status_e last_connect_status = STATE_NONE;
 volatile unsigned int tick_status;
 app_ctx_t app_ctx;
 
-
-
-_attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag)
-{
-    volatile uint32_t key = arch_irq_lock();
-    
-    uint8_t cmd[8] = {0};
-
-    cmd[0] = TLK_MB_D25F_TO_N22_MODE;
-    cmd[1] = mode_flag;
-
-    mb_send_with_polling(cmd);
-	arch_irq_unlock(key);
-}
-
-
 /**
  * @brief share memory message handler table
  */
 static p24g_sm_cmd_handler_t p24g_cmd_table[P24G_SM_CMD_MAX] = {0};
 uint8_t g_app_suspend_ret_flag = 0;
+
+extern ssize_t nvs_write(struct nvs_fs *fs, uint16_t id, const void *data, size_t len);
 
 static inline void app_wdt_init()
 {
@@ -87,6 +74,7 @@ static inline void app_wdt_init()
     wd_clear();
     wd_start();
 }
+
 static inline void app_timer1_start(uint32_t sys_tick)
 {
     unsigned int tick = sys_tick * sys_clk.pclk / SYSTEM_TIMER_TICK_1US;
@@ -94,10 +82,12 @@ static inline void app_timer1_start(uint32_t sys_tick)
     timer_set_cap_tick(TIMER1, tick);
     timer_start(TIMER1);
 }
+
 static inline void app_timer1_stop(void)
 {
     timer_stop(TIMER1);
 }
+
 static inline void app_timer1_init(void)
 {
     timer_set_init_tick(TIMER1, 0);
@@ -113,25 +103,27 @@ static inline void app_timer1_init(void)
     plic_interrupt_enable(IRQ_TIMER1);
 #endif
 }
+
 _attribute_ram_code_sec_ static void app_2p4g_set_power_state(p24g_device_status_e state, uint32_t tick)
 {
-    // if ((state == STATE_TO_IDLE) && (g_power_state != STATE_TO_SLEEP)) {
-    //     g_power_state = STATE_TO_IDLE;
-    //     if (tick) {
-    //         app_timer1_start((tick - stimer_get_tick() - APP_WFI_WAKEUP_EARLY_TIME_US * SYSTEM_TIMER_TICK_1US));
-    //     }
-    // } else if (state == STATE_TO_SLEEP) {
-    //     g_wakeup_stick = tick;
-    //     // app_inf.step_2t2r = STEP_2T2R_NONE;
-    //     g_power_state = STATE_TO_SLEEP;
-    // }
+#if 0
+    if ((state == STATE_TO_IDLE) && (g_power_state != STATE_TO_SLEEP)) {
+        g_power_state = STATE_TO_IDLE;
+        if (tick) {
+            app_timer1_start((tick - stimer_get_tick() - APP_WFI_WAKEUP_EARLY_TIME_US * SYSTEM_TIMER_TICK_1US));
+        }
+    } else if (state == STATE_TO_SLEEP) {
+        g_wakeup_stick = tick;
+        // app_inf.step_2t2r = STEP_2T2R_NONE;
+        g_power_state = STATE_TO_SLEEP;
+    }
+#endif
 }
 
 static inline bool app_2p4g_is_work_busy(void)
 {
     return (g_work_state == STATE_BUSY);
 }
-
 
 static inline char *tl_hex_to_str(const void *buf, uint8_t len)
 {
@@ -199,10 +191,10 @@ _attribute_ram_code_sec_ void app_2p4g_d25f_rx_packet_handler(uint8_t *data, uns
 _attribute_ram_code_sec_ void event_test(void)
 {
      static unsigned int tick=0;
-     static uint8_t TxBuf[64] = {0}; //[!!important]
+     static uint8_t TxBuf[64] = {0};
      static uint8_t cnt = 0;
 
-     if(clock_time_exceed(tick, 2000000)) {
+     if (clock_time_exceed(tick, 2000000)) {
          tick=stimer_get_tick();
 
          p24g_evt_t * p_evt = (p24g_evt_t *)TxBuf;
@@ -226,8 +218,7 @@ _attribute_ram_code_sec_ void event_test(void)
 
          p_evt->len = sizeof(p24g_usb_pkt_t) + p_pkt->len;
 
-         if(!mcc_d25f_hci_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len)) {
-//         if(!tlk_n22_sync_send_message(TLK_SHARE_MEMORY_MESSAGE_TYPE_BLE, TxBuf, sizeof(p24g_evt_t) + p_evt->len)) {
+         if (!mcc_d25f_hci_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len)) {
              tlkapi_printf(APP_LOG_EN, "d25f send sm message success\n");
          } else {
              tlkapi_printf(APP_LOG_EN, "d25f send sm message fail\n");
@@ -235,10 +226,9 @@ _attribute_ram_code_sec_ void event_test(void)
      }
 }
 
-
 _attribute_ram_code_sec_ uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint8_t *data, uint8_t len)
 {
-    static uint8_t TxBuf[64] = {0}; //[!!important]
+    static uint8_t TxBuf[64] = {0};
 
     p24g_evt_t *p_evt = (p24g_evt_t *)TxBuf;
 
@@ -246,33 +236,19 @@ _attribute_ram_code_sec_ uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint
     p_evt->opcode = op;
     uint8_t data_len = len > (sizeof(TxBuf) - 2) ? sizeof(TxBuf) - 2 : len;
 
-    if(data && data_len)
-    {
+    if (data && data_len) {
         memcpy(p_evt->data, data, data_len);
         p_evt->len = data_len;
     }
-    //TODO
-    // 	gpio_function_en(GPIO_PB4);
-	// gpio_output_en(GPIO_PB4);
-	// gpio_input_dis(GPIO_PB4);
-	// DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PB4);
-	// delay_us(27);
-	// DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PB4);
-    
-    if (!mcc_d25f_shm_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len, TLK_SHM_MSG_2P4G))
-    {
-        //if(!tlk_n22_sync_send_message(TLK_SHARE_MEMORY_MESSAGE_TYPE_BLE, TxBuf, sizeof(p24g_evt_t) + p_evt->len)) {
-        tlkapi_printf(1, "d25f send sm message success\n");
-        //tlkapi_printk(TLK_LOG_EN, "d25f send sm message success %x %x\n", type, op);
+
+    if (!mcc_d25f_shm_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len, TLK_SHM_MSG_2P4G)) {
+        tlkapi_printf(APP_IO_EN, "d25f send sm message success\n");
+    } else {
+        tlkapi_printf(APP_IO_EN, "d25f send sm message fail\n");
+        return 1;
     }
-    else
-    {
-        tlkapi_printf(1, "d25f send sm message fail\n");
-        //tlkapi_printk(TLK_LOG_EN, "d25f send sm message faillll\n");
-        return 1; // Error: message sending failed
-    }
-    // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PA6);
-    return TLK_SUCCESS; // Success
+
+    return TLK_SUCCESS;
 }
 
 _attribute_ram_code_sec_ uint8_t p24g_enable_pairing(bool enable)
@@ -282,7 +258,7 @@ _attribute_ram_code_sec_ uint8_t p24g_enable_pairing(bool enable)
 
 _attribute_ram_code_sec_ uint8_t p24g_enable_reconn(bool enable)
 {
-    return p24g_send_sm_msg(P24G_SM_CMD_SET_STATE, P24G_SM_OP_ENABLE_RECONN, &enable, 1);
+    return p24g_send_sm_msg(P24G_SM_CMD_SET_STATE, P24G_SM_OP_ENABLE_RECONN, (uint8_t*)&enable, 1);
 }
 
 _attribute_ram_code_sec_ uint8_t p24g_terminate_connect(void)
@@ -295,29 +271,14 @@ _attribute_ram_code_sec_ uint8_t p24g_rf_enter_idle(void)
     return p24g_send_sm_msg(P24G_SM_CMD_LL_CONTROL, P24G_SM_OP_ENTER_RF_IDLE, 0, 0);
 }
 
-
 _attribute_ram_code_ void app_2p4g_mb_km_data_cb(uint8_t* data)
 {
-    
-    if(data[0] == 0x7a)
-    {
+    if (data[0] == 0x7a) {
         data[0] = 0;
-        // app_mouse_report_to_usb(&data[1]);
     }
-    else if(data[6] == 0xa7 && data[5] == 0x57 && data[4] == 0x5a)
-    {
-        // tlkapi_send_string_data(APP_LOG_EN, "now usb init",data,7);
-      //  n22_rssi_scan_done = true;
-    }else{
-        // tlkapi_send_string_data(APP_LOG_EN, "d25f kb app_2p4g_mb_km_data_cb",data,7);
-    }
-    // tlkapi_send_string_data(APP_LOG_EN, "d25f kb app_2p4g_mb_km_data_cb",data,7);
-    //  tlkapi_printk(TLK_LOG_EN, "d25f kb app_2p4g_mb_km_data_cb: %x %x %x %x\n", data[0], data[1], data[2], data[3]);
-    
 }
 
-
-_attribute_ram_code_sec_ void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint32_t len)
+_attribute_ram_code_sec_ void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint16_t len)
 {
 
     if (!data || len == 0)
@@ -341,8 +302,6 @@ _attribute_ram_code_sec_ void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint32_t len
 #endif
 }
 
-
-
 _attribute_ram_code_sec_ uint8_t p24g_send_spp_data(uint8_t cmd, unsigned char *data, unsigned char len)
 {
     uint8_t ret = TLK_ERR_INVALID_LENGTH;
@@ -353,8 +312,6 @@ _attribute_ram_code_sec_ uint8_t p24g_send_spp_data(uint8_t cmd, unsigned char *
 
     return ret;
 }
-
-
 
 /**
  * @brief resister a command handler for a specific command type
@@ -406,7 +363,7 @@ _attribute_ram_code_ void p24g_user_init_deepRetn(void)
 void app_2p4g_dual_core_comm_init(void)
 {
 
-    mcc_mb_register_cb(TLK_MB_N22_TO_D25F_KM_DATA, app_2p4g_mb_km_data_cb);
+    mcc_mb_register_cb(TLK_MB_N22_TO_D25F_KM_DATA, (mb_recv_cb_t)app_2p4g_mb_km_data_cb);
     mcc_shm_register_cb(TLK_SHM_MSG_2P4G, app_2p4g_d25f_sm_rx_cb);
 
     uint8_t cmd[7] = {0};
@@ -416,7 +373,7 @@ void app_2p4g_dual_core_comm_init(void)
     cmd[5] = (uint8_t)(address >> 16 & 0xff);
     cmd[6] = (uint8_t)(address >> 24 & 0xff);
 
-    printk("d25fKbTxFifo %x\n",&d25fKbTxFifo);
+    LOG_INF("d25fKbTxFifo %x\n", address);
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_KB_TX_ADDRESS, cmd);
 
     address = (u32)&d25fSppTxFifo;
@@ -430,7 +387,6 @@ void app_2p4g_dual_core_comm_init(void)
     pp_fifo_reset(&d25fSppTxFifo);
 }
 
-
 _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
@@ -443,10 +399,8 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
         if (flash_dev_info.side_id != side_id)
         {
             flash_dev_info.side_id = side_id;
-            //save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
-
             int ret = nvs_write(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-            printk("NVS APP_2P4G_PAIR_INFO_ID Write result: %d\n", ret);
+            LOG_INF("NVS APP_2P4G_PAIR_INFO_ID Write result: %d\n", ret);
         }
         
     }
@@ -456,16 +410,14 @@ _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
 {
     if ((rr == REPORT_RATE_8K) || (rr == REPORT_RATE_125)) {
         flash_dev_other_info.report_rate = rr;
-        uint32_t side_id = fnv1a_hash(flash_dev_other_info.report_rate, 1);
+        uint32_t side_id = fnv1a_hash(&flash_dev_other_info.report_rate, 1);
 
         if (flash_dev_other_info.side_id != side_id)
         {
             flash_dev_other_info.side_id = side_id;
             tlkapi_send_string_data(APP_LOG_EN, "saving other info", &flash_dev_other_info.side_id, 5);
-
-            //save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
             int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-            printk("NVS APP_2P4G_APP_INFO_ID Write result: %d\n", ret);
+            LOG_INF("NVS APP_2P4G_APP_INFO_ID Write result: %d\n", ret);
         }
     }
 }
@@ -487,7 +439,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         }
         else if (p_evt->opcode == STATE_DISCONNECTED)
         {
-             if(p_evt->data[0] == P24G_LL_CONN_TIMEOUT)
+             if (p_evt->data[0] == P24G_LL_CONN_TIMEOUT)
             {
                 p24g_enable_reconn(true);
             }
@@ -522,7 +474,6 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
             wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
             wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
 
-            // DBG_GPIO_TOGGLE(STACK_IO_EN, GPIO_PD7);
             app_2p4g_set_power_state(STATE_TO_SLEEP, wakeup_stick);
         }
     }
@@ -532,7 +483,7 @@ static inline void app_2p4g_clock_reinit(uint8_t report_rate)
 {
     g_report_rate = report_rate;
     if (report_rate == REPORT_RATE_8K) {
-        app_clock_init(CLOCK_CONFIG_1V1_96_96);
+        app_clock_init(CLOCK_CONFIG_1V_48_48);
         if (app_get_kb_mode() == KB_MODE_2P4G) {
             app_wdt_init();
         }
@@ -547,7 +498,7 @@ static inline void app_2p4g_clock_reinit(uint8_t report_rate)
 _attribute_ram_code_sec_ void app_2p4g_clock_reover(void)
 {
     if (g_report_rate == REPORT_RATE_8K) {
-        app_clock_init(CLOCK_CONFIG_1V1_96_96);
+        app_clock_init(CLOCK_CONFIG_1V_48_48);
         if (app_get_kb_mode() == KB_MODE_2P4G) {
             app_wdt_init();
         }
@@ -578,14 +529,13 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
     switch (p_evt->opcode) {
-        case P24G_SM_OP_MISC_REPORT_RATE: //report rate changed
+        case P24G_SM_OP_MISC_REPORT_RATE:
             tlkapi_send_string_data(APP_LOG_EN, "report rate changed", data, len);
             app_2p4g_clock_reinit(data[3]);
             break;
 
         case P24G_SM_OP_MISC_SAVE_REPORT_RATE:
             app_2p4g_save_report_rate_info(data[3]);
-            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
             tlkapi_send_string_data(APP_LOG_EN, "report rate info saved", data, len);
             app_2p4g_clock_reinit(data[3]);
             break;
@@ -630,13 +580,17 @@ static void app_p24g_send_info_2_n22(void)
 }
 
 
-static void app_debug_io_init(void)
+_attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag)
 {
-#if (ALG_KEYSCAN_APP_FUN_ENABLE && APP_IO_EN)
-    gpio_function_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
-    gpio_output_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
-    gpio_input_dis(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
-#endif
+    volatile uint32_t key = arch_irq_lock();
+    
+    uint8_t cmd[8] = {0};
+
+    cmd[0] = TLK_MB_D25F_TO_N22_MODE;
+    cmd[1] = mode_flag;
+
+    mb_send_with_polling(cmd);
+	arch_irq_unlock(key);
 }
 
 /**
@@ -648,13 +602,11 @@ void p24g_user_init_normal(void)
 {
     app_wdt_init();
 
-    // app_debug_io_init();
-
     app_2p4g_dual_core_comm_init();
 
     app_p24g_sm_cmd_hanlder_init();
 
-    app_p24g_send_info_2_n22();//call this fun after sm init
+    app_p24g_send_info_2_n22(); //call this fun after sm init
 
     p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
  
@@ -662,26 +614,25 @@ void p24g_user_init_normal(void)
     tlkapi_send_string_data(APP_LOG_EN, "d25f kb _p24g_init end", 0, 0);
 }
 
-
 _attribute_ram_code_sec_ void app_p24g_spp_send_handle(void)
 {
     unsigned char  *p= pp_fifo_get_ptr(&tx_fifo);
     
-    if(p!=0)
+    if (p!=0)
     {
         unsigned char len=p[0];
         unsigned char cmd=p[1];
         
         unsigned char ret=0; 
-        if(cmd==CONSUME_KB_DATA_CMD)
+        if (cmd==CONSUME_KB_DATA_CMD)
         {
              ret = p24g_send_spp_data(P24G_SPP_CONSUME_KEY_DATA, &p[2], len);
         }
-        else if(cmd==ALL_KB_DATA_CMD)
+        else if (cmd==ALL_KB_DATA_CMD)
         {
             ret = p24g_send_spp_data(P24G_SPP_ALL_KEY_DATA, &p[2], len);
         }
-        if(ret==TLK_SUCCESS)
+        if (ret==TLK_SUCCESS)
         {
             pp_fifo_pop(&tx_fifo);
             tlkapi_send_string_data(APP_LOG_EN, "spp send OK", &ret, 1);
@@ -693,7 +644,6 @@ _attribute_ram_code_sec_ void app_p24g_spp_send_handle(void)
     }
 }
 
-
 /**
  * @brief       in 2.4g mode  device status check
  * @param[in]    none
@@ -704,21 +654,17 @@ _attribute_ram_code_sec_ void app_pp_check_connect_status(void)
 {
     static unsigned int led_tick;
 
-    #if 1
-    // if(last_connect_status!=app_inf.dev_now_status)
-    if(last_connect_status!=app_d24p_get_state() )
+    if (last_connect_status!=app_d24p_get_state() )
     {
         tick_status=clock_time()|1;
         led_tick=clock_time()|1;
         #if 0
-        if(last_connect_status==STATE_PAIRING)
+        if (last_connect_status==STATE_PAIRING)
         {
             //auto_draw_flag=0;
         }
         #endif
-        // last_connect_status=app_inf.dev_now_status;
         last_connect_status = app_d24p_get_state();
-        // print_app_public("d24g_status=%d\r\n", last_connect_status);
 
         #if 0
         if (app_inf.pair_success_flag)
@@ -737,31 +683,27 @@ _attribute_ram_code_sec_ void app_pp_check_connect_status(void)
 
         }
         #endif
-        
-        // if((app_inf.dev_now_status==STATE_NORMAL))
-        if((app_d24p_get_state() == STATE_CONNECTED))
+
+        if ((app_d24p_get_state() == STATE_CONNECTED))
         {
             gpio_set_level(PAIR_LED_PIN,LED_IS_ON);
         }
     }
-#endif
 
-
-    if(usb_connected_ok)
+    if (usb_connected_ok)
     {
         gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
     }
-    // else  if(app_inf.dev_now_status==STATE_RECONNECT)
-    else  if(app_d24p_get_state() == STATE_RECONNECT)
+    else if (app_d24p_get_state() == STATE_RECONNECT)
     {
         #if 0
-        if(clock_time_exceed(tick_status, RECONN_TIMEOUT_US))
+        if (clock_time_exceed(tick_status, RECONN_TIMEOUT_US))
         {
         
             //pp_rf_enter_idle(1);
             
             
-            if(pp_get_rf_link_status()==IDLE_RF_STATUS)
+            if (pp_get_rf_link_status()==IDLE_RF_STATUS)
             {
                 //app_enter_sleep(D24G_RECONNECT_TIMEOUT_SLEEP);
             }
@@ -769,30 +711,28 @@ _attribute_ram_code_sec_ void app_pp_check_connect_status(void)
         }
         #endif
 
-        if(clock_time_exceed(led_tick, 1000000))
+        if (clock_time_exceed(led_tick, 1000000))
         {
             led_tick=clock_time();
-            
             DBG_GPIO_TOGGLE(APP_IO_EN, PAIR_LED_PIN);
-            
-//          tlkapi_printf(APP_LOG_EN, "powron\n");
         }
     }
-    else  if(app_d24p_get_state() == STATE_PAIRING)
+    else if (app_d24p_get_state() == STATE_PAIRING)
     {
-        if(clock_time_exceed(led_tick, 100000))
+        if (clock_time_exceed(led_tick, 100000))
         {
             led_tick=clock_time();
             DBG_GPIO_TOGGLE(APP_IO_EN, PAIR_LED_PIN);
         }
     }
-    if((app_d24p_get_state() == STATE_CONNECTED))
+    if ((app_d24p_get_state() == STATE_CONNECTED))
     {
         app_p24g_spp_send_handle();
     }
 }
 
 #define SPP_TEST_EN 0
+#if SPP_TEST_EN
 uint8_t spp_buf[16] = {0x0, 0x13, 0x34, 0x45, 0x56, 0x67, 0x78, 0x89};
 _attribute_ram_code_sec_ static void app_spp_send_data(void)
 {
@@ -805,12 +745,13 @@ _attribute_ram_code_sec_ static void app_spp_send_data(void)
     }
     spp_buf[0]++;
 }
+#endif
 
 _attribute_ram_code_sec_ void app_timer1_irq_handler(void)
 {
     if (timer_get_irq_status(FLD_TMR1_MODE_IRQ)) {
         app_timer1_stop();
-        timer_clr_irq_status(FLD_TMR1_MODE_IRQ); //clear irq status
+        timer_clr_irq_status(FLD_TMR1_MODE_IRQ);
     }
 }
 
@@ -840,31 +781,20 @@ _attribute_ram_code_sec_ static void app_2p4g_sleep_check_loop(void)
             g_power_state = STATE_NONE;
             sleep_prepare_cnt = APP_SLEEP_PREPARE_COUNT;
             if (tick1_exce_tick2(g_wakeup_stick, stimer_get_tick() + APP_SUSPEND_LIMIT_MIN_TIME_US * SYSTEM_TIMER_TICK_1US)) {
-                // gpio_set_level(GPIO_PH2, 0);
-                // app_proc_before_sleep();
-                // DBG_GPIO_TOGGLE(APP_IO_EN,  GPIO_PD7);
                 if (tick1_exce_tick2(g_wakeup_stick, stimer_get_tick() + APP_SUSPEND_LONG_TIME_MIN_US * SYSTEM_TIMER_TICK_1US)) {
                     short_suspend_flag = 0;
-                    // gpio_set_level(GPIO_PH2, 1);
                 }
                 pm_set_suspend_power_cfg(FLD_PD_ZB_EN, short_suspend_flag);
 
                 g_app_suspend_ret_flag = 1;
-                // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 0);
                 pm_sleep_wakeup(SUSPEND_MODE, PM_WAKEUP_TIMER, PM_TICK_STIMER, g_wakeup_stick
                                 - (APP_WAKEUP_EARLY_TIME_US + (short_suspend_flag ? 0 : 600)) * SYSTEM_TIMER_TICK_1US);
-                // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 1);
-
-                // DBG_GPIO_TOGGLE(APP_IO_EN,  GPIO_PD7);
-                // app_proc_after_sleep();
                 if (!short_suspend_flag) {
-                    // gpio_set_level(GPIO_PH2, 0);
                     pm_set_dig_module_power_switch(FLD_PD_ZB_EN, PM_POWER_UP);
                     p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_LONG_SUSP_RET, 0, 0);
                 } else {
                     p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_SUSP_RET, 0, 0);
                 }
-                // gpio_set_level(GPIO_PH2, 1);
                 app_2p4g_set_power_state(STATE_TO_IDLE, 0);
             }
             #if APP_DELAY_ENTER_SUSPEND_TIME_US
@@ -877,11 +807,7 @@ _attribute_ram_code_sec_ static void app_2p4g_sleep_check_loop(void)
         if (!sleep_prepare_cnt) {
             g_power_state = STATE_NONE;
             sleep_prepare_cnt = APP_SLEEP_PREPARE_COUNT;
-            // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 0);
-                // gpio_set_level(GPIO_PG7, 0);
             core_entry_wfi_mode();
-                // gpio_set_level(GPIO_PG7, 1);
-            // DBG_STACK_GPIO_SET_LEVEL(APP_IO_EN, GPIO_PH2, 1);
             app_2p4g_set_power_state(STATE_TO_IDLE, 0);
         } else {
             sleep_prepare_cnt--;
@@ -896,16 +822,14 @@ _attribute_ram_code_sec_ static void app_2p4g_sleep_check_loop(void)
  */
 _attribute_no_inline_ void app_2p4g_main_loop(void)
 {
-    //tlk_multi_core_communication_loop();
     mcc_d25f_loop();
 ////////////////////////////////////// Debug entry /////////////////////////////////
 #if (TLKAPI_DEBUG_ENABLE)
     tlkapi_debug_handler();
 #endif
 
-
     app_pp_check_connect_status();
-    
+
     wd_clear();
 
 #if SPP_TEST_EN

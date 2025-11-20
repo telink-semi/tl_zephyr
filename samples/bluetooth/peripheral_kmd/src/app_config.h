@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file app_config.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -45,8 +45,10 @@ extern "C" {
 
 #define BATT_CHECK_ENABLE                   0
 
-#define TOGGLE_DEBUG_IO_ENABLE				0
+#define TOGGLE_DEBUG_IO_ENABLE              0
+
 #define USE_K_TIMER_LOOP                    1
+
 #define USER_K_TIMER_SCAN_LOOP_INTERVAL_MS  50      //50ms
 
 #ifdef __cplusplus

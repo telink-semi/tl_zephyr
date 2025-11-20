@@ -1,7 +1,9 @@
-/* main.c - Application main entry point */
+/** @file app_kb_matrix.c
+ *  @brief
+ */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -61,20 +63,6 @@ unsigned char map_digit[COL_CNT][ROW_CNT] = {\
        /*R0*/
 };
 
-
-
-static  unsigned int last_result[ROW_CNT]={0};
-static  unsigned int debug_result[ROW_CNT]={0};
-
-static KEY_MATRIX_DEFINE(key_matrix);
-
-// 全局变量
-static struct k_timer scan_timer;
-static bool scanning_active = false;
-
-
-static unsigned int  last_scan_result = 0;
-static unsigned int flag_count = 0;
 int debounce_cnt = 0;
 static uint32_t key_change_tick = 0;
 static unsigned char need_debounce_flag=0;
@@ -108,7 +96,7 @@ void digit_keyscan_init(void)
     keyscan_set_scan_mode(KEYSCAN_MODE1);
     
     keyscan_enable();
-    printk("digit hw keyscan init\r\n");
+    LOG_INF("digit hw keyscan init\r\n");
 
     #if (USE_K_TIMER_SCAN_MATRIX)
         k_timer_start(&scan_timer, K_MSEC(SCAN_INTERVAL_MS), 
@@ -118,6 +106,15 @@ void digit_keyscan_init(void)
     #endif
 }
 
+_attribute_ram_code_sec_ void digit_keyscan_enable(void)
+{
+    keyscan_enable();
+}
+
+_attribute_ram_code_sec_ void digit_keyscan_disable(void)
+{
+    keyscan_scan_disable(g_ks_row, ROW_CNT);
+}
 
 _attribute_ram_code_sec_noinline_ void digit_new_key_handle(void)
 {
@@ -143,7 +140,7 @@ _attribute_ram_code_sec_noinline_ void digit_new_key_handle(void)
 
 _attribute_ram_code_sec_noinline_ void digit_keyscan_handle(void)
 {
-    static unsigned int tick = 0;
+    // static unsigned int tick = 0;
     int has_new_evnt_flag = 0;
 
     if (keyscan_get_rxdone_irq_status())
@@ -152,7 +149,7 @@ _attribute_ram_code_sec_noinline_ void digit_keyscan_handle(void)
         for(int i=0;i<8;i++)
         {
             now_ks_scanning_buff[i] = dma_ks_scanning_buff[i];
-            // printk("%d=%08x\r\n",i,dma_ks_scanning_buff[i]);
+            // LOG_INF("%d=%08x\r\n",i,dma_ks_scanning_buff[i]);
         }
     }
     else
@@ -208,9 +205,10 @@ _attribute_ram_code_sec_noinline_ void digit_keyscan_handle(void)
 
 #else
 
+static KEY_MATRIX_DEFINE(key_matrix);
+
 void digit_keyscan_init(void)
 {
-    // 初始化按键扫描
     if (matrix_keypad_init() != 0) {
         LOG_ERR("Failed to initialize keypad\n");
         return;
@@ -243,7 +241,7 @@ _attribute_ram_code_sec_noinline_ void digit_new_key_handle(void)
             if(now_bit)
             {
                 app_key_buf.press_cnt++;
-                //printk("x %d, y %d\r\n", k, i);
+                //LOG_INF("x %d, y %d\r\n", k, i);
                 key_fifo(map_digit[k][i]);
             }
         }
@@ -356,12 +354,10 @@ _attribute_ram_code_sec_noinline_ unsigned int digit_key_soft_scan(void)
 }
 
 
-// 初始化按键扫描
 int matrix_keypad_init(void)
 {
     int ret;
-    
-    // 检查GPIO设备是否就绪
+
     for (int i = 0; i < ROW_CNT; i++) {
         if (!gpio_is_ready_dt(&key_matrix.row[i])) {
             LOG_ERR("Row GPIO %d not ready", i);
@@ -375,8 +371,7 @@ int matrix_keypad_init(void)
             return -ENODEV;
         }
     }
-    
-    // 配置行GPIO为输出
+
     for (int i = 0; i < ROW_CNT; i++) {
         ret = gpio_pin_configure_dt(&key_matrix.row[i], GPIO_OUTPUT_ACTIVE);
         if (ret < 0) {
@@ -385,8 +380,7 @@ int matrix_keypad_init(void)
         }
         gpio_pin_set_dt(&key_matrix.row[i], 0);
     }
-    
-    // 配置列GPIO为输入，带上拉
+
     for (int i = 0; i < COL_CNT; i++) {
         ret = gpio_pin_configure_dt(&key_matrix.col[i], 
                                    GPIO_INPUT | GPIO_PULL_UP);
@@ -398,7 +392,6 @@ int matrix_keypad_init(void)
     }
 
 #if (USE_K_TIMER_SCAN_MATRIX)
-    // 初始化定时器
     k_timer_init(&scan_timer, keyscan_loop, NULL);
 #endif
     

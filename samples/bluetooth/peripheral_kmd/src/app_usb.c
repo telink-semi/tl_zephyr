@@ -1,7 +1,9 @@
-/* main.c - Application main entry point */
+/** @file app_usb.c
+ *  @brief
+ */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -178,7 +180,7 @@ static void in_ready_cb(const struct device *dev)
 int kbd_set_report(const struct device *dev, struct usb_setup_packet *setup, int32_t *len,
 			uint8_t **data)
 {
-	printk("kb_out: %x, len %d", **data, *len);
+	LOG_INF("kb_out: %x, len %d", **data, *len);
 	
 	//gpio_pin_set(led1.port, led1.pin, (**data & HID_KBD_LED_NUM_LOCK));
 	//gpio_pin_set(led2.port, led2.pin, (**data & HID_KBD_LED_CAPS_LOCK));
@@ -241,20 +243,21 @@ int usb_hw_init(void)
 	}
 
 	LOG_INF("Enable USB, usb hw init");
+	return 0;
 }
 
 void app_usb_mode_exit(void)
 {
     usb_disable();
     usb_connected_ok = 0;
-    printk("usb mode exit\r\n");
+    LOG_INF("usb mode exit\r\n");
 }
 
 _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
 {
     static unsigned char kb[8] = {0, 0, 1, 0, 0, 0, 0, 0};
-    unsigned char  status = 0;
 	#if 0
+    unsigned char  status = 0;
     status=app_usb_ep_is_idle(HID_KEYBOARD_IN_ENDPOINT_NUM);
     if(status!=0)
     {
@@ -270,8 +273,8 @@ _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
 _attribute_ram_code_sec_ int app_all_key_report_to_usb(unsigned char *buf)
 {
     static unsigned char kb[17] ={8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    unsigned char  status = 0;
 	#if 0
+    unsigned char  status = 0;
     status=app_usb_ep_is_idle(HID_KEYBOARD_IN_ENDPOINT_NUM);
     if(status!=0)
     {
@@ -286,8 +289,8 @@ _attribute_ram_code_sec_ int app_all_key_report_to_usb(unsigned char *buf)
 _attribute_ram_code_sec_ int app_consume_key_report_to_usb(unsigned char *buf)
 {
     static unsigned char kb[3]={2,0,0}; // first is report id
-    unsigned char  status = 0;
 	#if 0
+    unsigned char  status = 0;
     status=app_usb_ep_is_idle(HID_KEYBOARD_IN_ENDPOINT_NUM);
     if(status!=0)
     {
@@ -385,10 +388,10 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
 
         if(last_vbus_status != vbus_status)
         {
-            printk("vbus_status = %d\r\n",vbus_status);
+            LOG_INF("vbus_status = %d\r\n",vbus_status);
             if(last_vbus_status == 0)
             {
-                // TODO:app_usb_bus_reset_init();
+                // app_usb_bus_reset_init();
             }
             else
             {
@@ -401,29 +404,29 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
         {
             if(usb_status == USB_DC_CONFIGURED)
             {
-                printk("mode is usb mode\r\n");
-                // TODO:gpio_set_level(MODE_LED_PIN, LED_IS_ON);
-                // TODO: gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
+                LOG_INF("mode is usb mode\r\n");
+                // gpio_set_level(MODE_LED_PIN, LED_IS_ON);
+                // gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
                 usb_connected_ok = 1;
                 if(fun_mode == KB_MODE_2P4G)
                 {
-                    // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_USB, 0, 0);
+                    // p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_USB, 0, 0);
                 }
                 else
                 {
-                    printk("ble enter idle mode\r\n");
-                    // TODO:ble_mode_enter_idle();
+                    LOG_INF("ble enter idle mode\r\n");
+                    // ble_mode_enter_idle();
                 }
             }
             else if(usb_status == USB_DC_DISCONNECTED)
             {
-                // TODO:gpio_set_level(MODE_LED_PIN, LED_IS_OFF);
+                // gpio_set_level(MODE_LED_PIN, LED_IS_OFF);
                 usb_connected_ok = 0;
 
                 if(fun_mode == KB_MODE_2P4G)
                 {
-                    printk("mode is 2.4g\r\n");
-                    // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
+                    LOG_INF("mode is 2.4g\r\n");
+                    // p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
                 }
             }
             last_usb_status = usb_status;

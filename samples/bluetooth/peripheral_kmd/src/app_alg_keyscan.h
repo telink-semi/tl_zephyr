@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file app_alg_keyscan.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,11 +12,8 @@
 extern "C" {
 #endif
 
-
 unsigned char key_scan(void);
 
-void digit_keyscan_init(void);
-void digit_keyscan_handle(void);
 #ifdef __cplusplus
 }
 #endif

@@ -1,10 +1,10 @@
 &cpu0 {
-	clock-frequency = <192000000>;		/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
+	clock-frequency = <48000000>;		/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
 	/*clock-frequency = <96000000>;*/
 };
 
 &uart0 {
-	status = "okay";
+	status = "disabled";
 	/*alg keyboard*/
 	/*pinctrl-0 = <&uart0_tx_pd4_default &uart0_rx_pd5_default>;*/
 	/*digital keyboard*/

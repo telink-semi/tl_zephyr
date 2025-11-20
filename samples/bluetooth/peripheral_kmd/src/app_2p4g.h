@@ -1,12 +1,16 @@
-/** @file
- *  @brief app_24g.h
+/** @file app_2p4g.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef __APP_2P4G_H__
 #define __APP_2P4G_H__
@@ -14,19 +18,6 @@
 #include "app_common_config.h"
 
 typedef void (*p24g_sm_cmd_handler_t)(uint8_t *data, uint16_t len);
-
-// enum {
-//     EMPTY_DATA_CMD=0,
-//     PAIR_DATA_CMD=1,
-//     RECONNECT_DATA_CMD=2,
-//     MOUSE_DATA=3,
-//     SPP_DATA=4,
-//     SPP_DATA_ACK=5,
-//     NORMAL_KB_DATA_CMD=6,
-//     CONSUME_KB_DATA_CMD=7,
-//     SYSTEM_KB_DATA_CMD=8,
-//     ALL_KB_DATA_CMD=9,
-// };
 
 /* Definition of mailbox 2.4g packet types */
 typedef enum {
@@ -44,6 +35,7 @@ typedef enum
     CLOCK_CONFIG_1V1_192_96  = 0,
     CLOCK_CONFIG_1V1_96_96,
     CLOCK_CONFIG_1V1_48_48,
+    CLOCK_CONFIG_1V_48_48,
     CLOCK_CONFIG_1V_72_36,
     CLOCK_CONFIG_1V_64_32,
     CLOCK_CONFIG_1V_48_24,
@@ -112,7 +104,7 @@ uint8_t p24g_register_sm_cmd_handler(p24g_sm_cmd_e cmd, p24g_sm_cmd_handler_t ha
  *
  * @return    None
  */
-void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint32_t len);
+void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint16_t len);
 
 
 /**
@@ -365,15 +357,12 @@ static inline void app_d24p_set_state(p24g_device_status_e state)
  */
 void app_2p4g_clock_reover(void);
 
+void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag);
 
+void p24g_user_init_normal(void);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#endif // __APP_2P4G_H__
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // __APP_2P4G_H__

@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -84,7 +85,7 @@ enum usbd_endpoint_index_e endpoint_idx[] = {USBD_EP0_IDX, USBD_EP1_IDX, USBD_EP
 /* The total hardware buffer size */
 #define EPS_BUFFER_TOTAL_SIZE (8 * 1024)
 
-#define EPS_BUFFER_OUT_SIZE (0x100)
+#define EPS_BUFFER_OUT_SIZE (0xFF)
 
 #define EPS_BUFFER_IN_SIZE (EPS_BUFFER_TOTAL_SIZE - EPS_BUFFER_OUT_SIZE)
 
@@ -430,7 +431,6 @@ static void ep_buf_init(uint8_t ep)
 
 static uint32_t ep_write(uint8_t ep, const uint8_t *data, uint32_t data_len)
 {
-	uint16_t i;
 	uint8_t ep_idx = USB_EP_GET_IDX(ep);
 	struct tlx_usbd_ctx *ctx = get_usbd_ctx();
 	struct tlx_usbd_ep_ctx *ep_ctx = endpoint_ctx(ep);
@@ -444,7 +444,7 @@ static uint32_t ep_write(uint8_t ep, const uint8_t *data, uint32_t data_len)
 		valid_len = data_len;
 	}
 
-	usb0hw_write_ep_data(ep_idx, data, valid_len);
+	usb0hw_write_ep_data(ep_idx, (uint8_t *)data, valid_len);
 
 	if (data_len == ep_ctx->cfg.max_sz) {
 		usb0hw_write_ep_data(ep_idx, 0, 0);
@@ -501,7 +501,6 @@ static inline void usb_event_out_setup_handler(uint8_t ep)
 static inline void usb_event_out_rcvd_handler(uint8_t ep)
 {
 	struct tlx_usbd_ep_ctx *ep_ctx = endpoint_ctx(ep);
-	unsigned short xfered_len = usb0hw_get_epout_len(USB_EP_GET_IDX(ep));
 
 	ep_ctx->cfg.cb(ep, USB_DC_EP_DATA_OUT);
 }
@@ -509,7 +508,6 @@ static inline void usb_event_out_rcvd_handler(uint8_t ep)
 static inline void usb_event_in_handler(uint8_t ep)
 {
 	struct tlx_usbd_ep_ctx *ep_ctx = endpoint_ctx(ep);
-	unsigned short xfered_len = usb0hw_get_epin_len(USB_EP_GET_IDX(ep));
 
 	ep_ctx->cfg.cb(ep, USB_DC_EP_DATA_IN);
 
@@ -538,8 +536,6 @@ static inline void usb_event_ep_retry_handler(uint8_t ep)
 
 static void usb_event_reset_handler(void)
 {
-	uint32_t i;
-
 	usb0hw_reset();
 	usb0hw_read_ep_data(USBD_EP0_IDX, endpoint_ctx(USBD_EP0_IDX)->buf.data,
 				endpoint_ctx(USBD_EP0_IDX)->cfg.max_sz);
@@ -596,7 +592,6 @@ static inline void usb_irq_out(void)
 			
 			if (doepint & FLD_USB_DOEPINT_XFERCOMPL) {
 				usb0hw_clear_doepint(ep_num, FLD_USB_DOEPINT_XFERCOMPL);
-				unsigned int len = usb0hw_get_epout_len(ep_num);
 				submit_usbd_event(USBD_EVT_OUT_COMPLETE,
 						USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
 			}
@@ -745,7 +740,6 @@ void usbd_ep_clear_stall(const unsigned char ep)
 int usb_dc_attach(void)
 {
 	struct tlx_usbd_ctx *ctx = get_usbd_ctx();
-	uint32_t i;
 
 	if (ctx->attached) {
 		return 0;
@@ -848,7 +842,7 @@ int usb_dc_set_address(const uint8_t addr)
 void usb_dc_set_status_callback(const usb_dc_status_callback cb)
 {
 	get_usbd_ctx()->status_cb = cb;
-	LOG_DBG("status cb(0x%X)", cb);
+	LOG_DBG("status cb(%p)", cb);
 }
 
 /**
@@ -1476,7 +1470,6 @@ int usb_dc_wakeup_request(void)
 static void usbd_work_handler(struct k_work *item)
 {
 	struct tlx_usbd_ctx *ctx;
-	struct tlx_usbd_ep_ctx *ep_ctx;
 	struct usbd_event *ev;
 
 	ctx = CONTAINER_OF(item, struct tlx_usbd_ctx, usb_work);

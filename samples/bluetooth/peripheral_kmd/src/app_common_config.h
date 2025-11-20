@@ -1,30 +1,12 @@
-/********************************************************************************************************
- * @file    app_common_config.h
- *
- * @brief   This is the header file for BLE SDK
- *
- * @author  BLE GROUP
- * @date    06,2022
- *
- * @par     Copyright (c) 2022, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
- *
- *          Licensed under the Apache License, Version 2.0 (the "License");
- *          you may not use this file except in compliance with the License.
- *          You may obtain a copy of the License at
- *
- *              http://www.apache.org/licenses/LICENSE-2.0
- *
- *          Unless required by applicable law or agreed to in writing, software
- *          distributed under the License is distributed on an "AS IS" BASIS,
- *          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *          See the License for the specific language governing permissions and
- *          limitations under the License.
- *
- *******************************************************************************************************/
+/** @file app_common_config.h
+ *  @brief
+ */
 
-// #include "config.h"
-// //#include "types.h"
-// #include "bit.h"
+/*
+ * Copyright (c) 2025 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 ///////////////////////// flash address Configuration////////////////////////////////////////////////
 #define P24G_OTHER_INF_FLASH_ADDR_1M  0xFE000    //4K
@@ -75,9 +57,8 @@
 /////////////////////////////////////////////////////////////////////////
 #define TLKAPI_DEBUG_ENABLE         0
 
-#define DBG_2P4G_IO_EN              1 //2.4G global gpio debug control
-#define STACK_IO_EN                 1 //stack
-#define APP_IO_EN                   1 //app
+#define DBG_2P4G_IO_EN              0 //2.4G global gpio debug control
+#define APP_IO_EN                   0
 
 #define DBG_GPIO_NOOP()             do {} while(0)
 #if (DBG_2P4G_IO_EN)
@@ -96,28 +77,11 @@
                 gpio_toggle(pin);                   \
             }                                       \
         } while(0)
-
-    #define DBG_STACK_GPIO_SET_LEVEL(en, pin, level) \
-        do {                                         \
-            if (en && (pin)) {                       \
-                gpio_set_level(pin, level);          \
-            }                                        \
-        } while(0)
-
-    #define DBG_STACK_GPIO_TOGGLE(en, pin)          \
-        do {                                        \
-            if (en && (pin)) {                      \
-                gpio_toggle(pin);                   \
-            }                                       \
-        } while(0)
 #else
 
     #define DBG_GPIO_SET_LEVEL(en, pin, level)       DBG_GPIO_NOOP()
     #define DBG_GPIO_TOGGLE(en, pin)                 DBG_GPIO_NOOP()
-    #define DBG_STACK_GPIO_SET_LEVEL(en, pin, level) DBG_GPIO_NOOP()
-    #define DBG_STACK_GPIO_TOGGLE(en, pin)           DBG_GPIO_NOOP()
 #endif
-
 
 
 typedef enum {
@@ -125,7 +89,6 @@ typedef enum {
     KB_MODE_BLE                         =   1,
     KB_MODE_USB                         =   2,
 } kb_mode_t;
-
 
 typedef enum
 {
@@ -224,7 +187,7 @@ typedef enum {
     DEVICE_TYPE_KB                      =   BIT(0),
     DEVICE_TYPE_MS                      =   BIT(1),
 
-};
+} p24G_enum_Type;
 
 typedef enum
 {

@@ -1,9 +1,9 @@
-/** @file
- *  @brief HoG Service sample
+/** @file app_public.h
+ *  @brief
  */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,7 +16,7 @@ extern "C" {
 #include "hog.h"
 #include "app_usb.h"
 #include "app_ble.h"
-#include "app_24g.h"
+#include "app_2p4g.h"
 #include "app_battery.h"
 #include "app_kb_matrix.h"
 #include "app_alg_keyscan.h"
@@ -51,20 +51,11 @@ extern pl_fifo_t d25fSppTxFifo;
 
 extern void mb_irq_handler(void);
 
-//ZH_TODO
 typedef struct
 {
     uint32_t side_id; //4
 
-    // unsigned char key[12];//12
-
     uint8_t peer_addr[MAC_ADDR_LEN];//6
-
-    // unsigned char mode;
-    // unsigned char mast_id;
-    // unsigned short temp1; //24
-
-    // unsigned char  temp2[8]; //32
 
 } ST_FLASH_DEV_INFO;
 extern ST_FLASH_DEV_INFO flash_dev_info;
@@ -82,27 +73,8 @@ extern ST_FLASH_DEV_OTHER_INFO flash_dev_other_info;
 extern int dev_other_info_idx;
 extern uint32_t  flash_sector_2p4_other_inf;
 
-//
-
-// #define TLK_ERR_BASE_NUM                                    (0x0)    /**< Global error base */
-
-// #define TLK_SUCCESS                                         (TLK_ERR_BASE_NUM + 0)    /**< Successful command */
-// #define TLK_ERR_NULL                                        (TLK_ERR_BASE_NUM + 1)    /**< Null pointer */
-// #define TLK_ERR_INVALID_PARAM                               (TLK_ERR_BASE_NUM + 2)    /**< Invalid parameter */
-// #define TLK_ERR_BUSY                                        (TLK_ERR_BASE_NUM + 3)    /**< Device or resourse Busy */
-// #define TLK_ERR_INVALID_STATE                               (TLK_ERR_BASE_NUM + 4)    /**< Invalid state, operation disallowed in this state */
-// #define TLK_ERR_BUFFER_EMPTY                                (TLK_ERR_BASE_NUM + 5)    /**< Buffer/FIFO is empty */
-// #define TLK_ERR_NO_MEM                                      (TLK_ERR_BASE_NUM + 6)    /**< No memory available for operation */
-// #define TLK_ERR_INVALID_LENGTH                              (TLK_ERR_BASE_NUM + 7)    /**< Invalid length */
-// #define TLK_ERR_TIMEOUT                                     (TLK_ERR_BASE_NUM + 8)    /**< Operation timed out */
-// #define TLK_ERR_INTERNAL                                    (TLK_ERR_BASE_NUM + 9)    /**< Internal error */
-// #define TLK_ERR_DEV_NOT_FOUND                               (TLK_ERR_BASE_NUM + 10)   /**< Destination device not found */
-// #define TLK_ERR_CMD_NOT_SUPPORT                             (TLK_ERR_BASE_NUM + 11)   /**< cmd not supported */
-// #define TLK_ERR_BUFFER_FULL                                 (TLK_ERR_BASE_NUM + 12)   /**< Buffer/FIFO is full */
-
-
-#define   LED_IS_ON  0
-#define   LED_IS_OFF 1
+#define LED_IS_ON  0
+#define LED_IS_OFF 1
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 #define PRESS_T_FN_FLAG      0X01
@@ -169,7 +141,7 @@ enum {
 
 typedef struct{
 
-    unsigned char nk[8];//normal key 
+    unsigned char nk[8];  //normal key 
         
     unsigned char tk_bits[ALL_KEY_BUF_SIZE];  //total key
     unsigned char nk_bits[ALL_KEY_BUF_SIZE];  //all_key
@@ -177,7 +149,7 @@ typedef struct{
 
     unsigned char press_cnt;
     unsigned char cnt;
-    unsigned char ck; // consume_key
+    unsigned char ck;  // consume_key
     unsigned char sk;  //system_key
         
     unsigned int special_key_press_f;
@@ -193,11 +165,13 @@ extern struct gpio_dt_spec toggle_pin;
 extern volatile uint32_t user_active_disconnect;
 extern volatile unsigned char fun_mode;
 extern struct gpio_dt_spec vbus_check_pin;
+
 void key_fifo(unsigned char key_code);
+
 unsigned char proc_hotkey(unsigned char key_code);
+
 unsigned char special_key_press_flag_set(unsigned char key_code);
 
-//ZH_TODO
 /**
  * @brief   read flash information
  * @param[in]   s_addr    - the base address of flash.
@@ -226,18 +200,36 @@ static _always_inline int tick1_exce_tick2(uint32_t tick1, uint32_t tick2)
     return (uint32_t)(tick1 - tick2) < BIT(30);
 }
 
+void app_proc_before_sleep(void);
+
+void app_proc_after_sleep(void);
+
+void user_timer_init(void);
+
+void key_data_handle(void);
 
 void special_key_event_handle(void);
-int keyboard_comm_init(void);
+
+void app_clock_init(app_clock_config_e select);
+
+void keyboard_comm_init(void);
+
 void app_ble_report_to_client(void);
+
 void public_loop(void);
+
 void k_timer_scan_loop_init(void);
+
+void app_pc_kb_led_status(unsigned char status);
+
 #if USE_K_TIMER_SCAN_MATRIX
 _attribute_ram_code_sec_ void keyscan_loop(struct k_work *work);
 #else
 _attribute_ram_code_sec_ void keyscan_loop(void);
 #endif
+
 void start_change_ble_pipe_by_delay_work(void);
+
 _attribute_ram_code_sec_noinline_ void app_ble_main_loop(void);
 
 static inline kb_mode_t  app_get_kb_mode(void)

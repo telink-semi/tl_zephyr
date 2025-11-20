@@ -63,7 +63,7 @@ void pm_retention_register_recover(void){
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X && CONFIG_USB_TELINK_TLX
 	/* Check Clock value for USB0. */
-	#if DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) < CLK_96MHZ
+	#if DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) < CLK_48MHZ
 		#error "USB0 digital voltage must be 1.1V and HCLK min's 48M"
 	#endif
 #endif
@@ -237,6 +237,7 @@ static int soc_tlx_init(void)
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 		PLL_192M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;

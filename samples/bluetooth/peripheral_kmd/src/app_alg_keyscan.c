@@ -1,7 +1,9 @@
-/* main.c - Application main entry point */
+/** @file app_alg_keyscan.c
+ *  @brief
+ */
 
 /*
- * Copyright (c) 2016 Intel Corporation
+ * Copyright (c) 2025 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -45,9 +47,6 @@ LOG_MODULE_REGISTER(alg_keyscan);
 #define KEYSCAN_ADC_BUFFER_SIZE (BUFFER_SIZE / 4)
 short adc0_buffer[KEYSCAN_ADC_BUFFER_SIZE] = {0}, adc1_buffer[KEYSCAN_ADC_BUFFER_SIZE] = {0};
 _attribute_aligned_(4)  unsigned short adc_buffer[KEYSCAN_ADC_BUFFER_SIZE*2] = {0};
-
-
-
 
 
 #define TOTAL_ROW                       														8
@@ -147,24 +146,15 @@ unsigned char key_scan(void)
         }
         debug_print_keyscan("\r\n");
         #endif
-       // TODO: key_data_handle();
-        //print_app_public("special_key_press_f=%d\r\n",app_key_buf.special_key_press_f);
-       // TODO:  special_key_event_handle();
+        // key_data_handle();
+        // print_app_public("special_key_press_f=%d\r\n",app_key_buf.special_key_press_f);
+        // special_key_event_handle();
      }
 
     return has_new_key_event;
 }
 #endif
 
-
 #if DIGIT_KEYSCAN_FUN_ENABL
-
-
-
-
-
-
-
-
 
 #endif
