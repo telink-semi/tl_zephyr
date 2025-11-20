@@ -141,21 +141,15 @@ manifest:
       groups:
         - hal
     - name: hal_telink
-      url: git@192.168.48.36:src/open_platform/telink_hal_zephyr_src.git
-      revision: e2a60458c7bb103b298455af7a31b0c26ef913dc
+      url: git@github.com:telink-semi/hal_telink.git
+      revision: 9df5ff319e923f11c04d28a19e81452aa1791eba
       path: modules/hal/telink
       groups:
         - hal 
     - name: tl_ble_sdk
-      url: git@192.168.48.36:sdk_app/ble/tl_ble_sdk.git
-      revision: 627ce1365e2ed2dd0bbd5f7a9d78d596b02b898f
+      url: git@github.com:telink-semi/tl_ble_sdk.git
+      revision: 74d355e3780b332ff5eeac631a8e31a533ce6501
       path: modules/hal/telink/tl_ble_sdk
-      groups:
-        - hal
-    - name: tl_ble_src
-      url: git@192.168.48.36:src/ble/telink_b91m_ble_multi_connection_src.git
-      revision: 9090f6c9bcbd5f2aa80900b5ba8f01ad283898d9
-      path: modules/hal/telink/tl_ble_src
       groups:
         - hal
     - name: hal_ti
@@ -205,7 +199,8 @@ manifest:
       groups:
         - crypto
     - name: mcuboot
-      revision: 1558e7ab0aadb4eac11f03befb5ccd3fa3f0aafe
+      url: git@github.com:telink-semi/mcuboot.git
+      revision: 3b46cd5423b3fd2d3fdfe41111025f439db23117
       path: bootloader/mcuboot
     - name: mipi-sys-t
       path: modules/debug/mipi-sys-t
