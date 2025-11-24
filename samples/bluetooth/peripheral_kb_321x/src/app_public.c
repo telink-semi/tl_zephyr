@@ -655,6 +655,7 @@ static int peripheral_comm_init(void)
     }
     LOG_INF("configure led_24g_pin io ok\n");
 
+    
 #endif
 
     if (!gpio_is_ready_dt(&led_ble_pin)) {
@@ -755,6 +756,9 @@ _attribute_ram_code_sec_ void keyscan_loop(struct k_work *work)
 _attribute_ram_code_sec_ void keyscan_loop(void)
 #endif
 {
+#if TOGGLE_DEBUG_IO_ENABLE
+    gpio_pin_set_dt(&toggle_pin, 1);
+#endif
 #if USB_APP_FUN_ENABLE
     if (fun_mode == KB_MODE_USB /*&& vbus_status == 1*/)// TODO: vbus_status
     {
@@ -763,21 +767,15 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
 #endif
 
 #if  DIGIT_KEYSCAN_FUN_ENABL
-     #if TOGGLE_DEBUG_IO_ENABLE
-     gpio_pin_set_dt(&toggle_pin, 1);
-     #endif
-     /*
-      * hw digital keyscan 1.3us
-      * sw digital keyscan 96M 88us    192M 47us
-      */
      digit_keyscan_handle();
-     #if TOGGLE_DEBUG_IO_ENABLE
-     gpio_pin_set_dt(&toggle_pin, 0);
-     #endif
 #endif
     if(app_get_kb_mode() == KB_MODE_2P4G) {
          d24_main_loop();
     }
+#if TOGGLE_DEBUG_IO_ENABLE
+    gpio_pin_set_dt(&toggle_pin, 0);
+#endif
+    gpio_pin_toggle_dt(&toggle_pin);
 }
 
 
@@ -787,6 +785,8 @@ _attribute_ram_code_sec_ void keyscan_loop(void)
     static uint32_t last_time = 0;
 
     loop_cnt++;
+
+    keyscan_loop();
 
     if(app_get_kb_mode() == KB_MODE_BLE)
     {

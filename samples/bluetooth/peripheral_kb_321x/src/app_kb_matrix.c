@@ -136,7 +136,7 @@ void digit_keyscan_init(void)
     k_timer_start(&scan_timer, K_MSEC(SCAN_INTERVAL_MS), 
                   K_MSEC(SCAN_INTERVAL_MS));
 #else
-    user_timer_init();
+    //user_timer_init();
 #endif
 
      LOG_INF("Matrix keyscan init\n");
