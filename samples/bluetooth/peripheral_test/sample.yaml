@@ -1,17 +1,18 @@
 sample:
-  name: Bluetooth Peripheral HT
-  description: Demonstrates the HT (Health Thermometer) GATT Service
+  name: Bluetooth Peripheral HIDs
+  description: Bluetooth Low Energy HID-over-GATT service sample
 tests:
-  sample.bluetooth.peripheral_ht:
+  sample.bluetooth.peripheral_hids:
     harness: bluetooth
-    platform_allow: qemu_cortex_m3 qemu_x86 nrf51dk_nrf51422 nrf52dk_nrf52832
+    platform_allow: qemu_x86
     tags: bluetooth
     integration_platforms:
-      - qemu_cortex_m3
-  sample.bluetooth.peripheral_ht.frdm_kw41z_shield:
+      - qemu_x86
+  sample.bluetooth.peripheral_hids.no_authentication:
     harness: bluetooth
-    platform_allow: mimxrt1020_evk mimxrt1050_evk mimxrt1060_evk frdm_k64f
+    extra_configs:
+      - CONFIG_SAMPLE_BT_USE_AUTHENTICATION=n
+    platform_allow: qemu_x86
     tags: bluetooth
-    extra_args: SHIELD=frdm_kw41z
     integration_platforms:
-      - mimxrt1020_evk
+      - qemu_x86
