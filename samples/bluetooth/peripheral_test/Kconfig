@@ -1,16 +1,13 @@
-# Copyright (c) 2021 Nordic Semiconductor ASA
+# Copyright 2023 Google LLC
 # SPDX-License-Identifier: Apache-2.0
 
-mainmenu "Bluetooth: Peripheral HT"
+mainmenu "Bluetooth: Peripheral HIDs"
 
-if HAS_HW_NRF_TEMP
-
-config SENSOR
+config SAMPLE_BT_USE_AUTHENTICATION
+	bool "Enable passkey authentication"
 	default y
-
-config TEMP_NRF5
-	default y
-
-endif # HAS_HW_NRF_TEMP
+	help
+	  Enable the passkey authentication callback and register the GATT
+	  read and and write attributes as authentication required.
 
 source "Kconfig.zephyr"
