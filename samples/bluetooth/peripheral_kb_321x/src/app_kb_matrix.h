@@ -311,7 +311,7 @@ void digital_keyscan_init(void);
 //////////////////////////////////////////K_timer scan///////////////////////////////////////////
 
 
-#define SCAN_INTERVAL_MS 1      // 扫描间隔5ms
+#define SCAN_INTERVAL_MS 5      // 扫描间隔5ms
 #define DEBOUNCE_COUNT   1        // 消抖计数4次(20ms)
 
 #define USE_K_TIMER_SCAN_MATRIX		0
