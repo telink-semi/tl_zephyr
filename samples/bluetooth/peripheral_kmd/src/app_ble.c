@@ -65,7 +65,7 @@ struct bt_le_adv_param adv_param = {
 	.options = (BT_LE_ADV_OPT_CONNECTABLE |BT_LE_ADV_OPT_USE_NAME |
 				BT_LE_ADV_OPT_ONE_TIME |BT_LE_ADV_OPT_FORCE_NAME_IN_AD),
 	.interval_min = 0x0020, /* 20 ms */
-	.interval_max = 0x0020, /* 20 ms */
+	.interval_max = 0x0040, /* 20 ms */
 	.peer = NULL,
 };
 
