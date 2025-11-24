@@ -33,20 +33,20 @@ enum {
 static uint8_t ctrl_point;
 
 /*! HID Report Type/ID and attribute handle map */
-static const struct hid_report_id_map_t hid_app_report_id_set[] = {
-	/* type                       ID                            handle */
-	{HID_REPORT_TYPE_INPUT,       HIDS_MOUSE_INPUT_REPORT_ID,    HID_INPUT_REPORT_1_HDL},  /* Mouse Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_KEYBOARD_INPUT_REPORT_ID, HID_INPUT_REPORT_2_HDL},     /* Keyboard Input Report */
-	{HID_REPORT_TYPE_OUTPUT,      HIDS_KEYBOARD_INPUT_REPORT_ID, HID_OUTPUT_REPORT_HDL},      /* Keyboard Output Report */
-	{HID_REPORT_TYPE_FEATURE,     HIDS_KEYBOARD_INPUT_REPORT_ID, HID_FEATURE_REPORT_HDL},     /* Keyboard Feature Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_CONSUMER_INPUT_REPORT_ID, HID_INPUT_REPORT_3_HDL},     /* consumer Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_SYSTEM_INPUT_REPORT_ID ,  HID_INPUT_REPORT_4_HDL},     /* system Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_ALL_KEY_INPUT_REPORT_ID , HID_INPUT_REPORT_5_HDL},    /* kb all key Input Report */
-	{HID_REPORT_TYPE_INPUT,       HIDS_VENDOR_INPUT_REPORT_ID ,  HID_INPUT_REPORT_6_HDL},    /* kb all key Input Report */
-	{HID_REPORT_TYPE_INPUT,       HID_KEYBOARD_BOOT_ID,          HID_KEYBOARD_BOOT_IN_HDL},   /* Boot Keyboard Input Report */
-	{HID_REPORT_TYPE_OUTPUT,      HID_KEYBOARD_BOOT_ID,          HID_KEYBOARD_BOOT_OUT_HDL},  /* Boot Keyboard Output Report */
-	{HID_REPORT_TYPE_INPUT,       HID_MOUSE_BOOT_ID,             HID_MOUSE_BOOT_IN_HDL},      /* Boot Mouse Input Report */
-};
+// static const struct hid_report_id_map_t hid_app_report_id_set[] = {
+// 	/* type                       ID                            handle */
+// 	{HOG_REPORT_TYPE_INPUT,       HIDS_MOUSE_INPUT_REPORT_ID,    HID_INPUT_REPORT_1_HDL},  /* Mouse Input Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HIDS_KEYBOARD_INPUT_REPORT_ID, HID_INPUT_REPORT_2_HDL},     /* Keyboard Input Report */
+// 	{HOG_REPORT_TYPE_OUTPUT,      HIDS_KEYBOARD_INPUT_REPORT_ID, HID_OUTPUT_REPORT_HDL},      /* Keyboard Output Report */
+// 	{HOG_REPORT_TYPE_FEATURE,     HIDS_KEYBOARD_INPUT_REPORT_ID, HID_FEATURE_REPORT_HDL},     /* Keyboard Feature Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HIDS_CONSUMER_INPUT_REPORT_ID, HID_INPUT_REPORT_3_HDL},     /* consumer Input Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HIDS_SYSTEM_INPUT_REPORT_ID ,  HID_INPUT_REPORT_4_HDL},     /* system Input Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HIDS_ALL_KEY_INPUT_REPORT_ID , HID_INPUT_REPORT_5_HDL},    /* kb all key Input Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HIDS_VENDOR_INPUT_REPORT_ID ,  HID_INPUT_REPORT_6_HDL},    /* kb all key Input Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HID_KEYBOARD_BOOT_ID,          HID_KEYBOARD_BOOT_IN_HDL},   /* Boot Keyboard Input Report */
+// 	{HOG_REPORT_TYPE_OUTPUT,      HID_KEYBOARD_BOOT_ID,          HID_KEYBOARD_BOOT_OUT_HDL},  /* Boot Keyboard Output Report */
+// 	{HOG_REPORT_TYPE_INPUT,       HID_MOUSE_BOOT_ID,             HID_MOUSE_BOOT_IN_HDL},      /* Boot Mouse Input Report */
+// };
 
 static uint8_t hid_report_map[] = {
  //keyboard report in
@@ -218,53 +218,53 @@ struct _bt_gatt_ccc hid_ccc[5];
 /* HID Input Report Reference - ID, Type */
 const struct hids_report hid_val_irep1_id_map = {
 	.id = HIDS_MOUSE_INPUT_REPORT_ID,
-	.type = HID_REPORT_TYPE_INPUT,
+	.type = HOG_REPORT_TYPE_INPUT,
 };
 
 /* HID Input Report Reference - ID, Type */
 const struct hids_report hid_val_irep2_id_map = {
 	.id = HIDS_KEYBOARD_INPUT_REPORT_ID,
-	.type = HID_REPORT_TYPE_INPUT,
+	.type = HOG_REPORT_TYPE_INPUT,
 };
 
 /* HID Input Report Reference - ID, Type */
 const struct hids_report hid_val_irep3_id_map = {
 	.id = HIDS_CONSUMER_INPUT_REPORT_ID,
-	.type = HID_REPORT_TYPE_INPUT,
+	.type = HOG_REPORT_TYPE_INPUT,
 };
 
 /* HID Input Report Reference - ID, Type */
 const struct hids_report hid_val_irep4_id_map = {
 	.id = HIDS_SYSTEM_INPUT_REPORT_ID,
-	.type = HID_REPORT_TYPE_INPUT,
+	.type = HOG_REPORT_TYPE_INPUT,
 };
 
 /* HID Input Report Reference - ID, Type */
 const struct hids_report hid_val_irep5_id_map = {
 	.id = HIDS_ALL_KEY_INPUT_REPORT_ID,
-	.type = HID_REPORT_TYPE_INPUT,
+	.type = HOG_REPORT_TYPE_INPUT,
 };
 
 /* HID Input Report Reference - ID, Type */
 const struct hids_report hid_val_irep6_id_map = {
 	.id = HIDS_VENDOR_INPUT_REPORT_ID,
-	.type = HID_REPORT_TYPE_INPUT,
+	.type = HOG_REPORT_TYPE_INPUT,
 };
 
 /* HID Output Report Reference - ID, Type */
 const struct hids_report hid_val_orep_id_map = {
 	.id = 0x0a,
-	.type = HID_REPORT_TYPE_OUTPUT,
+	.type = HOG_REPORT_TYPE_OUTPUT,
 };
 
 /* HID Feature Report Reference - ID, Type */
 const struct hids_report hid_val_frep_id_map = {
 	.id = 0x00,
-	.type = HID_REPORT_TYPE_FEATURE,
+	.type = HOG_REPORT_TYPE_FEATURE,
 };
 
 /* HID Protocol Mode Value */
-static uint8_t hid_pm_val = HID_PROTOCOL_MODE_REPORT;
+static uint8_t hid_pm_val = HOG_PROTOCOL_MODE_REPORT;
 static const uint16_t hid_len_pm_val = sizeof(hid_pm_val);
 
 static uint8_t bt_attr_get_id(const struct bt_gatt_attr *attr);
@@ -325,7 +325,7 @@ static ssize_t read_report_value(struct bt_conn *conn,
 			   const struct bt_gatt_attr *attr, void *buf,
 			   uint16_t len, uint16_t offset)
 {
-	struct hid_report_id_map_t *p_id_map;
+	//struct hid_report_id_map_t *p_id_map;
 
 	if (offset > HID_MAX_REPORT_LEN)
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
@@ -346,10 +346,9 @@ static ssize_t write_report_value(struct bt_conn *conn,
 				const void *buf, uint16_t len, uint16_t offset,
 				uint8_t flags)
 {
-	struct hid_report_id_map_t *p_id_map;
+	// struct hid_report_id_map_t *p_id_map;
 
 	printk("write_report_value: len %d\r\n", len);
-	printk("write_report_value: buf[0] %x\r\n");
 
 	if (offset + len > HID_MAX_REPORT_LEN)
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
@@ -561,7 +560,7 @@ uint8_t hid_get_ccc_table_value(uint16_t handle)
 int hid_send_input_report(struct bt_conn *conn, uint8_t report_id, uint8_t *p_value, uint16_t len)
 {
 	#if 0
-	uint16_t handle = hid_get_report_handle(HID_REPORT_TYPE_INPUT, report_id);
+	uint16_t handle = hid_get_report_handle(HOG_REPORT_TYPE_INPUT, report_id);
 
 	if ((handle != 0) && hid_ccc_is_enabled(handle+1))
 		return bt_gatt_notify(conn, &attrs[handle], p_value, len);

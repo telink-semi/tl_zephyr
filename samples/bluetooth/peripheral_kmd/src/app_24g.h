@@ -365,8 +365,15 @@ static inline void app_d24p_set_state(p24g_device_status_e state)
  */
 void app_2p4g_clock_reover(void);
 
+void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag);
 
-
+/**
+ * @brief       user initialization when MCU power on or wake_up from deepSleep mode
+ * @param[in]   none
+ * @return      none
+ */
+void p24g_user_init_normal(void);
+void app_clock_init(app_clock_config_e select);
 #ifdef __cplusplus
 extern "C" {
 #endif

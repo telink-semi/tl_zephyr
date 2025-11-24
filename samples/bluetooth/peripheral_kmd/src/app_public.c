@@ -39,7 +39,6 @@ static unsigned char last_fun_mode = 1;
 unsigned char  mode_pin_level = 0;
 
 unsigned char  g_report_rate_pin_level=0;
-static unsigned char  g_last_report_rate_pin_level=0;
 
 extern struct bt_conn *connected_handle;
 volatile uint32_t user_active_disconnect = 0;
@@ -535,10 +534,9 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             {
                 if(fun_mode==KB_MODE_2P4G)
                 {
-                    uint8_t ret = app_2p4g_set_stack_report_rate(REPORT_RATE_8K);
+                    ret = app_2p4g_set_stack_report_rate(REPORT_RATE_8K);
 
                     if (TLK_SUCCESS == ret) {
-                        //LOG_INF("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
                         LOG_INF("report rate change()...\n");
                     } else {
                         LOG_INF("report rate change failed(ret %d)\n", ret);
@@ -551,10 +549,9 @@ _attribute_ram_code_sec_noinline_ void special_key_event_handle(void)
             {
                 if(fun_mode==KB_MODE_2P4G)
                 {
-                    uint8_t ret = app_2p4g_set_stack_report_rate(REPORT_RATE_125);
+                    ret = app_2p4g_set_stack_report_rate(REPORT_RATE_125);
 
                     if (TLK_SUCCESS == ret) {
-                        //LOG_INF("report rate change(%s)...\n", g_last_report_rate_pin_level ? "8k" : "125");
                         LOG_INF("report rate change...\n");
                     } else {
                         LOG_INF("report rate change failed(ret %d)\n", ret);
@@ -850,7 +847,7 @@ _attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
 }
 
 
-static void peripheral_comm_init(void)
+static int peripheral_comm_init(void)
 {
     int ret;
 
@@ -863,7 +860,7 @@ static void peripheral_comm_init(void)
     ret = nvs_mount(&user_fs);
     if (ret) {
         LOG_INF("Error: NVS init failed: %d\n", ret);
-        return;
+        return -ENODEV;
     }
     LOG_INF("NVS initialized successfully.\n");
 
@@ -948,9 +945,11 @@ static void peripheral_comm_init(void)
         memcpy(app_ctx.mac, mac_public, MAC_ADDR_LEN);
         p24g_pairing_info_check();
     }
+
+    return 0;
 }
 
-extern void mb_irq_handler(void);
+
 static int soc_tlx_mcc_init(void)
 {
     IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
@@ -961,6 +960,7 @@ static int soc_tlx_mcc_init(void)
 
 	ske_dig_en();
 
+    return 0;
 }
 
 

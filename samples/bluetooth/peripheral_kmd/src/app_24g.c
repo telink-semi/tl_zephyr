@@ -13,7 +13,8 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
-
+#include <zephyr/drivers/flash.h>
+#include <zephyr/fs/nvs.h>
 #include <zephyr/settings/settings.h>
 
 #include "app_24g.h"
@@ -52,7 +53,18 @@ volatile p24g_device_status_e last_connect_status = STATE_NONE;
 volatile unsigned int tick_status;
 app_ctx_t app_ctx;
 
+_attribute_ram_code_sec_ static uint32_t fnv1a_hash(const uint8_t *data, size_t len) 
+{
+    uint32_t hash = 0x811C9DC5;
+    
+    for (size_t i = 0; i < len; i++) {
+        hash ^= data[i];
+        hash = hash + (hash << 24) + (hash << 8) + (hash << 5);
+        hash ^= (hash >> 16);//Avalanche Effect
+    }
 
+    return hash;
+}
 
 //ZH_TODO
 _attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag)
@@ -631,14 +643,14 @@ static void app_p24g_send_info_2_n22(void)
 }
 
 
-static void app_debug_io_init(void)
-{
-#if (ALG_KEYSCAN_APP_FUN_ENABLE && APP_IO_EN)
-    gpio_function_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
-    gpio_output_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
-    gpio_input_dis(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
-#endif
-}
+// static void app_debug_io_init(void)
+// {
+// #if (ALG_KEYSCAN_APP_FUN_ENABLE && APP_IO_EN)
+//     gpio_function_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
+//     gpio_output_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
+//     gpio_input_dis(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
+// #endif
+// }
 
 /**
  * @brief       user initialization when MCU power on or wake_up from deepSleep mode
@@ -794,6 +806,7 @@ _attribute_ram_code_sec_ void app_pp_check_connect_status(void)
 }
 
 #define SPP_TEST_EN 0
+#if SPP_TEST_EN
 uint8_t spp_buf[16] = {0x0, 0x13, 0x34, 0x45, 0x56, 0x67, 0x78, 0x89};
 _attribute_ram_code_sec_ static void app_spp_send_data(void)
 {
@@ -806,7 +819,7 @@ _attribute_ram_code_sec_ static void app_spp_send_data(void)
     }
     spp_buf[0]++;
 }
-
+#endif
 _attribute_ram_code_sec_ void app_timer1_irq_handler(void)
 {
     if (timer_get_irq_status(FLD_TMR1_MODE_IRQ)) {

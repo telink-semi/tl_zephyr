@@ -50,6 +50,8 @@ void ble_init(void);
 void ble_start_pairing_delayed_work_handler(struct k_work *work);
 void start_pairing_by_delay_work(void);
 void app_ble_report_to_client(void);
+void disconnect_current_connection(void);
+void save_ble_app_info(void);
 #ifdef __cplusplus
 }
 #endif

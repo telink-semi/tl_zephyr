@@ -197,32 +197,7 @@ void key_fifo(unsigned char key_code);
 unsigned char proc_hotkey(unsigned char key_code);
 unsigned char special_key_press_flag_set(unsigned char key_code);
 
-//ZH_TODO
-/**
- * @brief   read flash information
- * @param[in]   s_addr    - the base address of flash.
- * @param[in]   len     - the length(in byte, must be above 0) of content needs to read out from the page.
- * @param[out]  d_addr     - the start address of the buffer(ram address). 
- * @return  The offset address of the last data
- */
-
-int flash_info_load(unsigned int s_addr, unsigned char *d_addr,  int len);
-
-
-/**
- * @brief   save data to flash
- * @param[in]   addr    - the base address of flash.
- * @param[in]   len     - the length(in byte, must be above 0) of content needs to read out from the page.
- * @param[in]   buf     - data  buffer(ram address)
- * @param[in,out]  offset     - The offset address of the last data
- * @return  1: success  ,other: fail
- */
-
-_attribute_ram_code_sec_ int save_data_to_flash(unsigned long addr, int len, unsigned char *buf,int *offset);
-uint32_t fnv1a_hash(uint8_t *data, size_t len);
-
-//
-
+extern void mb_irq_handler(void);
 
 void special_key_event_handle(void);
 int keyboard_comm_init(void);
@@ -245,6 +220,10 @@ static inline kb_mode_t  app_get_kb_mode(void)
     return fun_mode;
     #endif
 }
+
+extern void mcc_d25f_service_init(void);
+
+void app_pc_kb_led_status(unsigned char status);
 
 #ifdef __cplusplus
 }

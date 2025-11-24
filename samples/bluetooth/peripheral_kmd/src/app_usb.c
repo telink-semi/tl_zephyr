@@ -253,8 +253,8 @@ void app_usb_mode_exit(void)
 _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
 {
     static unsigned char kb[8] = {0, 0, 1, 0, 0, 0, 0, 0};
-    unsigned char  status = 0;
 	#if 0
+    unsigned char  status = 0;
     status=app_usb_ep_is_idle(HID_KEYBOARD_IN_ENDPOINT_NUM);
     if(status!=0)
     {
@@ -270,8 +270,8 @@ _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
 _attribute_ram_code_sec_ int app_all_key_report_to_usb(unsigned char *buf)
 {
     static unsigned char kb[17] ={8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    unsigned char  status = 0;
 	#if 0
+    unsigned char  status = 0;
     status=app_usb_ep_is_idle(HID_KEYBOARD_IN_ENDPOINT_NUM);
     if(status!=0)
     {
@@ -286,8 +286,8 @@ _attribute_ram_code_sec_ int app_all_key_report_to_usb(unsigned char *buf)
 _attribute_ram_code_sec_ int app_consume_key_report_to_usb(unsigned char *buf)
 {
     static unsigned char kb[3]={2,0,0}; // first is report id
-    unsigned char  status = 0;
 	#if 0
+    unsigned char  status = 0;
     status=app_usb_ep_is_idle(HID_KEYBOARD_IN_ENDPOINT_NUM);
     if(status!=0)
     {

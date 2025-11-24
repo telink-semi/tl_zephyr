@@ -41,13 +41,13 @@ struct hids_ccc {
 #define HID_VERSION                   0x0111
 
 /* HID Report Types */
-#define HID_REPORT_TYPE_INPUT         0x01
-#define HID_REPORT_TYPE_OUTPUT        0x02
-#define HID_REPORT_TYPE_FEATURE       0x03
+#define HOG_REPORT_TYPE_INPUT         0x01
+#define HOG_REPORT_TYPE_OUTPUT        0x02
+#define HOG_REPORT_TYPE_FEATURE       0x03
 
 /* HID Protocol Mode Types */
-#define HID_PROTOCOL_MODE_BOOT        0x00
-#define HID_PROTOCOL_MODE_REPORT      0x01
+#define HOG_PROTOCOL_MODE_BOOT        0x00
+#define HOG_PROTOCOL_MODE_REPORT      0x01
 
 /* HID Control Point Values */
 #define HID_CONTROL_POINT_SUSPEND     0x00
