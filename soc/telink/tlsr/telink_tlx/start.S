@@ -26,6 +26,10 @@
     .global     __D25F_N22_RAM_REG
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+	.extern lpd_power_down_protect_enable
+	.extern lpd_power_down_protect_enable_for_deep_ret
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
 
 #include <zephyr/toolchain.h>
 #include <zephyr/devicetree.h>
@@ -193,6 +197,12 @@ _RAMCODE_INIT_BEGIN:
 	j      _RAMCODE_INIT_BEGIN
 
 _START:
+#if 1
+    //Flash Configuration for Chip Power-Down Protection
+    la     t0, lpd_power_down_protect_enable
+    jalr   t0
+#endif
+
 	j      __start
 
 
@@ -327,6 +337,12 @@ _IRAMCODE_INIT_BEGIN:
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE */
 
 _RESTORE:
+#if 1
+    //Flash Configuration for Chip Power-Down Protection
+    la     t0, lpd_power_down_protect_enable_for_deep_ret
+    jalr   t0
+#endif
+
 	j      tl_context_restore
 
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
