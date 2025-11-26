@@ -33,6 +33,13 @@
 #define GET_GPIO(dev)           ((volatile struct gpio_tlx_t *)	\
 				 ((const struct gpio_tlx_config *)dev->config)->gpio_base)
 
+/* Get GPIO IRQ registers address for TL322X and TL323X */
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#define GPIO_IRQ_ADD_OFFSET              (0x108)
+#define GPIO_IRQ_REGS_BASE_ADDR(gpio)    ((gpio) + GPIO_IRQ_ADD_OFFSET)
+#define GET_GPIO_IRQ_REGS(gpio)          ((volatile struct gpio_tlx_irq_regs *)GPIO_IRQ_REGS_BASE_ADDR((uint32_t)gpio))
+#endif
+
 /* Get GPIO IRQ number defined in dts */
 #define GET_IRQ_NUM(dev)        (((const struct gpio_tlx_config *)dev->config)->irq_num)
 
@@ -182,6 +189,17 @@ struct gpio_tlx_t {
 	uint8_t rsvd3;
 	uint8_t rsvd4;
 };
+
+struct gpio_tlx_irq_regs {
+	uint8_t irq0;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq1;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq2;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq3;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq4;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq5;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq6;                 /* IRQ_EN:GPIO interrupt */
+	uint8_t irq7;                 /* IRQ_EN:GPIO interrupt */
+};
 #endif
 
 /* GPIO IRQ configuration structure */
@@ -214,6 +232,7 @@ struct gpio_tlx_retention_data {
 #elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 struct gpio_tlx_retention_data {
 	struct gpio_tlx_t gpio_tlx_periph_config;
+	struct gpio_tlx_irq_regs irq_regs;
 	uint8_t gpio_tlx_irq_conf;
 	uint8_t analog_in_conf;
 	uint8_t analog_pupd_conf[2];
@@ -823,7 +842,8 @@ static int gpio_tlx_port_toggle_bits(const struct device *dev,
 
 /* API implementation: interrupts handler */
 #if IS_INST_IRQ_EN(0) || IS_INST_IRQ_EN(1) || IS_INST_IRQ_EN(2) || \
-	IS_INST_IRQ_EN(3) || IS_INST_IRQ_EN(4)
+	IS_INST_IRQ_EN(3) || IS_INST_IRQ_EN(4) || IS_INST_IRQ_EN(5) || \
+	IS_INST_IRQ_EN(6) || IS_INST_IRQ_EN(7) || IS_INST_IRQ_EN(8)
 static void gpio_tlx_irq_handler(const struct device *dev)
 {
 	struct gpio_tlx_data *data				= dev->data;
@@ -936,6 +956,9 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 	uint8_t irq_num				= GET_IRQ_NUM(dev);
 	uint8_t irq_priority			= GET_IRQ_PRIORITY(dev);
 	struct gpio_tlx_t *gpio			= (struct gpio_tlx_t *)cfg->gpio_base;
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	struct gpio_tlx_irq_regs *gpio_irqs			= (struct gpio_tlx_irq_regs *)GET_GPIO_IRQ_REGS(gpio);
+#endif
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
@@ -999,6 +1022,12 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 				}
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+				memcpy(gpio_irqs,
+					&data->gpio_tlx_retention.irq_regs,
+							sizeof(data->gpio_tlx_retention.irq_regs));
+#endif
+
 				riscv_plic_irq_enable(irq_num);
 				riscv_plic_set_priority(irq_num, irq_priority);
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -1015,10 +1044,18 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 		break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
+	{
 		memcpy(&data->gpio_tlx_retention.gpio_tlx_periph_config, gpio,
 		sizeof(data->gpio_tlx_retention.gpio_tlx_periph_config));
 		data->gpio_tlx_retention.gpio_tlx_irq_conf
 		= reg_gpio_irq_ctrl;
+
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+		memcpy(&data->gpio_tlx_retention.irq_regs,
+				gpio_irqs,
+				sizeof(data->gpio_tlx_retention.irq_regs));
+#endif
+
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 		data->gpio_tlx_retention.risc0_irq_conf
 		= reg_irq_risc0_en(GET_PORT_NUM(gpio));
@@ -1054,7 +1091,8 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 			data->gpio_tlx_retention.analog_pupd_conf[1]
 			= analog_read_reg8(0x0e + (GET_PORT_NUM(gpio) << 1) + 1);
 		}
-		break;
+	}
+	break;
 
 	default:
 		return -ENOTSUP;
