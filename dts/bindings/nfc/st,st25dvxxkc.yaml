@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2025 Telink
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+description: STM ST25DVXXKC IC
+
+compatible: "st,st25dvxxkc"
+
+include: i2c-device.yaml
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: |
+      The INT signal configuration is active-low.

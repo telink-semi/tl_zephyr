@@ -1,0 +1,24 @@
+#
+# Copyright (c) 2023 Telink Semiconductor
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+config ST25DVXXKC
+	bool "ST25DVXXKC NFC driver"
+	default n
+	depends on I2C
+	help
+		Enable I2C-based driver for ST25DVXXKC driver.
+
+if ST25DVXXKC
+
+config ST25DVXXKC_INIT_PRIORITY
+	int "ST25DVXXKC NFC driver init priority"
+	default 75
+
+module = ST25DVXXKC
+module-str = st25xxdvkc
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+
+endif # ST25DVXXKC

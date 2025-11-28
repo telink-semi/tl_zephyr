@@ -5315,6 +5315,15 @@ West:
   labels:
     - "area: Networking"
 
+"West project: nfc_st25dv":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
+    - "area: NFC"
+
 "West project: nrf_hw_models":
   status: maintained
   maintainers:

@@ -12,3 +12,8 @@ manifest:
       url: https://github.com/telink-semi/openthread_telink_lib
       revision: tags/v4.1.1
       path: modules/lib/openthread_telink_lib
+
+    - name: nfc_st25dv
+      url: https://github.com/telink-semi/nfc_st25dv
+      revision: 8854cf1e33f60e85a96e84bf35e442660883324f
+      path: modules/lib/nfc_st25dv
