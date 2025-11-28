@@ -4,6 +4,7 @@
 config TELINK_W91_CORE_HEARTBEAT
 	bool "Telink W91 intercore heartbeat"
 	default y
+	depends on !PM
 	help
 		This option enables Telink W91 heartbeat messages between cores.
 
@@ -11,7 +12,6 @@ if TELINK_W91_CORE_HEARTBEAT
 
 config CORE_HEARTBEAT_TELINK_W91_TIMEOUT_MS
 	int "Heartbeat signal interval, ms"
-	default 10000 if PM
 	default 2000
 	help
 	  This option sets heartbeat timeout in mS.
