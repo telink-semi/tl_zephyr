@@ -154,6 +154,12 @@ jobs:
         cd ..
         west build -b tlsr9528a                  -d build_mcuboot_b92_lzma              bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y
 
+    # Temporary off due to broken sample (modules under license)
+    # - name: Build B92 samples/subsys/nfc
+    #   run: |
+    #     cd ..
+    #     west build -b tlsr9528a                  -d build_nfc_b92                       zephyr/samples/subsys/nfc                                -- -DOVERLAY_CONFIG=boards/st25dv.conf
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -177,6 +183,7 @@ jobs:
         cp ../build_blinky_usb_dfu_b92/zephyr/zephyr.signed.bin     telink_build_artifacts/b92_blinky_usb_dfu.signed.bin
         cp ../build_ot_cli_b92/zephyr/zephyr.bin                    telink_build_artifacts/b92_ot_cli.bin
         cp ../build_crypto_mbedtls_b92/zephyr/zephyr.bin            telink_build_artifacts/b92_mbedtls.bin
+    # cp ../build_nfc_b92/zephyr/zephyr.bin                       telink_build_artifacts/b92_nfc.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

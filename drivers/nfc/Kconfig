@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2025 Telink Semiconductor
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+menu "NFC"
+
+config NFC
+	bool "NFC subsystem"
+	default n
+	help
+		This option enables the NFC subsystem.
+
+if NFC
+	rsource "Kconfig.st25dvxxkc"
+endif # NFC
+
+endmenu
