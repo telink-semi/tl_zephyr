@@ -194,7 +194,7 @@ _RAMCODE_INIT_BEGIN:
 	j      _RAMCODE_INIT_BEGIN
 
 _START:
-#if 1
+#if CONFIG_SOC_RISCV_TELINK_TL323X
     //Flash Configuration for Chip Power-Down Protection
     la     t0, lpd_power_down_protect_enable
     jalr   t0
@@ -320,7 +320,7 @@ _IRAMCODE_INIT_BEGIN:
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE */
 
 _RESTORE:
-#if 1
+#if CONFIG_SOC_RISCV_TELINK_TL323X
     //Flash Configuration for Chip Power-Down Protection
     la     t0, lpd_power_down_protect_enable_for_deep_ret
     jalr   t0
