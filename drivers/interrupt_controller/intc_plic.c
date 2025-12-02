@@ -158,6 +158,12 @@ static ALWAYS_INLINE uint32_t get_irq_cpumask(const struct device *dev, uint32_t
 
 static inline mem_addr_t get_context_en_addr(const struct device *dev, uint32_t cpu_num)
 {
+	/* Avoid accessing PLIC before it is ready */
+    if (!device_is_ready(dev)) {
+        printk("PLIC NOT READY: dev=%p, cpu_num=%u\n", dev, cpu_num);
+        return 0;
+    }
+
 	const struct plic_config *config = dev->config;
 	uint32_t hartid;
 	/*
