@@ -138,6 +138,12 @@ config TELINK_TLX_MATTER_RETENTION_LAYOUT
 	help
 		This option enables support Matter retention layout
 
+config DUAL_MODE
+	bool "Support dual-mode switch"
+	default y
+	help
+		This option enables dual mode
+
 config COMPRESS_LZMA
 	bool "Support LZMA compression"
 	default n
