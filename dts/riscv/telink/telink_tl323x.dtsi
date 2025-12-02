@@ -217,7 +217,7 @@
 			#io-channel-cells = <1>;
 		};
 
-		pinctrl: pinctrl@80140c70 {
+		pinctrl: pinctrl@80140cb0 {
 			compatible = "telink,tlx-pinctrl";
 			reg = <0x80140cb0 0x30
 				   0x80140c06 0x50
