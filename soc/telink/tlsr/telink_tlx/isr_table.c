@@ -19,9 +19,11 @@ uintptr_t __irq_vector_table _irq_vector_table[_IRQ_VECTOR_NUMBER + 1] = {
 void _irq_vector_handler(uint32_t num)
 {
 	struct _isr_table_entry *entry = &_sw_isr_table[CONFIG_2ND_LVL_ISR_TBL_OFFSET + num];
+	uint32_t mie_bkp = csr_read_clear(mie, MIP_MTIP | MIP_MSIP);
 
 	csr_set(mstatus, MSTATUS_IEN);
 	entry->isr(entry->arg);
 	csr_clear(mstatus, MSTATUS_IEN);
+	csr_write(mie, mie_bkp);
 	*(volatile uint32_t *)(_IRQ_VECTOR_PLIC_COMP_ADDR) = num;
 }
