@@ -875,7 +875,6 @@ static int tlx_start_radio(struct tlx_data *tlx)
 #ifdef CONFIG_DYNAMIC_INTERRUPTS
 		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
 				    (void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
-		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
 		if (!tlx_rf_zigbee_250K_mode) {
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
@@ -910,6 +909,7 @@ static int tlx_start_radio(struct tlx_data *tlx)
 			rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
 		}
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
+		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
 		riscv_plic_irq_enable(DT_INST_IRQN(0));
 		rf_set_rxmode();
 		tlx->is_started = true;
@@ -993,9 +993,8 @@ static int tlx_init(const struct device *dev)
 
 	/* init IRQs */
 #ifndef CONFIG_DYNAMIC_INTERRUPTS
-	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), tlx_rf_isr,
-		DEVICE_DT_INST_GET(0), 0);
-	riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
+	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), tlx_rf_isr, DEVICE_DT_INST_GET(0),
+		    0);
 #endif /* not CONFIG_DYNAMIC_INTERRUPTS */
 
 	/* init data variables */
