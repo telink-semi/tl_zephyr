@@ -12,6 +12,20 @@ LOG_MODULE_REGISTER(ot_main, LOG_LEVEL_DBG);
 #include <zephyr/net/openthread.h>
 #include <openthread/thread.h>
 
+static void ot_show_ip6_addr(otInstance *inst)
+{
+	const otNetifAddress *ip6_addr = otIp6GetUnicastAddresses(inst);
+
+	for (const otNetifAddress *addr = ip6_addr; addr; addr = addr->mNext) {
+		if (addr->mValid) {
+			char ip6_str[OT_IP6_ADDRESS_STRING_SIZE];
+
+			otIp6AddressToString(&addr->mAddress, ip6_str, sizeof(ip6_str));
+			LOG_INF("ip: %s", ip6_str);
+		}
+	}
+}
+
 static void ot_satate_changed(otChangedFlags flags,
 	struct openthread_context *ot_context, void *user_data)
 {
@@ -23,6 +37,7 @@ static void ot_satate_changed(otChangedFlags flags,
 				otLinkGetShortAddress(ot_context->instance));
 			LOG_HEXDUMP_INF(otLinkGetExtendedAddress(ot_context->instance),
 				OT_EXT_ADDRESS_SIZE, "OT Extended address:");
+			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_ROUTER:
 			LOG_INF("OT router");
@@ -30,6 +45,7 @@ static void ot_satate_changed(otChangedFlags flags,
 				otLinkGetShortAddress(ot_context->instance));
 			LOG_HEXDUMP_INF(otLinkGetExtendedAddress(ot_context->instance),
 				OT_EXT_ADDRESS_SIZE, "OT Extended address:");
+			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_LEADER:
 			LOG_INF("OT leader");
@@ -37,6 +53,7 @@ static void ot_satate_changed(otChangedFlags flags,
 				otLinkGetShortAddress(ot_context->instance));
 			LOG_HEXDUMP_INF(otLinkGetExtendedAddress(ot_context->instance),
 				OT_EXT_ADDRESS_SIZE, "OT Extended address:");
+			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_DISABLED:
 			LOG_INF("OT disabled");
@@ -51,7 +68,7 @@ static void ot_satate_changed(otChangedFlags flags,
 	}
 }
 
-void main(void)
+int main(void)
 {
 	LOG_INF("***** OpenThread CLI on Zephyr *****");
 	LOG_INF("OT channel     %u",     CONFIG_OPENTHREAD_CHANNEL);
@@ -64,4 +81,6 @@ void main(void)
 	};
 
 	openthread_state_changed_cb_register(openthread_get_default_context(), &ot_state_cahnge);
+
+	return 0;
 }
