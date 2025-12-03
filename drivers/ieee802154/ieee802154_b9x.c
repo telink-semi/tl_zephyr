@@ -860,10 +860,8 @@ static int b9x_init(const struct device *dev)
 
 	/* init IRQs */
 #ifndef CONFIG_DYNAMIC_INTERRUPTS
-	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), b9x_rf_isr,
-		DEVICE_DT_INST_GET(0), 0);
-	riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
-		DT_INST_IRQ(0, priority));
+	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), b9x_rf_isr, DEVICE_DT_INST_GET(0),
+		    0);
 #endif /* not CONFIG_DYNAMIC_INTERRUPTS */
 
 	/* init data variables */
@@ -1026,9 +1024,7 @@ static int b9x_start(const struct device *dev)
 	if (!b9x->is_started) {
 #ifdef CONFIG_DYNAMIC_INTERRUPTS
 		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
-			(void (*)(const void *))b9x_rf_isr, DEVICE_DT_INST_GET(0), 0);
-		riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
-			DT_INST_IRQ(0, priority));
+				    (void (*)(const void *))b9x_rf_isr, DEVICE_DT_INST_GET(0), 0);
 #endif /* CONFIG_DYNAMIC_INTERRUPTS */
 		if (!b9x_rf_zigbee_250K_mode) {
 			rf_mode_init();
@@ -1044,6 +1040,8 @@ static int b9x_start(const struct device *dev)
 			rf_set_power_level(tl_tx_pwr_lt[b9x->current_dbm - TL_TX_POWER_MIN]);
 		}
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
+		riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
+					DT_INST_IRQ(0, priority));
 		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
 		rf_set_txmode();
 		rf_set_rxmode();
