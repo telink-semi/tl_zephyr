@@ -34,6 +34,9 @@
 /* Get GPIO IRQ number defined in dts */
 #define GET_IRQ_NUM(dev) (irq_from_level_2(((const struct gpio_b9x_config *)dev->config)->irq_num))
 
+/* Get GPIO IRQ number in zephyr format */
+#define GET_LV2_IRQ_NUM(irq)  (IRQ_TO_L2(irq) + CONFIG_2ND_LVL_INTR_00_OFFSET)
+
 /* Get GPIO IRQ priority defined in dts */
 #define GET_IRQ_PRIORITY(dev)   (((const struct gpio_b9x_config *)dev->config)->irq_priority)
 
@@ -303,8 +306,8 @@ void gpio_b9x_irq_set(const struct device *dev, gpio_pin_t pin,
 #endif /* CONFIG_PM_DEVICE */
 
 	/* Enable PLIC interrupt */
-	riscv_plic_irq_enable(IRQ_TO_L2(irq_num));
-	riscv_plic_set_priority(IRQ_TO_L2(irq_num), irq_prioriy);
+	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
+	riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_prioriy);
 }
 
 /* Set pin's pull-up/down resistor */
@@ -563,7 +566,7 @@ static int gpio_b9x_pin_interrupt_configure(const struct device *dev,
 		BM_CLR(cfg->pin_irq_state->irq_en_both, BIT(pin));
 		if (!cfg->pin_irq_state->irq_en_rising && !cfg->pin_irq_state->irq_en_falling &&
 		    !cfg->pin_irq_state->irq_en_both) {
-			riscv_plic_irq_disable(IRQ_TO_L2(GET_IRQ_NUM(dev)));
+			riscv_plic_irq_disable(cfg->irq_num);
 		}
 		break;
 
@@ -680,9 +683,9 @@ static int gpio_b9x_pm_action(const struct device *dev, enum pm_device_action ac
 				if (cfg->pin_irq_state->irq_en_rising ||
 				    cfg->pin_irq_state->irq_en_falling ||
 				    cfg->pin_irq_state->irq_en_both) {
-					riscv_plic_irq_enable(IRQ_TO_L2(irq_num));
+					riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 				}
-				riscv_plic_set_priority(IRQ_TO_L2(irq_num), irq_priority);
+				riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_priority);
 
 				if (irq_num == IRQ_GPIO) {
 					BM_CLR(GPIO_IRQ_REG, FLD_GPIO_IRQ_LVL_GPIO);
