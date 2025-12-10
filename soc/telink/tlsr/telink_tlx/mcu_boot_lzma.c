@@ -219,7 +219,16 @@ int __wrap_boot_slots_compatible(struct boot_loader_state *state)
 			smaller = 1;
 			i++;
 		} else {
-			sz1 += boot_img_sector_size(state, BOOT_SECONDARY_SLOT, j);
+			size_t sector_size = boot_img_sector_size(state, BOOT_SECONDARY_SLOT, j);
+
+			if (sector_size == 0) {
+				/* Since this supports decompressed images,
+				 * we can safely exit if slot1 is smaller than slot0.
+				 */
+				break;
+			}
+
+			sz1 += sector_size;
 			/* Guarantee that multiple sectors of the primary slot
 			 * fit into the secondary slot.
 			 */
