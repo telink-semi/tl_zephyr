@@ -71,7 +71,7 @@ function(zephyr_mcuboot_tasks)
 
   # If single slot mode, or if in firmware updater mode and this is the firmware updater image,
   # use slot 0 information
-  if(NOT CONFIG_MCUBOOT_BOOTLOADER_MODE_SINGLE_APP AND (NOT CONFIG_MCUBOOT_BOOTLOADER_MODE_FIRMWARE_UPDATER OR CONFIG_MCUBOOT_APPLICATION_FIRMWARE_UPDATER))
+  if(NOT CONFIG_COMPRESS_LZMA AND NOT CONFIG_MCUBOOT_BOOTLOADER_MODE_SINGLE_APP AND (NOT CONFIG_MCUBOOT_BOOTLOADER_MODE_FIRMWARE_UPDATER OR CONFIG_MCUBOOT_APPLICATION_FIRMWARE_UPDATER))
     # Slot 1 size is used instead of slot 0 size
     set(slot_size)
     dt_nodelabel(slot1_flash NODELABEL "slot1_partition" REQUIRED)
