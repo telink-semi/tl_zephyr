@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2025 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	soc {
+		ram_ilm: memory@0 {
+			reg = <0x00000000 0x00000100>;
+		};
+
+		ram_dlm: memory@200000 {
+			reg = <0x00200000 0x0001B800>;
+		};
+
+		reserved-memory {
+			/* 32,5 KB for N22 */
+			d25_ilm_for_n22: memory@100 {
+				reg = <0x00000100 0x00007F00>;
+				no-map;
+			};
+
+			/* remaining ~82 KB for N22 */
+			d25_dlm_for_n22: memory@21B800 {
+				reg = <0x0021B800 0x00014800>;
+			};
+		};
+	};
+};
