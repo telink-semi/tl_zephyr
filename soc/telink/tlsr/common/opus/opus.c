@@ -11,9 +11,9 @@
 
 #include <ipc/ipc_based_driver.h>
 
-#define LOG_LEVEL CONFIG_TELINK_OTBR_LOG_LEVEL
+#define LOG_LEVEL TELINK_OPUS_REMOTE_LOG_LEVEL
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(otbr_ext);
+LOG_MODULE_REGISTER(opus_remote);
 
 #define OPUS_MAX_FRAME_SIZE 1275
 
