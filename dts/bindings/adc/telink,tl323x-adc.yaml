@@ -1,0 +1,61 @@
+# Copyright (c) 2022-2023, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TL323x ADC node
+
+compatible: "telink,tl323x-adc"
+
+include: [adc-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  "#io-channel-cells":
+    const: 1
+
+  pinctrl-0:
+    required: true
+
+  pinctrl-names:
+    required: true
+
+  sample-freq:
+    type: int
+    required: true
+    enum:
+      - 1000000
+      - 2000000
+    description: |
+      This property selects the ADC source frequency: 1 MHz, or 2 MHz.
+
+  resolution:
+    type: int
+    required: true
+    enum:
+      - 12
+      - 14
+      - 24
+    description: |
+       This property selects the ADC resolution in bits.
+
+  downsample-rate:
+    type: int
+    required: true
+    enum:
+      - 64
+      - 128
+      - 256
+    description: |
+       This property selects the downsample rate. 
+
+  vbat-divider:
+    type: int
+    required: true
+    enum:
+      - 4
+    description: |
+       This property selects the VBAT divider ratio.
+
+io-channel-cells:
+  - input

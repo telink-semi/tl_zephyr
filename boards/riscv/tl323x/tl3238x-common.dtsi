@@ -238,8 +238,10 @@
 
 &adc {
 	status = "okay";
-	vref-internal-mv = <1200>;
-	sample-freq = <DT_FREQ_K(96)>;
+	resolution = <24>;
+	sample-freq = <DT_FREQ_K(1000)>;
+	downsample-rate = <128>;
+	vbat-divider = <4>;
 	pinctrl-0 = <&adc_pd1_default>;
 	pinctrl-names = "default";
 };
