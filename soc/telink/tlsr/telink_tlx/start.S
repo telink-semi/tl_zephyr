@@ -26,7 +26,7 @@
     .global     __D25F_N22_RAM_REG
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X && 0
 	.extern lpd_power_down_protect_enable
 	.extern lpd_power_down_protect_enable_for_deep_ret
 #endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
@@ -197,7 +197,7 @@ _RAMCODE_INIT_BEGIN:
 	j      _RAMCODE_INIT_BEGIN
 
 _START:
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X && 0
     //Flash Configuration for Chip Power-Down Protection
     la     t0, lpd_power_down_protect_enable
     jalr   t0
@@ -337,7 +337,7 @@ _IRAMCODE_INIT_BEGIN:
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE */
 
 _RESTORE:
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X && 0
     //Flash Configuration for Chip Power-Down Protection
     la     t0, lpd_power_down_protect_enable_for_deep_ret
     jalr   t0
