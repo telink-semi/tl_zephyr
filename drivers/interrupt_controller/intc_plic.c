@@ -161,7 +161,8 @@ static inline mem_addr_t get_context_en_addr(const struct device *dev, uint32_t 
 	/* Avoid accessing PLIC before it is ready */
     if (!device_is_ready(dev)) {
         printk("PLIC NOT READY: dev=%p, cpu_num=%u\n", dev, cpu_num);
-        return 0;
+		static uint8_t buf[4];
+        return (mem_addr_t)buf;
     }
 
 	const struct plic_config *config = dev->config;
