@@ -221,7 +221,7 @@ config USB_B9X_THREAD_STACK_SIZE
 
 config USB_B9X_THREAD_PRIORITY
 	int "USBD thread priority"
-	default 0
+	default -1
 	help
 	  Priority of the thread that is used in the driver
 	  for handling the events from the USBD ISR, i.e. executing endpoint
@@ -257,7 +257,7 @@ config USB_TLX_THREAD_STACK_SIZE
 
 config USB_TLX_THREAD_PRIORITY
 	int "USBD thread priority"
-	default 0
+	default -1
 	help
 	  Priority of the thread that is used in the driver
 	  for handling the events from the USBD ISR, i.e. executing endpoint
