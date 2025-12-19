@@ -132,6 +132,7 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 		void *boot_app = (void *)app_start_addr;
 
 		irq_lock();
+        clock_set_all_clock_to_default();
 		((void (*)(void))boot_app)();
 	}
 }
