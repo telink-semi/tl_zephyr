@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Telink Semiconductor
+ * Copyright (c) 2021-2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -71,15 +71,14 @@ static struct b9x_data data = {
 #ifdef CONFIG_OPENTHREAD_FTD
 
 /* clean radio search match table */
-static void b9x_src_match_table_clean(struct b9x_src_match_table *table)
+ALWAYS_INLINE static void b9x_src_match_table_clean(struct b9x_src_match_table *table)
 {
 	memset(table, 0, sizeof(struct b9x_src_match_table));
 }
 
 /* Search in radio search match table */
-static bool
-ALWAYS_INLINE b9x_src_match_table_search(
-	const struct b9x_src_match_table *table, const uint8_t *addr, bool ext)
+ALWAYS_INLINE static bool b9x_src_match_table_search(const struct b9x_src_match_table *table,
+						     const uint8_t *addr, bool ext)
 {
 	bool result = false;
 
@@ -97,8 +96,8 @@ ALWAYS_INLINE b9x_src_match_table_search(
 }
 
 /* Add to radio search match table */
-static void b9x_src_match_table_add(
-	struct b9x_src_match_table *table, const uint8_t *addr, bool ext)
+ALWAYS_INLINE static void b9x_src_match_table_add(struct b9x_src_match_table *table,
+						  const uint8_t *addr, bool ext)
 {
 	if (!b9x_src_match_table_search(table, addr, ext)) {
 		for (size_t i = 0; i < 2 * CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
@@ -115,8 +114,8 @@ static void b9x_src_match_table_add(
 }
 
 /* Remove from radio search match table */
-static void b9x_src_match_table_remove(
-	struct b9x_src_match_table *table, const uint8_t *addr, bool ext)
+ALWAYS_INLINE static void b9x_src_match_table_remove(struct b9x_src_match_table *table,
+						     const uint8_t *addr, bool ext)
 {
 	for (size_t i = 0; i < 2 * CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
 		if (table->item[i].valid && table->item[i].ext == ext &&
@@ -134,7 +133,8 @@ static void b9x_src_match_table_remove(
 }
 
 /* Remove all entries from radio search match table */
-static void b9x_src_match_table_remove_group(struct b9x_src_match_table *table, bool ext)
+ALWAYS_INLINE static void b9x_src_match_table_remove_group(struct b9x_src_match_table *table,
+							   bool ext)
 {
 	for (size_t i = 0; i < 2 * CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
 		if (table->item[i].valid && table->item[i].ext == ext) {
@@ -152,8 +152,7 @@ static void b9x_src_match_table_remove_group(struct b9x_src_match_table *table, 
  * data request command or data
  * frame should be valid
  */
-static bool
-ALWAYS_INLINE b9x_require_pending_bit(const struct ieee802154_frame *frame)
+ALWAYS_INLINE static bool b9x_require_pending_bit(const struct ieee802154_frame *frame)
 {
 	bool result = false;
 
@@ -185,15 +184,15 @@ ALWAYS_INLINE b9x_require_pending_bit(const struct ieee802154_frame *frame)
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 
 /* clean radio search match table */
-static void b9x_enh_ack_table_clean(struct b9x_enh_ack_table *table)
+ALWAYS_INLINE static void b9x_enh_ack_table_clean(struct b9x_enh_ack_table *table)
 {
 	memset(table, 0, sizeof(struct b9x_enh_ack_table));
 }
 
 /* Search in enhanced ack table */
-static int
-ALWAYS_INLINE b9x_enh_ack_table_search(
-	const struct b9x_enh_ack_table *table, const uint8_t *addr_short, const uint8_t *addr_ext)
+ALWAYS_INLINE static int b9x_enh_ack_table_search(const struct b9x_enh_ack_table *table,
+						  const uint8_t *addr_short,
+						  const uint8_t *addr_ext)
 {
 	int result = -1;
 
@@ -212,9 +211,9 @@ ALWAYS_INLINE b9x_enh_ack_table_search(
 }
 
 /* Add to enhanced ack table */
-static void b9x_enh_ack_table_add(
-	struct b9x_enh_ack_table *table, const uint8_t *addr_short, const uint8_t *addr_ext,
-	const struct ieee802154_header_ie *ie_header)
+ALWAYS_INLINE static void b9x_enh_ack_table_add(struct b9x_enh_ack_table *table,
+						const uint8_t *addr_short, const uint8_t *addr_ext,
+						const struct ieee802154_header_ie *ie_header)
 {
 	int idx = b9x_enh_ack_table_search(table, addr_short, addr_ext);
 
@@ -238,8 +237,9 @@ static void b9x_enh_ack_table_add(
 }
 
 /* Remove from enhanced ack table */
-static void b9x_enh_ack_table_remove(
-	struct b9x_enh_ack_table *table, const uint8_t *addr_short, const uint8_t *addr_ext)
+ALWAYS_INLINE static void b9x_enh_ack_table_remove(struct b9x_enh_ack_table *table,
+						   const uint8_t *addr_short,
+						   const uint8_t *addr_ext)
 {
 	for (size_t i = 0; i < CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
 		if (table->item[i].valid &&
@@ -260,12 +260,13 @@ static void b9x_enh_ack_table_remove(
 }
 
 /* Clean mac keys data */
-static void b9x_mac_keys_data_clean(struct b9x_mac_keys *mac_keys_data)
+ALWAYS_INLINE static void b9x_mac_keys_data_clean(struct b9x_mac_keys *mac_keys_data)
 {
 	memset(mac_keys_data, 0, sizeof(struct b9x_mac_keys));
 }
 
-static const uint8_t *b9x_mac_keys_get(const struct b9x_mac_keys *mac_keys_data, uint8_t key_id)
+ALWAYS_INLINE static const uint8_t *b9x_mac_keys_get(const struct b9x_mac_keys *mac_keys_data,
+						     uint8_t key_id)
 {
 	const uint8_t *result = NULL;
 
@@ -280,7 +281,8 @@ static const uint8_t *b9x_mac_keys_get(const struct b9x_mac_keys *mac_keys_data,
 	return result;
 }
 
-static uint32_t b9x_mac_keys_frame_cnt_get(const struct b9x_mac_keys *mac_keys_data, uint8_t key_id)
+ALWAYS_INLINE static uint32_t b9x_mac_keys_frame_cnt_get(const struct b9x_mac_keys *mac_keys_data,
+							 uint8_t key_id)
 {
 	uint32_t result = 0;
 
@@ -299,7 +301,8 @@ static uint32_t b9x_mac_keys_frame_cnt_get(const struct b9x_mac_keys *mac_keys_d
 	return result;
 }
 
-static void b9x_mac_keys_frame_cnt_inc(struct b9x_mac_keys *mac_keys_data, uint8_t key_id)
+ALWAYS_INLINE static void b9x_mac_keys_frame_cnt_inc(struct b9x_mac_keys *mac_keys_data,
+						     uint8_t key_id)
 {
 	if (key_id) {
 		for (size_t i = 0; i < B9X_MAC_KEYS_ITEMS; i++) {
@@ -318,7 +321,7 @@ static void b9x_mac_keys_frame_cnt_inc(struct b9x_mac_keys *mac_keys_data, uint8
 #endif
 
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
-static uint16_t ALWAYS_INLINE b9x_get_csl_phase(struct b9x_data *b9x)
+ALWAYS_INLINE static uint16_t b9x_get_csl_phase(struct b9x_data *b9x)
 {
 	uint32_t csl_period_us = b9x->csl_period * 160;
 	int64_t cur_time_us = k_ticks_to_us_floor64(k_uptime_ticks());
@@ -331,7 +334,7 @@ static uint16_t ALWAYS_INLINE b9x_get_csl_phase(struct b9x_data *b9x)
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 
 /* Disable power management by device */
-static void b9x_disable_pm(struct b9x_data *b9x)
+ALWAYS_INLINE static void b9x_disable_pm(struct b9x_data *b9x)
 {
 #ifdef CONFIG_PM_DEVICE
 	if (atomic_test_and_set_bit(&b9x->current_pm_lock, 0) == 0) {
@@ -346,7 +349,7 @@ static void b9x_disable_pm(struct b9x_data *b9x)
 }
 
 /* Enable power management by device */
-static void b9x_enable_pm(struct b9x_data *b9x)
+ALWAYS_INLINE static void b9x_enable_pm(struct b9x_data *b9x)
 {
 #ifdef CONFIG_PM_DEVICE
 	if (atomic_test_and_clear_bit(&b9x->current_pm_lock, 0) == 1) {
@@ -361,7 +364,7 @@ static void b9x_enable_pm(struct b9x_data *b9x)
 }
 
 /* Set filter PAN ID */
-static int b9x_set_pan_id(const struct device *dev, uint16_t pan_id)
+ALWAYS_INLINE static int b9x_set_pan_id(const struct device *dev, uint16_t pan_id)
 {
 	struct b9x_data *b9x = dev->data;
 	uint8_t pan_id_le[IEEE802154_FRAME_LENGTH_PANID];
@@ -373,7 +376,7 @@ static int b9x_set_pan_id(const struct device *dev, uint16_t pan_id)
 }
 
 /* Set filter short address */
-static int b9x_set_short_addr(const struct device *dev, uint16_t short_addr)
+ALWAYS_INLINE static int b9x_set_short_addr(const struct device *dev, uint16_t short_addr)
 {
 	struct b9x_data *b9x = dev->data;
 	uint8_t short_addr_le[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
@@ -385,7 +388,7 @@ static int b9x_set_short_addr(const struct device *dev, uint16_t short_addr)
 }
 
 /* Set filter IEEE address */
-static int b9x_set_ieee_addr(const struct device *dev, const uint8_t *ieee_addr)
+ALWAYS_INLINE static int b9x_set_ieee_addr(const struct device *dev, const uint8_t *ieee_addr)
 {
 	struct b9x_data *b9x = dev->data;
 
@@ -395,8 +398,8 @@ static int b9x_set_ieee_addr(const struct device *dev, const uint8_t *ieee_addr)
 }
 
 /* Filter PAN ID, short address and IEEE address */
-static bool
-ALWAYS_INLINE b9x_run_filter(const struct device *dev, const struct ieee802154_frame *frame)
+ALWAYS_INLINE static bool b9x_run_filter(const struct device *dev,
+					 const struct ieee802154_frame *frame)
 {
 	struct b9x_data *b9x = dev->data;
 	bool result = false;
@@ -434,7 +437,7 @@ ALWAYS_INLINE b9x_run_filter(const struct device *dev, const struct ieee802154_f
 }
 
 /* Get MAC address */
-static ALWAYS_INLINE uint8_t *b9x_get_mac(const struct device *dev)
+ALWAYS_INLINE static uint8_t *b9x_get_mac(const struct device *dev)
 {
 	struct b9x_data *b9x = dev->data;
 
@@ -469,8 +472,7 @@ static ALWAYS_INLINE uint8_t *b9x_get_mac(const struct device *dev)
 }
 
 /* Convert RSSI to LQI */
-static uint8_t
-ALWAYS_INLINE b9x_convert_rssi_to_lqi(int8_t rssi)
+ALWAYS_INLINE static uint8_t b9x_convert_rssi_to_lqi(int8_t rssi)
 {
 	uint32_t lqi32 = 0;
 
@@ -491,8 +493,7 @@ ALWAYS_INLINE b9x_convert_rssi_to_lqi(int8_t rssi)
 }
 
 /* Update RSSI and LQI parameters */
-static void
-ALWAYS_INLINE b9x_update_rssi_and_lqi(const struct device *dev, struct net_pkt *pkt)
+ALWAYS_INLINE static void b9x_update_rssi_and_lqi(const struct device *dev, struct net_pkt *pkt)
 {
 	struct b9x_data *b9x = dev->data;
 	int8_t rssi;
@@ -507,8 +508,8 @@ ALWAYS_INLINE b9x_update_rssi_and_lqi(const struct device *dev, struct net_pkt *
 }
 
 /* Prepare TX buffer */
-static void
-ALWAYS_INLINE b9x_set_tx_payload(const struct device *dev, uint8_t *payload, uint8_t payload_len)
+ALWAYS_INLINE static void b9x_set_tx_payload(const struct device *dev, uint8_t *payload,
+					     uint8_t payload_len)
 {
 	struct b9x_data *b9x = dev->data;
 	unsigned char rf_data_len;
@@ -525,9 +526,8 @@ ALWAYS_INLINE b9x_set_tx_payload(const struct device *dev, uint8_t *payload, uin
 }
 
 /* Handle acknowledge packet */
-static void
-ALWAYS_INLINE b9x_handle_ack(const struct device *dev,
-	const void *buf, size_t buf_len, uint64_t rx_time)
+ALWAYS_INLINE static void b9x_handle_ack(const struct device *dev, const void *buf, size_t buf_len,
+					 uint64_t rx_time)
 {
 	struct b9x_data *b9x = dev->data;
 	struct net_pkt *ack_pkt = net_pkt_rx_alloc_with_buffer(
@@ -559,8 +559,7 @@ ALWAYS_INLINE b9x_handle_ack(const struct device *dev,
 }
 
 /* Send acknowledge packet */
-static void
-ALWAYS_INLINE b9x_send_ack(const struct device *dev, struct ieee802154_frame *frame)
+ALWAYS_INLINE static void b9x_send_ack(const struct device *dev, struct ieee802154_frame *frame)
 {
 	struct b9x_data *b9x = dev->data;
 	uint8_t ack_buf[64];
@@ -633,7 +632,7 @@ ALWAYS_INLINE b9x_send_ack(const struct device *dev, struct ieee802154_frame *fr
 }
 
 /* RX IRQ handler */
-static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
+ALWAYS_INLINE static void b9x_rf_rx_isr(const struct device *dev)
 {
 	struct b9x_data *b9x = dev->data;
 	int status = -EINVAL;
@@ -817,7 +816,7 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 }
 
 /* TX IRQ handler */
-static ALWAYS_INLINE void b9x_rf_tx_isr(const struct device *dev)
+ALWAYS_INLINE static void b9x_rf_tx_isr(const struct device *dev)
 {
 	struct b9x_data *b9x = dev->data;
 
@@ -835,7 +834,7 @@ static ALWAYS_INLINE void b9x_rf_tx_isr(const struct device *dev)
 }
 
 /* IRQ handler */
-static void __GENERIC_SECTION(.ram_code) b9x_rf_isr(const struct device *dev)
+__GENERIC_SECTION(.ram_code) static void b9x_rf_isr(const struct device *dev)
 {
 	if (rf_get_irq_status(FLD_RF_IRQ_RX)) {
 		b9x_rf_rx_isr(dev);
@@ -848,7 +847,7 @@ static void __GENERIC_SECTION(.ram_code) b9x_rf_isr(const struct device *dev)
 
 volatile bool b9x_rf_zigbee_250K_mode;
 
-static int b9x_start_radio(struct b9x_data *b9x)
+ALWAYS_INLINE static int b9x_start_radio(struct b9x_data *b9x)
 {
 	b9x_disable_pm(b9x);
 	/* check if RF is already started */
@@ -880,7 +879,7 @@ static int b9x_start_radio(struct b9x_data *b9x)
 	return 0;
 }
 
-static int b9x_stop_radio(struct b9x_data *b9x)
+ALWAYS_INLINE static int b9x_stop_radio(struct b9x_data *b9x)
 {
 	/* check if RF is already stopped */
 	if (b9x->is_started) {
@@ -903,7 +902,7 @@ static int b9x_stop_radio(struct b9x_data *b9x)
 	return 0;
 }
 
-static int b9x_set_channel_radio(struct b9x_data *b9x, uint16_t channel)
+ALWAYS_INLINE static int b9x_set_channel_radio(struct b9x_data *b9x, uint16_t channel)
 {
 	if (channel < 11 || channel > 26) {
 		return -EINVAL;
@@ -1019,24 +1018,19 @@ static enum ieee802154_hw_caps b9x_get_capabilities(const struct device *dev)
 static int b9x_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-	signed char rssi_peak = -110;
-	signed char rssi_cur = -110;
-	signed int rssiSum = 0;
-	signed int cnt = 1;
+
+	signed int rssi = 0, cnt = 0;
 	unsigned int t1 = stimer_get_tick();
 
 	rf_set_rxmode();
 	delay_us(85);
-	rssi_cur = rf_get_rssi();
-	rssiSum += rssi_cur;
 
-	while (!clock_time_exceed(t1, B9X_CCA_TIME_MAX_US)) {
-		rssi_cur = rf_get_rssi();
-		rssiSum += rssi_cur;
+	do {
+		rssi += rf_get_rssi();
 		cnt++;
-	}
-	rssi_peak = rssiSum / cnt;
-	if (rssi_peak > CONFIG_IEEE802154_B9X_CCA_RSSI_THRESHOLD) {
+	} while (!clock_time_exceed(t1, B9X_CCA_TIME_MAX_US));
+	rssi /= cnt;
+	if (rssi > CONFIG_IEEE802154_B9X_CCA_RSSI_THRESHOLD) {
 		return -EBUSY;
 	} else {
 		return 0;
@@ -1107,9 +1101,8 @@ static int b9x_stop(const struct device *dev)
 }
 
 /* API implementation: tx */
-static int b9x_tx(const struct device *dev,
-		  enum ieee802154_tx_mode mode,
-		  struct net_pkt *pkt,
+__GENERIC_SECTION(.ram_code)
+static int b9x_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct net_pkt *pkt,
 		  struct net_buf *frag)
 {
 	ARG_UNUSED(pkt);
@@ -1220,11 +1213,12 @@ static int b9x_tx(const struct device *dev,
 
 		uint8_t *frame_cnt =
 			(uint8_t *)&frame.sec_header[IEEE802154_FRAME_LENGTH_SEC_HEADER];
+		uint32_t fc = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, key_id);
 
-		frame_cnt[0] = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, key_id);
-		frame_cnt[1] = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, key_id) >> 8;
-		frame_cnt[2] = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, key_id) >> 16;
-		frame_cnt[3] = b9x_mac_keys_frame_cnt_get(b9x->mac_keys, key_id) >> 24;
+		frame_cnt[0] = fc;
+		frame_cnt[1] = fc >> 8;
+		frame_cnt[2] = fc >> 16;
+		frame_cnt[3] = fc >> 24;
 
 		net_pkt_set_ieee802154_mac_hdr_rdy(pkt, true);
 
