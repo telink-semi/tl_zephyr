@@ -7,3 +7,10 @@ config PWM_TELINK_TLX
 	depends on DT_HAS_TELINK_TLX_PWM_ENABLED
 	help
 	  Enables Telink TLx PWM driver.
+
+config PWM_TELINK_TLX_MAX_CHANNELS
+	int "Maximum number of PWM channels supported by TLx PWM"
+	default 6
+	depends on PWM_TELINK_TLX
+	help
+	  Defines maximum number of PWM channels supported by Telink TLx PWM hardware.

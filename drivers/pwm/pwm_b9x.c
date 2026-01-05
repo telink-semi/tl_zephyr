@@ -10,6 +10,13 @@
 #include <clock.h>
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/pm/device.h>
+
+struct pwm_b9x_channel_state {
+	uint32_t period;
+	uint32_t pulse;
+	pwm_flags_t flags;
+};
 
 struct pwm_b9x_config {
 	const pinctrl_soc_pin_t *pins;
@@ -20,14 +27,21 @@ struct pwm_b9x_config {
 
 struct pwm_b9x_data {
 	uint8_t out_pin_ch_connected;
+#ifdef CONFIG_PM_DEVICE
+	struct pwm_b9x_channel_state ch[CONFIG_PWM_TELINK_B9X_MAX_CHANNELS];
+#endif /* CONFIG_PM_DEVICE */
 };
 
 /* API implementation: init */
 static int pwm_b9x_init(const struct device *dev)
 {
 	const struct pwm_b9x_config *config = dev->config;
-
 	uint32_t pwm_clk_div;
+
+	/* Check maximum number of PWM channels */
+	if (config->channels > CONFIG_PWM_TELINK_B9X_MAX_CHANNELS) {
+		return -EINVAL;
+	}
 
 	/* Calculate and check PWM clock divider */
 	pwm_clk_div = sys_clk.pclk * 1000 * 1000 / config->clock_frequency - 1;
@@ -36,7 +50,7 @@ static int pwm_b9x_init(const struct device *dev)
 	}
 
 	/* Set PWM Peripheral clock */
-	pwm_set_clk((unsigned char) (pwm_clk_div & 0xFF));
+	pwm_set_clk((unsigned char)(pwm_clk_div & 0xFF));
 
 	return 0;
 }
@@ -75,7 +89,7 @@ static int pwm_b9x_set_cycles(const struct device *dev, uint32_t channel,
 #if CONFIG_SOC_RISCV_TELINK_B91
 	pwm_start(channel);
 #elif CONFIG_SOC_RISCV_TELINK_B92
-	pwm_start((channel == 0)?FLD_PWM0_EN:BIT(channel));
+	pwm_start((channel == 0) ? FLD_PWM0_EN : BIT(channel));
 #endif
 
 	/* switch to 32K */
@@ -84,8 +98,7 @@ static int pwm_b9x_set_cycles(const struct device *dev, uint32_t channel,
 	}
 
 	/* connect output */
-	if (!(data->out_pin_ch_connected & BIT(channel)) &&
-		config->pins[channel] != UINT32_MAX) {
+	if (config->pins[channel] != UINT32_MAX) {
 		const struct pinctrl_state pinctrl_state = {
 			.pins = &config->pins[channel],
 			.pin_cnt = 1,
@@ -102,6 +115,12 @@ static int pwm_b9x_set_cycles(const struct device *dev, uint32_t channel,
 			return -EIO;
 		}
 	}
+
+#ifdef CONFIG_PM_DEVICE
+	data->ch[channel].period = period_cycles;
+	data->ch[channel].pulse = pulse_cycles;
+	data->ch[channel].flags = flags;
+#endif /* CONFIG_PM_DEVICE */
 
 	return 0;
 }
@@ -126,6 +145,62 @@ static int pwm_b9x_get_cycles_per_sec(const struct device *dev,
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+
+static int pwm_b9x_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	const struct pwm_b9x_config *config = dev->config;
+	struct pwm_b9x_data *data = dev->data;
+
+	extern volatile bool b9x_deep_sleep_retention;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+	{
+		if (b9x_deep_sleep_retention) {
+			pwm_b9x_init(dev);
+		}
+
+		for (uint8_t channel = 0; channel < config->channels; channel++) {
+			if (data->out_pin_ch_connected & BIT(channel)) {
+				pwm_b9x_set_cycles(dev, channel, data->ch[channel].period,
+						   data->ch[channel].pulse,
+						   data->ch[channel].flags);
+			}
+		}
+	}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
+	break;
+
+	case PM_DEVICE_ACTION_SUSPEND:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+	{
+		for (uint8_t channel = 0; channel < config->channels; channel++) {
+			if (data->out_pin_ch_connected & BIT(channel)) {
+				uint32_t pin = B9x_PINMUX_GET_PIN(config->pins[channel]);
+
+#if CONFIG_SOC_RISCV_TELINK_B91
+				pwm_stop(channel);
+#elif CONFIG_SOC_RISCV_TELINK_B92
+				pwm_stop((channel == 0) ? FLD_PWM0_EN : BIT(channel));
+#endif
+				gpio_shutdown(pin);
+			}
+		}
+	}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
+	break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+#endif /* CONFIG_PM_DEVICE */
+
 /* PWM driver APIs structure */
 static const struct pwm_driver_api pwm_b9x_driver_api = {
 	.set_cycles = pwm_b9x_set_cycles,
@@ -134,6 +209,8 @@ static const struct pwm_driver_api pwm_b9x_driver_api = {
 
 /* PWM driver registration */
 #define PWM_b9x_INIT(n)                                                 \
+                                                                        \
+	PM_DEVICE_DT_INST_DEFINE(n, pwm_b9x_pm_action);                     \
                                                                         \
 	static const pinctrl_soc_pin_t pwm_b9x_pins##n[] = {                \
 		COND_CODE_1(DT_NODE_HAS_PROP(DT_DRV_INST(n), pinctrl_ch0),      \
@@ -170,10 +247,10 @@ static const struct pwm_driver_api pwm_b9x_driver_api = {
 		),                                                              \
 	};                                                                  \
                                                                         \
-	struct pwm_b9x_data data##n;                                        \
+	static struct pwm_b9x_data data##n;                                 \
                                                                         \
 	DEVICE_DT_INST_DEFINE(n, pwm_b9x_init,                              \
-		NULL, &data##n, &config##n,                                     \
+		PM_DEVICE_DT_INST_GET(n), &data##n, &config##n,                 \
 		POST_KERNEL, CONFIG_PWM_INIT_PRIORITY,                          \
 		&pwm_b9x_driver_api);
 
