@@ -1070,6 +1070,7 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 }
 
 /* API implementation: cca */
+__GENERIC_SECTION(.ram_code)
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
@@ -1097,12 +1098,14 @@ static int tlx_cca(const struct device *dev)
 }
 
 /* API implementation: set_channel */
+__GENERIC_SECTION(.ram_code)
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
 	return tlx_set_channel_radio(dev->data, channel);
 }
 
 /* API implementation: filter */
+__GENERIC_SECTION(.ram_code)
 static int tlx_filter(const struct device *dev,
 		      bool set,
 		      enum ieee802154_filter_type type,
@@ -1124,6 +1127,7 @@ static int tlx_filter(const struct device *dev,
 }
 
 /* API implementation: set_txpower */
+__GENERIC_SECTION(.ram_code)
 static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 {
 	struct tlx_data *tlx = dev->data;
@@ -1159,12 +1163,14 @@ __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 #endif
 
 /* API implementation: start */
+__GENERIC_SECTION(.ram_code)
 static int tlx_start(const struct device *dev)
 {
 	return tlx_start_radio(dev->data);
 }
 
 /* API implementation: stop */
+__GENERIC_SECTION(.ram_code)
 static int tlx_stop(const struct device *dev)
 {
 	return tlx_stop_radio(dev->data);
