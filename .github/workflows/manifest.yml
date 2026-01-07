@@ -15,6 +15,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: West init
+        working-directory: zephyrproject/zephyr
+        run: west init -l .
+
+      - name: West update
+        working-directory: zephyrproject/zephyr
+        run: west update
+
       - name: Manifest
         uses: zephyrproject-rtos/action-manifest@a6d0c6e52bbbb7d6df23ceb42842edcb4582b8dc
         with:

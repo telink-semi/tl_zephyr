@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Telink Semiconductor
+# Copyright (c) 2024-2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
 # Telink TLX RF configuration options
@@ -86,4 +86,8 @@ config IEEE802154_TLX_MAC7
 	  This is the byte 7 of the MAC address.
 
 endif # IEEE802154_TLX_MAC_STATIC
+
+config IEEE802154_2015
+	default y if SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+
 endif # IEEE802154_TELINK_TLX
