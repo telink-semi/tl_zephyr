@@ -1,11 +1,12 @@
 /* main.c - OpenThread */
 
 /*
- * Copyright (c) 2023 Telink
+ * Copyright (c) 2023-2026 Telink
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ot_main, LOG_LEVEL_DBG);
 
@@ -70,7 +71,8 @@ static void ot_satate_changed(otChangedFlags flags,
 
 int main(void)
 {
-	LOG_INF("***** OpenThread CLI on Zephyr *****");
+	LOG_INF("***** OpenThread SED joiner @ F_CPU = %u *****",
+		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency)));
 	LOG_INF("OT channel     %u",     CONFIG_OPENTHREAD_CHANNEL);
 	LOG_INF("OT pan id      %04x",   CONFIG_OPENTHREAD_PANID);
 	LOG_INF("OT pan ext id  %s",     CONFIG_OPENTHREAD_XPANID);
