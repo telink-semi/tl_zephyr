@@ -142,7 +142,7 @@ static int pwm_tlx_get_cycles_per_sec(const struct device *dev,
 }
 
 #ifdef CONFIG_PM_DEVICE
-
+__GENERIC_SECTION(.ram_code)
 static int pwm_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
 	const struct pwm_tlx_config *config = dev->config;

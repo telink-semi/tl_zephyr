@@ -625,7 +625,7 @@ int uart_tlx_drv_cmd(const struct device *dev, uint32_t cmd, uint32_t p)
 #endif /* CONFIG_UART_DRV_CMD */
 
 #ifdef CONFIG_PM_DEVICE
-
+__GENERIC_SECTION(.ram_code)
 static int uart_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
 	volatile struct uart_tlx_t *uart = GET_UART(dev);
