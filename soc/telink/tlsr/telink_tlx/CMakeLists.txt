@@ -21,6 +21,7 @@ zephyr_sources(
 
 zephyr_sources_ifdef(CONFIG_PM
 	power.c
+	idle.c
 )
 
 zephyr_sources_ifdef(CONFIG_RISCV_VECTORED_MODE
