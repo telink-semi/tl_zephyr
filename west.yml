@@ -253,7 +253,7 @@ manifest:
         - hal 
     - name: tl_ble_sdk
       url: https://github.com/telink-semi/tl_ble_sdk.git
-      revision: 45c250745b6677b0071c0fcedbf7f20ce300dc7d
+      revision: c52bae86f66ba4d3066bb019d2cabbdd5b8f539a
       path: modules/hal/telink/tl_ble_sdk
       groups:
         - hal

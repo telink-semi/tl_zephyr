@@ -261,7 +261,7 @@ void gen_fsk_close_unused_clock(void)
 
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
-#include "pm_internal.h"
+#include "pm.h"
 #endif
 
 /**
