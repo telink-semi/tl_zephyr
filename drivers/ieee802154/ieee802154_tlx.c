@@ -1048,7 +1048,7 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 }
 
 /* API implementation: cca */
-static int tlx_cca(const struct device *dev)
+__GENERIC_SECTION(.ram_code) static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 
@@ -1134,13 +1134,13 @@ __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 #endif
 
 /* API implementation: start */
-static int tlx_start(const struct device *dev)
+__GENERIC_SECTION(.ram_code) static int tlx_start(const struct device *dev)
 {
 	return tlx_start_radio(dev->data);
 }
 
 /* API implementation: stop */
-static int tlx_stop(const struct device *dev)
+__GENERIC_SECTION(.ram_code) static int tlx_stop(const struct device *dev)
 {
 	return tlx_stop_radio(dev->data);
 }
