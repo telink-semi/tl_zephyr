@@ -119,6 +119,13 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
+		/* Mark PB7 */
+		gpio_function_en(GPIO_PB7);
+		gpio_output_en(GPIO_PB7);
+		gpio_set_low_level(GPIO_PB7);
+		__asm__ __volatile__("nop");
+		__asm__ __volatile__("nop");
+		gpio_set_high_level(GPIO_PB7);
 		if (tl_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
@@ -126,6 +133,13 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			set_mtime(current_time);
 			tlx_deep_sleep_retention = true;
 		}
+		/* Mark PB7 */
+		gpio_function_en(GPIO_PB7);
+		gpio_output_en(GPIO_PB7);
+		gpio_set_low_level(GPIO_PB7);
+		__asm__ __volatile__("nop");
+		__asm__ __volatile__("nop");
+		gpio_set_high_level(GPIO_PB7);
 		break;
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	default:
