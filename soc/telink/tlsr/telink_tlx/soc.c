@@ -273,6 +273,11 @@ void soc_early_init_hook(void)
 {
 	unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 
+	/* In bootloader , will force to use 96M to save start time */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_MCUBOOT
+	cclk = CLK_96MHZ;
+#endif
+
 #ifdef CONFIG_PM
 	/* Select internal 32K for BLE PM, ASAP after boot */
 	blc_pm_select_internal_32k_crystal();
