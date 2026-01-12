@@ -1072,7 +1072,7 @@ __GENERIC_SECTION(.ram_code) static int tlx_cca(const struct device *dev)
 }
 
 /* API implementation: set_channel */
-static int tlx_set_channel(const struct device *dev, uint16_t channel)
+__GENERIC_SECTION(.ram_code)  static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
 	return tlx_set_channel_radio(dev->data, channel);
 }
@@ -1099,7 +1099,7 @@ static int tlx_filter(const struct device *dev,
 }
 
 /* API implementation: set_txpower */
-static int tlx_set_txpower(const struct device *dev, int16_t dbm)
+__GENERIC_SECTION(.ram_code)  static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 {
 	struct tlx_data *tlx = dev->data;
 
