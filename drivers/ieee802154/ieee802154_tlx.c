@@ -1146,7 +1146,9 @@ static int tlx_stop(const struct device *dev)
 }
 
 /* API implementation: tx */
+#if defined(CONFIG_IEEE802154_TLX_ACTIVE_STAGE_OPTIMIZATION)
 __GENERIC_SECTION(.ram_code)
+#endif
 static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct net_pkt *pkt,
 		  struct net_buf *frag)
 {

@@ -48,6 +48,10 @@ config IEEE802154_B9X_DELAY_TRX_ACC
 	  Accuracy of the clock used for scheduling radio delayed operations (delayed transmission
 	  or delayed reception), in ppm.
 
+config IEEE802154_B9X_ACTIVE_STAGE_OPTIMIZATION
+	bool "Active Stage Optimization"
+	default y
+
 if IEEE802154_B9X_MAC_STATIC
 
 config IEEE802154_B9X_MAC4
