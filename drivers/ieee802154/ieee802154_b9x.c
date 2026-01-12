@@ -1068,7 +1068,9 @@ static int b9x_stop(const struct device *dev)
 }
 
 /* API implementation: tx */
+#if defined(CONFIG_IEEE802154_B9X_ACTIVE_STAGE_OPTIMIZATION)
 __GENERIC_SECTION(.ram_code)
+#endif
 static int b9x_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct net_pkt *pkt,
 		  struct net_buf *frag)
 {
