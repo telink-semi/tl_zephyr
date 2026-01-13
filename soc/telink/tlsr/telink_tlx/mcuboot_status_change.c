@@ -9,6 +9,7 @@
 #include <zephyr/devicetree/fixed-partitions.h>
 #include <zephyr/irq.h>
 
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
 #include "bootutil/bootutil_log.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
@@ -95,12 +96,15 @@ static void jump_zb_prepare(void)
     core_interrupt_disable();
 }
 
+#endif
+
 #define BOOTLOADER_MCUBOOT_ROM_START_OFFSET             0x200
 
 void mcuboot_status_change(mcuboot_status_type_t status)
 {
 	if (status == MCUBOOT_STATUS_BOOTABLE_IMAGE_FOUND) {
-		uintptr_t app_start_addr ;
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+        uintptr_t app_start_addr ;
     	/* Get the Zigbee firmware flag from slot1 partition */
     	uint8_t zb_fw_flag[4];
     	flash_read(flash_zb_dev, ZIGBEE_PARTITION_OFFSET + ZB_FW_FLAG_OFFSET, zb_fw_flag, sizeof(zb_fw_flag));
@@ -129,6 +133,13 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 
 		// Print the start address for debugging
 		printk("start adr is %x \n",app_start_addr);
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
+
+#else
+		uintptr_t app_start_addr = DT_FIXED_PARTITION_ADDR(DT_NODELABEL(slot0_partition)) +
+			BOOTLOADER_MCUBOOT_ROM_START_OFFSET;
+        
+#endif
 		void *boot_app = (void *)app_start_addr;
 
 		irq_lock();
