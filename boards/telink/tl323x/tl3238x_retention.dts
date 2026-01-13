@@ -37,7 +37,7 @@
 		state1: state1 {
 			compatible = "zephyr,power-state";
 			power-state-name = "standby";
-			min-residency-us = <100000>;
+			min-residency-us = <10000>;
 			exit-latency-us = <1000>;
 		};
 	};
