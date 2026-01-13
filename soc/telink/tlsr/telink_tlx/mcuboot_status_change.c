@@ -9,7 +9,7 @@
 #include <zephyr/devicetree/fixed-partitions.h>
 #include <zephyr/irq.h>
 
-#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
 #include "bootutil/bootutil_log.h"
 #include "bootutil/image.h"
 #include "bootutil/bootutil.h"
@@ -33,7 +33,7 @@
 
 // init mode will jump to matter, if zigbee trigger action will jump to zigbee
 #define MODE_VAL_INIT           0xff
-#define ACTION_SWITCH_INIT    0xff
+#define ACTION_SWITCH_INIT      0xff
 // after matter paired , it will go to matter, only if trigger action.
 #define MODE_VAL_MATTER_PAIR    0x55
 #define ACTION_SWITCH_ZIGBEE    0xaa
@@ -61,6 +61,17 @@ static void restore_all_irq_priorities(void)
     }
 }
 
+static void jump_zb_prepare(void)
+{
+    restore_all_irq_priorities();
+    irq_lock();
+    reg_irq_src0=0;
+    reg_irq_src1=0;
+    core_interrupt_disable();
+}
+#endif
+
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
 static uint8_t jump_zb_dispatch(uint8_t *flag)
 {
     uint8_t mode = flag[0];
@@ -87,15 +98,19 @@ static uint8_t jump_zb_dispatch(uint8_t *flag)
     }
 }
 
-static void jump_zb_prepare(void)
-{
-    restore_all_irq_priorities();
-    irq_lock();
-    reg_irq_src0=0;
-    reg_irq_src1=0;
-    core_interrupt_disable();
-}
+#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
 
+static uint8_t jump_zb_dispatch(uint8_t *flag)
+{
+    uint8_t mode = flag[0];
+    if(mode != MODE_VAL_MATTER_PAIR){
+        /* only matter paired , will jump to matter , otherwise it will jump to zb */ 
+        return 1;
+    }else {
+        /* if mode is matter paried , will jump to matter */
+        return 0;
+    }
+}
 #endif
 
 #define BOOTLOADER_MCUBOOT_ROM_START_OFFSET             0x200
@@ -103,14 +118,14 @@ static void jump_zb_prepare(void)
 void mcuboot_status_change(mcuboot_status_type_t status)
 {
 	if (status == MCUBOOT_STATUS_BOOTABLE_IMAGE_FOUND) {
-#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE
+#if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
         uintptr_t app_start_addr ;
     	/* Get the Zigbee firmware flag from slot1 partition */
     	uint8_t zb_fw_flag[4];
     	flash_read(flash_zb_dev, ZIGBEE_PARTITION_OFFSET + ZB_FW_FLAG_OFFSET, zb_fw_flag, sizeof(zb_fw_flag));
     	if (memcmp(zb_fw_flag, zb_magic_flag, sizeof(zb_magic_flag))){
         	/* Zigbee firmware flag not found, boot to Matter */
-        	printk("Zigbee flag not found, jump to matter \n");
+        	//printk("Zigbee flag not found, jump to matter \n");
         	// jump to matter,app_start_addr is init is matter.
 			app_start_addr = DT_FIXED_PARTITION_ADDR(DT_NODELABEL(slot0_partition)) +
 			BOOTLOADER_MCUBOOT_ROM_START_OFFSET;
@@ -133,8 +148,6 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 
 		// Print the start address for debugging
 		printk("start adr is %x \n",app_start_addr);
-#elif CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
-
 #else
 		uintptr_t app_start_addr = DT_FIXED_PARTITION_ADDR(DT_NODELABEL(slot0_partition)) +
 			BOOTLOADER_MCUBOOT_ROM_START_OFFSET;
