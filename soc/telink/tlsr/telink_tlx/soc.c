@@ -14,6 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
+#include <pm_internal.h>
 
 #if DEBUG_GPIO_ENABLE
 #include "gpio_default.h"
@@ -33,7 +34,7 @@
 #endif
 
 /* Drivers changes , so should not change castart.s, add external*/
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
 __attribute__((section(".ram_code_retention"))) __attribute__((noinline))
 void pm_retention_register_recover(void){
