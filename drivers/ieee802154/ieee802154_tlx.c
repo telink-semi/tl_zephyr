@@ -40,6 +40,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "tlx_bt.h"
 #include "drivers.h"
 
+#include <tlsr_profiler/tlsr_profiler_ext.h>
+
 #if defined(CONFIG_IEEE802154_TLX_MAC_FLASH)
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
@@ -1039,6 +1041,7 @@ static int tlx_init(const struct device *dev)
 /* API implementation: iface_init */
 static void tlx_iface_init(struct net_if *iface)
 {
+	tlsr_profiler_set("tlx_iface_init+");
 	const struct device *dev = net_if_get_device(iface);
 	struct tlx_data *tlx = dev->data;
 	uint8_t *mac = tlx_get_mac(dev);
@@ -1048,6 +1051,7 @@ static void tlx_iface_init(struct net_if *iface)
 	tlx->iface = iface;
 
 	ieee802154_init(iface);
+	tlsr_profiler_set("tlx_iface_init-");
 }
 
 /* API implementation: get_capabilities */
@@ -1073,6 +1077,7 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 /* API implementation: cca */
 static int tlx_cca(const struct device *dev)
 {
+	tlsr_profiler_set("tlx_cca+");
 	ARG_UNUSED(dev);
 	signed char rssi_peak = -110;
 	signed char rssi_cur = -110;
@@ -1095,17 +1100,23 @@ static int tlx_cca(const struct device *dev)
 	}
 	rssi_peak = rssiSum/cnt;
 	if (rssi_peak > CONFIG_IEEE802154_TLX_CCA_RSSI_THRESHOLD) {
+		tlsr_profiler_set("tlx_cca-");
 		return -EBUSY;
 	} else {
+		tlsr_profiler_set("tlx_cca-");
 		return 0;
 	}
+	tlsr_profiler_set("tlx_cca-");
 	return -EBUSY;
 }
 
 /* API implementation: set_channel */
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
-	return tlx_set_channel_radio(dev->data, channel);
+	tlsr_profiler_set("tlx_set_channel+");
+	int r = tlx_set_channel_radio(dev->data, channel);
+	tlsr_profiler_set("tlx_set_channel-");
+	return r;
 }
 
 /* API implementation: filter */
@@ -1114,24 +1125,33 @@ static int tlx_filter(const struct device *dev,
 		      enum ieee802154_filter_type type,
 		      const struct ieee802154_filter *filter)
 {
+	tlsr_profiler_set("tlx_filter+");
 	if (!set) {
+		tlsr_profiler_set("tlx_filter-");
 		return -ENOTSUP;
 	}
 
 	if (type == IEEE802154_FILTER_TYPE_IEEE_ADDR) {
-		return tlx_set_ieee_addr(dev, filter->ieee_addr);
+		int r = tlx_set_ieee_addr(dev, filter->ieee_addr);
+		tlsr_profiler_set("tlx_filter-");
+		return r;
 	} else if (type == IEEE802154_FILTER_TYPE_SHORT_ADDR) {
-		return tlx_set_short_addr(dev, filter->short_addr);
+		int r = tlx_set_short_addr(dev, filter->short_addr);
+		tlsr_profiler_set("tlx_filter-");
+		return r;
 	} else if (type == IEEE802154_FILTER_TYPE_PAN_ID) {
-		return tlx_set_pan_id(dev, filter->pan_id);
+		int r = tlx_set_pan_id(dev, filter->pan_id);
+		tlsr_profiler_set("tlx_filter-");
+		return r;
 	}
-
+	tlsr_profiler_set("tlx_filter-");
 	return -ENOTSUP;
 }
 
 /* API implementation: set_txpower */
 static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 {
+	tlsr_profiler_set("tlx_set_txpower+");
 	struct tlx_data *tlx = dev->data;
 
 	/* check for supported Min/Max range */
@@ -1148,7 +1168,7 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 			rf_set_power_level(tl_tx_pwr_lt[dbm - TL_TX_POWER_MIN]);
 		}
 	}
-
+	tlsr_profiler_set("tlx_set_txpower-");
 	return 0;
 }
 
@@ -1167,13 +1187,19 @@ _attribute_ram_code_sec_ void stimer_rf_handler(const void *param)
 /* API implementation: start */
 static int tlx_start(const struct device *dev)
 {
-	return tlx_start_radio(dev->data);
+	tlsr_profiler_set("tlx_start+");
+	int r = tlx_start_radio(dev->data);
+	tlsr_profiler_set("tlx_start-");
+	return r;
 }
 
 /* API implementation: stop */
 static int tlx_stop(const struct device *dev)
 {
-	return tlx_stop_radio(dev->data);
+	tlsr_profiler_set("tlx_stop+");
+	int r = tlx_stop_radio(dev->data);
+	tlsr_profiler_set("tlx_stop-");
+	return r;
 }
 
 /* API implementation: tx */
@@ -1184,6 +1210,7 @@ static int tlx_tx(const struct device *dev,
 {
 	ARG_UNUSED(pkt);
 
+	tlsr_profiler_set("tlx_tx+");
 	int status = 0;
 	struct tlx_data *tlx = dev->data;
 
@@ -1195,6 +1222,7 @@ static int tlx_tx(const struct device *dev,
 	if (mode != IEEE802154_TX_MODE_DIRECT) {
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 		LOG_WRN("TX mode %d not supported", mode);
+		tlsr_profiler_set("tlx_tx-");
 		return -ENOTSUP;
 	}
 
@@ -1479,6 +1507,7 @@ static int tlx_tx(const struct device *dev,
 		}
 		tlx->ack_handler_en = false;
 	}
+	tlsr_profiler_set("tlx_tx-");
 
 	return status;
 }
@@ -1501,6 +1530,7 @@ static int tlx_configure(const struct device *dev,
 			 enum ieee802154_config_type type,
 			 const struct ieee802154_config *config)
 {
+	tlsr_profiler_set("tlx_configure+");
 	struct tlx_data *tlx = dev->data;
 	int result = 0;
 
@@ -1613,7 +1643,7 @@ static int tlx_configure(const struct device *dev,
 		result = -ENOTSUP;
 		break;
 	}
-
+	tlsr_profiler_set("tlx_configure-");
 	return result;
 }
 
