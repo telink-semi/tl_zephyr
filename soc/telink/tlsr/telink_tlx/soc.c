@@ -33,6 +33,8 @@
 # endif
 #endif
 
+#include <tlsr_profiler/tlsr_profiler_ext.h>
+
 /* Drivers changes , so should not change castart.s, add external*/
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
@@ -211,6 +213,10 @@ void soc_early_init_hook(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+
+#if CONFIG_TLSR_PROFILER_AUTOSTART
+	tlsr_profiler_ini();
+#endif /* TLSR_PROFILER_AUTOSTART */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	if (cclk == CLK_240MHZ) {
