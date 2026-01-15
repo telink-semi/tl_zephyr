@@ -12,4 +12,6 @@ rsource "common/otbr/Kconfig.otbr"
 rsource "common/opus/Kconfig.opus"
 endif # SOC_RISCV_TELINK_W9X
 
+rsource "common/tlsr_profiler/Kconfig.tlsr_profiler"
+
 endif # SOC_FAMILY_TELINK_TLSR

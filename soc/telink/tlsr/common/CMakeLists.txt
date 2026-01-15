@@ -90,3 +90,12 @@ message(FATAL_ERROR "CONFIG_TELINK_OPUS_REMOTE feature requires Andes GCC")
 endif()
 
 endif()
+
+if (CONFIG_TLSR_PROFILER)
+
+zephyr_sources(
+	tlsr_profiler/tlsr_profiler.c
+	tlsr_profiler/tlsr_profiler_ext.c
+)
+
+endif()

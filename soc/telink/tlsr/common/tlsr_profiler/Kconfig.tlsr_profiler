@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config TLSR_PROFILER
+	bool "Telink profiler"
+	depends on SOC_RISCV_TELINK_TLX || SOC_RISCV_TELINK_B9X
+	help
+		This option enables Telink profiling feature.
+
+if TLSR_PROFILER
+
+config TLSR_PROFILER_AUTOSTART
+	bool "Telink profiler antostart"
+	default y
+	help
+		This option enables Telink profiling feature autostart.
+
+config TLSR_PROFILER_ITEMS
+	int "Telink profiler items"
+	default 128
+	help
+		This option sets Telink profiler items count.
+
+endif # TLSR_PROFILER

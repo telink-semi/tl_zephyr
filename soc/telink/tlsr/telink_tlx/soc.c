@@ -19,6 +19,8 @@
 #include "tlx_bt_flash.h"
 #endif
 
+#include <tlsr_profiler/tlsr_profiler_ext.h>
+
 #include <stdlib.h>
 
 /* List of supported CCLK frequencies */
@@ -137,6 +139,10 @@ void soc_early_init_hook(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+
+#if CONFIG_TLSR_PROFILER_AUTOSTART
+	tlsr_profiler_ini();
+#endif /* TLSR_PROFILER_AUTOSTART */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	if (cclk == CLK_240MHZ) {
