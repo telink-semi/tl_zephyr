@@ -160,6 +160,11 @@ void pm_retention_register_recover(void){
 #endif
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	extern drv_api_status_e efuse_calib_sd_adc_vref(void);
+	_attribute_data_retention_sec_ unsigned int g_adc_calib_flag;
+#endif
+
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 /* SOC Parameters structure */
 _attribute_data_retention_sec_ struct {
@@ -296,6 +301,10 @@ void soc_early_init_hook(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	g_adc_calib_flag = efuse_calib_sd_adc_vref();
+#endif
 
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
@@ -437,6 +446,12 @@ void soc_tlx_restore(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	if (g_adc_calib_flag == DRV_API_SUCCESS) {
+		g_adc_calib_flag = efuse_calib_sd_adc_vref();
+	}
+#endif
 
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
