@@ -40,6 +40,12 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "tlx_bt.h"
 #include "drivers.h"
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#define RAM_CODE_SECTION_IEEE802154		__GENERIC_SECTION(.ram_code)
+#else
+#define RAM_CODE_SECTION_IEEE802154		
+#endif
+
 #if defined(CONFIG_IEEE802154_TLX_MAC_FLASH)
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
@@ -888,7 +894,7 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 }
 
 /* IRQ handler */
-__GENERIC_SECTION(.ram_code) static void tlx_rf_isr(const struct device *dev)
+RAM_CODE_SECTION_IEEE802154 static void tlx_rf_isr(const struct device *dev)
 {
 	if (rf_get_irq_status(FLD_RF_IRQ_RX)) {
 		tlx_rf_rx_isr(dev);
@@ -1104,7 +1110,7 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 }
 
 /* API implementation: cca */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
@@ -1140,14 +1146,14 @@ static int tlx_cca(const struct device *dev)
 }
 
 /* API implementation: set_channel */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_set_channel(const struct device *dev, uint16_t channel)
 {
 	return tlx_set_channel_radio(dev->data, channel);
 }
 
 /* API implementation: filter */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_filter(const struct device *dev,
 		      bool set,
 		      enum ieee802154_filter_type type,
@@ -1169,7 +1175,7 @@ static int tlx_filter(const struct device *dev,
 }
 
 /* API implementation: set_txpower */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 {
 	struct tlx_data *tlx = dev->data;
@@ -1195,7 +1201,7 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 extern bool isThreadCommissioned;
 
-__GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
+RAM_CODE_SECTION_IEEE802154 void stimer_rf_handler(const void *param)
 {
 	(void)param;
 	if (stimer_get_irq_status(FLD_SYSTEM_IRQ)) {
@@ -1205,21 +1211,21 @@ __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 #endif
 
 /* API implementation: start */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_start(const struct device *dev)
 {
 	return tlx_start_radio(dev->data);
 }
 
 /* API implementation: stop */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_stop(const struct device *dev)
 {
 	return tlx_stop_radio(dev->data);
 }
 
 /* API implementation: tx */
-__GENERIC_SECTION(.ram_code)
+RAM_CODE_SECTION_IEEE802154
 static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct net_pkt *pkt,
 		  struct net_buf *frag)
 {
