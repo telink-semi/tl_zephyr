@@ -40,6 +40,18 @@ config SOC_RISCV_TELINK_TL721X
 	help
 	  Telink TL721X
 
+config SOC_RISCV_TELINK_TL322X
+	bool "Telink TL322 SoC implementation"
+	select SOC_RISCV_TELINK_TLX
+	help
+	  Telink TL322X
+
+config SOC_RISCV_TELINK_TL323X
+	bool "Telink TL323 SoC implementation"
+	select SOC_RISCV_TELINK_TLX
+	help
+	  Telink TL323X
+
 endchoice
 
 config SOC_FAMILY_TELINK_TLSR
