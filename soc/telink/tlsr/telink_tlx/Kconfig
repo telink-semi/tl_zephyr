@@ -49,6 +49,14 @@ config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	help
 		This option enables Telink TLx hardware accelerated mbedtls version.
 
+config TELINK_TLX_MBEDTLS_HW_SHA_ACCELERATION
+	bool "Use Telink TLx platform mbedtls HW SHA256 acceleration"
+	depends on TELINK_TLX_MBEDTLS_HW_ACCELERATION
+	default y if MCUBOOT
+	help
+		This option enables Telink TLx hardware accelerated
+		SHA256 for MbedTLS in bootloader only.
+
 config TELINK_SOC_REBOOT_ON_FAULT
 	bool "Reboot system when fault happened"
 	help
