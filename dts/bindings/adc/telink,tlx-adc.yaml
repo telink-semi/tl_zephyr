@@ -27,6 +27,7 @@ properties:
       - 23000
       - 48000
       - 96000
+      - 192000
     description: |
       This property selects the ADC source frequency: 23 kHz, 48 kHz, or 96 kHz.
 
@@ -34,7 +35,6 @@ properties:
     type: int
     required: true
     enum:
-      - 900
       - 1200
     description: |
       This property selects the internal reference voltage source (in millivolts).
