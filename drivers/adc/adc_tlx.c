@@ -15,7 +15,7 @@
 
 /* Zephyr Logging headers */
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_LOG_LEVEL);
+LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
 
 /* Telink HAL headers */
 #include <adc.h>
@@ -239,6 +239,7 @@ static void adc_tlx_acquisition_thread(const struct device *dev)
 #endif
 		/* Perform read */
 		adc_code = adc_tlx_get_code();
+		LOG_INF("ADC raw: %d", adc_code);
 		if (!data->differential) {
 			/* Sign bit is not used in case of single-ended configuration */
 			adc_code = adc_code * 8;

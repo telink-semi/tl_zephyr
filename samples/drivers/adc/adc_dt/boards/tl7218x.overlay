@@ -21,6 +21,6 @@
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
 		zephyr,resolution = <12>;
-		zephyr,input-positive = <DT_ADC_VBAT>;
+		zephyr,input-positive = <DT_ADC_GPIO_PB1>;
 	};
 };
