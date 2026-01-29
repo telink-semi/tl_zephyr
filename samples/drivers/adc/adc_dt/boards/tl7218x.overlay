@@ -20,8 +20,8 @@
 		zephyr,gain = "ADC_GAIN_1_4";
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,resolution = <12>;
 		zephyr,input-positive = <DT_ADC_GPIO_PB1>;
+		zephyr,input-negative = <DT_ADC_GND>;
 	};
 
 	channel@1 {
@@ -29,7 +29,7 @@
 		zephyr,gain = "ADC_GAIN_1_4";
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,resolution = <12>;
 		zephyr,input-positive = <DT_ADC_GPIO_PB1>;
+		zephyr,input-negative = <DT_ADC_GND>;
 	};
 };

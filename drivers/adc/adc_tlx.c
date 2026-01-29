@@ -8,16 +8,40 @@
 
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/dt-bindings/adc/tlx-adc.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
 
 #include <adc.h>
 
 /************************************************************************
+ * Helpers
+ ************************************************************************/
+
+#define ARRAY_CONTAINS(arr, val)                            \
+	({                                                      \
+		bool _found = false;                                \
+		for (size_t _i = 0; _i < ARRAY_SIZE(arr); _i++) {   \
+			if ((arr)[_i] == (val)) {                       \
+				_found = true;                              \
+				break;                                      \
+			}                                               \
+		}                                                   \
+		_found;                                             \
+	})
+
+/************************************************************************
  * ADC driver data types
  ************************************************************************/
 
 struct telink_tlx_adc_data {
+	struct {
+		bool valid;
+		enum adc_gain gain;
+		uint16_t acquisition_time;
+		uint8_t input_positive;
+		uint8_t input_negative;
+	} channel[32];
 };
 
 struct telink_tlx_adc_config {
@@ -74,6 +98,12 @@ static int telink_tlx_adc_init(const struct device *dev)
 			LOG_ERR("adc init failed %d", result);
 			break;
 		}
+
+		struct telink_tlx_adc_data *data = dev->data;
+
+		for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++i) {
+			data->channel[i].valid = false;
+		}
 		LOG_INF("adc inited: %s", dev->name);
 	} while (0);
 	return result;
@@ -82,9 +112,53 @@ static int telink_tlx_adc_init(const struct device *dev)
 static int telink_tlx_adc_channel_setup(const struct device *dev,
 				 const struct adc_channel_cfg *channel_cfg)
 {
-	LOG_INF("%s %s", __func__, dev->name);
+	struct telink_tlx_adc_data *data = dev->data;
+	int result = -EINVAL;
 
-	return 0;
+	do {
+		if (!ARRAY_CONTAINS(((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
+			channel_cfg->gain)) {
+			LOG_ERR("adc not supported gain: %u", channel_cfg->gain);
+			break;
+		}
+		if (!ARRAY_CONTAINS(((enum adc_reference[]){ADC_REF_INTERNAL}),
+			channel_cfg->reference)) {
+			LOG_ERR("adc not supported reference: %u", channel_cfg->reference);
+			break;
+		}
+		if (!channel_cfg->differential) {
+			LOG_ERR("adc not supported input type: %u", channel_cfg->differential);
+			break;
+		}
+		if (!ARRAY_CONTAINS(((uint8_t[]){
+			DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2, DT_ADC_GPIO_PB3,
+			DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5, DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7,
+			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_GND, DT_ADC_VBAT}),
+			channel_cfg->input_positive)) {
+			LOG_ERR("adc not supported positive input: %u", channel_cfg->input_positive);
+			break;
+		}
+		if (!ARRAY_CONTAINS(((uint8_t[]){
+			DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2, DT_ADC_GPIO_PB3,
+			DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5, DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7,
+			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_GND, DT_ADC_VBAT}),
+			channel_cfg->input_negative)) {
+			LOG_ERR("adc not supported negative input: %u", channel_cfg->input_negative);
+			break;
+		}
+		data->channel[channel_cfg->channel_id].valid = true;
+		data->channel[channel_cfg->channel_id].gain = channel_cfg->gain;
+		data->channel[channel_cfg->channel_id].acquisition_time = channel_cfg->acquisition_time;
+		data->channel[channel_cfg->channel_id].input_positive = channel_cfg->input_positive;
+		data->channel[channel_cfg->channel_id].input_negative = channel_cfg->input_negative;
+		LOG_INF("adc channel[%u] = "
+			"{.gain=%u, .acquisition_time=%u, .input_positive=%u, input_negative=%u}",
+			channel_cfg->channel_id, channel_cfg->gain, channel_cfg->acquisition_time,
+			channel_cfg->input_positive, channel_cfg->input_negative);
+		result = 0;
+	} while (0);
+
+	return result;
 }
 
 static int telink_tlx_adc_read(const struct device *dev,
