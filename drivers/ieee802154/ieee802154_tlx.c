@@ -894,7 +894,7 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 }
 
 /* IRQ handler */
-RAM_CODE_SECTION_IEEE802154 static void tlx_rf_isr(const struct device *dev)
+__GENERIC_SECTION(.ram_code) static void tlx_rf_isr(const struct device *dev)
 {
 	if (rf_get_irq_status(FLD_RF_IRQ_RX)) {
 		tlx_rf_rx_isr(dev);
@@ -1201,7 +1201,7 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 extern bool isThreadCommissioned;
 
-RAM_CODE_SECTION_IEEE802154 void stimer_rf_handler(const void *param)
+__GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 {
 	(void)param;
 	if (stimer_get_irq_status(FLD_SYSTEM_IRQ)) {
