@@ -15,6 +15,22 @@ LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
 #include <adc.h>
 
 /************************************************************************
+ * ADC configuration checker
+ ************************************************************************/
+
+#ifndef CONFIG_ADC_CONFIGURABLE_INPUTS
+#error CONFIG_ADC_CONFIGURABLE_INPUTS should be set
+#endif /* CONFIG_ADC_CONFIGURABLE_INPUTS */
+
+#ifdef CONFIG_ADC_CONFIGURABLE_EXCITATION_CURRENT_SOURCE_PIN
+#error CONFIG_ADC_CONFIGURABLE_EXCITATION_CURRENT_SOURCE_PIN should not be set
+#endif /* CONFIG_ADC_CONFIGURABLE_EXCITATION_CURRENT_SOURCE_PIN */
+
+#ifdef CONFIG_ADC_CONFIGURABLE_VBIAS_PIN
+#error CONFIG_ADC_CONFIGURABLE_VBIAS_PIN should not be set
+#endif /* CONFIG_ADC_CONFIGURABLE_VBIAS_PIN */
+
+/************************************************************************
  * Helpers
  ************************************************************************/
 
@@ -35,6 +51,7 @@ LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
  ************************************************************************/
 
 struct telink_tlx_adc_data {
+	struct k_sem ready_sem;
 	struct {
 		bool valid;
 		enum adc_gain gain;
@@ -42,6 +59,7 @@ struct telink_tlx_adc_data {
 		uint8_t input_positive;
 		uint8_t input_negative;
 	} channel[32];
+	const struct adc_sequence *sequence;
 };
 
 struct telink_tlx_adc_config {
@@ -54,22 +72,15 @@ struct telink_tlx_adc_config {
  * ADC low-level wrappers
  ************************************************************************/
 
-static inline bool telink_tlx_adc_hw_valid(uintptr_t base_addr)
-{
-	bool result = false;
-
-	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
-		result = true;
-	}
-	return result;
-}
-
 static inline int telink_tlx_adc_hw_init(uintptr_t base_addr)
 {
-	ARG_UNUSED(base_addr);
+	int result = -ENXIO;
 
-	adc_init(NDMA_M_CHN);
-	return 0;
+	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+		adc_init(NDMA_M_CHN);
+		result = 0;
+	}
+	return result;
 }
 
 /************************************************************************
@@ -82,15 +93,11 @@ static int telink_tlx_adc_init(const struct device *dev)
 
 	do {
 		const struct telink_tlx_adc_config *config = dev->config;
+		struct telink_tlx_adc_data *data = dev->data;
 
 		result = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
 		if (result) {
 			LOG_ERR("adc pinctrl failed %d", result);
-			break;
-		}
-		if (!telink_tlx_adc_hw_valid(config->address)) {
-			LOG_ERR("adc no low-level hal");
-			result = -ENXIO;
 			break;
 		}
 		result = telink_tlx_adc_hw_init(config->address);
@@ -98,9 +105,11 @@ static int telink_tlx_adc_init(const struct device *dev)
 			LOG_ERR("adc init failed %d", result);
 			break;
 		}
-
-		struct telink_tlx_adc_data *data = dev->data;
-
+		result = k_sem_init(&data->ready_sem, 1, 1);
+		if (result) {
+			LOG_ERR("adc ready semaphore failed %d", result);
+			break;
+		}
 		for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++i) {
 			data->channel[i].valid = false;
 		}
@@ -126,6 +135,13 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 			LOG_ERR("adc not supported reference: %u", channel_cfg->reference);
 			break;
 		}
+		if (channel_cfg->acquisition_time != ADC_ACQ_TIME_DEFAULT &&
+			ADC_ACQ_TIME_UNIT(channel_cfg->acquisition_time) != ADC_ACQ_TIME_TICKS) {
+			LOG_ERR("adc not supported acquisition time %u %u",
+				(unsigned int)ADC_ACQ_TIME_VALUE(channel_cfg->acquisition_time),
+				(unsigned int)ADC_ACQ_TIME_UNIT(channel_cfg->acquisition_time));
+			break;
+		}
 		if (!channel_cfg->differential) {
 			LOG_ERR("adc not supported input type: %u", channel_cfg->differential);
 			break;
@@ -146,11 +162,17 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 			LOG_ERR("adc not supported negative input: %u", channel_cfg->input_negative);
 			break;
 		}
+		result = k_sem_take(&data->ready_sem, K_NO_WAIT);
+		if (result) {
+			LOG_ERR("adc access error %u", result);
+			break;
+		}
 		data->channel[channel_cfg->channel_id].valid = true;
 		data->channel[channel_cfg->channel_id].gain = channel_cfg->gain;
 		data->channel[channel_cfg->channel_id].acquisition_time = channel_cfg->acquisition_time;
 		data->channel[channel_cfg->channel_id].input_positive = channel_cfg->input_positive;
 		data->channel[channel_cfg->channel_id].input_negative = channel_cfg->input_negative;
+		k_sem_give(&data->ready_sem);
 		LOG_INF("adc channel[%u] = "
 			"{.gain=%u, .acquisition_time=%u, .input_positive=%u, input_negative=%u}",
 			channel_cfg->channel_id, channel_cfg->gain, channel_cfg->acquisition_time,
@@ -161,16 +183,76 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 	return result;
 }
 
+static int telink_tlx_adc_start(const struct device *dev,
+			const struct adc_sequence *sequence)
+{
+	const struct telink_tlx_adc_config *config = dev->config;
+	struct telink_tlx_adc_data *data = dev->data;
+	int result = -EINVAL;
+
+	do {
+		if (!sequence) {
+			LOG_ERR("adc no sequence");
+			break;
+		}
+		if (sequence->buffer_size < sizeof(int16_t) * POPCOUNT(sequence->channels) *
+			(sequence->options ? sequence->options->extra_samplings + 1 : 1)) {
+			LOG_ERR("adc buffer too small");
+			break;
+		}
+		if (!ARRAY_CONTAINS(((uint8_t[]){8, 10, 12}),
+			sequence->resolution)) {
+			LOG_ERR("adc not supported resolution: %u", sequence->resolution);
+			break;
+		}
+		result = 0;
+		for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++ i) {
+			if ((sequence->channels & (1 << i)) && !data->channel[i].valid) {
+				result = -EINVAL;
+				break;
+			}
+		}
+		if (result) {
+			LOG_ERR("adc sequence channel not set");
+			break;
+		}
+		result = k_sem_take(&data->ready_sem, K_NO_WAIT);
+		if (result) {
+			LOG_ERR("adc access error %u", result);
+			break;
+		}
+		data->sequence = sequence;
+		result = k_msgq_put(config->queue, &dev, K_FOREVER);
+		if (result) {
+			LOG_ERR("adc internal sw error %u", result);
+			break;
+		}
+		result = 0;
+	} while (0);
+	return result;
+}
+
 static int telink_tlx_adc_read(const struct device *dev,
 			const struct adc_sequence *sequence)
 {
-	LOG_INF("%s %s", __func__, dev->name);
+	struct telink_tlx_adc_data *data = dev->data;
+	int result = -EINVAL;
 
-	const struct telink_tlx_adc_config *config = dev->config;
-
-	(void)k_msgq_put(config->queue, &dev, K_FOREVER);
-
-	return 0;
+	do {
+		result = telink_tlx_adc_start(dev, sequence);
+		if (result) {
+			LOG_ERR("adc start error %u", result);
+			break;
+		}
+		result = k_sem_take(&data->ready_sem, K_FOREVER);
+		if (result) {
+			LOG_ERR("adc access error %u", result);
+			break;
+		}
+		k_sem_give(&data->ready_sem);
+		result = 0;
+	} while (0);
+	return result;
 }
 
 #ifdef CONFIG_ADC_ASYNC
@@ -178,24 +260,48 @@ static int telink_tlx_adc_read_async(const struct device *dev,
 			      const struct adc_sequence *sequence,
 			      struct k_poll_signal *async)
 {
-	LOG_INF("%s %s", __func__, dev->name);
-
-	return 0;
+	return telink_tlx_adc_start(dev, sequence);
 }
 #endif /* CONFIG_ADC_ASYNC */
 
 static void telink_tlx_adc_thread_handler(struct k_msgq *queue)
 {
-	for (;;) {
+	for (int result = 0;;) {
 		const struct device *dev;
 
-		if (!k_msgq_get(queue, &dev, K_FOREVER)) {
-			if (dev) {
-				LOG_INF("%s %s", __func__, dev->name);
-			} else {
-				LOG_ERR("adc internal sw error");
+		result = k_msgq_get(queue, &dev, K_FOREVER);
+		if (result) {
+			continue;
+		}
+		if (!dev) {
+			LOG_ERR("adc internal sw error");
+			continue;
+		}
+		struct telink_tlx_adc_data *data = dev->data;
+
+		for (uint16_t sampling_index = 0; sampling_index <
+			(data->sequence->options ? data->sequence->options->extra_samplings + 1 : 1);) {
+			for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++ i) {
+				if (data->sequence->channels & (1 << i)) {
+					LOG_INF("measure %s at ch %u", dev->name, i);
+				}
+			}
+			enum adc_action action = ADC_ACTION_CONTINUE;
+
+			if (data->sequence->options && data->sequence->options->callback) {
+				action = data->sequence->options->callback(dev, data->sequence, sampling_index);
+			}
+			if (action == ADC_ACTION_REPEAT) {
+				continue;
+			} else if (action == ADC_ACTION_FINISH) {
+				break;
+			}
+			sampling_index++;
+			if (data->sequence->options && data->sequence->options->interval_us) {
+				k_usleep(data->sequence->options->interval_us);
 			}
 		}
+		k_sem_give(&data->ready_sem);
 	}
 }
 
