@@ -1030,10 +1030,17 @@ int usb_dc_ep_check_cap(const struct usb_dc_ep_cfg_data *const ep_cfg)
 			LOG_ERR("EP%d can only be a control endpoint.", USBD_EP0_IDX);
 			return -EINVAL;
 		}
+		#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
+		if (ep_cfg->ep_mps > 64) {
+			LOG_ERR("EP%d's max packet size is fixed to 64.", USBD_EP0_IDX);
+			return -EINVAL;
+		}
+		#else
 		if (ep_cfg->ep_mps > 8) {
 			LOG_ERR("EP%d's max packet size is fixed to 8.", USBD_EP0_IDX);
 			return -EINVAL;
 		}
+		#endif
 	} else if (USB_EP_DIR_IS_IN(ep_cfg->ep_addr)) {
 		if (ep_cfg->ep_type == USB_DC_EP_CONTROL) {
 			LOG_ERR("EP%d cannot be a control endpoint.", ep_idx);
