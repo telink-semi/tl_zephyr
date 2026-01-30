@@ -558,7 +558,7 @@ int main(void)
 					      sys_rand32_get(), 0x00};
 
 				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid5_dev, rep,
+				hid_int_ep_write(hid0_dev, rep,
 						 sizeof(rep), NULL);
 				clear_mouse_report();
 				break;
@@ -571,7 +571,7 @@ int main(void)
 					      HID_KEY_CAPSLOCK};
 
 				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid3_dev, rep,
+				hid_int_ep_write(hid1_dev, rep,
 						 sizeof(rep), NULL);
 				clear_kbd_report();
 				break;
@@ -582,7 +582,7 @@ int main(void)
 				uint8_t rep[] = {0x00, 0x00, 0x00, 0x00};
 
 				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid5_dev, rep,
+				hid_int_ep_write(hid0_dev, rep,
 						 sizeof(rep), NULL);
 				break;
 			}
@@ -593,7 +593,7 @@ int main(void)
 					      0x00, 0x00, 0x00, 0x00};
 
 				k_sem_take(&usb_sem, K_FOREVER);
-				hid_int_ep_write(hid3_dev, rep,
+				hid_int_ep_write(hid1_dev, rep,
 						 sizeof(rep), NULL);
 				break;
 			}
