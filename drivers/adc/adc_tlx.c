@@ -52,7 +52,7 @@ LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
 
 struct telink_tlx_adc_data {
 	struct k_sem ready_sem;
-	struct {
+	struct telink_tlx_adc_data_channel {
 		bool valid;
 		enum adc_gain gain;
 		uint16_t acquisition_time;
@@ -66,6 +66,7 @@ struct telink_tlx_adc_config {
 	struct k_msgq *queue;
 	uintptr_t address;
 	const struct pinctrl_dev_config *pcfg;
+	uint32_t sample_freq;
 };
 
 /************************************************************************
@@ -78,6 +79,33 @@ static inline int telink_tlx_adc_hw_init(uintptr_t base_addr)
 
 	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
 		adc_init(NDMA_M_CHN);
+		result = 0;
+	}
+	return result;
+}
+
+static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
+	const struct telink_tlx_adc_data_channel *channel,
+	uint32_t sample_freq, uint16_t ref_internal)
+{
+	int result = -ENXIO;
+
+	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+		/* TODO: Dummy */
+		LOG_INF("adc [sample rate: %u, reference: %u]", sample_freq, ref_internal);
+		result = 0;
+	}
+	return result;
+}
+
+static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversampling,
+	int16_t *sample)
+{
+	int result = -ENXIO;
+
+	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+		/* TODO: Dummy */
+		*sample = 2047;
 		result = 0;
 	}
 	return result;
@@ -277,14 +305,43 @@ static void telink_tlx_adc_thread_handler(struct k_msgq *queue)
 			LOG_ERR("adc internal sw error");
 			continue;
 		}
+		const struct telink_tlx_adc_config *config = dev->config;
 		struct telink_tlx_adc_data *data = dev->data;
+		const struct adc_driver_api *api = dev->api;
 
-		for (uint16_t sampling_index = 0; sampling_index <
-			(data->sequence->options ? data->sequence->options->extra_samplings + 1 : 1);) {
-			for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++ i) {
-				if (data->sequence->channels & (1 << i)) {
-					LOG_INF("measure %s at ch %u", dev->name, i);
+		for (uint16_t sampling_index = 0;;) {
+			int16_t *adc_buffer = (int16_t *)data->sequence->buffer +
+				POPCOUNT(data->sequence->channels) * sampling_index;
+
+			for (size_t ch_id = 0; ch_id < ARRAY_SIZE(data->channel); ++ch_id) {
+				if (!(data->sequence->channels & (1 << ch_id))) {
+					continue;
 				}
+				int adc_hw_result = 0;
+
+				do {
+					adc_hw_result = telink_tlx_adc_hw_set_channel(config->address,
+						&data->channel[ch_id], config->sample_freq, api->ref_internal);
+					if (adc_hw_result) {
+						LOG_ERR("adc channel failed %d", adc_hw_result);
+						break;
+					}
+					for (uint16_t i = 0;
+						data->channel[ch_id].acquisition_time != ADC_ACQ_TIME_DEFAULT &&
+						i < ADC_ACQ_TIME_VALUE(data->channel[ch_id].acquisition_time); ++i) {
+						__asm __volatile ("nop");
+					}
+					adc_hw_result = telink_tlx_adc_hw_get_data(config->address,
+						data->sequence->oversampling, adc_buffer);
+					if (adc_hw_result) {
+						LOG_ERR("adc sample failed %d", adc_hw_result);
+						break;
+					}
+				} while (0);
+				if (adc_hw_result) {
+					*adc_buffer = 0;
+				}
+				adc_buffer++;
 			}
 			enum adc_action action = ADC_ACTION_CONTINUE;
 
@@ -297,8 +354,13 @@ static void telink_tlx_adc_thread_handler(struct k_msgq *queue)
 				break;
 			}
 			sampling_index++;
-			if (data->sequence->options && data->sequence->options->interval_us) {
-				k_usleep(data->sequence->options->interval_us);
+			if (sampling_index <
+				(data->sequence->options ? data->sequence->options->extra_samplings + 1 : 1)) {
+				if (data->sequence->options && data->sequence->options->interval_us) {
+					k_usleep(data->sequence->options->interval_us);
+				}
+			} else {
+				break;
 			}
 		}
 		k_sem_give(&data->ready_sem);
@@ -319,27 +381,27 @@ K_THREAD_DEFINE(telink_tlx_adc_thread, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_S
  * ADC driver registration
  ************************************************************************/
 
-static const struct adc_driver_api telink_tlx_adc_api = {
-	.channel_setup = telink_tlx_adc_channel_setup,
-	.read = telink_tlx_adc_read,
-#ifdef CONFIG_ADC_ASYNC
-	.read_async = telink_tlx_adc_read_async
-#endif
-};
-
 #define TELINK_TLX_ADC_DEFINE(n)                                                                   \
+                                                                                                   \
+	static const struct adc_driver_api telink_tlx_adc_api##n = {                                   \
+		.channel_setup = telink_tlx_adc_channel_setup,                                             \
+		.read = telink_tlx_adc_read,                                                               \
+		IF_ENABLED(CONFIG_ADC_ASYNC, (.read_async = telink_tlx_adc_read_async,))                   \
+		.ref_internal = DT_INST_PROP(n, vref_internal_mv)                                          \
+	};                                                                                             \
                                                                                                    \
 	PINCTRL_DT_INST_DEFINE(n);                                                                     \
 	                                                                                               \
 	static const struct telink_tlx_adc_config tlx_adc_config##n = {                                \
 		.queue = &telink_tlx_adc_msgq,                                                             \
-	    .address = DT_INST_REG_ADDR(n),                                                            \
-		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n)                                                  \
+		.address = DT_INST_REG_ADDR(n),                                                            \
+		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),                                                 \
+		.sample_freq = DT_INST_PROP(0, sample_freq)                                                \
 	};                                                                                             \
-	                                                                                               \
+                                                                                                   \
 	static struct telink_tlx_adc_data tlx_adc_data##n;                                             \
                                                                                                    \
 	DEVICE_DT_INST_DEFINE(n, telink_tlx_adc_init, NULL, &tlx_adc_data##n, &tlx_adc_config##n,      \
-		POST_KERNEL, CONFIG_ADC_INIT_PRIORITY, &telink_tlx_adc_api);
+		POST_KERNEL, CONFIG_ADC_INIT_PRIORITY, &telink_tlx_adc_api##n);
 
 DT_INST_FOREACH_STATUS_OKAY(TELINK_TLX_ADC_DEFINE)
