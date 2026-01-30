@@ -17,6 +17,23 @@
 #define LOG_LEVEL LOG_LEVEL_DBG
 LOG_MODULE_REGISTER(main);
 
+#define LED0_NODE DT_ALIAS(led0)
+#define LED1_NODE DT_ALIAS(led1)
+#define LED2_NODE DT_ALIAS(led2)
+
+#define GPIO_SPEC(node_id) GPIO_DT_SPEC_GET_OR(node_id, gpios, {0})
+
+static const struct gpio_dt_spec led0 = GPIO_SPEC(LED0_NODE),
+								 led1 = GPIO_SPEC(LED1_NODE),
+								 led2 = GPIO_SPEC(LED2_NODE);
+
+static const struct gpio_dt_spec leds[] = {
+	led0,
+	led1,
+	led2
+};
+
+
 #define SW0_NODE DT_ALIAS(sw0)
 
 #if DT_NODE_HAS_STATUS(SW0_NODE, okay)
@@ -129,7 +146,10 @@ static inline struct app_evt_t *app_evt_alloc(void)
 
 static const uint8_t hid_mouse_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 static const uint8_t hid_kbd_report_desc[] = HID_KEYBOARD_REPORT_DESC();
-static const uint8_t hid_kb_report_desc[] = HID_MOUSE_REPORT_DESC(2);
+static const uint8_t hid_mouse1_report_desc[] = HID_MOUSE_REPORT_DESC(2);
+static const uint8_t hid_kmd_report_desc[] = HID_KEYBOARD_REPORT_DESC();
+static const uint8_t hid_mouse2_report_desc[] = HID_MOUSE_REPORT_DESC(2);
+static const uint8_t hid_mouse3_report_desc[] = HID_MOUSE_REPORT_DESC(2);
 
 static K_SEM_DEFINE(evt_sem, 0, 1);	/* starts off "not available" */
 static K_SEM_DEFINE(usb_sem, 1, 1);	/* starts off "available" */
@@ -407,9 +427,24 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 
 #define DEVICE_AND_COMMA(node_id) DEVICE_DT_GET(node_id),
 
+/* LED control handler implementation */
+int kbd_set_report(const struct device *dev, struct usb_setup_packet *setup, int32_t *len,
+			uint8_t **data)
+{
+	gpio_pin_set(led1.port, led1.pin, (**data & HID_KBD_LED_NUM_LOCK));
+	gpio_pin_set(led2.port, led2.pin, (**data & HID_KBD_LED_CAPS_LOCK));
+
+	return 0;
+}
+
+struct hid_ops kbd_ops = {
+	.set_report = kbd_set_report,
+	.int_in_ready = in_ready_cb,
+};
+
 int main(void)
 {
-	const struct device *hid0_dev, *hid1_dev, *hid2_dev;
+	const struct device *hid0_dev, *hid1_dev, *hid2_dev, *hid3_dev, *hid4_dev, *hid5_dev;
 	struct app_evt_t *ev;
 	uint32_t dtr = 0U;
 	int ret;
@@ -431,6 +466,24 @@ int main(void)
 	hid2_dev = device_get_binding("HID_2");
 	if (hid2_dev == NULL) {
 		LOG_ERR("Cannot get USB HID 2 Device");
+		return 0;
+	}
+
+	hid3_dev = device_get_binding("HID_3");
+	if (hid3_dev == NULL) {
+		LOG_ERR("Cannot get USB HID 3 Device");
+		return 0;
+	}
+
+	hid4_dev = device_get_binding("HID_4");
+	if (hid4_dev == NULL) {
+		LOG_ERR("Cannot get USB HID 4 Device");
+		return 0;
+	}
+
+	hid5_dev = device_get_binding("HID_5");
+	if (hid5_dev == NULL) {
+		LOG_ERR("Cannot get USB HID 5 Device");
 		return 0;
 	}
 
@@ -466,14 +519,26 @@ int main(void)
 				sizeof(hid_mouse_report_desc), &ops);
 
 	usb_hid_register_device(hid1_dev, hid_kbd_report_desc,
-				sizeof(hid_kbd_report_desc), &ops);
+				sizeof(hid_kbd_report_desc), &kbd_ops);
 
-	usb_hid_register_device(hid2_dev, hid_kb_report_desc,
-				sizeof(hid_kb_report_desc), &ops);
+	usb_hid_register_device(hid2_dev, hid_mouse1_report_desc,
+				sizeof(hid_mouse1_report_desc), &ops);
+
+	usb_hid_register_device(hid3_dev, hid_kmd_report_desc,
+				sizeof(hid_kmd_report_desc), &kbd_ops);
+
+	usb_hid_register_device(hid4_dev, hid_mouse2_report_desc,
+				sizeof(hid_mouse2_report_desc), &ops);
+
+	usb_hid_register_device(hid5_dev, hid_mouse3_report_desc,
+				sizeof(hid_mouse3_report_desc), &ops);
 
 	usb_hid_init(hid0_dev);
 	usb_hid_init(hid1_dev);
 	usb_hid_init(hid2_dev);
+	usb_hid_init(hid3_dev);
+	usb_hid_init(hid4_dev);
+	usb_hid_init(hid5_dev);
 
 	ret = usb_enable(status_cb);
 	if (ret != 0) {
@@ -509,6 +574,31 @@ int main(void)
 				hid_int_ep_write(hid1_dev, rep,
 						 sizeof(rep), NULL);
 				clear_kbd_report();
+				break;
+			}
+			
+			case GPIO_BUTTON_2:
+			{
+				/* Move the mouse in random direction */
+				uint8_t rep[] = {0x00, sys_rand32_get(),
+					      sys_rand32_get(), 0x00};
+
+				k_sem_take(&usb_sem, K_FOREVER);
+				hid_int_ep_write(hid4_dev, rep,
+						 sizeof(rep), NULL);
+				clear_mouse_report();
+				break;
+			}
+			case GPIO_BUTTON_3:
+			{
+				/* Move the mouse in random direction */
+				uint8_t rep[] = {0x00, sys_rand32_get(),
+					      sys_rand32_get(), 0x00};
+
+				k_sem_take(&usb_sem, K_FOREVER);
+				hid_int_ep_write(hid5_dev, rep,
+						 sizeof(rep), NULL);
+				clear_mouse_report();
 				break;
 			}
 			case HID_MOUSE_CLEAR:
