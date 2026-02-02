@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(adc_tl323x, CONFIG_ADC_LOG_LEVEL);
 /* Telink HAL headers */
 #include <sd_adc.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/pm/device.h>
 
 /* Driver context structure */
 struct tl323x_adc_data {
@@ -32,6 +33,47 @@ struct tl323x_adc_data {
     uint8_t mode;
 
 	K_KERNEL_STACK_MEMBER(stack, CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE);
+
+	#if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	/* PM retention data */
+	struct {
+		/* Digital registers */
+		uint8_t dfifo_aidx2;
+		uint8_t dfifo_dc_clk_div;
+		uint8_t dc_mode_config;
+		uint8_t rx2_wptr_en;
+		uint8_t dfifo_dc_mode;
+		uint8_t rxfifo2_th_l;
+		uint8_t rxfifo2_th_h;
+		uint8_t irq_fifo;
+		uint8_t rxfifo2_trig_num;
+		uint8_t rxfifo2_clr;
+		uint8_t rxfifo2_st;
+		uint8_t rxfifo2_num;
+		uint16_t rxfifo2_max;
+		uint16_t dfifo_n2;
+		uint8_t cnt_num_all;
+		
+		/* Analog registers */
+		uint8_t areg_0x10f_01;
+		uint8_t areg_0x10c_02;
+		uint8_t areg_0x10d_03;
+		uint8_t areg_0x10e_04;
+		uint8_t areg_sel_ana_input_05;
+		uint8_t areg_sel_ana_input_div_06;
+		uint8_t areg_dc1_sel_ana_input_07;
+		
+		/* ADC configuration */
+		uint8_t mode;
+		uint8_t sample_mode;
+		sd_adc_sample_clk_freq_e sample_clk;
+		sd_adc_downsample_rate_e downsample_rate;
+		sd_adc_vbat_div_e vbat_div;
+		sd_adc_p_input_pin_def_e input_p;
+		sd_adc_n_input_pin_def_e input_n;
+		sd_adc_gpio_chn_div_e gpio_div;
+	} adc_tl323x_retention;
+#endif
 };
 
 /* Driver configuration structure */
@@ -386,6 +428,28 @@ static int adc_tl323x_channel_setup(const struct device *dev,
         sd_adc_gpio_sample_init(&adc_gpio_cfg);
     }
 
+#if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	/* Save configuration to retention structure */
+	data->adc_tl323x_retention.mode = data->mode; 
+	data->adc_tl323x_retention.sample_mode = SD_ADC_SINGLE_DC_MODE;
+	data->adc_tl323x_retention.sample_clk = sample_clk;
+	data->adc_tl323x_retention.downsample_rate = downsample_rate;
+	
+    if (channel_cfg->input_positive == DT_ADC_VBAT) {
+        data->adc_tl323x_retention.vbat_div = vbat_div;
+        // Clear GPIO-specific fields
+        data->adc_tl323x_retention.gpio_div = 0;
+        data->adc_tl323x_retention.input_p = 0;
+        data->adc_tl323x_retention.input_n = 0;
+    } else {
+        data->adc_tl323x_retention.gpio_div = SD_ADC_GPIO_CHN_DIV_1F4;
+        data->adc_tl323x_retention.input_p = adc_tl323x_get_p_pin(channel_cfg->input_positive);
+        data->adc_tl323x_retention.input_n = SD_ADC_GNDN;
+        // Clear VBAT-specific field
+        data->adc_tl323x_retention.vbat_div = 0;
+    }
+#endif
+
     return 0;
 }
 
@@ -407,6 +471,132 @@ static int adc_tl323x_read(const struct device *dev, const struct adc_sequence *
 	adc_context_start_read(&data->ctx, sequence);
 	return adc_context_wait_for_completion(&data->ctx);
 }
+
+#if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+__GENERIC_SECTION(.ram_code)
+static int adc_tl323x_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	struct tl323x_adc_data *data = dev->data;
+
+	LOG_INF("ADC PM action: %d", action);
+	
+	switch (action) {
+	case PM_DEVICE_ACTION_SUSPEND:
+		LOG_INF("ADC suspending...");
+		/* Save digital registers */
+		data->adc_tl323x_retention.dfifo_aidx2 = reg_dfifo_aidx2;
+		data->adc_tl323x_retention.dfifo_dc_clk_div = reg_dfifo_dc_clk_div;
+		data->adc_tl323x_retention.dc_mode_config = reg_dc_mode_config;
+		data->adc_tl323x_retention.rx2_wptr_en = reg_rx2_wptr_en;
+		data->adc_tl323x_retention.dfifo_dc_mode = reg_dfifo_dc_mode;
+		data->adc_tl323x_retention.rxfifo2_th_l = reg_rxfifo2_th_l;
+		data->adc_tl323x_retention.rxfifo2_th_h = reg_rxfifo2_th_h;
+		data->adc_tl323x_retention.irq_fifo = reg_irq_fifo;
+		data->adc_tl323x_retention.rxfifo2_trig_num = reg_rxfifo2_trig_num;
+		data->adc_tl323x_retention.rxfifo2_clr = reg_rxfifo2_clr;
+		data->adc_tl323x_retention.rxfifo2_st = reg_rxfifo2_st;
+		data->adc_tl323x_retention.rxfifo2_num = reg_rxfifo2_num;
+		data->adc_tl323x_retention.rxfifo2_max = reg_rxfifo2_max;
+		data->adc_tl323x_retention.dfifo_n2 = reg_dfifo_n2;
+		data->adc_tl323x_retention.cnt_num_all = reg_cnt_num_all;
+		
+		/* Save analog registers */
+		data->adc_tl323x_retention.areg_0x10f_01 = analog_read_reg8(areg_0x10f);
+		data->adc_tl323x_retention.areg_0x10c_02 = analog_read_reg8(areg_0x10c);
+		data->adc_tl323x_retention.areg_0x10d_03 = analog_read_reg8(areg_0x10d);
+		data->adc_tl323x_retention.areg_0x10e_04 = analog_read_reg8(areg_0x10e);
+		data->adc_tl323x_retention.areg_sel_ana_input_05 = analog_read_reg8(areg_sel_ana_input);
+		data->adc_tl323x_retention.areg_sel_ana_input_div_06 = analog_read_reg8(areg_sel_ana_input_div);
+		data->adc_tl323x_retention.areg_dc1_sel_ana_input_07 = analog_read_reg8(areg_dc1_sel_ana_input);
+	
+		/* Save ADC configuration parameters */
+		data->adc_tl323x_retention.mode = data->mode;		
+		break;
+		
+	case PM_DEVICE_ACTION_RESUME:
+		{ 
+			LOG_INF("ADC resuming...");
+			extern volatile bool tlx_deep_sleep_retention;
+			
+			if (tlx_deep_sleep_retention) {
+				/* Restore analog registers */
+				analog_write_reg8(areg_0x10f, data->adc_tl323x_retention.areg_0x10f_01);
+				analog_write_reg8(areg_0x10c, data->adc_tl323x_retention.areg_0x10c_02);
+				analog_write_reg8(areg_0x10d, data->adc_tl323x_retention.areg_0x10d_03);
+				analog_write_reg8(areg_0x10e, data->adc_tl323x_retention.areg_0x10e_04);
+				analog_write_reg8(areg_sel_ana_input, data->adc_tl323x_retention.areg_sel_ana_input_05);
+				analog_write_reg8(areg_sel_ana_input_div, data->adc_tl323x_retention.areg_sel_ana_input_div_06);
+				analog_write_reg8(areg_dc1_sel_ana_input, data->adc_tl323x_retention.areg_dc1_sel_ana_input_07);
+				
+				/* Restore digital registers */
+				reg_dfifo_aidx2 = data->adc_tl323x_retention.dfifo_aidx2;
+				reg_dfifo_dc_clk_div = data->adc_tl323x_retention.dfifo_dc_clk_div;
+				reg_dc_mode_config = data->adc_tl323x_retention.dc_mode_config;
+				reg_rx2_wptr_en = data->adc_tl323x_retention.rx2_wptr_en;
+				reg_dfifo_dc_mode = data->adc_tl323x_retention.dfifo_dc_mode;
+				reg_rxfifo2_th_l = data->adc_tl323x_retention.rxfifo2_th_l;
+				reg_rxfifo2_th_h = data->adc_tl323x_retention.rxfifo2_th_h;
+				reg_irq_fifo = data->adc_tl323x_retention.irq_fifo;
+				reg_rxfifo2_trig_num = data->adc_tl323x_retention.rxfifo2_trig_num;
+				reg_rxfifo2_clr = data->adc_tl323x_retention.rxfifo2_clr;
+				reg_rxfifo2_st = data->adc_tl323x_retention.rxfifo2_st;
+				reg_rxfifo2_num = data->adc_tl323x_retention.rxfifo2_num;
+				reg_rxfifo2_max = data->adc_tl323x_retention.rxfifo2_max;
+				reg_dfifo_n2 = data->adc_tl323x_retention.dfifo_n2;
+				reg_cnt_num_all = data->adc_tl323x_retention.cnt_num_all;
+				
+				data->mode = data->adc_tl323x_retention.mode;
+
+				/* Clear FIFO state and reinitialize */
+				sd_adc_power_off(SD_ADC_SAMPLE_MODE);  // Power off ADC
+				k_busy_wait(10);  // Wait for ADC to power off
+
+				/* Reinitialize ADC with saved configuration */
+				sd_adc_init(data->adc_tl323x_retention.sample_mode);
+			
+				if (data->mode == SD_ADC_VBAT_MODE) {
+					/* Restore VBAT mode configuration */
+					sd_adc_vbat_sample_init(data->adc_tl323x_retention.sample_clk, 
+							data->adc_tl323x_retention.vbat_div, 
+							data->adc_tl323x_retention.downsample_rate);
+				} else {
+					/* Restore GPIO mode configuration */
+					sd_adc_gpio_cfg_t adc_gpio_cfg = {
+						.clk_freq = data->adc_tl323x_retention.sample_clk,
+						.downsample_rate = data->adc_tl323x_retention.downsample_rate,
+						.gpio_div = data->adc_tl323x_retention.gpio_div,
+						.input_p = data->adc_tl323x_retention.input_p,
+						.input_n = data->adc_tl323x_retention.input_n
+					};
+				
+					sd_adc_gpio_sample_init(&adc_gpio_cfg);
+				}
+				/* 5. Ensure ADC clock is enabled. */
+				// Check if additional clock configuration is required.
+				analog_write_reg8(areg_0x10c, 
+					analog_read_reg8(areg_0x10c) | FLD_XO_EN_CLK_ANA);
+				
+				LOG_INF("ADC restored from retention");
+			}
+		}
+		break;
+		
+	default:
+		LOG_INF("Unsupported PM action: %d", action);
+		return -ENOTSUP;
+	}
+	
+	return 0;
+}
+
+/* PM device macros */
+#define PM_DEVICE_INST_DEFINE(n, adc_tl323x_pm_action)  \
+PM_DEVICE_DT_INST_DEFINE(n, adc_tl323x_pm_action);
+#define PM_DEVICE_INST_GET(n) PM_DEVICE_DT_INST_GET(n)
+#else
+#define PM_DEVICE_INST_DEFINE(n, adc_tl323x_pm_action)
+#define PM_DEVICE_INST_GET(n)  NULL
+#endif /* CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION) */
 
 static int adc_tl323x_init(const struct device *dev)
 {
@@ -462,9 +652,12 @@ static const struct adc_driver_api adc_tl323x_api = {
 	.read = adc_tl323x_read,
 };
 
+/* ADC driver registration with PM support */
+PM_DEVICE_INST_DEFINE(0, adc_tl323x_pm_action);
+
 DEVICE_DT_INST_DEFINE(0,
 		      adc_tl323x_init,
-		      NULL,
+		      PM_DEVICE_INST_GET(0),
 		      &tl323x_adc_data_0,
 		      &tl323x_adc_cfg_0,
 		      POST_KERNEL,
