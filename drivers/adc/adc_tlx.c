@@ -9,6 +9,7 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/dt-bindings/adc/tlx-adc.h>
+#include <zephyr/pm/device.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
 
@@ -34,17 +35,37 @@ LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
  * Helpers
  ************************************************************************/
 
-#define ARRAY_CONTAINS(arr, val)                            \
-	({                                                      \
-		bool _found = false;                                \
-		for (size_t _i = 0; _i < ARRAY_SIZE(arr); _i++) {   \
-			if ((arr)[_i] == (val)) {                       \
-				_found = true;                              \
-				break;                                      \
-			}                                               \
-		}                                                   \
-		_found;                                             \
+#define ARRAY_CONTAINS(arr, val)                                    \
+	({                                                              \
+		bool _found = false;                                        \
+		for (size_t _i = 0; _i < ARRAY_SIZE(arr); _i++) {           \
+			if ((arr)[_i] == (val)) {                               \
+				_found = true;                                      \
+				break;                                              \
+			}                                                       \
+		}                                                           \
+		_found;                                             		\
 	})
+
+#define ARRAY_REMAP_OR(arr_in, arr_out, val, def)                   \
+	({                                                              \
+		__typeof__((arr_out)[0]) _out = (def);                      \
+		BUILD_ASSERT(ARRAY_SIZE(arr_in) == ARRAY_SIZE(arr_out));    \
+		for (size_t _i = 0; _i < ARRAY_SIZE(arr_in); _i++) {        \
+			if ((arr_in)[_i] == (val)) {                            \
+				_out = (arr_out)[_i];                               \
+				break;                                              \
+			}                                                       \
+		}                                                           \
+		_out;                                                       \
+	})
+
+static inline int32_t int32_div_pow2(int32_t val, uint8_t n)
+{
+	int32_t bias = (val >> 31) & ((1 << n) - 1);
+
+	return (val + bias) >> n;
+}
 
 /************************************************************************
  * ADC driver data types
@@ -86,13 +107,39 @@ static inline int telink_tlx_adc_hw_init(uintptr_t base_addr)
 
 static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 	const struct telink_tlx_adc_data_channel *channel,
-	uint32_t sample_freq, uint16_t ref_internal)
+	uint32_t sample_freq, uint16_t ref_internal, uint8_t resolution)
 {
 	int result = -ENXIO;
+	adc_res_e hw_resolution = ARRAY_REMAP_OR(((uint32_t[]){8, 10, 12}),
+		((adc_res_e[]){ADC_RES8, ADC_RES10, ADC_RES12}), resolution, ADC_RES12);
 
+	/* No HAL API to set resolution */
+	analog_write_reg8(areg_adc_res_m,
+		(analog_read_reg8(areg_adc_res_m) & (~FLD_ADC_RES_M)) | hw_resolution);
 	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
-		/* TODO: Dummy */
-		LOG_INF("adc [sample rate: %u, reference: %u]", sample_freq, ref_internal);
+		adc_chn_cfg_t channel_config = {
+			/* Haitao: Bug with measurement full VBAT voltage */
+			.divider = ADC_VBAT_DIV_1F2,
+			.v_ref = ARRAY_REMAP_OR(
+				((enum adc_gain[]){1200}),
+				((adc_ref_vol_e[]){ADC_VREF_1P2V}),
+				ref_internal, ADC_VREF_1P2V),
+			.pre_scale = ARRAY_REMAP_OR(
+				((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
+				((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1F2, ADC_PRESCALE_1}),
+				channel->gain, ADC_PRESCALE_1),
+			.sample_freq = ARRAY_REMAP_OR(
+				((uint32_t[]){23000, 48000, 96000, 192000}),
+				((adc_sample_freq_e[]){ADC_SAMPLE_FREQ_23K, ADC_SAMPLE_FREQ_48K,
+					ADC_SAMPLE_FREQ_96K, ADC_SAMPLE_FREQ_192K}),
+				sample_freq, ADC_SAMPLE_FREQ_48K),
+			.input_p = channel->input_positive,
+			.input_n = channel->input_negative
+		};
+		/* No external HAL API (in the header file) */
+		extern void adc_chn_config(adc_sample_chn_e chn, adc_chn_cfg_t adc_cfg);
+
+		adc_chn_config(ADC_M_CHANNEL, channel_config);
 		result = 0;
 	}
 	return result;
@@ -104,9 +151,25 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 	int result = -ENXIO;
 
 	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
-		/* TODO: Dummy */
-		*sample = 2047;
-		result = 0;
+
+		size_t samples_num = (size_t)1 << oversampling;
+
+		if (samples_num && samples_num <= UINT16_MAX) {
+			int32_t value = 0;
+
+			adc_power_on();
+			for (size_t i = 0; i < samples_num; i++) {
+				adc_start_sample_nodma();
+				while (!adc_get_rxfifo_cnt());
+				value +=  (int16_t)adc_get_raw_code();
+				adc_stop_sample_nodma();
+			}
+			adc_power_off();
+			*sample = int32_div_pow2(value, oversampling);
+			result = 0;
+		} else {
+			result = -EINVAL;
+		}
 	}
 	return result;
 }
@@ -128,6 +191,19 @@ static int telink_tlx_adc_init(const struct device *dev)
 			LOG_ERR("adc pinctrl failed %d", result);
 			break;
 		}
+		for(uint8_t i = 0; i < config->pcfg->state_cnt; ++i) {
+			if (config->pcfg->states[i].id == PINCTRL_STATE_DEFAULT) {
+				for(uint8_t j = 0; j < config->pcfg->states[i].pin_cnt; ++j) {
+					const pinctrl_soc_pin_t pin =
+						TLX_PINMUX_GET_PIN(config->pcfg->states[i].pins[j]);
+
+					gpio_function_en(pin);
+					gpio_input_dis(pin);
+					gpio_output_dis(pin);
+					gpio_set_low_level(pin);
+				}
+			}
+		}
 		result = telink_tlx_adc_hw_init(config->address);
 		if (result) {
 			LOG_ERR("adc init failed %d", result);
@@ -141,7 +217,7 @@ static int telink_tlx_adc_init(const struct device *dev)
 		for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++i) {
 			data->channel[i].valid = false;
 		}
-		LOG_INF("adc inited: %s", dev->name);
+		LOG_DBG("adc inited: %s", dev->name);
 	} while (0);
 	return result;
 }
@@ -177,7 +253,7 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 		if (!ARRAY_CONTAINS(((uint8_t[]){
 			DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2, DT_ADC_GPIO_PB3,
 			DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5, DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7,
-			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_GND, DT_ADC_VBAT}),
+			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_VBAT_1_2}),
 			channel_cfg->input_positive)) {
 			LOG_ERR("adc not supported positive input: %u", channel_cfg->input_positive);
 			break;
@@ -185,7 +261,7 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 		if (!ARRAY_CONTAINS(((uint8_t[]){
 			DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2, DT_ADC_GPIO_PB3,
 			DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5, DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7,
-			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_GND, DT_ADC_VBAT}),
+			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_GND}),
 			channel_cfg->input_negative)) {
 			LOG_ERR("adc not supported negative input: %u", channel_cfg->input_negative);
 			break;
@@ -201,7 +277,7 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 		data->channel[channel_cfg->channel_id].input_positive = channel_cfg->input_positive;
 		data->channel[channel_cfg->channel_id].input_negative = channel_cfg->input_negative;
 		k_sem_give(&data->ready_sem);
-		LOG_INF("adc channel[%u] = "
+		LOG_DBG("adc channel[%u] = "
 			"{.gain=%u, .acquisition_time=%u, .input_positive=%u, input_negative=%u}",
 			channel_cfg->channel_id, channel_cfg->gain, channel_cfg->acquisition_time,
 			channel_cfg->input_positive, channel_cfg->input_negative);
@@ -321,7 +397,8 @@ static void telink_tlx_adc_thread_handler(struct k_msgq *queue)
 
 				do {
 					adc_hw_result = telink_tlx_adc_hw_set_channel(config->address,
-						&data->channel[ch_id], config->sample_freq, api->ref_internal);
+						&data->channel[ch_id], config->sample_freq, api->ref_internal,
+						data->sequence->resolution);
 					if (adc_hw_result) {
 						LOG_ERR("adc channel failed %d", adc_hw_result);
 						break;
@@ -367,6 +444,58 @@ static void telink_tlx_adc_thread_handler(struct k_msgq *queue)
 	}
 }
 
+#ifdef CONFIG_PM_DEVICE
+
+static int telink_tlx_adc_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	int result = 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		do {
+			const struct telink_tlx_adc_config *config = dev->config;
+
+			extern volatile bool tlx_deep_sleep_retention;
+
+			if (tlx_deep_sleep_retention) {
+				result = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+				if (result) {
+					LOG_ERR("adc pinctrl failed %d", result);
+					break;
+				}
+				for(uint8_t i = 0; i < config->pcfg->state_cnt; ++i) {
+					if (config->pcfg->states[i].id == PINCTRL_STATE_DEFAULT) {
+						for(uint8_t j = 0; j < config->pcfg->states[i].pin_cnt; ++j) {
+							const pinctrl_soc_pin_t pin =
+								TLX_PINMUX_GET_PIN(config->pcfg->states[i].pins[j]);
+
+							gpio_function_en(pin);
+							gpio_input_dis(pin);
+							gpio_output_dis(pin);
+							gpio_set_low_level(pin);
+						}
+					}
+				}
+				result = telink_tlx_adc_hw_init(config->address);
+				if (result) {
+					LOG_ERR("adc init failed %d", result);
+					break;
+				}
+			}
+		} while (0);
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+		break;
+	case PM_DEVICE_ACTION_SUSPEND:
+		break;
+	default:
+		result = -ENOTSUP;
+	}
+	return result;
+}
+
+#endif /* CONFIG_PM_DEVICE */
+
 /************************************************************************
  * ADCs common data
  ************************************************************************/
@@ -390,6 +519,8 @@ K_THREAD_DEFINE(telink_tlx_adc_thread, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_S
 		.ref_internal = DT_INST_PROP(n, vref_internal_mv)                                          \
 	};                                                                                             \
                                                                                                    \
+	PM_DEVICE_DT_INST_DEFINE(n, telink_tlx_adc_pm_action);                                         \
+                                                                                                   \
 	PINCTRL_DT_INST_DEFINE(n);                                                                     \
 	                                                                                               \
 	static const struct telink_tlx_adc_config tlx_adc_config##n = {                                \
@@ -401,7 +532,8 @@ K_THREAD_DEFINE(telink_tlx_adc_thread, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_S
                                                                                                    \
 	static struct telink_tlx_adc_data tlx_adc_data##n;                                             \
                                                                                                    \
-	DEVICE_DT_INST_DEFINE(n, telink_tlx_adc_init, NULL, &tlx_adc_data##n, &tlx_adc_config##n,      \
+	DEVICE_DT_INST_DEFINE(n, telink_tlx_adc_init, PM_DEVICE_DT_INST_GET(n),                        \
+		&tlx_adc_data##n, &tlx_adc_config##n,                                                      \
 		POST_KERNEL, CONFIG_ADC_INIT_PRIORITY, &telink_tlx_adc_api##n);
 
 DT_INST_FOREACH_STATUS_OKAY(TELINK_TLX_ADC_DEFINE)
