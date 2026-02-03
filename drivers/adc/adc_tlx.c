@@ -128,10 +128,19 @@ static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 	int result = -ENXIO;
 
 	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+#if CONFIG_SOC_RISCV_TELINK_TL721X
 		const adc_pre_scale_e *hw_pre_scale = ARRAY_REMAP(
 			((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
 			((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1F2, ADC_PRESCALE_1}),
 			channel->gain);
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+		const adc_pre_scale_e *hw_pre_scale = ARRAY_REMAP(
+			((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1}),
+			((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1}),
+			channel->gain);
+#else
+#error unsupported SOC
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		const adc_sample_freq_e *hw_sample_freq = ARRAY_REMAP(
 			((uint32_t[]){23000, 48000, 96000, 192000}),
 			((adc_sample_freq_e[]){ADC_SAMPLE_FREQ_23K, ADC_SAMPLE_FREQ_48K,
@@ -151,7 +160,7 @@ static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 			analog_write_reg8(areg_adc_res_m,
 				(analog_read_reg8(areg_adc_res_m) & (~FLD_ADC_RES_M)) | *hw_resolution);
 			adc_chn_cfg_t channel_config = {
-				.divider = ADC_VBAT_DIV_1F2, /* Haitao: Bug with measurement full VBAT voltage */
+				.divider = ADC_VBAT_DIV_1F4,
 				.v_ref = *hw_ref_vol,
 				.pre_scale = *hw_pre_scale,
 				.sample_freq = *hw_sample_freq,
@@ -193,7 +202,13 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 			for (size_t i = 0; i < samples_num; i++) {
 				adc_start_sample_nodma();
 				while (!adc_get_rxfifo_cnt());
+#if CONFIG_SOC_RISCV_TELINK_TL721X
 				value +=  (int16_t)adc_get_raw_code();
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+				value +=  (int16_t)adc_get_code();
+#else
+#error unsupported SOC
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 				adc_stop_sample_nodma();
 			}
 			adc_power_off();
@@ -283,11 +298,21 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 	int result = -EINVAL;
 
 	do {
+#if CONFIG_SOC_RISCV_TELINK_TL721X
 		if (!ARRAY_CONTAINS(((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
 			channel_cfg->gain)) {
 			LOG_ERR("adc not supported gain: %u", channel_cfg->gain);
 			break;
 		}
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+		if (!ARRAY_CONTAINS(((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1}),
+			channel_cfg->gain)) {
+			LOG_ERR("adc not supported gain: %u", channel_cfg->gain);
+			break;
+		}
+#else
+#error unsupported SOC
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		if (!ARRAY_CONTAINS(((enum adc_reference[]){ADC_REF_INTERNAL}),
 			channel_cfg->reference)) {
 			LOG_ERR("adc not supported reference: %u", channel_cfg->reference);
@@ -307,7 +332,7 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 		if (!ARRAY_CONTAINS(((uint8_t[]){
 			DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2, DT_ADC_GPIO_PB3,
 			DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5, DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7,
-			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_VBAT_1_2}),
+			DT_ADC_GPIO_PD0, DT_ADC_GPIO_PD1, DT_ADC_VBAT_1_4}),
 			channel_cfg->input_positive)) {
 			LOG_ERR("adc not supported positive input: %u", channel_cfg->input_positive);
 			break;

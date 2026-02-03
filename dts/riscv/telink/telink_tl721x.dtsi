@@ -245,9 +245,9 @@
 			clock-frequency = <I2C_BITRATE_STANDARD>;
 		};
 
-		adc: adc@801401C0 {
+		adc: adc@801401c0 {
 			compatible = "telink,tlx-adc";
-			reg = <0x801401C0 0x32>;
+			reg = <0x801401c0 0x32>;
 			status = "disabled";
 			#io-channel-cells = <1>;
 		};

@@ -17,5 +17,5 @@
 #define DT_ADC_GPIO_PD0      0x09
 #define DT_ADC_GPIO_PD1      0x0a
 #define DT_ADC_GND           0x0f
-#define DT_ADC_VBAT_1_2      0x0f
+#define DT_ADC_VBAT_1_4      0x0f
 #endif /* ZEPHYR_INCLUDE_DT_BINDINGS_ADC_TLX_ADC_H_ */
