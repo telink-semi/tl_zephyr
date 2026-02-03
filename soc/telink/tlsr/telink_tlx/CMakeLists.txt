@@ -74,7 +74,7 @@ zephyr_link_libraries(
 )
 
 # Make MCUBoot early boot code injection
-if (CONFIG_TELINK_B9X_MCUBOOT_STARTUP)
+if (CONFIG_TELINK_TLX_MCUBOOT_STARTUP)
 
 zephyr_sources(
 	mcu_boot_startup.c
