@@ -609,9 +609,9 @@ static void usb_ctrl_data_read_handler(void)
 	if (!ep_ctx->reading) {
 		return;
 	}
-	if (ep_ctx->buf.left_len > 8) {
-		len = 8;
-		ep_ctx->buf.left_len -= 8;
+	if (ep_ctx->buf.left_len > USB_MAX_CTRL_MPS) {
+		len = USB_MAX_CTRL_MPS;
+		ep_ctx->buf.left_len -= USB_MAX_CTRL_MPS;
 	} else {
 		len = ep_ctx->buf.left_len;
 		ep_ctx->buf.left_len = 0;
