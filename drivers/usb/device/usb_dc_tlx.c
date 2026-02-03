@@ -22,6 +22,7 @@
 #include <zephyr/usb/usb_device.h>
 
 #include <soc.h>
+#include "lib/include/plic.h"
 
 #define LOG_LEVEL CONFIG_USB_DRIVER_LOG_LEVEL
 #include <zephyr/logging/log.h>
@@ -717,8 +718,16 @@ static void usb_irq_suspend_handler(void)
 	}
 }
 
+struct k_timer usb_en_preempt_timer;
+static void usb_preempt_cb(struct k_timer *tm)
+{
+	plic_preempt_feature_dis();
+	k_timer_stop(tm);
+}
+
 static void usb_irq_setup(void)
 {
+	k_timer_start(&usb_en_preempt_timer, K_MSEC(1000), K_MSEC(1000));
 	usbhw_clr_ctrl_ep_irq(FLD_CTRL_EP_IRQ_SETUP);
 	submit_usbd_event(USBD_EVT_SETUP, 0);
 }
@@ -802,6 +811,7 @@ static void usb_irq_eps(void)
 
 static void usb_irq_reset(void)
 {
+	plic_preempt_feature_en(CORE_PREEMPT_PRI_MODE0);
 	usbhw_clr_irq_status(USB_IRQ_RESET_STATUS);
 	submit_usbd_event(USBD_EVT_RESET, 0);
 }
@@ -821,6 +831,7 @@ static void usb_irq_suspend(void)
 
 static int usb_irq_init(void)
 {
+	k_timer_init(&usb_en_preempt_timer, usb_preempt_cb, NULL);
 	IRQ_CONNECT(USBD_TLX_IRQN_BY_IDX(0), USBD_TLX_IRQ_PRIORITY_BY_IDX(0), usb_irq_setup, 0, 0);
 	if (USBD_TLX_IRQN_BY_IDX(0) < CONFIG_2ND_LVL_ISR_TBL_OFFSET) {
 		return -EINVAL;
