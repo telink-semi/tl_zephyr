@@ -15,6 +15,9 @@ LOG_MODULE_REGISTER(i2c_telink);
 #include <zephyr/drivers/i2c.h>
 #include "i2c-priv.h"
 #include <zephyr/drivers/pinctrl.h>
+#ifdef CONFIG_PM_DEVICE
+#include <zephyr/pm/device.h>
+#endif /* CONFIG_PM_DEVICE */
 
 /* I2C configuration structure */
 struct i2c_tlx_cfg {
@@ -171,6 +174,40 @@ static int i2c_tlx_init(const struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+__GENERIC_SECTION(.ram_code)
+static int i2c_tlx_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	const struct i2c_tlx_cfg *cfg = dev->config;
+	uint32_t dev_config = (I2C_MODE_CONTROLLER | i2c_map_dt_bitrate(cfg->bitrate));
+
+	extern volatile bool tlx_deep_sleep_retention;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+	{
+		if (tlx_deep_sleep_retention) {
+			i2c_tlx_configure(dev, dev_config);
+		}
+	}
+	break;
+
+	case PM_DEVICE_ACTION_SUSPEND:
+	{
+
+	}
+	break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DT_INST_DEFINE(0, i2c_tlx_pm_action);
+#endif /* CONFIG_PM_DEVICE */
+
 /* I2C driver APIs structure */
 static const struct i2c_driver_api i2c_tlx_api = {
 	.configure = i2c_tlx_configure,
@@ -193,7 +230,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 	};							      \
 								      \
 	I2C_DEVICE_DT_INST_DEFINE(inst, i2c_tlx_init,		      \
-				  NULL,				      \
+				  PM_DEVICE_DT_INST_GET(0),				      \
 				  &i2c_tlx_data_##inst,		      \
 				  &i2c_tlx_cfg_##inst,		      \
 				  POST_KERNEL,			      \
