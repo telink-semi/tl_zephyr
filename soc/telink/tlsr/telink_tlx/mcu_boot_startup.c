@@ -69,8 +69,10 @@ static bool telink_tlx_mcu_boot_startup(void)
 		uint8_t chip_id[21] = {0};
 		uint8_t ieee_addr[8] = {0};
 		if (efuse_get_ieee_addr(ieee_addr) == DRV_API_SUCCESS) {
+
 			memcpy(chip_id + 2, ieee_addr, 8);
 			uint16_t chip_id_crc = crc16_itu_t(0, chip_id + 2, 16);
+
 			chip_id[0] = 0xaa;
 			chip_id[1] = 0x12;
 			chip_id[18] = chip_id_crc & 0x00ff;
