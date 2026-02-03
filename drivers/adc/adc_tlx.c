@@ -57,13 +57,7 @@ struct tlx_adc_cfg {
 };
 
 #ifdef CONFIG_PM_DEVICE
-struct adc_tlx_state {
-	struct tlx_adc_cfg adc_cfg;
-	struct tlx_adc_data adc_data;
-	struct adc_channel_cfg channel_cfg;
-};
-
-static struct adc_tlx_state adc_state;
+struct adc_channel_cfg tlx_channel_cfg;
 #endif /* CONFIG_PM_DEVICE */
 
 /* Validate ADC data buffer size */
@@ -449,7 +443,7 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	}
 
 #ifdef CONFIG_PM_DEVICE
-	memcpy(&adc_state.channel_cfg, channel_cfg, sizeof(struct adc_channel_cfg));
+	memcpy(&tlx_channel_cfg, channel_cfg, sizeof(struct adc_channel_cfg));
 #endif
 	return 0;
 }
@@ -489,27 +483,20 @@ static int adc_tlx_read_async(const struct device *dev,
 __GENERIC_SECTION(.ram_code)
 static int adc_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
-	struct tlx_adc_data *data = dev->data;
-	struct tlx_adc_cfg *cfg = dev->config;
-
 	extern volatile bool tlx_deep_sleep_retention;
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 	{
 		if (tlx_deep_sleep_retention) {
-			memcpy(cfg, &adc_state.adc_cfg, sizeof(struct tlx_adc_cfg));
-			memcpy(data, &adc_state.adc_data, sizeof(struct tlx_adc_data));
-
-			adc_tlx_channel_setup(dev, &adc_state.channel_cfg);
+			adc_tlx_channel_setup(dev, &tlx_channel_cfg);
 		}
 	}
 	break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
 	{
-		memcpy(&adc_state.adc_cfg, cfg, sizeof(struct tlx_adc_cfg));
-		memcpy(&adc_state.adc_data, data, sizeof(struct tlx_adc_data));
+
 	}
 	break;
 
