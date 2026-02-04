@@ -448,20 +448,23 @@ static int adc_tl323x_init(const struct device *dev)
 __GENERIC_SECTION(.ram_code)
 static int adc_tl323x_pm_action(const struct device *dev, enum pm_device_action action)
 {
-	extern volatile bool tlx_deep_sleep_retention;
-
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		extern volatile bool tlx_deep_sleep_retention;
 		if (tlx_deep_sleep_retention) {
 			adc_tl323x_channel_setup(dev, &tl323x_channel_cfg);
 		}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	}
 	break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
 	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	}
 	break;
 
