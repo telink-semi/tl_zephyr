@@ -162,22 +162,31 @@ __GENERIC_SECTION(.ram_code)
 static int i2c_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
 	const struct i2c_tlx_cfg *cfg = dev->config;
+	const pinctrl_soc_pin_t *i2cPinsMux = cfg->pcfg->states->pins;
 	uint32_t dev_config = (I2C_MODE_CONTROLLER | i2c_map_dt_bitrate(cfg->bitrate));
-
-	extern volatile bool tlx_deep_sleep_retention;
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		extern volatile bool tlx_deep_sleep_retention;
 		if (tlx_deep_sleep_retention) {
 			i2c_tlx_configure(dev, dev_config);
 		}
+
+		pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+		/* Enable the input function of the SCL and SDA pins */
+		gpio_input_en(*i2cPinsMux++);
+		gpio_input_en(*i2cPinsMux);
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	}
 	break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
 	{
-
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		gpio_shutdown(*i2cPinsMux);
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	}
 	break;
 
