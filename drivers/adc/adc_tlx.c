@@ -1,499 +1,593 @@
 /*
- * Copyright (c) 2022-2023 Telink Semiconductor
+ * Copyright (c) 2022-2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #define DT_DRV_COMPAT telink_tlx_adc
 
-/* Local driver headers */
-#define ADC_CONTEXT_USES_KERNEL_TIMER
-#include "adc_context.h"
-
-/* Zephyr Device Tree headers */
-#include <zephyr/dt-bindings/adc/tlx-adc.h>
-
-/* Zephyr Logging headers */
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_LOG_LEVEL);
-
-/* Telink HAL headers */
-#include <adc.h>
+#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/dt-bindings/adc/tlx-adc.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_TELINK_TLX_LOG_LEVEL);
 
-/* Set ADC resolution value */
-static inline void adc_set_resolution(adc_res_e res)
-{
-	analog_write_reg8(areg_adc_res_m, (analog_read_reg8
-		(areg_adc_res_m)&(~FLD_ADC_RES_M)) | res);
-}
+#include <adc.h>
 
+/************************************************************************
+ * ADC configuration checker
+ ************************************************************************/
 
-/* ADC tlx defines */
-#define SIGN_BIT_POSITION          (13)
-#define AREG_ADC_DATA_STATUS       (0xf6)
-#define ADC_DATA_READY             BIT(0)
+#ifndef CONFIG_ADC_CONFIGURABLE_INPUTS
+#error CONFIG_ADC_CONFIGURABLE_INPUTS should be set
+#endif /* CONFIG_ADC_CONFIGURABLE_INPUTS */
 
-/* tlx ADC driver data */
-struct tlx_adc_data {
-	struct adc_context ctx;
-	int16_t *buffer;
-	int16_t *repeat_buffer;
-	uint8_t differential;
-	uint8_t resolution_divider;
-	struct k_sem acq_sem;
-	struct k_thread thread;
+/************************************************************************
+ * Helpers
+ ************************************************************************/
 
-	K_THREAD_STACK_MEMBER(stack, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE);
+#define TYPE_COMPAT(a, b)                                                                          \
+	__builtin_types_compatible_p(__typeof__(a), __typeof__(b)) ||                              \
+		__builtin_types_compatible_p(const __typeof__(a), __typeof__(b)) ||                \
+		__builtin_types_compatible_p(__typeof__(a), const __typeof__(b))
+
+#define ARRAY_CONTAINS(arr, val)                                                                   \
+	({                                                                                         \
+		BUILD_ASSERT(TYPE_COMPAT((arr)[0], val));                                          \
+		bool _found = false;                                                               \
+                                                                                                   \
+		for (size_t _i = 0; _i < ARRAY_SIZE(arr); ++_i) {                                  \
+			if ((arr)[_i] == (val)) {                                                  \
+				_found = true;                                                     \
+				break;                                                             \
+			}                                                                          \
+		}                                                                                  \
+		_found;                                                                            \
+	})
+
+#define ARRAY_REMAP(arr_inp, arr_out, val)                                                         \
+	({                                                                                         \
+		BUILD_ASSERT(ARRAY_SIZE(arr_inp) == ARRAY_SIZE(arr_out));                          \
+		BUILD_ASSERT(TYPE_COMPAT((arr_inp)[0], val));                                      \
+		static const __typeof__((arr_out)[0]) _rom_arr_out[] = arr_out;                    \
+		const __typeof__((arr_out)[0]) *_out = NULL;                                       \
+                                                                                                   \
+		for (size_t _i = 0; _i < ARRAY_SIZE(arr_inp); ++_i) {                              \
+			if ((arr_inp)[_i] == (val)) {                                              \
+				_out = &_rom_arr_out[_i];                                          \
+				break;                                                             \
+			}                                                                          \
+		}                                                                                  \
+		_out;                                                                              \
+	})
+
+#define IS_SIGNED_TYPE(x) (((__typeof__(x))-1) < 0)
+
+#define INT_DIV_POW2(val, n)                                                                       \
+	({                                                                                         \
+		__typeof__(val) _v = (val);                                                        \
+		__typeof__(n) _n = (n);                                                            \
+                                                                                                   \
+		IS_SIGNED_TYPE(_v)                                                                 \
+		? ((_v + ((_v < 0) ? (((__typeof__(_v))1 << _n) - 1) : 0)) >> _n) : (_v >> _n);    \
+	})
+
+/************************************************************************
+ * ADC driver data types
+ ************************************************************************/
+
+struct telink_tlx_adc_data {
+	struct k_sem ready_sem;
+	struct telink_tlx_adc_data_channel {
+		bool valid;
+		enum adc_gain gain;
+		uint16_t acquisition_time;
+		uint8_t input_positive;
+		uint8_t input_negative;
+	} channel[32];
+	const struct adc_sequence *sequence;
 };
 
-struct tlx_adc_cfg {
-	uint32_t sample_freq;
-	uint16_t vref_internal_mv;
+struct telink_tlx_adc_config {
+	struct k_msgq *queue;
+	uintptr_t address;
 	const struct pinctrl_dev_config *pcfg;
+	uint32_t sample_freq;
 };
 
-/* Validate ADC data buffer size */
-static int adc_tlx_validate_buffer_size(const struct adc_sequence *sequence)
+/************************************************************************
+ * ADC low-level wrappers
+ ************************************************************************/
+
+static inline int telink_tlx_adc_hw_init(uintptr_t base_addr)
 {
-	size_t needed = sizeof(int16_t);
+	int result = -ENXIO;
 
-	if (sequence->options) {
-		needed *= (1 + sequence->options->extra_samplings);
+	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+		adc_init(NDMA_M_CHN);
+		result = 0;
+	} else {
+		LOG_ERR("adc no device");
 	}
-
-	if (sequence->buffer_size < needed) {
-		return -ENOMEM;
-	}
-
-	return 0;
+	return result;
 }
 
-/* Validate ADC read API input parameters */
-static int adc_tlx_validate_sequence(const struct adc_sequence *sequence)
+static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
+						const struct telink_tlx_adc_data_channel *channel,
+						uint32_t sample_freq, uint16_t ref_internal,
+						uint8_t resolution)
 {
-	int status;
+	int result = -ENXIO;
 
-	if (sequence->channels != BIT(0)) {
-		LOG_ERR("Only channel 0 is supported.");
-		return -ENOTSUP;
-	}
+	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+		const adc_pre_scale_e *hw_pre_scale = ARRAY_REMAP(
+			((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
+			((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1F2, ADC_PRESCALE_1}),
+			channel->gain);
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+		const adc_pre_scale_e *hw_pre_scale = ARRAY_REMAP(
+			((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1}),
+			((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1}), channel->gain);
+#else
+#error unsupported SOC
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+		const adc_sample_freq_e *hw_sample_freq = ARRAY_REMAP(
+			((uint32_t[]){23000, 48000, 96000, 192000}),
+			((adc_sample_freq_e[]){ADC_SAMPLE_FREQ_23K, ADC_SAMPLE_FREQ_48K,
+					       ADC_SAMPLE_FREQ_96K, ADC_SAMPLE_FREQ_192K}),
+			sample_freq);
+		const adc_ref_vol_e *hw_ref_vol = ARRAY_REMAP(
+			((uint16_t[]){1200}), ((adc_ref_vol_e[]){ADC_VREF_1P2V}), ref_internal);
+		const adc_res_e *hw_resolution =
+			ARRAY_REMAP(((uint8_t[]){8, 10, 12}),
+				    ((adc_res_e[]){ADC_RES8, ADC_RES10, ADC_RES12}), resolution);
 
-	if (sequence->oversampling) {
-		LOG_ERR("Oversampling is not supported.");
-		return -ENOTSUP;
-	}
+		if (hw_pre_scale && hw_sample_freq && hw_ref_vol && hw_resolution) {
+			/* No HAL API to set resolution */
+			analog_write_reg8(areg_adc_res_m,
+					  (analog_read_reg8(areg_adc_res_m) & (~FLD_ADC_RES_M)) |
+						  *hw_resolution);
+			adc_chn_cfg_t channel_config = {
+				.divider = ADC_VBAT_DIV_1F4,
+				.v_ref = *hw_ref_vol,
+				.pre_scale = *hw_pre_scale,
+				.sample_freq = *hw_sample_freq,
+				.input_p = channel->input_positive,
+				.input_n = channel->input_negative,
+			};
+			/* No external HAL API (in the header file) */
+			extern void adc_chn_config(adc_sample_chn_e chn, adc_chn_cfg_t adc_cfg);
 
-	status = adc_tlx_validate_buffer_size(sequence);
-	if (status) {
-		LOG_ERR("Buffer size too small.");
-		return status;
-	}
-
-	return 0;
-}
-
-/* Convert dts pin to tlx SDK pin */
-static adc_input_pin_def_e adc_tlx_get_pin(uint8_t dt_pin)
-{
-	adc_input_pin_def_e adc_pin;
-
-	switch (dt_pin) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case DT_ADC_GPIO_PB0:
-		adc_pin = ADC_GPIO_PB0;
-		break;
-#endif
-	case DT_ADC_GPIO_PB1:
-		adc_pin = ADC_GPIO_PB1;
-		break;
-	case DT_ADC_GPIO_PB2:
-		adc_pin = ADC_GPIO_PB2;
-		break;
-	case DT_ADC_GPIO_PB3:
-		adc_pin = ADC_GPIO_PB3;
-		break;
-	case DT_ADC_GPIO_PB4:
-		adc_pin = ADC_GPIO_PB4;
-		break;
-	case DT_ADC_GPIO_PB5:
-		adc_pin = ADC_GPIO_PB5;
-		break;
-	case DT_ADC_GPIO_PB6:
-		adc_pin = ADC_GPIO_PB6;
-		break;
-	case DT_ADC_GPIO_PB7:
-		adc_pin = ADC_GPIO_PB7;
-		break;
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case DT_ADC_GPIO_PD0:
-		adc_pin = ADC_GPIO_PD0;
-		break;
-	case DT_ADC_GPIO_PD1:
-		adc_pin = ADC_GPIO_PD1;
-		break;
-#endif
-	case DT_ADC_VBAT:
-		adc_pin = ADC_VBAT;
-		break;
-
-	default:
-		adc_pin = NOINPUTN;
-		break;
-	}
-
-	return adc_pin;
-}
-
-/* Get ADC value */
-static signed short adc_tlx_get_code(void)
-{
-	signed short adc_code;
-
-#if  CONFIG_SOC_RISCV_TELINK_TL321X
-	adc_code = adc_get_code();
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-	adc_code = adc_get_raw_code();
-#endif
-	return adc_code;
-}
-
-/* ADC Context API implementation: start sampling */
-static void adc_context_start_sampling(struct adc_context *ctx)
-{
-	struct tlx_adc_data *data =
-		CONTAINER_OF(ctx, struct tlx_adc_data, ctx);
-
-	data->repeat_buffer = data->buffer;
-
-	adc_power_on();
-
-	k_sem_give(&data->acq_sem);
-}
-
-/* ADC Context API implementation: buffer pointer */
-static void adc_context_update_buffer_pointer(struct adc_context *ctx, bool repeat_sampling)
-{
-	struct tlx_adc_data *data =
-		CONTAINER_OF(ctx, struct tlx_adc_data, ctx);
-
-	if (repeat_sampling) {
-		data->buffer = data->repeat_buffer;
-	}
-}
-
-/* Start ADC measurements */
-static int adc_tlx_adc_start_read(const struct device *dev, const struct adc_sequence *sequence)
-{
-	int status;
-	struct tlx_adc_data *data = dev->data;
-
-	/* Validate input parameters */
-	status = adc_tlx_validate_sequence(sequence);
-	if (status != 0) {
-		return status;
-	}
-
-	/* Set resolution */
-	switch (sequence->resolution) {
-	case 12:
-		adc_set_resolution(ADC_RES12);
-		data->resolution_divider = 4;
-		break;
-	case 10:
-		adc_set_resolution(ADC_RES10);
-		data->resolution_divider = 16;
-		break;
-	case 8:
-		adc_set_resolution(ADC_RES8);
-		data->resolution_divider = 64;
-		break;
-	default:
-		LOG_ERR("Selected ADC resolution is not supported.");
-		return -EINVAL;
-	}
-
-	/* Save buffer */
-	data->buffer = sequence->buffer;
-
-	/* Start ADC conversion */
-	adc_context_start_read(&data->ctx, sequence);
-
-	return adc_context_wait_for_completion(&data->ctx);
-}
-
-/* Main ADC Acquisition thread */
-static void adc_tlx_acquisition_thread(const struct device *dev)
-{
-	int16_t adc_code = 0;
-	struct tlx_adc_data *data = dev->data;
-
-	while (true) {
-		/* Wait for Acquisition semaphore */
-		k_sem_take(&data->acq_sem, K_FOREVER);
-#if  CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
-		adc_start_sample_nodma();
-		while (((reg_adc_rxfifo_trig_num & FLD_BUF_CNT) >> 4)
-				== 0){
+			adc_chn_config(ADC_M_CHANNEL, channel_config);
+			result = 0;
+		} else {
+			LOG_ERR("adc invalid channel settings:%s%s%s%s",
+				(hw_pre_scale ? "" : " gain"),
+				(hw_sample_freq ? "" : " samplerate"),
+				(hw_ref_vol ? "" : " reference"),
+				(hw_resolution ? "" : " resolution"));
+			result = -EINVAL;
 		}
-#endif
-		/* Perform read */
-		adc_code = adc_tlx_get_code();
-		if (!data->differential) {
-			/* Sign bit is not used in case of single-ended configuration */
-			adc_code = adc_code * 8;
+	} else {
+		LOG_ERR("adc no device");
+	}
+	return result;
+}
 
-			/* Do not return negative value for single-ended configuration */
-			if (adc_code < 0) {
-				adc_code = 0;
+static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversampling,
+					     int16_t *sample)
+{
+	int result = -ENXIO;
+
+	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
+
+		size_t samples_num = (size_t)1 << oversampling;
+
+		if (samples_num && samples_num <= UINT16_MAX) {
+			int32_t value = 0;
+
+			adc_power_on();
+			for (size_t i = 0; i < samples_num; ++i) {
+				adc_start_sample_nodma();
+				while (!adc_get_rxfifo_cnt()) {
+				}
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+				value += (int16_t)adc_get_raw_code();
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+				value += (int16_t)adc_get_code();
+#else
+#error unsupported SOC
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+				adc_stop_sample_nodma();
+			}
+			adc_power_off();
+			*sample = INT_DIV_POW2(value, oversampling);
+			result = 0;
+		} else {
+			LOG_ERR("adc invalid oversampling %u", oversampling);
+			result = -EINVAL;
+		}
+	} else {
+		LOG_ERR("adc no device");
+	}
+	return result;
+}
+
+/************************************************************************
+ * ADC internal functionality
+ ************************************************************************/
+
+static int telink_tlx_adc_rise_up(const struct device *dev)
+{
+	int result = 0;
+
+	do {
+		const struct telink_tlx_adc_config *config = dev->config;
+
+		result = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+		if (result) {
+			LOG_ERR("adc pinctrl failed %d", result);
+			break;
+		}
+		for (uint8_t i = 0; i < config->pcfg->state_cnt; ++i) {
+			if (config->pcfg->states[i].id == PINCTRL_STATE_DEFAULT) {
+				for (uint8_t j = 0; j < config->pcfg->states[i].pin_cnt; ++j) {
+					const pinctrl_soc_pin_t pin =
+						TLX_PINMUX_GET_PIN(config->pcfg->states[i].pins[j]);
+
+					gpio_function_en(pin);
+					gpio_input_dis(pin);
+					gpio_output_dis(pin);
+					gpio_set_low_level(pin);
+				}
 			}
 		}
-		*data->buffer++ = adc_code;
-
-		/* Power off ADC */
-		adc_power_off();
-
-		/* Release ADC context */
-		adc_context_on_sampling_done(&data->ctx, dev);
-	}
+		result = telink_tlx_adc_hw_init(config->address);
+		if (result) {
+			LOG_ERR("adc init failed %d", result);
+			break;
+		}
+	} while (0);
+	return result;
 }
 
-/* ADC Driver initialization */
-static int adc_tlx_init(const struct device *dev)
+/************************************************************************
+ * ADC external APIs
+ ************************************************************************/
+
+static int telink_tlx_adc_init(const struct device *dev)
 {
-	struct tlx_adc_data *data = dev->data;
+	int result = 0;
 
-	const struct tlx_adc_cfg *config = dev->config;
-	int err;
+	do {
+		struct telink_tlx_adc_data *data = dev->data;
 
-	/* Configure dt provided device signals when available */
-	err = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
-	if (err < 0) {
-		LOG_ERR("ADC pinctrl setup failed (%d)", err);
-		return err;
-	}
-
-	k_sem_init(&data->acq_sem, 0, 1);
-
-	k_thread_create(&data->thread, data->stack,
-			CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE,
-			(k_thread_entry_t)adc_tlx_acquisition_thread,
-			(void *)dev, NULL, NULL,
-			CONFIG_ADC_TLX_ACQUISITION_THREAD_PRIO,
-			0, K_NO_WAIT);
-
-	adc_context_unlock_unconditionally(&data->ctx);
-
-	return 0;
+		result = telink_tlx_adc_rise_up(dev);
+		if (result) {
+			LOG_ERR("adc rise up failed %d", result);
+			break;
+		}
+		result = k_sem_init(&data->ready_sem, 1, 1);
+		if (result) {
+			LOG_ERR("adc ready semaphore failed %d", result);
+			break;
+		}
+		for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++i) {
+			data->channel[i].valid = false;
+		}
+		LOG_DBG("adc inited: %s", dev->name);
+	} while (0);
+	return result;
 }
 
-/* API implementation: channel_setup */
-static int adc_tlx_channel_setup(const struct device *dev,
-				 const struct adc_channel_cfg *channel_cfg)
+static int telink_tlx_adc_channel_setup(const struct device *dev,
+					const struct adc_channel_cfg *channel_cfg)
 {
-	adc_ref_vol_e vref_internal_mv;
-	adc_sample_freq_e sample_freq;
-	adc_pre_scale_e pre_scale;
-	adc_sample_cycle_e sample_cycl;
-	adc_input_pin_def_e input_positive;
-	adc_input_pin_def_e input_negative;
-	struct tlx_adc_data *data = dev->data;
-	const struct tlx_adc_cfg *config = dev->config;
+	struct telink_tlx_adc_data *data = dev->data;
+	int result = -EINVAL;
 
-	/* Check reference */
-	if (channel_cfg->reference != ADC_REF_INTERNAL) {
-		LOG_ERR("Selected ADC reference is not supported.");
-		return -EINVAL;
-	}
+	do {
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+		if (!ARRAY_CONTAINS(((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
+				    channel_cfg->gain)) {
+			LOG_ERR("adc not supported gain: %u", channel_cfg->gain);
+			break;
+		}
+#elif CONFIG_SOC_RISCV_TELINK_TL321X
+		if (!ARRAY_CONTAINS(((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1}),
+				    channel_cfg->gain)) {
+			LOG_ERR("adc not supported gain: %u", channel_cfg->gain);
+			break;
+		}
+#else
+#error unsupported SOC
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+		if (!ARRAY_CONTAINS(((enum adc_reference[]){ADC_REF_INTERNAL}),
+				    channel_cfg->reference)) {
+			LOG_ERR("adc not supported reference: %u", channel_cfg->reference);
+			break;
+		}
+		if (channel_cfg->acquisition_time != ADC_ACQ_TIME_DEFAULT &&
+		    ADC_ACQ_TIME_UNIT(channel_cfg->acquisition_time) != ADC_ACQ_TIME_TICKS) {
+			LOG_ERR("adc not supported acquisition time %u %u",
+				(unsigned int)ADC_ACQ_TIME_VALUE(channel_cfg->acquisition_time),
+				(unsigned int)ADC_ACQ_TIME_UNIT(channel_cfg->acquisition_time));
+			break;
+		}
+		if (!channel_cfg->differential) {
+			LOG_ERR("adc not supported input type: %u", channel_cfg->differential);
+			break;
+		}
+		if (!ARRAY_CONTAINS(((uint8_t[]){DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2,
+						 DT_ADC_GPIO_PB3, DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5,
+						 DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7, DT_ADC_GPIO_PD0,
+						 DT_ADC_GPIO_PD1, DT_ADC_VBAT_1_4}),
+				    channel_cfg->input_positive)) {
+			LOG_ERR("adc not supported positive input: %u",
+				channel_cfg->input_positive);
+			break;
+		}
+		if (!ARRAY_CONTAINS(((uint8_t[]){DT_ADC_GPIO_PB0, DT_ADC_GPIO_PB1, DT_ADC_GPIO_PB2,
+						 DT_ADC_GPIO_PB3, DT_ADC_GPIO_PB4, DT_ADC_GPIO_PB5,
+						 DT_ADC_GPIO_PB6, DT_ADC_GPIO_PB7, DT_ADC_GPIO_PD0,
+						 DT_ADC_GPIO_PD1, DT_ADC_GND}),
+				    channel_cfg->input_negative)) {
+			LOG_ERR("adc not supported negative input: %u",
+				channel_cfg->input_negative);
+			break;
+		}
+		result = k_sem_take(&data->ready_sem, K_NO_WAIT);
+		if (result) {
+			LOG_ERR("adc access error %u", result);
+			break;
+		}
+		data->channel[channel_cfg->channel_id].valid = true;
+		data->channel[channel_cfg->channel_id].gain = channel_cfg->gain;
+		data->channel[channel_cfg->channel_id].acquisition_time =
+			channel_cfg->acquisition_time;
+		data->channel[channel_cfg->channel_id].input_positive = channel_cfg->input_positive;
+		data->channel[channel_cfg->channel_id].input_negative = channel_cfg->input_negative;
+		k_sem_give(&data->ready_sem);
+		LOG_DBG("adc channel[%u] = "
+			"{.gain=%u, .acquisition_time=%u, .input_positive=%u, input_negative=%u}",
+			channel_cfg->channel_id, channel_cfg->gain, channel_cfg->acquisition_time,
+			channel_cfg->input_positive, channel_cfg->input_negative);
+		result = 0;
+	} while (0);
 
-	/* Check internal reference */
-	switch (config->vref_internal_mv) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case 900:
-		vref_internal_mv = ADC_VREF_0P9V;
-		break;
-	case 1200:
-		vref_internal_mv = ADC_VREF_1P2V;
-		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-	case 1200:
-		vref_internal_mv = ADC_VREF_ANTI_AGING;
-		break;
-#endif
-	default:
-		LOG_ERR("Selected reference voltage is not supported.");
-		return -EINVAL;
-	}
-
-	/* Check sample frequency */
-	switch (config->sample_freq) {
-	case 23000:
-		sample_freq = ADC_SAMPLE_FREQ_23K;
-		break;
-	case 48000:
-		sample_freq = ADC_SAMPLE_FREQ_48K;
-		break;
-	case 96000:
-		sample_freq = ADC_SAMPLE_FREQ_96K;
-		break;
-	default:
-		LOG_ERR("Selected sample frequency is not supported.");
-		return -EINVAL;
-	}
-
-	/* Check gain */
-	switch (channel_cfg->gain) {
-	case ADC_GAIN_1:
-		pre_scale = ADC_PRESCALE_1;
-		break;
-	#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case ADC_GAIN_1_4:
-		pre_scale = ADC_PRESCALE_1F4;
-		break;
-	#endif
-
-	default:
-		LOG_ERR("Selected ADC gain is not supported.");
-		return -EINVAL;
-	}
-
-	/* Check acquisition time */
-	switch (channel_cfg->acquisition_time) {
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 3):
-		sample_cycl = ADC_SAMPLE_CYC_3;
-		break;
-	case ADC_ACQ_TIME_DEFAULT:
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 6):
-		sample_cycl = ADC_SAMPLE_CYC_6;
-		break;
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 9):
-		sample_cycl = ADC_SAMPLE_CYC_9;
-		break;
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 12):
-		sample_cycl = ADC_SAMPLE_CYC_12;
-		break;
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 18):
-		sample_cycl = ADC_SAMPLE_CYC_18;
-		break;
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 24):
-		sample_cycl = ADC_SAMPLE_CYC_24;
-		break;
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 36):
-		sample_cycl = ADC_SAMPLE_CYC_36;
-		break;
-	case ADC_ACQ_TIME(ADC_ACQ_TIME_TICKS, 48):
-		sample_cycl = ADC_SAMPLE_CYC_48;
-		break;
-
-	default:
-		LOG_ERR("Selected ADC acquisition time is not supported.");
-		return -EINVAL;
-	}
-
-	/* Check for valid pins configuration */
-	input_positive = adc_tlx_get_pin(channel_cfg->input_positive);
-	input_negative = adc_tlx_get_pin(channel_cfg->input_negative);
-	if ((input_positive == (uint8_t)ADC_VBAT || input_negative == (uint8_t)ADC_VBAT) &&
-		channel_cfg->differential) {
-		LOG_ERR("VBAT pin is not available for differential mode.");
-		return -EINVAL;
-	} else if (channel_cfg->differential && (input_negative == (uint8_t)NOINPUTN)) {
-		LOG_ERR("Negative input is not selected.");
-		return -EINVAL;
-	}
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
-	/* Init NDMA ADC */
-	adc_init(NDMA_M_CHN);
-#endif
-
-	data->differential = channel_cfg->differential;
-
-	if (channel_cfg->differential) {
-		/* Differential pins configuration */
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
-		adc_set_diff_pin(ADC_M_CHANNEL, input_positive, input_negative);
-#endif
-	} else if (input_positive == (uint8_t)ADC_VBAT) {
-		/* VBAT pin configuration */
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X
-		adc_vbat_sample_init(ADC_M_CHANNEL);
-#endif
-	} else {
-		/* Single-ended GPIO pin configuration */
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
-		adc_gpio_cfg_t adc_gpio_cfg_m = {
-				.v_ref			=	vref_internal_mv,
-				.pre_scale		=	pre_scale,
-				.sample_freq		=	sample_freq,
-				.pin			=	input_positive,
-		};
-		adc_gpio_sample_init(ADC_M_CHANNEL, adc_gpio_cfg_m);
-#endif
-	}
-
-	return 0;
+	return result;
 }
 
-/* API implementation: read */
-static int adc_tlx_read(const struct device *dev,
-			const struct adc_sequence *sequence)
+static int telink_tlx_adc_start(const struct device *dev, const struct adc_sequence *sequence)
 {
-	int status;
-	struct tlx_adc_data *data = dev->data;
+	const struct telink_tlx_adc_config *config = dev->config;
+	struct telink_tlx_adc_data *data = dev->data;
+	int result = -EINVAL;
 
-	adc_context_lock(&data->ctx, false, NULL);
-	status = adc_tlx_adc_start_read(dev, sequence);
-	adc_context_release(&data->ctx, status);
+	do {
+		if (!sequence) {
+			LOG_ERR("adc no sequence");
+			break;
+		}
+		if (sequence->buffer_size <
+		    sizeof(int16_t) * POPCOUNT(sequence->channels) *
+			    (sequence->options ? sequence->options->extra_samplings + 1 : 1)) {
+			LOG_ERR("adc buffer too small");
+			break;
+		}
+		if (!ARRAY_CONTAINS(((uint8_t[]){8, 10, 12}), sequence->resolution)) {
+			LOG_ERR("adc not supported resolution: %u", sequence->resolution);
+			break;
+		}
+		result = 0;
+		for (size_t i = 0; i < ARRAY_SIZE(data->channel); ++i) {
+			if ((sequence->channels & (1 << i)) && !data->channel[i].valid) {
+				result = -EINVAL;
+				break;
+			}
+		}
+		if (result) {
+			LOG_ERR("adc sequence channel not set");
+			break;
+		}
+		result = k_sem_take(&data->ready_sem, K_NO_WAIT);
+		if (result) {
+			LOG_ERR("adc access error %u", result);
+			break;
+		}
+		data->sequence = sequence;
+		result = k_msgq_put(config->queue, &dev, K_FOREVER);
+		if (result) {
+			LOG_ERR("adc internal sw error %u", result);
+			break;
+		}
+		result = 0;
+	} while (0);
+	return result;
+}
 
-	return status;
+static int telink_tlx_adc_read(const struct device *dev, const struct adc_sequence *sequence)
+{
+	struct telink_tlx_adc_data *data = dev->data;
+	int result = -EINVAL;
+
+	do {
+		result = telink_tlx_adc_start(dev, sequence);
+		if (result) {
+			LOG_ERR("adc start error %u", result);
+			break;
+		}
+		result = k_sem_take(&data->ready_sem, K_FOREVER);
+		if (result) {
+			LOG_ERR("adc access error %u", result);
+			break;
+		}
+		k_sem_give(&data->ready_sem);
+		result = 0;
+	} while (0);
+	return result;
 }
 
 #ifdef CONFIG_ADC_ASYNC
-/* API implementation: read_async */
-static int adc_tlx_read_async(const struct device *dev,
-			      const struct adc_sequence *sequence,
-			      struct k_poll_signal *async)
+static int telink_tlx_adc_read_async(const struct device *dev, const struct adc_sequence *sequence,
+				     struct k_poll_signal *async)
 {
-	int status;
-	struct tlx_adc_data *data = dev->data;
-
-	adc_context_lock(&data->ctx, true, async);
-	status = adc_tlx_adc_start_read(dev, sequence);
-	adc_context_release(&data->ctx, status);
-
-	return status;
+	return telink_tlx_adc_start(dev, sequence);
 }
 #endif /* CONFIG_ADC_ASYNC */
 
-static struct tlx_adc_data data_0 = {
-	ADC_CONTEXT_INIT_TIMER(data_0, ctx),
-	ADC_CONTEXT_INIT_LOCK(data_0, ctx),
-	ADC_CONTEXT_INIT_SYNC(data_0, ctx),
-};
+static void telink_tlx_adc_thread_handler(struct k_msgq *queue)
+{
+	for (int result = 0;;) {
+		const struct device *dev;
 
-PINCTRL_DT_INST_DEFINE(0);
+		result = k_msgq_get(queue, &dev, K_FOREVER);
+		if (result) {
+			continue;
+		}
+		if (!dev) {
+			LOG_ERR("adc internal sw error");
+			continue;
+		}
+		const struct telink_tlx_adc_config *config = dev->config;
+		struct telink_tlx_adc_data *data = dev->data;
+		const struct adc_driver_api *api = dev->api;
 
-static const struct tlx_adc_cfg cfg_0 = {
-	.sample_freq = DT_INST_PROP(0, sample_freq),
-	.vref_internal_mv = DT_INST_PROP(0, vref_internal_mv),
-	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
-};
+		for (uint16_t sampling_index = 0;;) {
+			int16_t *adc_buffer = (int16_t *)data->sequence->buffer +
+					      POPCOUNT(data->sequence->channels) * sampling_index;
 
-static const struct adc_driver_api adc_tlx_driver_api = {
-	.channel_setup = adc_tlx_channel_setup,
-	.read = adc_tlx_read,
-#ifdef CONFIG_ADC_ASYNC
-	.read_async = adc_tlx_read_async,
-#endif
-	.ref_internal = cfg_0.vref_internal_mv,
-};
+			for (size_t ch_id = 0; ch_id < ARRAY_SIZE(data->channel); ++ch_id) {
+				if (!(data->sequence->channels & (1 << ch_id))) {
+					continue;
+				}
+				int adc_hw_result = 0;
 
-DEVICE_DT_INST_DEFINE(0, adc_tlx_init, NULL,
-		      &data_0,  &cfg_0,
-		      POST_KERNEL,
-		      CONFIG_ADC_INIT_PRIORITY,
-		      &adc_tlx_driver_api);
+				do {
+					adc_hw_result = telink_tlx_adc_hw_set_channel(
+						config->address, &data->channel[ch_id],
+						config->sample_freq, api->ref_internal,
+						data->sequence->resolution);
+					if (adc_hw_result) {
+						LOG_ERR("adc channel failed %d", adc_hw_result);
+						break;
+					}
+					for (uint16_t i = 0;
+					     data->channel[ch_id].acquisition_time !=
+						     ADC_ACQ_TIME_DEFAULT &&
+					     i < ADC_ACQ_TIME_VALUE(
+							 data->channel[ch_id].acquisition_time);
+					     ++i) {
+						__asm __volatile("nop");
+					}
+					adc_hw_result = telink_tlx_adc_hw_get_data(
+						config->address, data->sequence->oversampling,
+						adc_buffer);
+					if (adc_hw_result) {
+						LOG_ERR("adc sample failed %d", adc_hw_result);
+						break;
+					}
+				} while (0);
+				if (adc_hw_result) {
+					*adc_buffer = 0;
+				}
+				adc_buffer++;
+			}
+			enum adc_action action = ADC_ACTION_CONTINUE;
+
+			if (data->sequence->options && data->sequence->options->callback) {
+				action = data->sequence->options->callback(dev, data->sequence,
+									   sampling_index);
+			}
+			if (action == ADC_ACTION_REPEAT) {
+				continue;
+			} else if (action == ADC_ACTION_FINISH) {
+				break;
+			}
+			sampling_index++;
+			if (sampling_index < (data->sequence->options
+						      ? data->sequence->options->extra_samplings + 1
+						      : 1)) {
+				if (data->sequence->options &&
+				    data->sequence->options->interval_us) {
+					k_usleep(data->sequence->options->interval_us);
+				}
+			} else {
+				break;
+			}
+		}
+		k_sem_give(&data->ready_sem);
+	}
+}
+
+#ifdef CONFIG_PM_DEVICE
+
+static int telink_tlx_adc_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	int result = 0;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		extern volatile bool tlx_deep_sleep_retention;
+
+		if (tlx_deep_sleep_retention) {
+			result = telink_tlx_adc_rise_up(dev);
+		}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+		break;
+	case PM_DEVICE_ACTION_SUSPEND:
+		break;
+	default:
+		result = -ENOTSUP;
+	}
+	return result;
+}
+
+#endif /* CONFIG_PM_DEVICE */
+
+/************************************************************************
+ * ADCs common data
+ ************************************************************************/
+
+K_MSGQ_DEFINE(telink_tlx_adc_msgq, sizeof(const struct device *),
+	      CONFIG_ADC_TLX_ACQUISITION_QUEUE_SIZE, __alignof__(const struct device *));
+K_THREAD_DEFINE(telink_tlx_adc_thread, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE,
+		telink_tlx_adc_thread_handler, &telink_tlx_adc_msgq, NULL, NULL,
+		CONFIG_ADC_TLX_ACQUISITION_THREAD_PRIO, 0, 0);
+
+/************************************************************************
+ * ADC driver registration
+ ************************************************************************/
+/* clang-format off */
+#define TELINK_TLX_ADC_DEFINE(n)                                                                   \
+                                                                                                   \
+	static const struct adc_driver_api telink_tlx_adc_api##n = {                               \
+		.channel_setup = telink_tlx_adc_channel_setup,                                     \
+		.read = telink_tlx_adc_read,                                                       \
+		IF_ENABLED(CONFIG_ADC_ASYNC,                                                       \
+			(.read_async = telink_tlx_adc_read_async,)                                 \
+		)                                                                                  \
+		.ref_internal = DT_INST_PROP(n, vref_internal_mv),                                 \
+	};                                                                                         \
+                                                                                                   \
+	PM_DEVICE_DT_INST_DEFINE(n, telink_tlx_adc_pm_action);                                     \
+                                                                                                   \
+	PINCTRL_DT_INST_DEFINE(n);                                                                 \
+                                                                                                   \
+	static const struct telink_tlx_adc_config tlx_adc_config##n = {                            \
+		.queue = &telink_tlx_adc_msgq,                                                     \
+		.address = DT_INST_REG_ADDR(n),                                                    \
+		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),                                         \
+		.sample_freq = DT_INST_PROP(0, sample_freq),                                       \
+	};                                                                                         \
+                                                                                                   \
+	static struct telink_tlx_adc_data tlx_adc_data##n;                                         \
+                                                                                                   \
+	DEVICE_DT_INST_DEFINE(n, telink_tlx_adc_init, PM_DEVICE_DT_INST_GET(n), &tlx_adc_data##n,  \
+			      &tlx_adc_config##n, POST_KERNEL, CONFIG_ADC_INIT_PRIORITY,           \
+			      &telink_tlx_adc_api##n);
+/* clang-format on */
+DT_INST_FOREACH_STATUS_OKAY(TELINK_TLX_ADC_DEFINE)
