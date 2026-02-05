@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Telink Semiconductor
+# Copyright (c) 2022-2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
 config ADC_TELINK_TLX
@@ -23,5 +23,35 @@ config ADC_TLX_ACQUISITION_THREAD_PRIO
 	default 0
 	help
 	  Priority level for the internal ADC data acquisition thread.
+
+config ADC_TLX_ACQUISITION_QUEUE_SIZE
+	int "Queue size for the ADC data acquisition"
+	default 16
+	help
+	  Size of the queue used for the internal data acquisition.
+
+choice
+	prompt "Telink TLX ADC log level"
+	default ADC_TELINK_TLX_LOG_LEVEL_INFO
+	help
+		This option selects log level for Telink TLX ADC driver.
+
+config ADC_TELINK_TLX_LOG_LEVEL_CRIT
+	bool "Critical"
+config ADC_TELINK_TLX_LOG_LEVEL_WARN
+	bool "Warning"
+config ADC_TELINK_TLX_LOG_LEVEL_INFO
+	bool "Informational"
+config ADC_TELINK_TLX_LOG_LEVEL_DEBG
+	bool "Debug"
+endchoice
+
+config ADC_TELINK_TLX_LOG_LEVEL
+	int
+	default 1 if ADC_TELINK_TLX_LOG_LEVEL_CRIT
+	default 2 if ADC_TELINK_TLX_LOG_LEVEL_WARN
+	default 3 if ADC_TELINK_TLX_LOG_LEVEL_INFO
+	default 4 if ADC_TELINK_TLX_LOG_LEVEL_DEBG
+	default 0
 
 endif # ADC_TELINK_TLX
