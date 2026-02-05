@@ -31,10 +31,7 @@ struct tl323x_adc_data {
 	int16_t *buffer;
 	int16_t *repeat_buffer;
 	struct k_sem acq_sem;
-	struct k_thread thread;
     uint8_t mode;
-
-	K_KERNEL_STACK_MEMBER(stack, CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE);
 };
 
 /* Driver configuration structure */
@@ -49,8 +46,13 @@ struct tl323x_adc_cfg {
 #ifdef CONFIG_PM_DEVICE
 struct adc_channel_cfg tl323x_channel_cfg;
 #endif /* CONFIG_PM_DEVICE */
+static volatile bool veriFlag = true;
+
+static struct k_thread adc_thread;
+K_THREAD_STACK_DEFINE(adc_thread_stack, CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE);
 
 #define SD_ADC_SAMPLE_CNT 16  // Number of samples used to calculate the average.
+static signed int sd_adc_sample_buffer[SD_ADC_SAMPLE_CNT] __attribute__((aligned(4))) = {0};
 
 /* Convert dts pin to tl323x SDK pin */
 static sd_adc_p_input_pin_def_e adc_tl323x_get_p_pin(uint8_t dt_pin)
@@ -189,9 +191,8 @@ static int adc_tl323x_setup_downsample_rate(uint32_t downsample_rate, sd_adc_dow
  *
  * @return The calculated average voltage value (unit: mV)
  */
-static int sd_adc_collect_and_calculate_average(struct tl323x_adc_data *data)
+static int sd_adc_collect_and_calculate_average(void)
 {
-	signed int sd_adc_sample_buffer[SD_ADC_SAMPLE_CNT] __attribute__((aligned(4))) = {0};
 	signed int code_average = 0;
 
 	// Enable ADC and start sampling
@@ -236,11 +237,8 @@ static int sd_adc_collect_and_calculate_average(struct tl323x_adc_data *data)
 		code_average += sd_adc_sample_buffer[i] / (SD_ADC_SAMPLE_CNT >> 1);
 	}
 
-    signed int sd_adc_vol_10x = 0;
-    signed int sd_adc_vol = 0;
-    sd_adc_vol_10x = sd_adc_calculate_voltage(code_average, SD_ADC_VOLTAGE_10X_MV);
-    sd_adc_vol = sd_adc_vol_10x / 10;
-    return sd_adc_vol;
+	signed int sd_adc_vol_10x = sd_adc_calculate_voltage(code_average, SD_ADC_VOLTAGE_10X_MV);
+	return sd_adc_vol_10x / 10;
 }
 
 /* ADC Context API implementation: start sampling */
@@ -272,13 +270,10 @@ static void adc_tl323x_acquisition_thread(const struct device *dev)
 		k_sem_take(&data->acq_sem, K_FOREVER);
 
 		/* Collect samples and calculate average voltage value */
-		int average_voltage = sd_adc_collect_and_calculate_average(data);
-
-		data->sample = average_voltage;
+		data->sample = sd_adc_collect_and_calculate_average();
 		*data->buffer++ = data->sample;
 
         // Stop sampling and power off
-        sd_adc_sample_stop();
         sd_adc_power_off(SD_ADC_SAMPLE_MODE);
 
 		/* Release ADC context */
@@ -392,9 +387,10 @@ static int adc_tl323x_channel_setup(const struct device *dev,
         /* Initialize GPIO sampling */
         sd_adc_gpio_sample_init(&adc_gpio_cfg);
     }
+
 #ifdef CONFIG_PM_DEVICE
 	memcpy(&tl323x_channel_cfg, channel_cfg, sizeof(struct adc_channel_cfg));
-#endif
+#endif /* CONFIG_PM_DEVICE */
     return 0;
 }
 
@@ -402,12 +398,14 @@ static int adc_tl323x_channel_setup(const struct device *dev,
 static int adc_tl323x_read(const struct device *dev, const struct adc_sequence *sequence)
 {
 	struct tl323x_adc_data *data = dev->data;
-	int status;
-
-	// Verification parameters
-	status = adc_tl323x_validate_sequence(sequence);
-	if (status != 0) {
-		return status;
+	if (veriFlag) {
+		// Verification parameters
+		int status = adc_tl323x_validate_sequence(sequence);
+		if (status != 0) {
+			LOG_ERR("ADC seq validate fail");
+			return status;
+		}
+		veriFlag = false;
 	}
 	// Save buffer pointer
 	data->buffer = sequence->buffer;
@@ -432,12 +430,14 @@ static int adc_tl323x_init(const struct device *dev)
 
 	k_sem_init(&data->acq_sem, 0, 1);
 
-	k_thread_create(&data->thread, data->stack,
+	k_thread_create(&adc_thread, adc_thread_stack,
 		CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE,
 		(k_thread_entry_t)adc_tl323x_acquisition_thread,
 		(void *)dev, NULL, NULL,
 		CONFIG_ADC_TL323X_ACQUISITION_THREAD_PRIO,
 		0, K_NO_WAIT);
+
+	k_thread_name_set(&adc_thread, "adc_tl323x");
 
 	adc_context_unlock_unconditionally(&data->ctx);
 
