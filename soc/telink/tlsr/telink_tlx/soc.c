@@ -278,15 +278,15 @@ void soc_early_init_hook(void)
 {
 	unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 
-	/* In bootloader , will force to use 96M to save start time */
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_MCUBOOT
-	cclk = CLK_96MHZ;
-#endif
-
 #ifdef CONFIG_PM
 	/* Select internal 32K for BLE PM, ASAP after boot */
 	blc_pm_select_internal_32k_crystal();
 #endif /* CONFIG_PM  */
+
+	/* in non pm mode ,will set ldo to 1.2v to make it work ok */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM
+	cclk = CLK_96MHZ;
+#endif
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
@@ -368,6 +368,7 @@ void soc_early_init_hook(void)
 	// 	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_96MHZ:
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
@@ -516,6 +517,7 @@ void soc_tlx_restore(void)
 	// 	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_96MHZ:
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
