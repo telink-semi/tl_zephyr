@@ -18,6 +18,7 @@
 LOG_MODULE_REGISTER(adc_tl323x, CONFIG_ADC_LOG_LEVEL);
 
 /* Telink HAL headers */
+#include "lpc.h"
 #include <sd_adc.h>
 #include <zephyr/drivers/pinctrl.h>
 #ifdef CONFIG_PM_DEVICE
@@ -463,7 +464,12 @@ static int adc_tl323x_pm_action(const struct device *dev, enum pm_device_action 
 	case PM_DEVICE_ACTION_SUSPEND:
 	{
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-
+		/*
+		 * Close LPC before sleep, otherwise
+		 * it will increase the standby current.
+		 */
+		lpc_vbat_detect_disable();
+		lpc_power_down();
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	}
 	break;
