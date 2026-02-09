@@ -10,13 +10,9 @@
 
 / {
 	soc {
-		/delete-node/ memory@60000;
 		/delete-node/ memory@68000;
 		/delete-node/ memory@80000;
 
-		ram_ilm_retention_non_reset: memory@60000 {
-			compatible = "mmio-sram";
-		};
 
 		ram_ilm_retention: memory@68000 {
 			compatible = "mmio-sram";
@@ -41,13 +37,10 @@
 		state1: state1 {
 			compatible = "zephyr,power-state";
 			power-state-name = "standby";
-			min-residency-us = <100000>;
+			min-residency-us = <10000>;
 			exit-latency-us = <1000>;
 		};
 	};
-};
-&ram_ilm_retention_non_reset {
-	reg = <0x00060000 0x00008000>;
 };
 
 &ram_ilm_retention {
@@ -55,5 +48,5 @@
 };
 
 &ram_ilm_nonretention {
-	reg = <0x00080000 0x00008000>;
+	reg = <0x00080000 0x00010000>;
 };

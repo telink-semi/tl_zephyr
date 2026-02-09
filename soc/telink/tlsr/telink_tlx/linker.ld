@@ -34,7 +34,6 @@ MEMORY
 	#elif CONFIG_SOC_RISCV_TELINK_TL321X
 	RAM_ILM_N    (rwx) : ORIGIN = DT_REG_ADDR(DT_NODELABEL(ram_ilm_nonretention)), LENGTH = DT_REG_SIZE(DT_NODELABEL(ram_ilm_nonretention))
 	#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	RAM_ILM_NON_RESET (rwx) : ORIGIN = DT_REG_ADDR(DT_NODELABEL(ram_ilm_retention_non_reset)), LENGTH = DT_REG_SIZE(DT_NODELABEL(ram_ilm_retention_non_reset))
 	RAM_ILM_N         (rwx) : ORIGIN = DT_REG_ADDR(DT_NODELABEL(ram_ilm_nonretention)), LENGTH = DT_REG_SIZE(DT_NODELABEL(ram_ilm_nonretention))
 	#endif
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */

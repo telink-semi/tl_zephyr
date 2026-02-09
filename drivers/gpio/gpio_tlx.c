@@ -951,6 +951,7 @@ static int gpio_tlx_manage_callback(const struct device *dev,
 
 #if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 
+__GENERIC_SECTION(.ram_code)
 static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
 	const struct gpio_tlx_config *cfg	= dev->config;

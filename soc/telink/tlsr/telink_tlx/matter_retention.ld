@@ -26,6 +26,11 @@ SECTION_DATA_PROLOGUE(ram_dlm_bss,(NOLOAD),)
 	. = ALIGN(4);
 	*(.bss)
 
+	/* Arrange a portion of the RAM to RAM_ILM_N to free RAM space for use
+	 * Moving the "malloc_arena" of noinit_ilm section to ram_dlm_bss
+	 */
+	"*malloc.c.obj*"(".noinit.*")
+
 	/* Moving the BLE controller stack (HAL) */
 	"*tlx_bt.c.obj*"(".noinit.*" ".bss.*")
 

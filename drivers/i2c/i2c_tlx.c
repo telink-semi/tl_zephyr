@@ -15,6 +15,9 @@ LOG_MODULE_REGISTER(i2c_telink);
 #include <zephyr/drivers/i2c.h>
 #include "i2c-priv.h"
 #include <zephyr/drivers/pinctrl.h>
+#ifdef CONFIG_PM_DEVICE
+#include <zephyr/pm/device.h>
+#endif /* CONFIG_PM_DEVICE */
 
 /* I2C configuration structure */
 struct i2c_tlx_cfg {
@@ -65,7 +68,7 @@ static int i2c_tlx_configure(const struct device *dev, uint32_t dev_config)
 	}
 
 	/* init i2c */
-#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	i2c_master_init(I2C0);
 	i2c_set_master_clk(I2C0, (unsigned char)(sys_clk.pclk * 1000 * 1000 / (4 * i2c_speed)));
 #else
@@ -100,7 +103,7 @@ static int i2c_tlx_transfer(const struct device *dev,
 
 		/* config stop bit */
 		send_stop = msgs[i].flags & I2C_MSG_STOP ? 1 : 0;
-#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		i2c_master_send_stop(I2C0, send_stop);
 #else
 		i2c_master_send_stop(send_stop);
@@ -108,14 +111,14 @@ static int i2c_tlx_transfer(const struct device *dev,
 #endif
 		/* transfer data */
 		if (msgs[i].flags & I2C_MSG_READ) {
-#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			status = i2c_master_read(I2C0, addr << 1, msgs[i].buf, msgs[i].len);
 #else
 			status = i2c_master_read(addr << 1, msgs[i].buf, msgs[i].len);
 
 #endif
 		} else {
-#ifdef CONFIG_SOC_RISCV_TELINK_TL322X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			status = i2c_master_write(I2C0, addr << 1, msgs[i].buf, msgs[i].len);
 #else
 			status = i2c_master_write(addr << 1, msgs[i].buf, msgs[i].len);
@@ -171,6 +174,49 @@ static int i2c_tlx_init(const struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+__GENERIC_SECTION(.ram_code)
+static int i2c_tlx_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	const struct i2c_tlx_cfg *cfg = dev->config;
+	const pinctrl_soc_pin_t *i2cPinsMux = cfg->pcfg->states->pins;
+	uint32_t dev_config = (I2C_MODE_CONTROLLER | i2c_map_dt_bitrate(cfg->bitrate));
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		extern volatile bool tlx_deep_sleep_retention;
+		if (tlx_deep_sleep_retention) {
+			i2c_tlx_configure(dev, dev_config);
+		}
+
+		pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+		/* Enable the input function of the SCL and SDA pins */
+		gpio_input_en(*i2cPinsMux++);
+		gpio_input_en(*i2cPinsMux);
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+	}
+	break;
+
+	case PM_DEVICE_ACTION_SUSPEND:
+	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		gpio_shutdown(*i2cPinsMux);
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+	}
+	break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DT_INST_DEFINE(0, i2c_tlx_pm_action);
+#endif /* CONFIG_PM_DEVICE */
+
 /* I2C driver APIs structure */
 static const struct i2c_driver_api i2c_tlx_api = {
 	.configure = i2c_tlx_configure,
@@ -193,7 +239,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 	};							      \
 								      \
 	I2C_DEVICE_DT_INST_DEFINE(inst, i2c_tlx_init,		      \
-				  NULL,				      \
+				  PM_DEVICE_DT_INST_GET(0),				      \
 				  &i2c_tlx_data_##inst,		      \
 				  &i2c_tlx_cfg_##inst,		      \
 				  POST_KERNEL,			      \

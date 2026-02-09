@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  *
- * Copyright (c) 2025 Telink Semiconductor (Shanghai) Co., Ltd.
+ * Copyright (c) 2024 Telink Semiconductor (Shanghai) Co., Ltd.
  */
 
 / {
@@ -20,7 +20,7 @@
 		zephyr,gain = "ADC_GAIN_1";
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,resolution = <24>;
+		zephyr,resolution = <12>;
 		zephyr,input-positive = <DT_ADC_VBAT>;
 	};
 };

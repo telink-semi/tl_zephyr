@@ -24,6 +24,12 @@
     .global     __N22_IRAM_SIZE
     .global     __N22_DRAM_SIZE
     .global     __D25F_N22_RAM_REG
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+    .equ __D25F_IRAM_SIZE,   3 //96KB   note: configuration Options: 1/2/3
+    .equ __D25F_DRAM_SIZE,   2 //64KB   note: configuration Options: 4/3/2
+
+	.global     __D25F_IRAM_SIZE
+    .global     __D25F_DRAM_SIZE
 #endif
 
 #include <zephyr/toolchain.h>
@@ -59,6 +65,11 @@ start:
     lui    t0 , 0x80141
     li     t1 , __D25F_N22_RAM_REG
     sh     t1 , -2036(t0)              //write16(0x8014080c,0x2105)
+#elif CONFIG_SOC_RISCV_TELINK_TL323X
+    /*Initialize D25 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , __D25F_DRAM_SIZE
+    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
 #endif
 
 #if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
@@ -209,6 +220,13 @@ retention_entry:
 	.org 0x22
 
 retention_start:
+	/* Select ram mode */
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+/*Initialize D25 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , __D25F_DRAM_SIZE
+    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
+#endif
 
 	/* Select PLIC mode */
 #ifdef CONFIG_RISCV_VECTORED_MODE

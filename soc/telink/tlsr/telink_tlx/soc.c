@@ -160,6 +160,11 @@ void pm_retention_register_recover(void){
 #endif
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	extern drv_api_status_e efuse_calib_sd_adc_vref(void);
+	_attribute_data_retention_sec_ unsigned int g_adc_calib_flag;
+#endif
+
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 /* SOC Parameters structure */
 _attribute_data_retention_sec_ struct {
@@ -194,6 +199,76 @@ void soc_load_rf_parameters_deep_retention(void)
 }
 #endif
 
+#if CONFIG_PM
+#define RST_BIT_CLR(x, n)    ((x) |= (n))
+#define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
+__attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((optimize("O2")))
+void gen_fsk_close_unused_clock(void)
+{
+	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
+    RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
+    
+    RST_BIT_CLR(reg_rst1, FLD_RST1_UART3);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_GSPI);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_DMA);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_SPISLV);
+    
+    RST_BIT_CLR(reg_rst2, FLD_RST2_I2C1);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_LM);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_TRNG);
+    
+    RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC1);
+	RST_BIT_CLR(reg_rst3, FLD_RST3_TRACE);
+	RST_BIT_CLR(reg_rst3, FLD_RST3_BROM);
+    RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC);
+    
+    RST_BIT_CLR(reg_rst4, FLD_RST4_DC);
+    RST_BIT_CLR(reg_rst4, FLD_RST4_UART4);
+    RST_BIT_CLR(reg_rst4, FLD_RST4_SKE);
+    RST_BIT_CLR(reg_rst4, FLD_RST4_HASH);	// will enable when HW HASH used
+    
+    RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
+    RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
+    
+    RST_BIT_CLR(reg_rst6, FLD_RST6_RZ);
+    
+    RST_BIT_CLR(reg_rst7, FLD_RST7_USB1);
+
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_LSPI_EN);
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C0_EN);
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN);
+
+	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK0_UART3_EN);
+	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_DMA_EN);
+	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_GSPI_EN);
+	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_SPISLV_EN);
+
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_I2C1_EN);
+
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_QDEC1_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_TRACE_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_BROM_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_QDEC0_EN);
+
+	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_DC_EN);
+	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_UART4_EN);
+	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_SKE_EN);
+	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_HASH_EN);	// will enable when HW HASH used
+
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_UART2_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_PEM_EN);
+
+	CLOCK_BIT_CLR(reg_clk_en6, FLD_CLK6_RZ_EN);
+
+	CLOCK_BIT_CLR(reg_clk_en7, FLD_CLK7_USB1_EN);
+}
+#endif /* CONFIG_PM  */
+
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
+#include "pm.h"
+#endif
+
 /**
  * @brief Perform basic initialization at boot.
  *
@@ -208,6 +283,11 @@ void soc_early_init_hook(void)
 	blc_pm_select_internal_32k_crystal();
 #endif /* CONFIG_PM  */
 
+	/* in non pm mode ,will set ldo to 1.2v to make it work ok */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM
+	cclk = CLK_96MHZ;
+#endif
+
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
@@ -221,6 +301,10 @@ void soc_early_init_hook(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	g_adc_calib_flag = efuse_calib_sd_adc_vref();
+#endif
 
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
@@ -245,9 +329,17 @@ void soc_early_init_hook(void)
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
+		#if CONFIG_PM
+			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
+		#endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
+		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
+#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+		break;
+#if CONFIG_SOC_RISCV_TELINK_TL721X
 	case CLK_60MHZ:
 		PLL_240M_CCLK_60M_HCLK_60M_PCLK_15M_MSPI_48M;
+		break;
 	case CLK_80MHZ:
 		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_48M;
 		break;
@@ -276,6 +368,7 @@ void soc_early_init_hook(void)
 	// 	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_96MHZ:
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
@@ -355,6 +448,12 @@ void soc_tlx_restore(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	if (g_adc_calib_flag == DRV_API_SUCCESS) {
+		g_adc_calib_flag = efuse_calib_sd_adc_vref();
+	}
+#endif
+
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
 #endif
@@ -378,6 +477,10 @@ void soc_tlx_restore(void)
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
+		#if CONFIG_PM
+			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
+			gen_fsk_close_unused_clock();
+		#endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
@@ -414,6 +517,7 @@ void soc_tlx_restore(void)
 	// 	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_96MHZ:
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif

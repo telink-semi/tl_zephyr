@@ -18,8 +18,12 @@
 LOG_MODULE_REGISTER(adc_tl323x, CONFIG_ADC_LOG_LEVEL);
 
 /* Telink HAL headers */
+#include "lpc.h"
 #include <sd_adc.h>
 #include <zephyr/drivers/pinctrl.h>
+#ifdef CONFIG_PM_DEVICE
+#include <zephyr/pm/device.h>
+#endif /* CONFIG_PM_DEVICE */
 
 /* Driver context structure */
 struct tl323x_adc_data {
@@ -42,6 +46,10 @@ struct tl323x_adc_cfg {
 	uint8_t vbat_divider;
     const struct pinctrl_dev_config *pcfg;
 };
+
+#ifdef CONFIG_PM_DEVICE
+struct adc_channel_cfg tl323x_channel_cfg;
+#endif /* CONFIG_PM_DEVICE */
 
 #define SD_ADC_SAMPLE_CNT 16  // Number of samples used to calculate the average.
 
@@ -385,7 +393,9 @@ static int adc_tl323x_channel_setup(const struct device *dev,
         /* Initialize GPIO sampling */
         sd_adc_gpio_sample_init(&adc_gpio_cfg);
     }
-
+#ifdef CONFIG_PM_DEVICE
+	memcpy(&tl323x_channel_cfg, channel_cfg, sizeof(struct adc_channel_cfg));
+#endif
     return 0;
 }
 
@@ -435,6 +445,45 @@ static int adc_tl323x_init(const struct device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_DEVICE
+__GENERIC_SECTION(.ram_code)
+static int adc_tl323x_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		extern volatile bool tlx_deep_sleep_retention;
+		if (tlx_deep_sleep_retention) {
+			adc_tl323x_channel_setup(dev, &tl323x_channel_cfg);
+		}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+	}
+	break;
+
+	case PM_DEVICE_ACTION_SUSPEND:
+	{
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		/*
+		 * Close LPC before sleep, otherwise
+		 * it will increase the standby current.
+		 */
+		lpc_vbat_detect_disable();
+		lpc_power_down();
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+	}
+	break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DT_INST_DEFINE(0, adc_tl323x_pm_action);
+#endif /* CONFIG_PM_DEVICE */
+
 static struct tl323x_adc_data tl323x_adc_data_0 = {
 	ADC_CONTEXT_INIT_TIMER(tl323x_adc_data_0, ctx),
 	ADC_CONTEXT_INIT_LOCK(tl323x_adc_data_0, ctx),
@@ -464,7 +513,7 @@ static const struct adc_driver_api adc_tl323x_api = {
 
 DEVICE_DT_INST_DEFINE(0,
 		      adc_tl323x_init,
-		      NULL,
+		      PM_DEVICE_DT_INST_GET(0),
 		      &tl323x_adc_data_0,
 		      &tl323x_adc_cfg_0,
 		      POST_KERNEL,

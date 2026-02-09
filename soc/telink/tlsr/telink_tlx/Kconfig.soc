@@ -15,3 +15,27 @@ config SOC
 	default "telink_tl322x" if SOC_RISCV_TELINK_TL322X
 	default "telink_tl323x" if SOC_RISCV_TELINK_TL323X
 	default "telink_tl721x" if SOC_RISCV_TELINK_TL721X
+
+config NORMAL_MODE
+	int "independent matter mode"
+	default 0
+	help
+		This option enables independent matter mode.
+
+config ACTION_DUAL_MODE
+	int "action dual mode"
+	default 1
+	help
+		This option enables matter switch mode ,such as by button.
+
+config AUTO_SWITCH_DUAL_MODE
+	int "auto switch dual mode"
+	default 2
+	help
+		This option enables matter auto-switch mode ,such as by scan QR code.
+
+config DUAL_MODE
+	int "Support dual-mode switch"
+	default NORMAL_MODE
+	help
+		This option enables different dual mode.

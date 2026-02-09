@@ -7,3 +7,10 @@ config PWM_TELINK_B9X
 	depends on DT_HAS_TELINK_B9X_PWM_ENABLED
 	help
 	  Enables Telink B9x PWM driver.
+
+config PWM_TELINK_B9X_MAX_CHANNELS
+	int "Maximum number of PWM channels supported by B9x PWM"
+	default 6
+	depends on PWM_TELINK_B9X
+	help
+	  Defines maximum number of PWM channels supported by Telink B9x PWM hardware.

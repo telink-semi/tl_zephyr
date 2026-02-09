@@ -131,10 +131,10 @@
 };
 
 &ram_ilm {
-	reg = <0x00060000 0x00020000>;
+	reg = <0x00068000 0x00018000>;
 };
 &ram_ilm_non_retention {
-	reg = <0x00080000 0x00008000>;
+	reg = <0x00080000 0x00010000>;
 };
 
 &flash {
@@ -235,7 +235,7 @@
 &i2c {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c_scl_pc3_default &i2c_sda_pc2_default>;
+	pinctrl-0 = <&i2c_scl_pd3_default &i2c_sda_pd2_default>;
 	pinctrl-names = "default";
 };
 
