@@ -1,8 +1,8 @@
-# Copyright (c) 2024 Telink Semiconductor
+# Copyright (c) 2024-2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-config TELINK_W91_IPC_DISPATCHER
-	bool "Telink W91 IPC driver"
+config TELINK_IPC_DISPATCHER
+	bool "Telink IPC driver"
 	default y
 	depends on DT_HAS_ZEPHYR_IPC_ICMSG_ENABLED
 	select MBOX
@@ -10,54 +10,54 @@ config TELINK_W91_IPC_DISPATCHER
 	select IPC_SERVICE_BACKEND_ICMSG
 	select SPSC_PBUF
 	help
-		This option enables Telink W91 IPC dispatching extension.
+		This option enables Telink IPC dispatching extension.
 
 config MBOX_INIT_PRIORITY
-	default 50 if TELINK_W91_IPC_DISPATCHER
+	default 50 if TELINK_IPC_DISPATCHER
 
 config IPC_SERVICE_REG_BACKEND_PRIORITY
-	default 50 if TELINK_W91_IPC_DISPATCHER
+	default 50 if TELINK_IPC_DISPATCHER
 
 config IPC_SERVICE_BACKEND_ICMSG_WQ_STACK_SIZE
 	default 4096 if TELINK_OPUS_REMOTE
-	default 3072 if TELINK_W91_IPC_DISPATCHER
+	default 3072 if TELINK_IPC_DISPATCHER
 
 config IPC_SERVICE_BACKEND_ICMSG_WQ_PRIORITY
 	int
-	default -15 if TELINK_W91_IPC_DISPATCHER
+	default -15 if TELINK_IPC_DISPATCHER
 
-config TELINK_W91_IPC_DISPATCHER_INIT_PRIORITY
+config TELINK_IPC_DISPATCHER_INIT_PRIORITY
 	int "Telink IPC dispatcher init priority"
 	default 51
-	depends on TELINK_W91_IPC_DISPATCHER
+	depends on TELINK_IPC_DISPATCHER
 	help
 		This option sets Telink IPC dispatcher init priority.
 
-config TELINK_W91_IPC_PRE_DRIVERS_INIT_PRIORITY
+config TELINK_IPC_PRE_DRIVERS_INIT_PRIORITY
 	int "Telink IPC pre drivers init priority"
 	default 52
-	depends on TELINK_W91_IPC_DISPATCHER
+	depends on TELINK_IPC_DISPATCHER
 	help
 		This option sets Telink IPC pre drivers init priority.
 
-config TELINK_W91_IPC_DRIVERS_INIT_PRIORITY
+config TELINK_IPC_DRIVERS_INIT_PRIORITY
 	int "Telink IPC drivers init priority"
 	default 53
-	depends on TELINK_W91_IPC_DISPATCHER
+	depends on TELINK_IPC_DISPATCHER
 	help
 		This option sets Telink IPC drivers init priority.
 
-config TELINK_W91_IPC_DISPATCHER_BOUND_TIMEOUT_MS
+config TELINK_IPC_DISPATCHER_BOUND_TIMEOUT_MS
 	int "Telink IPC dispatcher bound timeout"
 	default 2000
-	depends on TELINK_W91_IPC_DISPATCHER
+	depends on TELINK_IPC_DISPATCHER
 	help
 		This option sets Telink IPC dispatcher bound timeout in mS.
 
-config TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS
+config TELINK_IPC_DISPATCHER_TIMEOUT_MS
 	int "Telink IPC dispatcher timeout"
 	default 1500
-	depends on TELINK_W91_IPC_DISPATCHER
+	depends on TELINK_IPC_DISPATCHER
 	help
 		This option sets Telink IPC dispatcher requests timeout in mS.
 

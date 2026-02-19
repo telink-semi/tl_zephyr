@@ -65,7 +65,7 @@ static int adc_w91_ipc_setup(const struct device *dev)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst,
 		adc_w91_ipc_setup, NULL, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -99,7 +99,7 @@ static int adc_w91_ipc_read(struct adc_w91_data *data, uint16_t ch,
 	uint8_t inst = ((struct adc_w91_cfg *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, adc_w91_ipc_read, &adc_req, &err,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 	if (err != 0) {
 		LOG_ERR("ADC read failed, ret(%d)", err);
 	}
@@ -330,7 +330,7 @@ DEVICE_DT_INST_DEFINE(0, adc_w91_init, NULL,	\
 		      &adc_w91_data_##inst,				\
 			  &adc_w91_cfg_##inst,				\
 		      POST_KERNEL,						\
-		      CONFIG_TELINK_W91_IPC_DRIVERS_INIT_PRIORITY,		\
+		      CONFIG_TELINK_IPC_DRIVERS_INIT_PRIORITY,		\
 		      &adc_w91_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(ADC_W91_INIT)

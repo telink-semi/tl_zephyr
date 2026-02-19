@@ -3,7 +3,7 @@
 
 config TELINK_OPUS_REMOTE
 	bool "Telink OPUS codec IPC remote backend"
-	select TELINK_W91_IPC_DISPATCHER
+	select TELINK_IPC_DISPATCHER
 	help
 		This option enables Telink OPUS codec IPC remote backend.
 

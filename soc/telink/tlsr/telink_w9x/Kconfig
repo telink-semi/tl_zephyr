@@ -75,9 +75,6 @@ config TELINK_W91_DEBUG_BAUDRATE
 	help
 		This option sets Telink W91 debug baudrate, bps.
 
-source "soc/telink/tlsr/telink_w9x/ipc/Kconfig.ipc"
-source "soc/telink/tlsr/telink_w9x/blocking_core/Kconfig.blocking"
-source "soc/telink/tlsr/telink_w9x/core_heartbeat/Kconfig.heartbeat"
 source "soc/telink/tlsr/telink_w9x/bluetooth/Kconfig.bt"
 source "soc/telink/tlsr/telink_w9x/crypto/Kconfig.crypto"
 source "soc/telink/tlsr/telink_w9x/Kconfig.n22"

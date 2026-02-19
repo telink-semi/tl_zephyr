@@ -3,6 +3,31 @@
 
 zephyr_include_directories(.)
 
+if(CONFIG_TELINK_IPC_DISPATCHER)
+
+zephyr_sources(
+	ipc/ipc_dispatcher.c
+	ipc/ipc_based_driver.c
+)
+
+endif()
+
+if(CONFIG_TELINK_BLOCKING_CORE)
+
+zephyr_sources(
+	blocking_core/blocking.c
+)
+
+endif()
+
+if(CONFIG_TELINK_CORE_HEARTBEAT)
+
+zephyr_sources(
+	core_heartbeat/core_heartbeat.c
+)
+
+endif()
+
 # This component requires from SOC UART with HW flow control
 if(CONFIG_TELINK_OT_RCP)
 

@@ -66,7 +66,7 @@ static int reset_cause_w91_get_value(uint32_t *value)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0, reset_cause_w91_get_value, NULL,
 				      &reset_cause_get_value_resp,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (!reset_cause_get_value_resp.err) {
 		*value = reset_cause_get_value_resp.value;
@@ -165,4 +165,4 @@ static int reset_cause_w91_init(void)
 	return 0;
 }
 
-SYS_INIT(reset_cause_w91_init, POST_KERNEL, CONFIG_TELINK_W91_IPC_PRE_DRIVERS_INIT_PRIORITY);
+SYS_INIT(reset_cause_w91_init, POST_KERNEL, CONFIG_TELINK_IPC_PRE_DRIVERS_INIT_PRIORITY);

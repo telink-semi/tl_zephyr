@@ -68,7 +68,7 @@ static int watchdog_ipc_start(const struct device *dev, uint64_t timeout_ms)
 	uint8_t inst = ((struct wdt_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, watchdog_ipc_start,
-			&timeout_ms, &err, CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+			&timeout_ms, &err, CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -86,7 +86,7 @@ static int watchdog_ipc_stop(const struct device *dev)
 	uint8_t inst = ((struct wdt_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, watchdog_ipc_stop,
-				NULL, &err, CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				NULL, &err, CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -103,7 +103,7 @@ static int watchdog_ipc_reset(const struct device *dev)
 	uint8_t inst = ((struct wdt_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, watchdog_ipc_reset,
-			NULL, &err, CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+			NULL, &err, CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -121,7 +121,7 @@ static int watchdog_ipc_wrap_expire_now(const struct device *dev)
 	uint8_t inst = ((struct wdt_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, watchdog_ipc_wrap_expire_now,
-				NULL, &err, CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				NULL, &err, CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
