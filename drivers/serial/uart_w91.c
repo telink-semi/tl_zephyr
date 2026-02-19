@@ -200,7 +200,7 @@ static int uart_w91_configure(const struct device *dev, const struct uart_config
 	uint8_t inst = ((struct uart_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, uart_w91_configure, &config_req, &err,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -237,7 +237,7 @@ static int uart_w91_send(const struct device *dev, const uint8_t *tx_data, int s
 	uint8_t inst = ((struct uart_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, uart_w91_send, &tx_req, &err,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -289,7 +289,7 @@ static int uart_w91_read(const struct device *dev, uint8_t *rx_data, const int s
 	uint8_t inst = ((struct uart_w91_config *)dev->config)->instance_id;
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, uart_w91_read, (uint16_t *)&size, &rx_resp,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (rx_resp.err < 0) {
 		return rx_resp.err;
@@ -422,7 +422,7 @@ static int uart_w91_irq_state_change(const struct device *dev, enum uart_irq_typ
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst, uart_w91_irq_state_change,
 				      &irq_state_change_req, &err,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -716,6 +716,6 @@ static const struct uart_driver_api uart_w91_driver_api = {
                                                                                                    \
 	DEVICE_DT_INST_DEFINE(                                                                     \
 		n, uart_w91_driver_init, NULL, &uart_w91_data_##n, &uart_w91_cfg_##n, POST_KERNEL, \
-		CONFIG_TELINK_W91_IPC_DRIVERS_INIT_PRIORITY, (void *)&uart_w91_driver_api);
+		CONFIG_TELINK_IPC_DRIVERS_INIT_PRIORITY, (void *)&uart_w91_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(UART_W91_INIT)

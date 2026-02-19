@@ -21,19 +21,6 @@ zephyr_sources_ifdef(CONFIG_BT
 	bluetooth/bt_mac.c
 )
 
-zephyr_sources_ifdef(CONFIG_TELINK_W91_IPC_DISPATCHER
-	ipc/ipc_dispatcher.c
-	ipc/ipc_based_driver.c
-)
-
-zephyr_sources_ifdef(CONFIG_TELINK_W91_BLOCKING_CORE
-	blocking_core/blocking.c
-)
-
-zephyr_sources_ifdef(CONFIG_TELINK_W91_CORE_HEARTBEAT
-	core_heartbeat/core_heartbeat.c
-)
-
 zephyr_sources_ifdef(CONFIG_TELINK_W91_DEBUG_ENABLE
 	debug.c
 )

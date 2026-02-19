@@ -6,7 +6,7 @@
 config ENTROPY_TELINK_W91_TRNG
 	bool "Telink W91-series Entropy driver"
 	default y
-	depends on DT_HAS_TELINK_W91_TRNG_ENABLED && TELINK_W91_IPC_DISPATCHER
+	depends on DT_HAS_TELINK_W91_TRNG_ENABLED && TELINK_IPC_DISPATCHER
 	select ENTROPY_HAS_DRIVER
 	help
 	  Enable the W91-series Entropy driver.

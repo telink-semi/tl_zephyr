@@ -60,7 +60,7 @@ static int pinctrl_w91_pin_configure(uint8_t pin, uint8_t func)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0,
 			pinctrl_w91_pin_configure, &pin_config_req, &err,
-			CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+			CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -87,4 +87,4 @@ int pinctrl_configure_pins(const pinctrl_soc_pin_t *pins, uint8_t pin_cnt, uintp
 	return err;
 }
 
-SYS_INIT(pinctrl_w91_init, POST_KERNEL, CONFIG_TELINK_W91_IPC_PRE_DRIVERS_INIT_PRIORITY);
+SYS_INIT(pinctrl_w91_init, POST_KERNEL, CONFIG_TELINK_IPC_PRE_DRIVERS_INIT_PRIORITY);

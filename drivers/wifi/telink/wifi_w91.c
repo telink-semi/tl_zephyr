@@ -232,7 +232,7 @@ static void wifi_w91_init_if(struct net_if *iface)
 #endif
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id, wifi_w91_init_if, &ip_flags,
-				      &init_resp, CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      &init_resp, CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (init_resp.err) {
 		LOG_ERR("Failed to start Wi-Fi driver (response status is incorrect)");
@@ -275,7 +275,7 @@ static int wifi_w91_scan(const struct device *dev, struct wifi_scan_params *para
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
 		wifi_w91_scan, NULL, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 	if (!err) {
 		wifi_w91_reset_state(&data->base.if_state);
 		data->base.if_state.state = WIFI_STATE_SCANNING;
@@ -354,7 +354,7 @@ static int wifi_w91_connect(const struct device *dev, struct wifi_connect_req_pa
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
 		wifi_w91_connect, &connect_req, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 	if (!err) {
 		wifi_w91_reset_state(&data->base.if_state);
 		data->base.if_state.state = WIFI_STATE_AUTHENTICATING;
@@ -379,7 +379,7 @@ static int wifi_w91_disconnect(const struct device *dev)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
 		wifi_w91_disconnect, NULL, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -439,7 +439,7 @@ static int wifi_w91_ap_enable(const struct device *dev, struct wifi_connect_req_
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
 		wifi_w91_ap_enable, &connect_req, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -459,7 +459,7 @@ static int wifi_w91_ap_disable(const struct device *dev)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&data->ipc, cfg->instance_id,
 		wifi_w91_ap_disable, NULL, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -971,7 +971,7 @@ static const struct net_wifi_mgmt_offload wifi_w91_driver_api = {
                                                                 \
 	NET_DEVICE_DT_INST_DEFINE(n, wifi_w91_init,                 \
 		NULL, &wifi_data_##n, &wifi_config_##n,                 \
-		CONFIG_TELINK_W91_IPC_DRIVERS_INIT_PRIORITY,            \
+		CONFIG_TELINK_IPC_DRIVERS_INIT_PRIORITY,            \
 		&wifi_w91_driver_api, ETHERNET_L2,                      \
 		NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);
 

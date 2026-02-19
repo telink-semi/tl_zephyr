@@ -8,6 +8,9 @@ if IEEE802154
 rsource "common/ot_rcp/Kconfig.ot_rcp"
 endif # IEEE802154
 if SOC_RISCV_TELINK_W9X
+rsource "common/ipc/Kconfig.ipc"
+rsource "common/blocking_core/Kconfig.blocking"
+rsource "common/core_heartbeat/Kconfig.heartbeat"
 rsource "common/otbr/Kconfig.otbr"
 rsource "common/opus/Kconfig.opus"
 endif # SOC_RISCV_TELINK_W9X

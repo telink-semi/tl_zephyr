@@ -68,7 +68,7 @@ static int pm_w91_enable(bool enable)
 	}
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0, pm_w91_enable, &pm_enable_req, &err,
-				      CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+				      CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	return err;
 }
@@ -179,4 +179,4 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	arch_irq_unlock(MSTATUS_IEN);
 }
 
-SYS_INIT(pm_w91_init, POST_KERNEL, CONFIG_TELINK_W91_IPC_PRE_DRIVERS_INIT_PRIORITY);
+SYS_INIT(pm_w91_init, POST_KERNEL, CONFIG_TELINK_IPC_PRE_DRIVERS_INIT_PRIORITY);

@@ -295,7 +295,7 @@ static int spi_w91_config(const struct device *dev, const struct spi_config *con
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst,
 		spi_w91_ipc_configure, &config_req, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (!err) {
 		spi_w91_save_config(dev, config);
@@ -451,7 +451,7 @@ static int spi_w91_master_tx_rx(const struct device *dev)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst,
 		spi_w91_master_tx_rx, &master_tx_rx_req, &master_tx_rx_resp,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (master_tx_rx_resp.err) {
 		LOG_ERR("SPI tx/rx operation failed (ERR type = %d)", master_tx_rx_resp.err);
@@ -553,7 +553,7 @@ static int spi_w91_init(const struct device *dev)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(ipc_data, inst,
 		spi_w91_init, NULL, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (err) {
 		LOG_ERR("Failed to init SPI");
@@ -592,7 +592,7 @@ static struct spi_driver_api spi_w91_api = {
 			      &spi_w91_data_##n,                            \
 			      &spi_w91_config_##n,                          \
 			      POST_KERNEL,                                  \
-			      CONFIG_TELINK_W91_IPC_DRIVERS_INIT_PRIORITY,  \
+			      CONFIG_TELINK_IPC_DRIVERS_INIT_PRIORITY,  \
 			      &spi_w91_api);
 
 DT_INST_FOREACH_STATUS_OKAY(SPI_W91_INIT)

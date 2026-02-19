@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2024-2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -77,7 +77,7 @@ static int ipc_dispatcher_start(void)
 		LOG_ERR("IPC failed to register endpoint: %d", ret);
 	} else {
 		ret = k_sem_take(&ipc_sem_bound,
-			K_MSEC(CONFIG_TELINK_W91_IPC_DISPATCHER_BOUND_TIMEOUT_MS));
+			K_MSEC(CONFIG_TELINK_IPC_DISPATCHER_BOUND_TIMEOUT_MS));
 		if (ret < 0) {
 			LOG_ERR("IPC endpoint bind timed out: %d", ret);
 		}
@@ -150,4 +150,4 @@ int ipc_dispatcher_send(const void *data, size_t len)
 	return ipc_service_send(&ept, data, len);
 }
 
-SYS_INIT(ipc_dispatcher_start, POST_KERNEL, CONFIG_TELINK_W91_IPC_DISPATCHER_INIT_PRIORITY);
+SYS_INIT(ipc_dispatcher_start, POST_KERNEL, CONFIG_TELINK_IPC_DISPATCHER_INIT_PRIORITY);

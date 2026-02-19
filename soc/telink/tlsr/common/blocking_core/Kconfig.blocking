@@ -1,0 +1,18 @@
+# Copyright (c) 2024-2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config TELINK_BLOCKING_CORE
+	bool "Telink blocking core"
+	default y
+	help
+		This option enables Telink blocking core.
+
+if TELINK_BLOCKING_CORE
+
+config BLOCKING_CORE_TELINK_CORE_STOP_TIMEOUT_MS
+	int "Core stop timeout"
+	default 100
+	help
+	  This option sets core stop timeout in uS.
+
+endif # TELINK_BLOCKING_CORE

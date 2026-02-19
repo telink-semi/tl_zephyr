@@ -77,7 +77,7 @@ static int hci_w91_open(const struct device *dev, bt_hci_recv_t recv)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0,
 			hci_w91_open, mac, &err,
-			CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+			CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (err == 0) {
 		bt_ctrl_state = W91_BT_CTRL_STATE_ACTIVATED;
@@ -109,7 +109,7 @@ static int hci_w91_close(const struct device *dev)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0,
 			hci_w91_close, NULL, &err,
-			CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+			CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	if (err == 0) {
 		bt_ctrl_state = W91_BT_CTRL_STATE_STOPPED;
@@ -177,7 +177,7 @@ static int hci_w91_send(const struct device *dev, struct net_buf *buf)
 
 	IPC_DISPATCHER_HOST_SEND_DATA(&ipc_data, 0,
 		hci_w91_send, &send_req, &err,
-		CONFIG_TELINK_W91_IPC_DISPATCHER_TIMEOUT_MS);
+		CONFIG_TELINK_IPC_DISPATCHER_TIMEOUT_MS);
 
 	net_buf_unref(buf);
 	return err;
@@ -379,7 +379,7 @@ static const struct bt_hci_driver_api w91_bt_hci_api = {
 		NULL,                                                           \
 		NULL,                                                           \
 		POST_KERNEL,                                                    \
-		CONFIG_TELINK_W91_IPC_DRIVERS_INIT_PRIORITY,                    \
+		CONFIG_TELINK_IPC_DRIVERS_INIT_PRIORITY,                    \
 		&w91_bt_hci_api);
 
 DT_INST_FOREACH_STATUS_OKAY(W91_BT_HCI_INIT)
