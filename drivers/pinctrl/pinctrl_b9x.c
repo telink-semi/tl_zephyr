@@ -109,11 +109,11 @@ static int pinctrl_b9x_pm_action(const struct device *dev, enum pm_device_action
 {
 	ARG_UNUSED(dev);
 
-	extern volatile bool b9x_deep_sleep_retention;
+	extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
-		if (b9x_deep_sleep_retention) {
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 			/* set pad_mul_sel register value from dts */
 			reg_gpio_pad_mul_sel |= DT_INST_PROP(0, pad_mul_sel);
 		}
