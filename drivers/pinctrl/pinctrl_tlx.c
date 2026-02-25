@@ -96,11 +96,11 @@ static int pinctrl_tlx_pm_action(const struct device *dev, enum pm_device_action
 {
 	ARG_UNUSED(dev);
 
-	extern volatile bool tlx_deep_sleep_retention;
+	extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
-		if (tlx_deep_sleep_retention) {
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 
 		}
 		break;

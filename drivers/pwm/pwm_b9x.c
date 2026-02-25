@@ -152,13 +152,13 @@ static int pwm_b9x_pm_action(const struct device *dev, enum pm_device_action act
 	const struct pwm_b9x_config *config = dev->config;
 	struct pwm_b9x_data *data = dev->data;
 
-	extern volatile bool b9x_deep_sleep_retention;
+	extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 #if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
 	{
-		if (b9x_deep_sleep_retention) {
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 			pwm_b9x_init(dev);
 		}
 
