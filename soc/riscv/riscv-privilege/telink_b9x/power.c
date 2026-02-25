@@ -82,7 +82,11 @@ static void set_mtime(uint64_t time)
 }
 
 #if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
-volatile bool b9x_deep_sleep_retention;
+/* Indicating that system has resumed from deep sleep retention */
+static volatile bool b9x_resumed_from_deep_sleep_retention;
+
+/* Indicating that deep sleep retention has occurred since boot */
+static volatile bool b9x_deep_sleep_retention_occurred;
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
 
 /**
@@ -124,7 +128,8 @@ __weak void pm_state_set(enum pm_state state, uint8_t substate_id)
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime_compare(wakeup_time);
 			set_mtime(current_time);
-			b9x_deep_sleep_retention = true;
+			b9x_resumed_from_deep_sleep_retention = true;
+			b9x_deep_sleep_retention_occurred = true;
 		}
 		break;
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
@@ -144,11 +149,11 @@ __weak void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	ARG_UNUSED(substate_id);
 
 #if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
-	if (b9x_deep_sleep_retention) {
+	if (b9x_resumed_from_deep_sleep_retention) {
 		csr_clear(mip, MIP_MEIP);
-		b9x_deep_sleep_retention = false;
+		b9x_resumed_from_deep_sleep_retention = false;
 	}
-#endif
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
 
 	/*
 	 * System is now in active mode. Enabling interrupts which were
@@ -156,3 +161,21 @@ __weak void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	 */
 	arch_irq_unlock(MSTATUS_IEN);
 }
+
+#if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+/**
+ * @brief Check if system has resumed from deep sleep retention.
+ */
+bool pm_has_resumed_from_deep_sleep_retention(void)
+{
+	return b9x_resumed_from_deep_sleep_retention;
+}
+
+/**
+ * @brief Check if deep sleep retention has occurred since boot.
+ */
+bool pm_has_deep_sleep_retention_occurred(void)
+{
+	return b9x_deep_sleep_retention_occurred;
+}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
