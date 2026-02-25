@@ -169,8 +169,8 @@ static int i2c_tlx_pm_action(const struct device *dev, enum pm_device_action act
 	case PM_DEVICE_ACTION_RESUME:
 	{
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-		extern volatile bool tlx_deep_sleep_retention;
-		if (tlx_deep_sleep_retention) {
+		extern bool pm_has_resumed_from_deep_sleep_retention(void);
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 			i2c_tlx_configure(dev, dev_config);
 		}
 

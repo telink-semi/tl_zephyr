@@ -539,9 +539,9 @@ static int telink_tlx_adc_pm_action(const struct device *dev, enum pm_device_act
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-		extern volatile bool tlx_deep_sleep_retention;
+		extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
-		if (tlx_deep_sleep_retention) {
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 			result = telink_tlx_adc_rise_up(dev);
 		}
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */

@@ -835,9 +835,9 @@ static int gpio_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 		{
-			extern volatile bool tlx_deep_sleep_retention;
+			extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
-			if (tlx_deep_sleep_retention) {
+			if (pm_has_resumed_from_deep_sleep_retention()) {
 /* Disable interrupts before restoring GPIO from sleep */
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 				if (irq_num == IRQ_GPIO) {
