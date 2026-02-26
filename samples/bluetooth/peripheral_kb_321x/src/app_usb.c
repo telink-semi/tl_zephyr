@@ -17,6 +17,7 @@
 #include <zephyr/settings/settings.h>
 
 #include <zephyr/usb/usb_device.h>
+#include <zephyr/usb/class/hid.h>
 #include <zephyr/usb/class/usb_hid.h>
 
 
@@ -226,6 +227,11 @@ int usb_hw_init(void)
 	usb_hid_register_device(hid_dev_kb, hid_report_kb_desc, sizeof(hid_report_kb_desc), &kbd_ops);
 	// usb_hid_register_device(hid_dev_n_key, hid_report_n_keys_desc, sizeof(hid_report_n_keys_desc), &kbd_ops);
 	//usb_hid_register_device(hid_vendor, hid_report_vendor_defined, sizeof(hid_report_vendor_defined), &kbd_ops);
+
+    ret = usb_hid_set_proto_code(hid_dev_kb, HID_BOOT_IFACE_CODE_KEYBOARD);
+    if (ret) {
+        LOG_WRN("Failed to set HID proto code for HID_0 (%d)", ret);
+    }
 
 	usb_hid_init(hid_dev_kb);
 	// usb_hid_init(hid_dev_n_key);
