@@ -71,6 +71,8 @@ extern "C" {
  * @}
  */
 
+extern unsigned char efuse_get_chip_id(unsigned char *chip_id_buff);
+
 /**
  * @brief Copy the device id to a buffer
  *
