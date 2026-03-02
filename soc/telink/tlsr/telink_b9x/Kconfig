@@ -98,6 +98,8 @@ config TELINK_B9X_MCUBOOT_STARTUP
 	depends on MCUBOOT
 	select CRC
 	select UART_DRV_CMD
+	default y if SOC_RISCV_TELINK_B92
+	default n
 	help
 		Run Telink specific vendor code before MCUBoot
 		main process
