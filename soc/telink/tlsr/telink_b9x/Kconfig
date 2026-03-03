@@ -143,4 +143,10 @@ config TELINK_WDT_FEED_TIME
 
 endif # WATCHDOG
 
+config MCUBOOT_START_OFFSET
+	hex
+	default 0x5000
+	help
+		The MCUboot offset value.
+
 endif # SOC_RISCV_TELINK_B9X
