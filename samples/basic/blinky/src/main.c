@@ -4,45 +4,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <stdio.h>
 #include <zephyr/kernel.h>
-#include <zephyr/drivers/gpio.h>
+#include "soc_flash.c"
 
-/* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   1000
-
-/* The devicetree node identifier for the "led0" alias. */
-#define LED0_NODE DT_ALIAS(led0)
-
-/*
- * A build error on this line means your board is unsupported.
- * See the sample documentation for information on how to fix this.
- */
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+static void printk_buf(const char *comment, void *buf, size_t len)
+{
+    printk("%s[%zu]:", comment, len);
+    for (size_t i = 0; i < len; ++i) {
+        printk(" %02x ", ((uint8_t *)buf)[i]);
+    }
+    printk("\n");
+}
 
 int main(void)
 {
-	int ret;
-	bool led_state = true;
+	printk("main started\n");
 
-	if (!gpio_is_ready_dt(&led)) {
-		return 0;
-	}
+	static uint8_t data[256];
+	const uintptr_t addr = 0x201fec78;
 
-	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
-		return 0;
-	}
+	soc_flash_read(NULL, addr, data, sizeof(data));
 
-	while (1) {
-		ret = gpio_pin_toggle_dt(&led);
-		if (ret < 0) {
-			return 0;
-		}
+	printk_buf("data", data, sizeof(data));
 
-		led_state = !led_state;
-		printf("LED state: %s\n", led_state ? "ON" : "OFF");
-		k_msleep(SLEEP_TIME_MS);
-	}
 	return 0;
 }
