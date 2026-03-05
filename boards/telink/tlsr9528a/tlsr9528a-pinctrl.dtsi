@@ -76,14 +76,14 @@
 		pinmux = <B9x_PINMUX_SET(B9x_PORT_A, B9x_PIN_3, B92_FUNC_GSPI_MISO_IO)>;
 	};
 
-	/* Define I2C pins: SCL(PC0), SDA(PC1) */
+	/* Define I2C pins: SCL(PA1), SDA(PA0)*/
+	i2c_scl_pa1_default: i2c_scl_pa1_default {
+		pinmux = <B9x_PINMUX_SET(B9x_PORT_A, B9x_PIN_1, B92_FUNC_I2C_SCL_IO | (B9x_PULL_UP<<5))>;
+	};
+	i2c_sda_pa0_default: i2c_sda_pa0_default {
+		pinmux = <B9x_PINMUX_SET(B9x_PORT_A, B9x_PIN_0, B92_FUNC_I2C_SDA_IO | (B9x_PULL_UP<<5))>;
+	};
 
-	i2c_scl_pc0_default: i2c_scl_pc0_default {
-		pinmux = <B9x_PINMUX_SET(B9x_PORT_C, B9x_PIN_0, B92_FUNC_I2C_SCL_IO)>;
-	};
-	i2c_sda_pc1_default: i2c_sda_pc1_default {
-		pinmux = <B9x_PINMUX_SET(B9x_PORT_C, B9x_PIN_1, B92_FUNC_I2C_SDA_IO)>;
-	};
 
 	/* Define ADC pins: PB0..PB7, PD0-PD1 */
 

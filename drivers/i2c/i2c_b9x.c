@@ -53,7 +53,7 @@ static int i2c_b9x_configure(const struct device *dev, uint32_t dev_config)
 		break;
 
 	case I2C_SPEED_FAST:
-		i2c_speed = 400000U;
+		i2c_speed = 200000U;
 		break;
 
 	case I2C_SPEED_FAST_PLUS:
@@ -101,7 +101,7 @@ static int i2c_b9x_transfer(const struct device *dev,
 		if (msgs[i].flags & I2C_MSG_READ) {
 			status = i2c_master_read(addr << 1, msgs[i].buf, msgs[i].len);
 		} else {
-			status = i2c_master_write(addr << 1, msgs[i].buf, msgs[i].len);
+			status = i2c_master_write(addr, msgs[i].buf, msgs[i].len);
 		}
 
 		/* check status */

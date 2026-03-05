@@ -35,9 +35,12 @@ struct pwm_b9x_data {
 /* API implementation: init */
 static int pwm_b9x_init(const struct device *dev)
 {
+/* should not set div , or it will change the pulse of the zigbee*/
+#if 0
 	const struct pwm_b9x_config *config = dev->config;
 	uint32_t pwm_clk_div;
 
+	// adopt with zigbee , use the initial div setting part .
 	/* Check maximum number of PWM channels */
 	if (config->channels > CONFIG_PWM_TELINK_B9X_MAX_CHANNELS) {
 		return -EINVAL;
@@ -52,6 +55,7 @@ static int pwm_b9x_init(const struct device *dev)
 	/* Set PWM Peripheral clock */
 	pwm_set_clk((unsigned char)(pwm_clk_div & 0xFF));
 
+#endif
 	return 0;
 }
 
