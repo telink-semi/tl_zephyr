@@ -27,7 +27,7 @@ static void restore_all_irq_priorities(void)
 {
     volatile uint32_t *prio = (volatile uint32_t *)PLIC_PRIO;
     int i;
-    for(i=1;i<PLIC_IRQS;i++)
+    for( i=1; i<PLIC_IRQS; i++)
     {
         *prio = 1U;
         prio++;
@@ -37,7 +37,7 @@ static void restore_all_irq_priorities(void)
 #define USER_PARTITION		user_para_partition
 #define USER_PARTITION_DEVICE	FIXED_PARTITION_DEVICE(USER_PARTITION)
 #define USER_PARTITION_OFFSET	FIXED_PARTITION_OFFSET(USER_PARTITION)
-#define USER_PARTITION_SIZE 	FIXED_PARTITION_SIZE(USER_PARTITION) 
+#define USER_PARTITION_SIZE 	FIXED_PARTITION_SIZE(USER_PARTITION)
 
 #define SLOT0_PARTITION		slot0_partition
 #define SLOT0_PARTITION_DEVICE	FIXED_PARTITION_DEVICE(SLOT0_PARTITION)
@@ -52,9 +52,9 @@ uint8_t zb_slot0_flag[4];
 
 #define USER_MATTER_PAIR_VAL    0x55  // jump to matter
 
-#define USER_INIT_VAL           0xff  // init state or others will go into zb 
+#define USER_INIT_VAL           0xff  // init state or others will go into zb
 #define USER_ZB_SW_VAL          0xaa  // jump to matter,use XIP
-#define USER_MATTER_BACK_ZB     0xa0  // only commisiion fail will back to zb 
+#define USER_MATTER_BACK_ZB     0xa0  // only commisiion fail will back to zb
 
 #define ZB_FW_FLAG_OFFSET       0x20 //telink fw valid flag offset .
 
@@ -64,7 +64,7 @@ void * dual_mode_start_proc(void * boot_adr)
 {
 	void *start;
     /* Read the boot flag from the user partition to determine the boot behavior */
-    uint8_t boot_flag=0;
+    uint8_t boot_flag = 0;
     flash_read(flash_para_dev, USER_PARTITION_OFFSET, &boot_flag, 1);
     printk("boot flag is  %x \n",boot_flag);
 

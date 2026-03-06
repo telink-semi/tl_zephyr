@@ -244,7 +244,7 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c_scl_pa1_default &i2c_sda_pa0_default>;
 	pinctrl-names = "default";
-		leedarsen@44 {
+		i2ccontrol@44 {
 		compatible = "ledcontrol,i2c";
 		reg = <0x44>;
 	};
