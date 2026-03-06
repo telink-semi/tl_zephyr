@@ -20,10 +20,16 @@
 	pwm_pool {
 		compatible = "pwm-leds";
 		out {
-			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>,
-				<&pwm0 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>,
-				<&pwm0 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
+			pwms =  <&pwm0 2 PWM_MSEC(1) PWM_POLARITY_NORMAL>,
+					<&pwm0 0 PWM_MSEC(1) PWM_POLARITY_NORMAL>,
+					<&pwm0 1 PWM_MSEC(1) PWM_POLARITY_NORMAL>,
+					<&pwm0 2 PWM_MSEC(1) PWM_POLARITY_NORMAL>;
 		};
+	};
+
+	zephyr,user {
+		/* adjust channel number according to pinmux in board.dts for adc demo. */
+		io-channels = <&adc 0>;
 	};
 };
 
@@ -43,6 +49,22 @@
 	};
 	pwm_ch2_pd0_default: pwm_ch2_pd0_default {
 		pinmux = <B9x_PINMUX_SET(B9x_PORT_D, B9x_PIN_0, B92_FUNC_PWM2)>;
+	};
+};
+
+&adc {
+	/* the channel setting for adc demo. */
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+		zephyr,input-positive = <DT_ADC_VBAT>;
 	};
 };
 

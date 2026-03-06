@@ -184,6 +184,13 @@ unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 	clock_32k_init(CLK_32K_RC);
 	clock_cal_32k_rc();
 
+#if CONFIG_SOC_RISCV_TELINK_B91 || CONFIG_SOC_RISCV_TELINK_B92
+	/* Reset Radio */
+	rf_radio_reset();
+	rf_reset_dma();
+	rf_baseband_reset();
+#endif
+
 #if CONFIG_SOC_RISCV_TELINK_B92
 	/* Stop 32k watchdog */
 	wd_32k_stop();

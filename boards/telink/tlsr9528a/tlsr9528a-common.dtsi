@@ -92,8 +92,8 @@
 		compatible = "gpio-keys";
 
 		inp {
-			gpios = <&gpiod 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
-				<&gpiod 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			gpios = <&gpiof 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,
+				<&gpiof 7 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 		};
 	};
 
@@ -125,7 +125,7 @@
 };
 
 &cpu0 {
-	clock-frequency = <48000000>;
+	clock-frequency = <96000000>;
 };
 
 &ram_ilm {
@@ -175,6 +175,11 @@
 			reg = <0xfe000 0x2000>;
 		};
 	};
+};
+
+&gpioa {
+	interrupts = <39 1>;
+	status = "okay";
 };
 
 &gpiob {
@@ -237,8 +242,12 @@
 &i2c {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c_scl_pc0_default &i2c_sda_pc1_default>;
+	pinctrl-0 = <&i2c_scl_pa1_default &i2c_sda_pa0_default>;
 	pinctrl-names = "default";
+		i2ccontrol@44 {
+		compatible = "ledcontrol,i2c";
+		reg = <0x44>;
+	};
 };
 
 &adc {
