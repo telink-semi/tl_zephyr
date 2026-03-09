@@ -812,21 +812,21 @@ static void gpio_b9x_irq_connect_4(void)
 	riscv_plic_set_priority(DT_INST_IRQN(4), DT_INST_IRQ(4, priority));
 #endif
 }
+#endif
 
-
+#if CONFIG_SOC_RISCV_TELINK_B92
 /* If instance 5 is present and has interrupt enabled, connect IRQ */
 #if DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 5
 static void gpio_b9x_irq_connect_5(void)
 {
-	#if IS_INST_IRQ_EN(5)
+#if IS_INST_IRQ_EN(5)
 	IRQ_CONNECT(DT_INST_IRQN(5), DT_INST_IRQ(5, priority),
 		    gpio_b9x_irq_handler,
 		    DEVICE_DT_INST_GET(5), 0);
-	#endif
+	riscv_plic_set_priority(DT_INST_IRQN(5), DT_INST_IRQ(5, priority));
+#endif
 }
 #endif
-
-
 #endif
 
 #if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION

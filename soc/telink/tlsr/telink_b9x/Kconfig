@@ -118,4 +118,35 @@ config COMPRESS_LZMA_DICTIONARY_SIZE
 
 endif # BOOTLOADER_MCUBOOT || MCUBOOT
 
+if WATCHDOG
+
+config WATCHDOG_AUTO
+	bool "Support auto watchdog"
+	depends on WATCHDOG
+	default y
+	help
+		This option enables auto watchdog
+
+config TELINK_WDT_TIMEOUT
+	int "Watchdog timeout in milliseconds"
+	depends on WATCHDOG_AUTO
+	default 30000
+	help
+		This option supports setting the watchdog timeout
+
+config TELINK_WDT_FEED_TIME
+	int "Feed watchdog time in milliseconds"
+	depends on WATCHDOG_AUTO
+	default 1000
+	help
+		This option supports feeding the watchdog
+
+endif # WATCHDOG
+
+config MCUBOOT_START_OFFSET
+	hex
+	default 0x5000
+	help
+		The MCUboot offset value.
+
 endif # SOC_RISCV_TELINK_B9X

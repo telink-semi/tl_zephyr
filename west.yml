@@ -247,7 +247,7 @@ manifest:
       path: modules/hal/tdk
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 04b740a9cb86bc3257c12b54d0ce9f03f49add3f
+      revision: 703c97e20e014bcb236cc18a5d5ab521780679ca
       path: modules/hal/telink
       groups:
         - hal
@@ -303,7 +303,7 @@ manifest:
         - crypto
     - name: mcuboot
       url: https://github.com/telink-semi/mcuboot
-      revision: 346f7374ff4467e40b5594658f8ac67a5e9813c9
+      revision: 1754b9bf869f6f54ebffdb075e9f4f363b9dee6d
       path: bootloader/mcuboot
       groups:
         - bootloader
