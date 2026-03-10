@@ -122,6 +122,22 @@ void soc_load_rf_parameters_deep_retention(void)
 }
 #endif
 
+#if CONFIG_SOC_RISCV_TELINK_B92
+typedef enum{
+	PM_VDD_DCORE_VOLTAGE_1V20 = 0x10,
+} pm_vdd_dcore_voltage_e;
+
+/**
+ * @brief       This function servers to set vdd_dcore output voltage in active mode.
+ * @param[in]   voltage - vdd_dcore setting.
+ * @return      none.
+ */
+void pm_set_vdd_dcore(pm_vdd_dcore_voltage_e voltage)
+{
+    analog_write_reg8(0x1d, (analog_read_reg8(0x1d) & 0xe0) | voltage);
+}
+#endif
+
 /**
  * @brief Perform basic initialization at boot.
  *
@@ -141,6 +157,7 @@ unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 	sys_init(POWER_MODE, VBAT_TYPE);
 #elif CONFIG_SOC_RISCV_TELINK_B92
 	sys_init(POWER_MODE, VBAT_TYPE, GPIO_VOLTAGE_3V3);
+	pm_set_vdd_dcore(PM_VDD_DCORE_VOLTAGE_1V20);
 #endif
 
 #if CONFIG_PM
