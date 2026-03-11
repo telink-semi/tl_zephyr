@@ -432,14 +432,14 @@ static int adc_tl323x_init(const struct device *dev)
     }
 
 	k_sem_init(&data->acq_sem, 0, 1);
-
+#if 0
 	k_thread_create(&data->thread, data->stack,
 		CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE,
 		(k_thread_entry_t)adc_tl323x_acquisition_thread,
 		(void *)dev, NULL, NULL,
 		CONFIG_ADC_TL323X_ACQUISITION_THREAD_PRIO,
 		0, K_NO_WAIT);
-
+#endif
 	adc_context_unlock_unconditionally(&data->ctx);
 
 	return 0;
