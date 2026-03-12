@@ -174,4 +174,13 @@ config SOC_PMOS_SWITCH_TIME_CTL
 		This option can increase the PMOS switching time when the inductance value is below 6.8uH
 endif
 
+if SOC_RISCV_TELINK_TL323X
+config MCUBOOT_START_OFFSET
+	hex
+	default 0x5000
+	help
+		The MCUboot offset value.
+
+endif
+
 source "soc/telink/tlsr/telink_tlx/Kconfig.n22"
