@@ -722,12 +722,12 @@ struct k_timer usb_en_preempt_timer;
 static void usb_preempt_cb(struct k_timer *tm)
 {
 	plic_preempt_feature_dis();
-	k_timer_stop(tm);
 }
 
 static void usb_irq_setup(void)
 {
-	k_timer_start(&usb_en_preempt_timer, K_MSEC(1000), K_MSEC(1000));
+	plic_preempt_feature_en(CORE_PREEMPT_PRI_MODE0);
+	k_timer_start(&usb_en_preempt_timer, K_MSEC(1000), K_NO_WAIT);
 	usbhw_clr_ctrl_ep_irq(FLD_CTRL_EP_IRQ_SETUP);
 	submit_usbd_event(USBD_EVT_SETUP, 0);
 }
