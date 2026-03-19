@@ -303,7 +303,7 @@ manifest:
         - crypto
     - name: mcuboot
       url: https://github.com/telink-semi/mcuboot
-      revision: 1754b9bf869f6f54ebffdb075e9f4f363b9dee6d
+      revision: efcdb99de1c7f778f0bbbf5dd4e53ecd745f101e
       path: bootloader/mcuboot
       groups:
         - bootloader
