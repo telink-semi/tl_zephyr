@@ -298,6 +298,11 @@ void soc_early_init_hook(void)
 	pm_set_ret_ldo_voltage(RET_LDO_TRIM_0P65V);
 #endif
 
+/* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+	analog_write_reg8(0x01,(analog_read_reg8(0x01)&0xf8)|0x06);// change from 0x04 to 0x06 for the board changes.
+#endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
+
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
@@ -443,6 +448,11 @@ void soc_tlx_restore(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+
+/* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+	analog_write_reg8(0x01,(analog_read_reg8(0x01)&0xf8)|0x06);// change from 0x04 to 0x06 for the board changes.
+#endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
