@@ -490,6 +490,11 @@ static char **prepare_main_args(int *argc)
 }
 #endif
 
+#if CONFIG_WATCHDOG_AUTO
+#include <watchdog.h>
+#include <zephyr/drivers/watchdog.h>
+#endif /* CONFIG_WATCHDOG_AUTO */
+
 /**
  * @brief Mainline for kernel's background thread
  *
@@ -551,6 +556,33 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 #ifdef CONFIG_MMU
 	z_mem_manage_boot_finish();
 #endif /* CONFIG_MMU */
+
+#if CONFIG_WATCHDOG_AUTO
+	int err;
+	int wdt_channel_id;
+	const struct device *const wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
+
+	struct wdt_timeout_cfg wdt_config = {
+		/* Reset SoC when watchdog timer expires. */
+		.flags = WDT_FLAG_RESET_SOC,
+
+		/* Expire watchdog after max window */
+		.window.min = 0,
+		.window.max = CONFIG_TELINK_WDT_TIMEOUT,
+	};
+
+	wdt_channel_id = wdt_install_timeout(wdt, &wdt_config);
+	if (wdt_channel_id < 0) {
+		printk("Watchdog install error\n");
+		return;
+	}
+
+	err = wdt_setup(wdt, WDT_OPT_PAUSE_HALTED_BY_DBG);
+	if (err < 0) {
+		printk("Watchdog setup error\n");
+		return;
+	}
+#endif /* CONFIG_WATCHDOG_AUTO */
 
 #ifdef CONFIG_BOOTARGS
 	extern int main(int, char **);

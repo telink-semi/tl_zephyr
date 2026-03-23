@@ -162,6 +162,31 @@ config MICRO_SPEECH_EXTRA_DRIVER
 	help
 	  This option enables audio and dma driver for micro speech sample
 
+if WATCHDOG
+
+config WATCHDOG_AUTO
+	bool "Support auto watchdog"
+	depends on WATCHDOG
+	default y
+	help
+		This option enables auto watchdog
+
+config TELINK_WDT_TIMEOUT
+	int "Watchdog timeout in milliseconds"
+	depends on WATCHDOG_AUTO
+	default 30000
+	help
+		This option supports setting the watchdog timeout
+
+config TELINK_WDT_FEED_TIME
+	int "Feed watchdog time in milliseconds"
+	depends on WATCHDOG_AUTO
+	default 1000
+	help
+		This option supports feeding the watchdog
+
+endif # WATCHDOG
+
 endif # SOC_RISCV_TELINK_TLX
 
 source "soc/telink/tlsr/telink_tlx/Kconfig.n22"

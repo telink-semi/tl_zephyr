@@ -9,6 +9,9 @@
 #include <clock.h>
 #include <watchdog.h>
 #include <zephyr/drivers/watchdog.h>
+#if CONFIG_WATCHDOG_AUTO
+#include <zephyr/kernel.h>
+#endif /* CONFIG_WATCHDOG_AUTO */
 
 #define LOG_MODULE_NAME watchdog_tlx
 #if defined(CONFIG_WDT_LOG_LEVEL)
@@ -20,14 +23,33 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
+#if CONFIG_WATCHDOG_AUTO
+static struct k_timer tlx_WdtTimer;
+
+void tlx_WdtTimerTimeoutCallback(struct k_timer *timer)
+{
+	if (!timer) {
+		return;
+	}
+	wd_clear_cnt();
+}
+#endif /* CONFIG_WATCHDOG_AUTO */
 
 static int wdt_tlx_setup(const struct device *dev, uint8_t options)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(options);
 
+#if CONFIG_WATCHDOG_AUTO
+	wd_stop();
+#endif /* CONFIG_WATCHDOG_AUTO */
 	wd_start();
-
+#if CONFIG_WATCHDOG_AUTO
+	k_timer_stop(&tlx_WdtTimer);
+	k_timer_init(&tlx_WdtTimer, &tlx_WdtTimerTimeoutCallback, NULL);
+	k_timer_start(&tlx_WdtTimer, K_MSEC(CONFIG_TELINK_WDT_FEED_TIME),
+		K_MSEC(CONFIG_TELINK_WDT_FEED_TIME));
+#endif /* CONFIG_WATCHDOG_AUTO */
 	LOG_INF("HW watchdog started");
 
 	return 0;
@@ -38,7 +60,9 @@ static int wdt_tlx_disable(const struct device *dev)
 	ARG_UNUSED(dev);
 
 	wd_stop();
-
+#if CONFIG_WATCHDOG_AUTO
+	k_timer_stop(&tlx_WdtTimer);
+#endif /* CONFIG_WATCHDOG_AUTO */
 	LOG_INF("HW watchdog stopped");
 
 	return 0;

@@ -7,6 +7,9 @@
 #include <bootutil/mcuboot_status.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/devicetree/fixed-partitions.h>
+#if CONFIG_WATCHDOG_AUTO
+#include <zephyr/drivers/watchdog.h>
+#endif /* CONFIG_WATCHDOG_AUTO */
 #include <zephyr/irq.h>
 
 #if CONFIG_DUAL_MODE == CONFIG_ACTION_DUAL_MODE || CONFIG_DUAL_MODE == CONFIG_AUTO_SWITCH_DUAL_MODE
@@ -157,6 +160,11 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 
 		irq_lock();
         clock_set_all_clock_to_default();
+#if CONFIG_WATCHDOG_AUTO
+		const struct device *const wdt = DEVICE_DT_GET(DT_ALIAS(watchdog0));
+
+		wdt_disable(wdt);
+#endif /* CONFIG_WATCHDOG_AUTO */
 		((void (*)(void))boot_app)();
 	}
 }
