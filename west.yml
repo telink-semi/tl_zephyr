@@ -148,13 +148,13 @@ manifest:
         - hal 
     - name: tl_ble_sdk
       url: git@192.168.48.36:sdk_app/ble/tl_ble_sdk.git
-      revision: e87a616df0cac91291fe9265d9ba62e243662640
+      revision: 92964b8bf238bda40ca8fdd2d14c1006fb954502
       path: modules/hal/telink/tl_ble_sdk
       groups:
         - hal
     - name: tl_ble_src
       url: git@192.168.48.36:src/ble/telink_b91m_ble_multi_connection_src.git
-      revision: 28c2679b37ed40dbfd8f958f3be4257387159153
+      revision: 331351f81b5606f6f9c6aa32811da545bb12cf1a
       path: modules/hal/telink/tl_ble_src
       groups:
         - hal
