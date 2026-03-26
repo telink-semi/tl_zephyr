@@ -36,6 +36,10 @@ zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS
 	mcuboot_status_change.c
 )
 
+zephyr_sources_ifdef(CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	soc_irq0.c
+)
+
 # Force using BFD-LD
 zephyr_ld_options(-fuse-ld=bfd)
 
