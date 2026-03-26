@@ -501,6 +501,14 @@ static void plic_irq_handler(const struct device *dev)
 	uint32_t cpu_id = arch_curr_cpu()->id;
 	/* Get the IRQ number generating the interrupt */
 	const uint32_t local_irq = sys_read32(claim_complete_addr);
+#if (CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION || CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION)
+	/* Workaround for Telink SOCs to aviod IRQ11 */
+	if (!local_irq) {
+		extern void telink_zero_isr(void);
+		telink_zero_isr();
+		return;
+	}
+#endif
 
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
 	uint16_t *cpu_count = get_irq_hit_count_cpu(dev, cpu_id, local_irq);
