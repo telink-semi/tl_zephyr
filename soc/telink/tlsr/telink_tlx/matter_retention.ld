@@ -31,18 +31,6 @@ SECTION_DATA_PROLOGUE(ram_dlm_bss,(NOLOAD),)
 	 */
 	"*malloc.c.obj*"(".noinit.*")
 
-	/* Moving the BLE controller stack (HAL) */
-	"*tlx_bt.c.obj*"(".noinit.*" ".bss.*")
-
-	/* Moving the Zephyr BLE data */
-	"*att.c.obj*"(".noinit.*" ".bss.*")
-	"*buf.c.obj*"(".noinit.*")
-	"*conn.c.obj*"(".noinit.*" ".bss.*")
-	"*crypto.c.obj*"(".bss.*")
-	"*gatt.c.obj*"(".bss.*")
-	"*hci_core.c.obj*"(".noinit.*" ".bss.*")
-	"*l2cap.c.obj*"(".bss.*")
-
 	PROVIDE (_RAM_DLM_BSS_VMA_END = .);
 	PROVIDE (_RAM_DLM_BSS_VMA_START = ADDR(ram_dlm_bss));
 	PROVIDE (_RAM_DLM_BSS_LMA_START = LOADADDR(ram_dlm_bss));
