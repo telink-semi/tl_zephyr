@@ -220,6 +220,14 @@ jobs:
         cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_mcuboot_lzma.bin"
         rm -rf build_b92
 
+    - name: Build B92 boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tlsr9528a                  -d build_b92     zephyr/samples/boards/tlsr9x/gpio-kbd-matrix             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        mkdir -p "$GITHUB_WORKSPACE/telink_build_artifacts"
+        cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_gpio-kbd-matrix.bin"
+        rm -rf build_b92
+
     # Temporary off due to broken sample (modules under license)
     # - name: Build B92 samples/subsys/nfc
     #   run: |

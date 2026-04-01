@@ -142,6 +142,12 @@ jobs:
         cd ..
         west build -b tl3218x_ml3m -d build_button_tl321x_ml3m                zephyr/samples/basic/button                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL321X boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tl3218x     -d build_gpio-kbd-matrix_tl321x             zephyr/samples/boards/tlsr9x/gpio-kbd-matrix  -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -164,6 +170,7 @@ jobs:
         cp ../build_crypto_mbedtls_tl321x/zephyr/zephyr.bin             telink_build_artifacts/tl321x_mbedtls.bin
         cp ../build_mcuboot_chip_id_tl321x/zephyr/zephyr.bin            telink_build_artifacts/tl321x_mcuboot_chip_id.bin
         cp ../build_button_tl321x_ml3m/zephyr/zephyr.bin                telink_build_artifacts/tl321x_ml3m_button.bin
+        cp ../build_gpio-kbd-matrix_tl321x/zephyr/zephyr.bin            telink_build_artifacts/tl321x_gpio-kbd-matrix.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

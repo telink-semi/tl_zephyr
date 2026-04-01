@@ -145,6 +145,11 @@ jobs:
         cd ..
         west build -b tlsr9118bdk40d_v1          -d build_opus                           zephyr/samples/boards/tlsr9x/opus          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build W91 boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tlsr9118bdk40d_v1          -d build_gpio-kbd-matrix                zephyr/samples/boards/tlsr9x/gpio-kbd-matrix -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -169,6 +174,7 @@ jobs:
         cp ../build_ot_cli/zephyr/zephyr.bin                        telink_build_artifacts/w91_ot_cli.bin
         cp ../build_otbr/zephyr/zephyr.bin                          telink_build_artifacts/w91_otbr.bin
         cp ../build_opus/zephyr/zephyr.bin                          telink_build_artifacts/w91_opus.bin
+        cp ../build_gpio-kbd-matrix/zephyr/zephyr.bin               telink_build_artifacts/w91_gpio-kbd-matrix.bin
         cp ../build_blinky_w91/zephyr/n22.bin                       telink_build_artifacts/n22.bin
         cp ../build_opus/zephyr/n22.bin                             telink_build_artifacts/n22_opus.bin
 
