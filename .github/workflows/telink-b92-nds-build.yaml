@@ -152,6 +152,11 @@ jobs:
         cd ..
         west build -b tlsr9528a                  -d build_mcuboot_b92_lzma              bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y
 
+    - name: Build B92 boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tlsr9528a                  -d build_gpio-kbd-matrix_b92           zephyr/samples/boards/tlsr9x/gpio-kbd-matrix             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -175,6 +180,7 @@ jobs:
         cp ../build_blinky_usb_dfu_b92/zephyr/zephyr.signed.bin     telink_build_artifacts/b92_blinky_usb_dfu.signed.bin
         cp ../build_ot_cli_b92/zephyr/zephyr.bin                    telink_build_artifacts/b92_ot_cli.bin
         cp ../build_crypto_mbedtls_b92/zephyr/zephyr.bin            telink_build_artifacts/b92_mbedtls.bin
+        cp ../build_gpio-kbd-matrix_b92/zephyr/zephyr.bin           telink_build_artifacts/b92_gpio-kbd-matrix.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

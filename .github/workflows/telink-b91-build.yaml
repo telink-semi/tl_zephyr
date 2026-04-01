@@ -188,6 +188,14 @@ jobs:
         cp build_b91/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b91_mbedtls.bin"
         rm -rf build_b91
 
+    - name: Build B91 boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tlsr9518adk80d             -d build_b91     zephyr/samples/boards/tlsr9x/gpio-kbd-matrix             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        mkdir -p "$GITHUB_WORKSPACE/telink_build_artifacts"
+        cp build_b91/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b91_gpio-kbd-matrix.bin"
+        rm -rf build_b91
+
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
       with:

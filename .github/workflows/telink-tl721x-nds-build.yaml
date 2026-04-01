@@ -142,6 +142,11 @@ jobs:
         cd ..
         west build -b tl7218x_ml7m             -d build_button_tl721x_ml7m              zephyr/samples/basic/button                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL721X boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_gpio-kbd-matrix_tl721x          zephyr/samples/boards/tlsr9x/gpio-kbd-matrix             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -164,6 +169,7 @@ jobs:
         cp ../build_mcuboot_chip_id_tl721x/zephyr/zephyr.bin           telink_build_artifacts/tl721x_mcuboot_chip_id.bin
         cp ../build_button_tl721x_ml7g/zephyr/zephyr.bin               telink_build_artifacts/tl7218x_ml7g_button.bin
         cp ../build_button_tl721x_ml7m/zephyr/zephyr.bin               telink_build_artifacts/tl7218x_ml7m_button.bin
+        cp ../build_gpio-kbd-matrix_tl721x/zephyr/zephyr.bin           telink_build_artifacts/tl7218x_gpio-kbd-matrix.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
