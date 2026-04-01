@@ -151,4 +151,10 @@ config MCUBOOT_START_OFFSET
 	help
 		The MCUboot offset value.
 
+config STARTUP_OPTIMIZATE
+	bool "Support startup speed optimization"
+	default n
+	help
+		This option supports startup optimizate.
+
 endif # SOC_RISCV_TELINK_B9X
