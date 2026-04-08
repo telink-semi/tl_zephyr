@@ -53,7 +53,7 @@ config TELINK_TL323X_PMP
 
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on SOC_SERIES_RISCV_TELINK_TLX && MBEDTLS
+	depends on MBEDTLS
 	default y
 	help
 		This option enables Telink TLx hardware accelerated mbedtls version.
@@ -177,18 +177,16 @@ if SOC_RISCV_TELINK_TL323X
 config SOC_PMOS_SWITCH_TIME_CTL
 	bool "Add pmos switch time"
 	default n
-    depends on SOC_RISCV_TELINK_TL323X
+	depends on SOC_RISCV_TELINK_TL323X
 	help
 		This option can increase the PMOS switching time when the inductance value is below 6.8uH
 endif
 
-if SOC_RISCV_TELINK_TL323X
 config MCUBOOT_START_OFFSET
 	hex
-	default 0x5000
+	default 0x5000 if SOC_RISCV_TELINK_TL323X
+	default 0x0
 	help
 		The MCUboot offset value.
-
-endif
 
 source "soc/telink/tlsr/telink_tlx/Kconfig.n22"

@@ -43,8 +43,8 @@ enum usbd_endpoint_index_e {
 };
 
 enum usbd_endpoint_index_e endpoint_idx[] = {USBD_EP0_IDX, USBD_EP1_IDX, USBD_EP2_IDX,
-						USBD_EP3_IDX, USBD_EP4_IDX, USBD_EP5_IDX,
-						USBD_EP6_IDX, USBD_EP7_IDX, USBD_EP8_IDX};
+					     USBD_EP3_IDX, USBD_EP4_IDX, USBD_EP5_IDX,
+					     USBD_EP6_IDX, USBD_EP7_IDX, USBD_EP8_IDX};
 
 #define USBD_EPIN_BUSY_RETRY_TIMEOUT_US 10000
 
@@ -105,10 +105,9 @@ struct ep_buf_t {
 };
 
 static struct ep_buf_t eps_buf_inf = {.init_list = {0, 0, 0, 0, 0, 0, 0, 0, 0},
-					.seg_addr = 0,
-					.init_num = 0,
-					.remaining_size = EPS_BUFFER_IN_SIZE};
-
+				      .seg_addr = 0,
+				      .init_num = 0,
+				      .remaining_size = EPS_BUFFER_IN_SIZE};
 
 /**
  * @brief Endpoint configuration.
@@ -123,7 +122,7 @@ static struct ep_buf_t eps_buf_inf = {.init_list = {0, 0, 0, 0, 0, 0, 0, 0, 0},
  */
 struct tlx_usbd_ep_cfg {
 	usb_dc_ep_callback cb;
-	unsigned short max_sz; // uint32_t -> unsigned short
+	unsigned short max_sz;
 	bool en;
 	uint8_t addr;
 	enum usb_dc_ep_transfer_type type;
@@ -244,7 +243,10 @@ K_FIFO_DEFINE(usbd_evt_fifo);
  */
 static struct k_work_q usbd_work_queue;
 #if CONFIG_USB_TELINK_TLX
-static K_KERNEL_STACK_DEFINE(usbd_work_queue_stack, CONFIG_USB_TLX_WORK_QUEUE_STACK_SIZE);
+/* USB_TLX_WORK_QUEUE_STACK_SIZE was 1024 by default but has been deprecated now.
+ * It should be sized to accommodate the longest expected call stack of the USB device
+ */
+static K_KERNEL_STACK_DEFINE(usbd_work_queue_stack, 1024);
 #endif
 
 static inline void usbd_work_schedule(void)
@@ -463,9 +465,10 @@ static inline void usb_event_out_complete_handler(uint8_t ep)
 
 	ep_ctx->cfg.out_ack = false;
 
-	if ((USB_EP_GET_IDX(ep) == USBD_EP0_IDX)) {
+	if (USB_EP_GET_IDX(ep) == USBD_EP0_IDX) {
 		if ((xfered_len == 0)) {
-			usb0hw_read_ep_data(USB_EP_GET_IDX(ep), ep_ctx->buf.data, ep_ctx->cfg.max_sz);
+			usb0hw_read_ep_data(USB_EP_GET_IDX(ep), ep_ctx->buf.data,
+					    ep_ctx->cfg.max_sz);
 			ep_ctx->cfg.out_ack = true;
 		} else {
 			ep_ctx->buf.left_len = ep_ctx->buf.total_len = xfered_len;
@@ -485,12 +488,12 @@ static inline void usb_event_out_setup_handler(uint8_t ep)
 		}
 	}
 	if (xfered_len > 0) {
-		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[1] == USB_SREQ_SET_FEATURE)
-				&& (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
+		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[1] == USB_SREQ_SET_FEATURE) &&
+		    (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
 			usbd_ctx.wakeup_feature = true;
 		}
-		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[1] == USB_SREQ_CLEAR_FEATURE)
-				&& (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
+		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[1] == USB_SREQ_CLEAR_FEATURE) &&
+		    (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
 			usbd_ctx.wakeup_feature = false;
 		}
 
@@ -542,7 +545,7 @@ static void usb_event_reset_handler(void)
 
 	usb0hw_reset();
 	usb0hw_read_ep_data(USBD_EP0_IDX, endpoint_ctx(USBD_EP0_IDX)->buf.data,
-				endpoint_ctx(USBD_EP0_IDX)->cfg.max_sz);
+			    endpoint_ctx(USBD_EP0_IDX)->cfg.max_sz);
 
 	if (get_usbd_ctx()->suspend) {
 		if (get_usbd_ctx()->status_cb) {
@@ -597,16 +600,19 @@ static inline void usb_irq_out(void)
 			if (doepint & FLD_USB_DOEPINT_XFERCOMPL) {
 				usb0hw_clear_doepint(ep_num, FLD_USB_DOEPINT_XFERCOMPL);
 				unsigned int len = usb0hw_get_epout_len(ep_num);
+
 				submit_usbd_event(USBD_EVT_OUT_COMPLETE,
-						USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
+						  USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
 			}
 			if (doepint & FLD_USB_DOEPINT_SETUP) {
 				usb0hw_clear_doepint(ep_num, FLD_USB_DOEPINT_SETUP);
-				submit_usbd_event(USBD_EVT_OUT_SETUP, USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
+				submit_usbd_event(USBD_EVT_OUT_SETUP,
+						  USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
 			}
 			if (doepint & FLD_USB_DOEPINT_STSPHSERCVD) {
 				usb0hw_clear_doepint(ep_num, FLD_USB_DOEPINT_STSPHSERCVD);
-				submit_usbd_event(USBD_EVT_OUT_RCVD, USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
+				submit_usbd_event(USBD_EVT_OUT_RCVD,
+						  USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
 			}
 		}
 	}
@@ -615,12 +621,13 @@ static inline void usb_irq_out(void)
 static inline void usb_irq_in(void)
 {
 	for (unsigned char ep_num = 0; ep_num < USBD_EP_TOTAL_CNT; ep_num++) {
-		if ((usb0hw_get_daint()) & BIT(ep_num)) {
+		if (usb0hw_get_daint() & BIT(ep_num)) {
 			unsigned int diepint = usb0hw_get_diepint(ep_num);
+
 			if (diepint & FLD_USB_DIEPINT_XFERCOMPL) {
 				usb0hw_clear_diepint(ep_num, FLD_USB_DIEPINT_XFERCOMPL);
 				submit_usbd_event(USBD_EVT_IN_COMPLETE,
-						USB_EP_GET_ADDR(ep_num, USB_EP_DIR_IN));
+						  USB_EP_GET_ADDR(ep_num, USB_EP_DIR_IN));
 			}
 		}
 	}
@@ -692,13 +699,14 @@ __attribute__((section(".ram_code"))) static void usb_irq_handler(void)
 
 static int usb_irq_init(void)
 {
-	IRQ_CONNECT(USBD_TLX_IRQN_BY_IDX(0), USBD_TLX_IRQ_PRIORITY_BY_IDX(0), usb_irq_handler, 0, 0);
+	IRQ_CONNECT(USBD_TLX_IRQN_BY_IDX(0), USBD_TLX_IRQ_PRIORITY_BY_IDX(0), usb_irq_handler, 0,
+		    0);
 	if (USBD_TLX_IRQN_BY_IDX(0) < CONFIG_2ND_LVL_ISR_TBL_OFFSET) {
 		return -EINVAL;
 	}
 	plic_interrupt_enable(USBD_TLX_IRQN_BY_IDX(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
 	plic_set_priority(USBD_TLX_IRQN_BY_IDX(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
-			USBD_TLX_IRQ_PRIORITY_BY_IDX(0));
+			  USBD_TLX_IRQ_PRIORITY_BY_IDX(0));
 
 	return 0;
 }
@@ -717,7 +725,7 @@ void usbd_ep_stall(const unsigned char ep)
 	if (ep_num == 0) {
 		/* receive next setup. */
 		usb0hw_read_ep_data(USBD_EP0_IDX, endpoint_ctx(USBD_EP0_IDX)->buf.data,
-					endpoint_ctx(USBD_EP0_IDX)->cfg.max_sz);
+				    endpoint_ctx(USBD_EP0_IDX)->cfg.max_sz);
 	}
 }
 
@@ -1131,8 +1139,9 @@ int usb_dc_ep_enable(const uint8_t ep)
 
 		if (USB_EP_GET_IDX(ep) != 0) {
 			usb0hw_ep_open(USB_EP_GET_IDX(ep_ctx->cfg.addr),
-			USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN : USB0_DIR_OUT,
-					ep_ctx->cfg.type, ep_ctx->cfg.max_sz);
+				       USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN
+									: USB0_DIR_OUT,
+				       ep_ctx->cfg.type, ep_ctx->cfg.max_sz);
 			return 0;
 		}
 	}
@@ -1175,7 +1184,8 @@ int usb_dc_ep_disable(const uint8_t ep)
 	}
 
 	LOG_DBG("EP disable: 0x%02x", ep);
-	usb0hw_ep_close(USB_EP_GET_IDX(ep), USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN : USB0_DIR_OUT);
+	usb0hw_ep_close(USB_EP_GET_IDX(ep),
+			USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN : USB0_DIR_OUT);
 	ep_ctx_reset(USB_EP_GET_IDX(ep));
 
 	if (USB_EP_GET_DIR(ep) == USB_EP_DIR_IN) {
@@ -1236,7 +1246,7 @@ int usb_dc_ep_flush(const uint8_t ep)
  * @return 0 on success, negative errno code on fail.
  */
 int usb_dc_ep_write(const uint8_t ep, const uint8_t *const data, const uint32_t data_len,
-			uint32_t *const ret_bytes)
+		    uint32_t *const ret_bytes)
 {
 	struct tlx_usbd_ep_ctx *ep_ctx;
 
@@ -1286,7 +1296,7 @@ int usb_dc_ep_write(const uint8_t ep, const uint8_t *const data, const uint32_t 
  * @return 0 on success, negative errno code on fail.
  */
 int usb_dc_ep_read(const uint8_t ep, uint8_t *const data, const uint32_t max_data_len,
-			uint32_t *const read_bytes)
+		   uint32_t *const read_bytes)
 {
 	int ret;
 
@@ -1574,8 +1584,8 @@ static int usb_init(void)
 
 	ret = usb_irq_init();
 	k_work_queue_start(&usbd_work_queue, usbd_work_queue_stack,
-				K_KERNEL_STACK_SIZEOF(usbd_work_queue_stack),
-				CONFIG_SYSTEM_WORKQUEUE_PRIORITY, NULL);
+			   K_KERNEL_STACK_SIZEOF(usbd_work_queue_stack),
+			   CONFIG_SYSTEM_WORKQUEUE_PRIORITY, NULL);
 
 	k_work_init(&get_usbd_ctx()->usb_work, usbd_work_handler);
 

@@ -14,7 +14,10 @@
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;
-	pinctrl-0 = <&uart1_tx_pc6_default &uart1_rx_pc7_default &uart1_rts_pc5_default &uart1_cts_pc4_default>;
+	pinctrl-0 = <&uart1_tx_pc6_default
+			 &uart1_rx_pc7_default
+			 &uart1_rts_pc5_default
+			 &uart1_cts_pc4_default>;
 	pinctrl-names = "default";
 	hw-flow-control;
 };

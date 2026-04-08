@@ -15,8 +15,8 @@
 #endif
 
 /*  Redefine 'spi_read' and 'spi_write' functions names from HAL */
-#define spi_read    hal_spi_read
-#define spi_write   hal_spi_write
+#define spi_read  hal_spi_read
+#define spi_write hal_spi_write
 #include "spi.c"
 #undef spi_read
 #undef spi_write
@@ -30,11 +30,9 @@ LOG_MODULE_REGISTER(spi_telink);
 #include "spi_context.h"
 #include <zephyr/drivers/pinctrl.h>
 
-
-#define CHIP_SELECT_COUNT               3u
-#define SPI_WORD_SIZE                   8u
-#define SPI_WR_RD_CHUNK_SIZE_MAX        16u
-
+#define CHIP_SELECT_COUNT        3u
+#define SPI_WORD_SIZE            8u
+#define SPI_WR_RD_CHUNK_SIZE_MAX 16u
 
 /* SPI configuration structure */
 struct spi_tlx_cfg {
@@ -42,14 +40,13 @@ struct spi_tlx_cfg {
 	gpio_pin_e cs_pin[CHIP_SELECT_COUNT];
 	const struct pinctrl_dev_config *pcfg;
 };
-#define SPI_CFG(dev)                    ((struct spi_tlx_cfg *) ((dev)->config))
+#define SPI_CFG(dev) ((struct spi_tlx_cfg *)((dev)->config))
 
 /* SPI data structure */
 struct spi_tlx_data {
 	struct spi_context ctx;
 };
-#define SPI_DATA(dev)                   ((struct spi_tlx_data *) ((dev)->data))
-
+#define SPI_DATA(dev) ((struct spi_tlx_data *)((dev)->data))
 
 /* disable hardware cs flow control */
 static void spi_tlx_hw_cs_disable(const struct spi_tlx_cfg *config)
@@ -63,7 +60,8 @@ static void spi_tlx_hw_cs_disable(const struct spi_tlx_cfg *config)
 
 		/* if CS pin is defined in device tree */
 		if (pin != 0) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL323X
 			gspi_cs_pin_dis(pin);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 			if (config->peripheral_id == LSPI_MODULE) {
@@ -77,8 +75,7 @@ static void spi_tlx_hw_cs_disable(const struct spi_tlx_cfg *config)
 }
 
 /* config cs flow control: hardware or software */
-static bool spi_tlx_config_cs(const struct device *dev,
-			      const struct spi_config *config)
+static bool spi_tlx_config_cs(const struct device *dev, const struct spi_config *config)
 {
 	gpio_pin_e cs_pin = 0;
 	const struct spi_tlx_cfg *tlx_config = SPI_CFG(dev);
@@ -111,7 +108,8 @@ static bool spi_tlx_config_cs(const struct device *dev,
 
 		/* disable cs pin if it is defined and is not requested */
 		if ((cs_pin != 0) && (cs_id != config->slave)) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL323X
 			gspi_cs_pin_dis(cs_pin);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 			if (tlx_config->peripheral_id == LSPI_MODULE) {
@@ -124,7 +122,8 @@ static bool spi_tlx_config_cs(const struct device *dev,
 
 		/* enable cs pin if it is defined and is requested */
 		if ((cs_pin != 0) && (cs_id == config->slave)) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL323X
 			gspi_cs_pin_en(cs_pin);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 			if (tlx_config->peripheral_id == LSPI_MODULE) {
@@ -173,8 +172,8 @@ static uint32_t spi_tlx_get_txrx_len(const struct spi_buf_set *tx_bufs,
 }
 
 /* process tx data */
-_attribute_ram_code_sec_
-static void spi_tlx_tx(uint8_t peripheral_id, struct spi_context *ctx, uint8_t len)
+_attribute_ram_code_sec_ static void spi_tlx_tx(uint8_t peripheral_id, struct spi_context *ctx,
+						uint8_t len)
 {
 	uint8_t tx;
 
@@ -190,8 +189,8 @@ static void spi_tlx_tx(uint8_t peripheral_id, struct spi_context *ctx, uint8_t l
 }
 
 /* process rx data */
-_attribute_ram_code_sec_
-static void spi_tlx_rx(uint8_t peripheral_id, struct spi_context *ctx, uint8_t len)
+_attribute_ram_code_sec_ static void spi_tlx_rx(uint8_t peripheral_id, struct spi_context *ctx,
+						uint8_t len)
 {
 	uint8_t rx = 0;
 
@@ -205,8 +204,7 @@ static void spi_tlx_rx(uint8_t peripheral_id, struct spi_context *ctx, uint8_t l
 }
 
 /* SPI transceive internal */
-_attribute_ram_code_sec_
-static void spi_tlx_txrx(const struct device *dev, uint32_t len)
+_attribute_ram_code_sec_ static void spi_tlx_txrx(const struct device *dev, uint32_t len)
 {
 	unsigned int chunk_size = SPI_WR_RD_CHUNK_SIZE_MAX;
 	struct spi_tlx_cfg *cfg = SPI_CFG(dev);
@@ -244,7 +242,8 @@ static void spi_tlx_txrx(const struct device *dev, uint32_t len)
 		}
 
 		/* clear TX and RX fifo */
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_TXF_CLR_LEVEL);
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_RXF_CLR_LEVEL);
 #endif
@@ -309,15 +308,15 @@ static bool spi_tlx_is_config_supported(const struct spi_config *config,
 }
 
 /* SPI configuration */
-static int spi_tlx_config(const struct device *dev,
-			  const struct spi_config *config)
+static int spi_tlx_config(const struct device *dev, const struct spi_config *config)
 {
 	int status = 0;
 	spi_mode_type_e mode = SPI_MODE0;
 	struct spi_tlx_cfg *tlx_config = SPI_CFG(dev);
 	struct spi_tlx_data *tlx_data = SPI_DATA(dev);
 	const pinctrl_soc_pin_t *pins = tlx_config->pcfg->states->pins;
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint8_t clk_src = sys_clk.pll_clk;
 #endif
 
@@ -331,7 +330,7 @@ static int spi_tlx_config(const struct device *dev,
 		return -ENOTSUP;
 	}
 
-		/* get SPI mode */
+	/* get SPI mode */
 	if (((config->operation & SPI_MODE_CPHA) == 0) &&
 	    ((config->operation & SPI_MODE_CPOL) == 0)) {
 		mode = SPI_MODE0;
@@ -347,9 +346,9 @@ static int spi_tlx_config(const struct device *dev,
 	}
 
 	/* init SPI master */
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
-	spi_master_init(tlx_config->peripheral_id,
-			clk_src * 1000000/config->frequency, mode);
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	spi_master_init(tlx_config->peripheral_id, clk_src * 1000000 / config->frequency, mode);
 #endif
 	spi_master_config(tlx_config->peripheral_id, SPI_NORMAL);
 
@@ -362,7 +361,8 @@ static int spi_tlx_config(const struct device *dev,
 		} else if (lines == SPI_LINES_DUAL) {
 			spi_set_io_mode(tlx_config->peripheral_id, SPI_DUAL_MODE);
 		} else if (lines == SPI_LINES_QUAD) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			spi_set_io_mode(tlx_config->peripheral_id, SPI_QUAD_MODE);
 #endif
 		}
@@ -402,10 +402,8 @@ static int spi_tlx_init(const struct device *dev)
 }
 
 /* API implementation: transceive */
-static int spi_tlx_transceive(const struct device *dev,
-			      const struct spi_config *config,
-			      const struct spi_buf_set *tx_bufs,
-			      const struct spi_buf_set *rx_bufs)
+static int spi_tlx_transceive(const struct device *dev, const struct spi_config *config,
+			      const struct spi_buf_set *tx_bufs, const struct spi_buf_set *rx_bufs)
 {
 	int status = 0;
 	struct spi_tlx_data *data = SPI_DATA(dev);
@@ -443,11 +441,9 @@ static int spi_tlx_transceive(const struct device *dev,
 
 #ifdef CONFIG_SPI_ASYNC
 /* API implementation: transceive_async */
-static int spi_tlx_transceive_async(const struct device *dev,
-				    const struct spi_config *config,
+static int spi_tlx_transceive_async(const struct device *dev, const struct spi_config *config,
 				    const struct spi_buf_set *tx_bufs,
-				    const struct spi_buf_set *rx_bufs,
-				    spi_callback_t cb,
+				    const struct spi_buf_set *rx_bufs, spi_callback_t cb,
 				    void *userdata)
 {
 	ARG_UNUSED(dev);
@@ -462,8 +458,7 @@ static int spi_tlx_transceive_async(const struct device *dev,
 #endif /* CONFIG_SPI_ASYNC */
 
 /* API implementation: release */
-static int spi_tlx_release(const struct device *dev,
-			   const struct spi_config *config)
+static int spi_tlx_release(const struct device *dev, const struct spi_config *config)
 {
 	struct spi_tlx_data *data = SPI_DATA(dev);
 
@@ -486,30 +481,24 @@ static struct spi_driver_api spi_tlx_api = {
 };
 
 /* SPI driver registration */
-#define SPI_TLX_INIT(inst)						  \
-									  \
-	PINCTRL_DT_INST_DEFINE(inst);					  \
-									  \
-	static struct spi_tlx_data spi_tlx_data_##inst = {		  \
-		SPI_CONTEXT_INIT_LOCK(spi_tlx_data_##inst, ctx),	  \
-		SPI_CONTEXT_INIT_SYNC(spi_tlx_data_##inst, ctx),	  \
-		SPI_CONTEXT_CS_GPIOS_INITIALIZE(DT_DRV_INST(inst), ctx)	  \
-	};								  \
-									  \
-	static struct spi_tlx_cfg spi_tlx_cfg_##inst = {		  \
-		.peripheral_id = DT_INST_ENUM_IDX(inst, peripheral_id),	  \
-		.cs_pin[0] = DT_INST_STRING_TOKEN(inst, cs0_pin),	  \
-		.cs_pin[1] = DT_INST_STRING_TOKEN(inst, cs1_pin),	  \
-		.cs_pin[2] = DT_INST_STRING_TOKEN(inst, cs2_pin),	  \
-		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),		  \
-	};								  \
-									  \
-	DEVICE_DT_INST_DEFINE(inst, spi_tlx_init,			  \
-			      NULL,					  \
-			      &spi_tlx_data_##inst,			  \
-			      &spi_tlx_cfg_##inst,			  \
-			      POST_KERNEL,				  \
-			      CONFIG_SPI_INIT_PRIORITY,			  \
-			      &spi_tlx_api);
+#define SPI_TLX_INIT(inst)                                                                         \
+                                                                                                   \
+	PINCTRL_DT_INST_DEFINE(inst);                                                              \
+                                                                                                   \
+	static struct spi_tlx_data spi_tlx_data_##inst = {                                         \
+		SPI_CONTEXT_INIT_LOCK(spi_tlx_data_##inst, ctx),                                   \
+		SPI_CONTEXT_INIT_SYNC(spi_tlx_data_##inst, ctx),                                   \
+		SPI_CONTEXT_CS_GPIOS_INITIALIZE(DT_DRV_INST(inst), ctx)};                          \
+                                                                                                   \
+	static struct spi_tlx_cfg spi_tlx_cfg_##inst = {                                           \
+		.peripheral_id = DT_INST_ENUM_IDX(inst, peripheral_id),                            \
+		.cs_pin[0] = DT_INST_STRING_TOKEN(inst, cs0_pin),                                  \
+		.cs_pin[1] = DT_INST_STRING_TOKEN(inst, cs1_pin),                                  \
+		.cs_pin[2] = DT_INST_STRING_TOKEN(inst, cs2_pin),                                  \
+		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                      \
+	};                                                                                         \
+                                                                                                   \
+	DEVICE_DT_INST_DEFINE(inst, spi_tlx_init, NULL, &spi_tlx_data_##inst, &spi_tlx_cfg_##inst, \
+			      POST_KERNEL, CONFIG_SPI_INIT_PRIORITY, &spi_tlx_api);
 
 DT_INST_FOREACH_STATUS_OKAY(SPI_TLX_INIT)

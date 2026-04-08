@@ -4,10 +4,10 @@ on: pull_request
 
 jobs:
   telink_build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Telink build examples
     env:
-      ZEPHYR_SDK_VERSION: 0.15.2
+      ZEPHYR_SDK_VERSION: 0.17.0
     steps:
 
     - name: Install dependencies
@@ -18,10 +18,11 @@ jobs:
     - name: Setup Zephyr toolchain
       run: |
         mkdir ~/zephyr_sdk
-        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.gz
+        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
         (cd ~/zephyr_sdk && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/sha256.sum | shasum --check --ignore-missing)
-        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.gz -C ~/zephyr_sdk
+        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_sdk
         (cd ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -35,9 +36,21 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
+
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 89334d4738b8fe5efc7ca6192e1f2deac58429af
+
+    - name: Download and extract TL323X firmware binaries
+      run: |
+        wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl323x_fw/TL323X_FW.zip -O /tmp/TL323X_FW.zip
+        unzip -q /tmp/TL323X_FW.zip -d ${{ github.workspace }}
+        ls -la ${{ github.workspace }}/TL323X_FW/
+        rm -f /tmp/TL323X_FW.zip
 
     - name: Build TL323x samples/basic/blinky
       run: |
@@ -62,7 +75,7 @@ jobs:
     - name: Build TL323x samples/drivers/adc
       run: |
         cd ..
-        west build -b tl3238x     -d build_adc_tl323x                         zephyr/samples/drivers/adc                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl3238x     -d build_adc_tl323x                         zephyr/samples/drivers/adc/adc_dt                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL323x samples/drivers/watchdog
       run: |

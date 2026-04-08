@@ -1,8 +1,10 @@
 &cpu0 {
-	clock-frequency = <192000000>;		/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
+	/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
+	clock-frequency = <192000000>;
 };
 
 &uart0 {
 	status = "okay";
-	current-speed = <2000000>;			/* Baud rate for serial port logging */
+	/* Baud rate for serial port logging */
+	current-speed = <2000000>;
 };

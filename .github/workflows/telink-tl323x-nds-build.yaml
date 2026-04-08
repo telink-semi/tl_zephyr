@@ -3,11 +3,13 @@
 
 name: Telink TL323X build examples using Andes GCC
 
-on: pull_request
+# suspend Andes build for TL322X since the mis-matches of toolchains and
+# compile options, and will be re-enabled after the toolchain issue is resolved
+# on: pull_request
 
 jobs:
   telink_build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Telink build examples
     env:
       ZEPHYR_TOOLCHAIN_VARIANT: "andes-gcc"
@@ -37,9 +39,21 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
+
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 89334d4738b8fe5efc7ca6192e1f2deac58429af
+
+    - name: Download and extract TL323X firmware binaries
+      run: |
+        wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl323x_fw/TL323X_FW.zip -O /tmp/TL323X_FW.zip
+        unzip -q /tmp/TL323X_FW.zip -d ${{ github.workspace }}
+        ls -la ${{ github.workspace }}/TL323X_FW/
+        rm -f /tmp/TL323X_FW.zip
 
     - name: Build TL323x samples/basic/blinky
       run: |

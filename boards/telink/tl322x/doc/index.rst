@@ -7,11 +7,11 @@ Overview
 ********
 
 The TL3228X Generic Starter Kit is a hardware platform which
-can be used to verify the `Telink TLX series chipset` and develop applications
+can be used to verify the ``Telink TLX series chipset`` and develop applications
 for several 2.4 GHz air interface standards including Bluetooth low energy,
 Zigbee 3.0, Homekit, 6LoWPAN, Thread and 2.4 Ghz proprietary.
 
-.. figure:: img/tl3228x.jpg
+.. figure:: img/TL3228XEVB-TOP.jpg
      :align: center
      :alt: TL3228X
 
@@ -199,7 +199,7 @@ Building
 .. important::
 
    These instructions assume you've set up a development environment as
-   described in the `Zephyr Getting Started Guide`_.
+   described in the ``Zephyr Getting Started Guide``_.
 
 To build applications using the default RISC-V toolchain from Zephyr SDK, just run the west build command.
 Here is an example for the "hello_world" application.
@@ -230,9 +230,9 @@ Flashing
 
 To flash the TL3228X board see the sources below:
 
-- `Burning and Debugging Tools for all Series`_
+- ``Burning and Debugging Tools for all Series``_
 
-It is also possible to use the west flash command. Download BDT tool for Linux `Burning and Debugging Tool for Linux`_ or
+It is also possible to use the west flash command. Download BDT tool for Linux ``Burning and Debugging Tool for Linux``_ or
 `Burning and Debugging Tool for Windows`_ and extract archive into some directory you wish TELINK_BDT_BASE_DIR
 
 - Now you should be able to run the west flash command with the BDT path specified (TELINK_BDT_BASE_DIR).

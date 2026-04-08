@@ -15,6 +15,10 @@
 	#address-cells = <1>;
 	#size-cells = <0>;
 
+	/* we don't need to execute adc_raw_to_millivolts_dt because
+	 * our driver do the conversion to mV internally, so the value in
+	 * buf is already in mV
+	 */
 	channel@0 {
 		reg = <0>;
 		zephyr,gain = "ADC_GAIN_1";

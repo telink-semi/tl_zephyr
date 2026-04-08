@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT telink_tlx_adc
+#define DT_DRV_COMPAT telink_tl322x_adc
 
 /* Local driver headers */
 #define ADC_CONTEXT_USES_KERNEL_TIMER
@@ -15,22 +15,26 @@
 
 /* Zephyr Logging headers */
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_LOG_LEVEL);
+LOG_MODULE_REGISTER(adc_tl322x, CONFIG_ADC_LOG_LEVEL);
 
 /* Telink HAL headers */
 #include <adc.h>
 #include <zephyr/drivers/pinctrl.h>
+#ifdef CONFIG_PM_DEVICE
+#include <zephyr/pm/device.h>
+#endif /* CONFIG_PM_DEVICE */
 
 /* Set ADC resolution value */
-static inline void adc_set_resolution(adc_num_e sar_adc_num,adc_res_e res)
+static inline void adc_set_resolution(adc_num_e sar_adc_num, adc_res_e res)
 {
-    analog_write_reg8(areg_adc_res_m(sar_adc_num), (analog_read_reg8(areg_adc_res_m(sar_adc_num) )&(~FLD_ADC_RES_M)) | res);
+	analog_write_reg8(areg_adc_res_m(sar_adc_num),
+			  (analog_read_reg8(areg_adc_res_m(sar_adc_num)) & (~FLD_ADC_RES_M)) | res);
 }
 
 /* ADC tlx defines */
-#define SIGN_BIT_POSITION          (13)
-#define AREG_ADC_DATA_STATUS       (0xf6)
-#define ADC_DATA_READY             BIT(0)
+#define SIGN_BIT_POSITION    (13)
+#define AREG_ADC_DATA_STATUS (0xf6)
+#define ADC_DATA_READY       BIT(0)
 
 /* tlx ADC driver data */
 struct tlx_adc_data {
@@ -42,7 +46,7 @@ struct tlx_adc_data {
 	struct k_sem acq_sem;
 	struct k_thread thread;
 
-	K_THREAD_STACK_MEMBER(stack, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE);
+	K_KERNEL_STACK_MEMBER(stack, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE);
 };
 
 struct tlx_adc_cfg {
@@ -50,6 +54,10 @@ struct tlx_adc_cfg {
 	uint16_t vref_internal_mv;
 	const struct pinctrl_dev_config *pcfg;
 };
+
+#ifdef CONFIG_PM_DEVICE
+struct adc_channel_cfg tlx_channel_cfg;
+#endif /* CONFIG_PM_DEVICE */
 
 /* Validate ADC data buffer size */
 static int adc_tlx_validate_buffer_size(const struct adc_sequence *sequence)
@@ -93,41 +101,62 @@ static int adc_tlx_validate_sequence(const struct adc_sequence *sequence)
 
 static uint16_t adc_tlx_get_pin(uint16_t dt_pin, bool positive)
 {
-    if (positive) {
-        /* adc_input_pch_e */
-        switch (dt_pin) {
-        case DT_ADC_GPIO_PC0: return ADC0_GPIO_PC0P;
-        case DT_ADC_GPIO_PC1: return ADC0_GPIO_PC1P;
-        case DT_ADC_GPIO_PC2: return ADC0_GPIO_PC2P;
-        case DT_ADC_GPIO_PC3: return ADC0_GPIO_PC3P;
-        case DT_ADC_GPIO_PC4: return ADC0_GPIO_PC4P;
-        case DT_ADC_GPIO_PC5: return ADC0_GPIO_PC5P;
-        case DT_ADC_GPIO_PC6: return ADC0_GPIO_PC6P;
-        case DT_ADC_GPIO_PC7: return ADC0_GPIO_PC7P;
-        case DT_ADC_VBAT:     return ADC_VBAT_P;
-        default:              return 0;
-        }
-    } else {
-        /* adc_input_nch_e */
-        switch (dt_pin) {
-        case DT_ADC_GPIO_PC0: return ADC0_GPIO_PC0N;
-        case DT_ADC_GPIO_PC1: return ADC0_GPIO_PC1N;
-        case DT_ADC_GPIO_PC2: return ADC0_GPIO_PC2N;
-        case DT_ADC_GPIO_PC3: return ADC0_GPIO_PC3N;
-        case DT_ADC_GPIO_PC4: return ADC0_GPIO_PC4N;
-        case DT_ADC_GPIO_PC5: return ADC0_GPIO_PC5N;
-        case DT_ADC_GPIO_PC6: return ADC0_GPIO_PC6N;
-        case DT_ADC_GPIO_PC7: return ADC0_GPIO_PC7N;
-        case DT_ADC_VBAT:     return ADC_GND_N;
-        default:              return 0;
-        }
-    }
+	if (positive) {
+		/* adc_input_pch_e */
+		switch (dt_pin) {
+		case DT_ADC_GPIO_PC0:
+			return ADC0_GPIO_PC0P;
+		case DT_ADC_GPIO_PC1:
+			return ADC0_GPIO_PC1P;
+		case DT_ADC_GPIO_PC2:
+			return ADC0_GPIO_PC2P;
+		case DT_ADC_GPIO_PC3:
+			return ADC0_GPIO_PC3P;
+		case DT_ADC_GPIO_PC4:
+			return ADC0_GPIO_PC4P;
+		case DT_ADC_GPIO_PC5:
+			return ADC0_GPIO_PC5P;
+		case DT_ADC_GPIO_PC6:
+			return ADC0_GPIO_PC6P;
+		case DT_ADC_GPIO_PC7:
+			return ADC0_GPIO_PC7P;
+		case DT_ADC_VBAT:
+			return ADC_VBAT_P;
+		default:
+			return 0;
+		}
+	} else {
+		/* adc_input_nch_e */
+		switch (dt_pin) {
+		case DT_ADC_GPIO_PC0:
+			return ADC0_GPIO_PC0N;
+		case DT_ADC_GPIO_PC1:
+			return ADC0_GPIO_PC1N;
+		case DT_ADC_GPIO_PC2:
+			return ADC0_GPIO_PC2N;
+		case DT_ADC_GPIO_PC3:
+			return ADC0_GPIO_PC3N;
+		case DT_ADC_GPIO_PC4:
+			return ADC0_GPIO_PC4N;
+		case DT_ADC_GPIO_PC5:
+			return ADC0_GPIO_PC5N;
+		case DT_ADC_GPIO_PC6:
+			return ADC0_GPIO_PC6N;
+		case DT_ADC_GPIO_PC7:
+			return ADC0_GPIO_PC7N;
+		case DT_ADC_VBAT:
+			return ADC_GND_N;
+		default:
+			return 0;
+		}
+	}
 }
 
 /* Get ADC value */
 static signed short adc_tlx_get_code(adc_num_e sar_adc_num)
 {
 	signed short adc_code;
+
 	adc_code = adc_get_raw_code(sar_adc_num);
 	return adc_code;
 }
@@ -135,8 +164,7 @@ static signed short adc_tlx_get_code(adc_num_e sar_adc_num)
 /* ADC Context API implementation: start sampling */
 static void adc_context_start_sampling(struct adc_context *ctx)
 {
-	struct tlx_adc_data *data =
-		CONTAINER_OF(ctx, struct tlx_adc_data, ctx);
+	struct tlx_adc_data *data = CONTAINER_OF(ctx, struct tlx_adc_data, ctx);
 
 	data->repeat_buffer = data->buffer;
 	adc_power_on(ADC0);
@@ -147,8 +175,7 @@ static void adc_context_start_sampling(struct adc_context *ctx)
 /* ADC Context API implementation: buffer pointer */
 static void adc_context_update_buffer_pointer(struct adc_context *ctx, bool repeat_sampling)
 {
-	struct tlx_adc_data *data =
-		CONTAINER_OF(ctx, struct tlx_adc_data, ctx);
+	struct tlx_adc_data *data = CONTAINER_OF(ctx, struct tlx_adc_data, ctx);
 
 	if (repeat_sampling) {
 		data->buffer = data->repeat_buffer;
@@ -205,8 +232,7 @@ static void adc_tlx_acquisition_thread(const struct device *dev)
 		/* Wait for Acquisition semaphore */
 		k_sem_take(&data->acq_sem, K_FOREVER);
 		adc_start_sample_nodma(ADC0);
-		while (((reg_adc_rxfifo_trig_num(ADC0) & FLD_BUF_CNT) >> 4)
-				== 0){
+		while (((reg_adc_rxfifo_trig_num(ADC0) & FLD_BUF_CNT) >> 4) == 0) {
 		}
 
 		adc_code = adc_tlx_get_code(ADC0);
@@ -244,12 +270,9 @@ static int adc_tlx_init(const struct device *dev)
 
 	k_sem_init(&data->acq_sem, 0, 1);
 
-	k_thread_create(&data->thread, data->stack,
-			CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE,
-			(k_thread_entry_t)adc_tlx_acquisition_thread,
-			(void *)dev, NULL, NULL,
-			CONFIG_ADC_TLX_ACQUISITION_THREAD_PRIO,
-			0, K_NO_WAIT);
+	k_thread_create(&data->thread, data->stack, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE,
+			(k_thread_entry_t)adc_tlx_acquisition_thread, (void *)dev, NULL, NULL,
+			CONFIG_ADC_TLX_ACQUISITION_THREAD_PRIO, 0, K_NO_WAIT);
 
 	adc_context_unlock_unconditionally(&data->ctx);
 
@@ -257,8 +280,7 @@ static int adc_tlx_init(const struct device *dev)
 }
 
 /* API implementation: read */
-static int adc_tlx_read(const struct device *dev,
-			const struct adc_sequence *sequence)
+static int adc_tlx_read(const struct device *dev, const struct adc_sequence *sequence)
 {
 	int status;
 	struct tlx_adc_data *data = dev->data;
@@ -387,16 +409,16 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		return -EINVAL;
 	}
 
-    input_positive = (adc_input_pch_e)adc_tlx_get_pin(channel_cfg->input_positive, true);
-    input_negative = (adc_input_nch_e)adc_tlx_get_pin(channel_cfg->input_negative, false);
-    if ((input_positive == (uint16_t)ADC_VBAT_P || input_negative == (uint16_t)ADC_GND_N) &&
-        channel_cfg->differential) {
-        LOG_ERR("VBAT or GND is not available for differential mode.");
-        return -EINVAL;
-    } else if (channel_cfg->differential && (input_negative == (uint16_t)0)) {
-        LOG_ERR("Negative input is not selected.");
-        return -EINVAL;
-    }
+	input_positive = (adc_input_pch_e)adc_tlx_get_pin(channel_cfg->input_positive, true);
+	input_negative = (adc_input_nch_e)adc_tlx_get_pin(channel_cfg->input_negative, false);
+	if ((input_positive == (uint16_t)ADC_VBAT_P || input_negative == (uint16_t)ADC_GND_N) &&
+	    channel_cfg->differential) {
+		LOG_ERR("VBAT or GND is not available for differential mode.");
+		return -EINVAL;
+	} else if (channel_cfg->differential && (input_negative == (uint16_t)0)) {
+		LOG_ERR("Negative input is not selected.");
+		return -EINVAL;
+	}
 
 	adc_init(ADC0, NDMA_M_CHN);
 
@@ -404,36 +426,39 @@ static int adc_tlx_channel_setup(const struct device *dev,
 
 	if (channel_cfg->differential) {
 		/* Differential pins configuration */
-		/* The adc_channel_sample_init function has been configured and will not be configured here. */
-		// adc_pin_config(input_positive);
-		// adc_pin_config(input_negative);
+		/* The adc_channel_sample_init function has been configured and will not be */
+		/* configured here. */
+		/* adc_pin_config(input_positive); */
+		/* adc_pin_config(input_negative); */
 		adc_set_diff_input(ADC0, ADC_M_CHANNEL, input_positive, input_negative);
 	} else if (input_positive == (uint16_t)ADC_VBAT_P) {
 		/* VBAT pin configuration */
 		adc_chn_cfg_t adc_vbat_cfg_m = {
-				.pre_scale		=	pre_scale,
-				.sample_freq		=	sample_freq,
-				.input_p	=	input_positive,
-				.input_n	=	ADC_GND_N,
+			.pre_scale = pre_scale,
+			.sample_freq = sample_freq,
+			.input_p = input_positive,
+			.input_n = ADC_GND_N,
 		};
 		adc_channel_sample_init(ADC0, ADC_VBAT_MODE, ADC_M_CHANNEL, &adc_vbat_cfg_m);
 	} else {
 		/* Single-ended GPIO pin configuration */
 		adc_chn_cfg_t adc_gpio_cfg_m = {
-				.pre_scale		=	pre_scale,
-				.sample_freq		=	sample_freq,
-				.input_p	=	input_positive,
-				.input_n	=	ADC_GND_N,
+			.pre_scale = pre_scale,
+			.sample_freq = sample_freq,
+			.input_p = input_positive,
+			.input_n = ADC_GND_N,
 		};
 		adc_channel_sample_init(ADC0, ADC_GPIO_MODE, ADC_M_CHANNEL, &adc_gpio_cfg_m);
 	}
+#ifdef CONFIG_PM_DEVICE
+	memcpy(&tlx_channel_cfg, channel_cfg, sizeof(struct adc_channel_cfg));
+#endif
 	return 0;
 }
 
 #ifdef CONFIG_ADC_ASYNC
 /* API implementation: read_async */
-static int adc_tlx_read_async(const struct device *dev,
-			      const struct adc_sequence *sequence,
+static int adc_tlx_read_async(const struct device *dev, const struct adc_sequence *sequence,
 			      struct k_poll_signal *async)
 {
 	int status;
@@ -446,6 +471,33 @@ static int adc_tlx_read_async(const struct device *dev,
 	return status;
 }
 #endif /* CONFIG_ADC_ASYNC */
+
+#ifdef CONFIG_PM_DEVICE
+__GENERIC_SECTION(.ram_code)
+static int adc_tlx_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	extern volatile bool tlx_deep_sleep_retention;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME: {
+		if (tlx_deep_sleep_retention) {
+			adc_tlx_channel_setup(dev, &tlx_channel_cfg);
+		}
+	} break;
+
+	case PM_DEVICE_ACTION_SUSPEND: {
+
+	} break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DT_INST_DEFINE(0, adc_tlx_pm_action);
+#endif /* CONFIG_PM_DEVICE */
 
 static struct tlx_adc_data data_0 = {
 	ADC_CONTEXT_INIT_TIMER(data_0, ctx),
@@ -470,8 +522,5 @@ static const struct adc_driver_api adc_tlx_driver_api = {
 	.ref_internal = cfg_0.vref_internal_mv,
 };
 
-DEVICE_DT_INST_DEFINE(0, adc_tlx_init, NULL,
-		      &data_0,  &cfg_0,
-		      POST_KERNEL,
-		      CONFIG_ADC_INIT_PRIORITY,
+DEVICE_DT_INST_DEFINE(0, adc_tlx_init, NULL, &data_0, &cfg_0, POST_KERNEL, CONFIG_ADC_INIT_PRIORITY,
 		      &adc_tlx_driver_api);
