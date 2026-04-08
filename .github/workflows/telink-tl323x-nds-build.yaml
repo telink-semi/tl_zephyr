@@ -7,7 +7,7 @@ on: pull_request
 
 jobs:
   telink_build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Telink build examples
     env:
       ZEPHYR_TOOLCHAIN_VARIANT: "andes-gcc"
@@ -22,8 +22,8 @@ jobs:
     - name: Setup Andes toolchain
       run: |
         mkdir ~/nds-gcc
-        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f.tar.gz
-        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f.tar.gz -C ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_14.2.0.txz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_14.2.0.txz -C ~/nds-gcc
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3

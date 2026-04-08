@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2024~2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -17,7 +17,11 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/kernel.h>
 #include <stdlib.h>
+
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+/* Not available for hal_v1, only for hal_v2 */
 #include "tl_flash.h"
+#endif
 
 LOG_MODULE_REGISTER(flash_tlx, CONFIG_FLASH_LOG_LEVEL);
 
