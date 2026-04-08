@@ -73,7 +73,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X)) || \
 	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)))
 		
-	 	#include "tlx_bt.h"
+	 	// #include "tlx_bt.h"
 	 	extern uint32_t blc_ll_checkBleRfFsmIsBusy(void);
 		
 		if (blc_ll_checkBleRfFsmIsBusy() && tl_bt_controller_state()) {

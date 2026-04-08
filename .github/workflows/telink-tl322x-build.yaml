@@ -4,10 +4,10 @@ on: pull_request
 
 jobs:
   telink_build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Telink build examples
     env:
-      ZEPHYR_SDK_VERSION: 0.15.2
+      ZEPHYR_SDK_VERSION: 0.17.0
     steps:
 
     - name: Install dependencies
@@ -18,10 +18,11 @@ jobs:
     - name: Setup Zephyr toolchain
       run: |
         mkdir ~/zephyr_sdk
-        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.gz
+        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
         (cd ~/zephyr_sdk && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/sha256.sum | shasum --check --ignore-missing)
-        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.gz -C ~/zephyr_sdk
+        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_sdk
         (cd ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3

@@ -247,14 +247,14 @@ manifest:
       path: modules/hal/tdk
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 32c4232d886917f58c5f2d52dfb3bb6d8ae78361
+      revision: pull/177/head
       path: modules/hal/telink
       groups:
         - hal
     - name: tl_ble_sdk
       url: https://github.com/telink-semi/tl_ble_sdk_zephyr.git
       revision: 72bbfcc8361b4783db85c09ecaa4e1b2621a39fb
-      path: modules/hal/telink/tl_ble_sdk
+      path: modules/hal/telink/hal_v2/tl_ble_sdk
       groups:
         - hal
     - name: hal_ti
@@ -309,7 +309,7 @@ manifest:
         - crypto
     - name: mcuboot
       url: https://github.com/telink-semi/mcuboot
-      revision: 92ec50eb718031a243ac30b9f5463ee6be1b5603
+      revision: pull/14/head
       path: bootloader/mcuboot
       groups:
         - bootloader
