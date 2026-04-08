@@ -138,89 +138,88 @@
 #define TL322X_FUNC_LSPI_CK_IO         126
 
 /* Some special aliases (with value 0) */
-#define TL322X_FUNC_PA5_USB0_DM_IO     0
-#define TL322X_FUNC_PA6_USB0_DP_IO     0
-#define TL322X_FUNC_PA7_SWS_IO         0
-#define TL322X_FUNC_PC4_TDI_I          0
-#define TL322X_FUNC_PC5_TDO_IO         0
-#define TL322X_FUNC_PC6_TMS_IO         0
-#define TL322X_FUNC_PC7_TCK_I          0
-#define TL322X_FUNC_PI0_MSPI_MOSI_IO   0
-#define TL322X_FUNC_PI1_MSPI_CK_IO     0
-#define TL322X_FUNC_PI2_MSPI_IO3_IO    0
-#define TL322X_FUNC_PI3_MSPI_CN_IO     0
-#define TL322X_FUNC_PI4_MSPI_MISO_IO   0
-#define TL322X_FUNC_PI5_MSPI_IO2_IO    0
+#define TL322X_FUNC_PA5_USB0_DM_IO   0
+#define TL322X_FUNC_PA6_USB0_DP_IO   0
+#define TL322X_FUNC_PA7_SWS_IO       0
+#define TL322X_FUNC_PC4_TDI_I        0
+#define TL322X_FUNC_PC5_TDO_IO       0
+#define TL322X_FUNC_PC6_TMS_IO       0
+#define TL322X_FUNC_PC7_TCK_I        0
+#define TL322X_FUNC_PI0_MSPI_MOSI_IO 0
+#define TL322X_FUNC_PI1_MSPI_CK_IO   0
+#define TL322X_FUNC_PI2_MSPI_IO3_IO  0
+#define TL322X_FUNC_PI3_MSPI_CN_IO   0
+#define TL322X_FUNC_PI4_MSPI_MISO_IO 0
+#define TL322X_FUNC_PI5_MSPI_IO2_IO  0
 
 /* IDs for GPIO Ports  */
 
-#define TLX_PORT_A       0x00
-#define TLX_PORT_B       0x01
-#define TLX_PORT_C       0x02
-#define TLX_PORT_D       0x03
-#define TLX_PORT_E       0x04
-#define TLX_PORT_F       0x05
-#define TLX_PORT_G       0x06
-#define TLX_PORT_H       0x07
-#define TLX_PORT_I       0x08
+#define TLX_PORT_A 0x00
+#define TLX_PORT_B 0x01
+#define TLX_PORT_C 0x02
+#define TLX_PORT_D 0x03
+#define TLX_PORT_E 0x04
+#define TLX_PORT_F 0x05
+#define TLX_PORT_G 0x06
+#define TLX_PORT_H 0x07
+#define TLX_PORT_I 0x08
 
 /* IDs for GPIO Pins */
 
-#define TLX_PIN_0        0x01
-#define TLX_PIN_1        0x02
-#define TLX_PIN_2        0x04
-#define TLX_PIN_3        0x08
-#define TLX_PIN_4        0x10
-#define TLX_PIN_5        0x20
-#define TLX_PIN_6        0x40
-#define TLX_PIN_7        0x80
+#define TLX_PIN_0 0x01
+#define TLX_PIN_1 0x02
+#define TLX_PIN_2 0x04
+#define TLX_PIN_3 0x08
+#define TLX_PIN_4 0x10
+#define TLX_PIN_5 0x20
+#define TLX_PIN_6 0x40
+#define TLX_PIN_7 0x80
 
 /* TLX pinctrl pull-up/down */
 
-#define TLX_PULL_NONE    0
-#define TLX_PULL_DOWN    2
-#define TLX_PULL_UP      3
+#define TLX_PULL_NONE 0
+#define TLX_PULL_DOWN 2
+#define TLX_PULL_UP   3
 
 /* Pin function positions */
 
-#define TL322X_PIN_FUNC_POS    0xFF
+#define TL322X_PIN_FUNC_POS 0xFF
 
 /* Pin pull up positions */
 
-#define TLX_PIN_0_PULL_UP_EN_POS    0x00
-#define TLX_PIN_1_PULL_UP_EN_POS    0x02
-#define TLX_PIN_2_PULL_UP_EN_POS    0x04
-#define TLX_PIN_3_PULL_UP_EN_POS    0x06
-#define TLX_PIN_4_PULL_UP_EN_POS    0x00
-#define TLX_PIN_5_PULL_UP_EN_POS    0x02
-#define TLX_PIN_6_PULL_UP_EN_POS    0x04
-#define TLX_PIN_7_PULL_UP_EN_POS    0x06
+#define TLX_PIN_0_PULL_UP_EN_POS 0x00
+#define TLX_PIN_1_PULL_UP_EN_POS 0x02
+#define TLX_PIN_2_PULL_UP_EN_POS 0x04
+#define TLX_PIN_3_PULL_UP_EN_POS 0x06
+#define TLX_PIN_4_PULL_UP_EN_POS 0x00
+#define TLX_PIN_5_PULL_UP_EN_POS 0x02
+#define TLX_PIN_6_PULL_UP_EN_POS 0x04
+#define TLX_PIN_7_PULL_UP_EN_POS 0x06
 
 /* TL322X pin configuration bit field positions and masks */
 
-#define TLX_PULL_POS     24
-#define TLX_PULL_MSK     0x3
-#define TLX_FUNC_POS     16
-#define TL322X_FUNC_MSK  0xFF
-#define TLX_PORT_POS     8
-#define TLX_PORT_MSK     0xFF
+#define TLX_PULL_POS    24
+#define TLX_PULL_MSK    0x3
+#define TLX_FUNC_POS    16
+#define TL322X_FUNC_MSK 0xFF
+#define TLX_PORT_POS    8
+#define TLX_PORT_MSK    0xFF
 
-#define TLX_PIN_POS      0
-#define TLX_PIN_MSK      0xFFFF
-#define TLX_PIN_ID_MSK   0xFF
+#define TLX_PIN_POS    0
+#define TLX_PIN_MSK    0xFFFF
+#define TLX_PIN_ID_MSK 0xFF
 
-#define TL322X_PULL_NONE    (TLX_PULL_NONE << (TLX_PULL_POS - TLX_FUNC_POS))
-#define TL322X_PULL_DOWN    (TLX_PULL_DOWN << (TLX_PULL_POS - TLX_FUNC_POS))
-#define TL322X_PULL_UP      (TLX_PULL_UP << (TLX_PULL_POS - TLX_FUNC_POS))
+#define TL322X_PULL_NONE (TLX_PULL_NONE << (TLX_PULL_POS - TLX_FUNC_POS))
+#define TL322X_PULL_DOWN (TLX_PULL_DOWN << (TLX_PULL_POS - TLX_FUNC_POS))
+#define TL322X_PULL_UP   (TLX_PULL_UP << (TLX_PULL_POS - TLX_FUNC_POS))
 
 /* Setters and getters */
 
-#define TLX_PINMUX_SET(port, pin, func)   ((func << TLX_FUNC_POS) | \
-					   (port << TLX_PORT_POS) | \
-					   (pin << TLX_PIN_POS))
-#define TLX_PINMUX_GET_PULL(pinmux)       ((pinmux >> TLX_PULL_POS) & TLX_PULL_MSK)
-#define TLX_PINMUX_GET_FUNC(pinmux)       ((pinmux >> TLX_FUNC_POS) & TL322X_FUNC_MSK)
-#define TLX_PINMUX_GET_PIN(pinmux)        ((pinmux >> TLX_PIN_POS) & TLX_PIN_MSK)
-#define TLX_PINMUX_GET_PIN_ID(pinmux)     ((pinmux >> TLX_PIN_POS) & TLX_PIN_ID_MSK)
+#define TLX_PINMUX_SET(port, pin, func)                                                            \
+	((func << TLX_FUNC_POS) | (port << TLX_PORT_POS) | (pin << TLX_PIN_POS))
+#define TLX_PINMUX_GET_PULL(pinmux)   ((pinmux >> TLX_PULL_POS) & TLX_PULL_MSK)
+#define TLX_PINMUX_GET_FUNC(pinmux)   ((pinmux >> TLX_FUNC_POS) & TL322X_FUNC_MSK)
+#define TLX_PINMUX_GET_PIN(pinmux)    ((pinmux >> TLX_PIN_POS) & TLX_PIN_MSK)
+#define TLX_PINMUX_GET_PIN_ID(pinmux) ((pinmux >> TLX_PIN_POS) & TLX_PIN_ID_MSK)
 
-#endif  /* ZEPHYR_TL322X_PINCTRL_COMMON_H_ */
+#endif /* ZEPHYR_TL322X_PINCTRL_COMMON_H_ */

@@ -58,6 +58,8 @@ source "drivers/adc/Kconfig.b9x"
 
 source "drivers/adc/Kconfig.tlx"
 
+source "drivers/adc/Kconfig.tl322x"
+
 source "drivers/adc/Kconfig.tl323x"
 
 source "drivers/adc/Kconfig.w91"

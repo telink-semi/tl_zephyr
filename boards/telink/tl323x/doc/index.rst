@@ -11,7 +11,7 @@ can be used to verify the Telink TLx series chipset and develop applications
 for several 2.4 GHz air interface standards including Bluetooth LE, Zigbee, RF4CE,
 Thread, Matter, and 2.4GHz proprietary standard.
 
-.. figure:: img/tl3238x.jpg
+.. figure:: img/TL3238X-EVB-TOP.jpg
      :align: center
      :alt: TL3238X
 
@@ -198,7 +198,7 @@ Building
 .. important::
 
    These instructions assume you've set up a development environment as
-   described in the `Zephyr Getting Started Guide`_.
+   described in the ``Zephyr Getting Started Guide``_.
 
 To build applications using the default RISC-V toolchain from Zephyr SDK, just run the west build command.
 Here is an example for the "hello_world" application.
@@ -229,7 +229,7 @@ Flashing
 
 To flash the TL3238X board see the sources below:
 
-- `Burning and Debugging Tools for all Series`_
+- ``Burning and Debugging Tools for all Series``_
 
 .. It is also possible to use the west flash command. Download BDT tool for Linux `Burning and Debugging Tools for Linux`_ or
 .. `Burning and Debugging Tools for Windows`_ and extract archive into some directory you wish TELINK_BDT_BASE_DIR

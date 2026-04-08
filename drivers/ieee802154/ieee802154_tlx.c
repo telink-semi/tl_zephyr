@@ -41,7 +41,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "drivers.h"
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-#define RAM_CODE_SECTION_IEEE802154		__GENERIC_SECTION(.ram_code)
+#define RAM_CODE_SECTION_IEEE802154 __GENERIC_SECTION(.ram_code)
 #else
 #define RAM_CODE_SECTION_IEEE802154
 #endif
@@ -50,8 +50,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 
-static const struct device *flash_device =
-	DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
+static const struct device *flash_device = DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
 #endif /* CONFIG_IEEE802154_TLX_MAC_FLASH */
 
 #ifdef CONFIG_OPENTHREAD_FTD
@@ -109,9 +108,9 @@ ALWAYS_INLINE static bool tlx_src_match_table_search(const struct tlx_src_match_
 
 	for (size_t i = 0; i < 2 * CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
 		if (table->item[i].valid && table->item[i].ext == ext &&
-			!memcmp(table->item[i].addr, addr,
-				ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT :
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT)) {
+		    !memcmp(table->item[i].addr, addr,
+			    ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT
+				: IEEE802154_FRAME_LENGTH_ADDR_SHORT)) {
 			result = true;
 			break;
 		}
@@ -129,8 +128,8 @@ ALWAYS_INLINE static void tlx_src_match_table_add(struct tlx_src_match_table *ta
 			if (!table->item[i].valid) {
 				table->item[i].ext = ext;
 				memcpy(table->item[i].addr, addr,
-					ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT :
-					IEEE802154_FRAME_LENGTH_ADDR_SHORT);
+				       ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT
+					   : IEEE802154_FRAME_LENGTH_ADDR_SHORT);
 				table->item[i].valid = true;
 				break;
 			}
@@ -144,14 +143,14 @@ ALWAYS_INLINE static void tlx_src_match_table_remove(struct tlx_src_match_table 
 {
 	for (size_t i = 0; i < 2 * CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
 		if (table->item[i].valid && table->item[i].ext == ext &&
-			!memcmp(table->item[i].addr, addr,
-				ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT :
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT)) {
+		    !memcmp(table->item[i].addr, addr,
+			    ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT
+				: IEEE802154_FRAME_LENGTH_ADDR_SHORT)) {
 			table->item[i].valid = false;
 			table->item[i].ext = false;
 			memset(table->item[i].addr, 0,
-				ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT :
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT);
+			       ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT
+				   : IEEE802154_FRAME_LENGTH_ADDR_SHORT);
 			break;
 		}
 	}
@@ -166,8 +165,8 @@ ALWAYS_INLINE static void tlx_src_match_table_remove_group(struct tlx_src_match_
 			table->item[i].valid = false;
 			table->item[i].ext = false;
 			memset(table->item[i].addr, 0,
-				ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT :
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT);
+			       ext ? IEEE802154_FRAME_LENGTH_ADDR_EXT
+				   : IEEE802154_FRAME_LENGTH_ADDR_SHORT);
 		}
 	}
 }
@@ -186,12 +185,14 @@ ALWAYS_INLINE static bool tlx_require_pending_bit(const struct ieee802154_frame 
 			result = true;
 		} else if (frame->general.type == IEEE802154_FRAME_FCF_TYPE_CMD) {
 			if (!frame->sec_header ||
-				frame->general.ver < IEEE802154_FRAME_FCF_VER_2015 ||
-				(frame->sec_header[0] & IEEE802154_FRAME_SECCTRL_SEC_LEVEL_MASK) <
-					IEEE802154_FRAME_SECCTRL_SEC_LEVEL_4) {
-				const uint8_t *cmd_id = frame->payload_ie ?
-					tlx_ieee802154_get_data(frame->payload,
-					frame->payload_len) : frame->payload;
+			    frame->general.ver < IEEE802154_FRAME_FCF_VER_2015 ||
+			    (frame->sec_header[0] & IEEE802154_FRAME_SECCTRL_SEC_LEVEL_MASK) <
+				    IEEE802154_FRAME_SECCTRL_SEC_LEVEL_4) {
+				const uint8_t *cmd_id =
+					frame->payload_ie
+						? tlx_ieee802154_get_data(frame->payload,
+									  frame->payload_len)
+						: frame->payload;
 				if (cmd_id && *cmd_id == TLX_CMD_ID_DATA_REQ) {
 					result = true;
 				}
@@ -222,11 +223,10 @@ ALWAYS_INLINE static int tlx_enh_ack_table_search(const struct tlx_enh_ack_table
 	int result = -1;
 
 	for (size_t i = 0; i < CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
-		if (table->item[i].valid &&
-			(!memcmp(table->item[i].addr_short, addr_short,
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT) ||
-			!memcmp(table->item[i].addr_ext, addr_ext,
-				IEEE802154_FRAME_LENGTH_ADDR_EXT))) {
+		if (table->item[i].valid && (!memcmp(table->item[i].addr_short, addr_short,
+						     IEEE802154_FRAME_LENGTH_ADDR_SHORT) ||
+					     !memcmp(table->item[i].addr_ext, addr_ext,
+						     IEEE802154_FRAME_LENGTH_ADDR_EXT))) {
 			result = i;
 			break;
 		}
@@ -247,17 +247,16 @@ ALWAYS_INLINE static void tlx_enh_ack_table_add(struct tlx_enh_ack_table *table,
 			if (!table->item[i].valid) {
 				idx = i;
 				memcpy(table->item[idx].addr_short, addr_short,
-					IEEE802154_FRAME_LENGTH_ADDR_SHORT);
+				       IEEE802154_FRAME_LENGTH_ADDR_SHORT);
 				memcpy(table->item[idx].addr_ext, addr_ext,
-					IEEE802154_FRAME_LENGTH_ADDR_EXT);
+				       IEEE802154_FRAME_LENGTH_ADDR_EXT);
 				table->item[idx].valid = true;
 				break;
 			}
 		}
 	}
 	if (idx != -1) {
-		memcpy(&table->item[idx].ie_header, ie_header,
-			sizeof(struct ieee802154_header_ie));
+		memcpy(&table->item[idx].ie_header, ie_header, sizeof(struct ieee802154_header_ie));
 	}
 }
 
@@ -268,17 +267,13 @@ ALWAYS_INLINE static void tlx_enh_ack_table_remove(struct tlx_enh_ack_table *tab
 {
 	for (size_t i = 0; i < CONFIG_OPENTHREAD_MAX_CHILDREN; i++) {
 		if (table->item[i].valid &&
-			!memcmp(table->item[i].addr_short, addr_short,
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT) &&
-			!memcmp(table->item[i].addr_ext, addr_ext,
-				IEEE802154_FRAME_LENGTH_ADDR_EXT)) {
+		    !memcmp(table->item[i].addr_short, addr_short,
+			    IEEE802154_FRAME_LENGTH_ADDR_SHORT) &&
+		    !memcmp(table->item[i].addr_ext, addr_ext, IEEE802154_FRAME_LENGTH_ADDR_EXT)) {
 			table->item[i].valid = false;
-			memset(table->item[i].addr_short, 0,
-				IEEE802154_FRAME_LENGTH_ADDR_SHORT);
-			memset(table->item[i].addr_ext, 0,
-				IEEE802154_FRAME_LENGTH_ADDR_EXT);
-			memset(&table->item[i].ie_header, 0,
-				sizeof(struct ieee802154_header_ie));
+			memset(table->item[i].addr_short, 0, IEEE802154_FRAME_LENGTH_ADDR_SHORT);
+			memset(table->item[i].addr_ext, 0, IEEE802154_FRAME_LENGTH_ADDR_EXT);
+			memset(&table->item[i].ie_header, 0, sizeof(struct ieee802154_header_ie));
 			break;
 		}
 	}
@@ -432,25 +427,25 @@ ALWAYS_INLINE static bool tlx_run_filter(const struct device *dev,
 	do {
 		if (frame->dst_panid != NULL) {
 			if (memcmp(frame->dst_panid, tlx->filter_pan_id,
-					IEEE802154_FRAME_LENGTH_PANID) != 0 &&
-				memcmp(frame->dst_panid, TLX_BROADCAST_ADDRESS,
-					IEEE802154_FRAME_LENGTH_PANID) != 0) {
+				   IEEE802154_FRAME_LENGTH_PANID) != 0 &&
+			    memcmp(frame->dst_panid, TLX_BROADCAST_ADDRESS,
+				   IEEE802154_FRAME_LENGTH_PANID) != 0) {
 				break;
 			}
 		}
 		if (frame->dst_addr != NULL) {
 			if (frame->dst_addr_ext) {
 				if ((net_if_get_link_addr(tlx->iface)->len !=
-						IEEE802154_FRAME_LENGTH_ADDR_EXT) ||
-					memcmp(frame->dst_addr, tlx->filter_ieee_addr,
-						IEEE802154_FRAME_LENGTH_ADDR_EXT) != 0) {
+				     IEEE802154_FRAME_LENGTH_ADDR_EXT) ||
+				    memcmp(frame->dst_addr, tlx->filter_ieee_addr,
+					   IEEE802154_FRAME_LENGTH_ADDR_EXT) != 0) {
 					break;
 				}
 			} else {
 				if (memcmp(frame->dst_addr, TLX_BROADCAST_ADDRESS,
-						IEEE802154_FRAME_LENGTH_ADDR_SHORT) != 0 &&
-					memcmp(frame->dst_addr, tlx->filter_short_addr,
-						IEEE802154_FRAME_LENGTH_ADDR_SHORT) != 0) {
+					   IEEE802154_FRAME_LENGTH_ADDR_SHORT) != 0 &&
+				    memcmp(frame->dst_addr, tlx->filter_short_addr,
+					   IEEE802154_FRAME_LENGTH_ADDR_SHORT) != 0) {
 					break;
 				}
 			}
@@ -476,10 +471,10 @@ ALWAYS_INLINE static uint8_t *tlx_get_mac(const struct device *dev)
 	 */
 	tlx->mac_addr[0] = (tlx->mac_addr[0] & ~0x01) | 0x02;
 #elif defined(CONFIG_IEEE802154_TLX_MAC_FLASH)
-	(void) flash_read(flash_device, FIXED_PARTITION_OFFSET(vendor_partition)
-			+ IEEE802154_TLX_FLASH_MAC_OFFSET, tlx->mac_addr,
-			IEEE802154_FRAME_LENGTH_ADDR_EXT);
-#else /* CONFIG_IEEE802154_TLX_MAC_STATIC */
+	(void)flash_read(flash_device,
+			 FIXED_PARTITION_OFFSET(vendor_partition) + IEEE802154_TLX_FLASH_MAC_OFFSET,
+			 tlx->mac_addr, IEEE802154_FRAME_LENGTH_ADDR_EXT);
+#else  /* CONFIG_IEEE802154_TLX_MAC_STATIC */
 	/* Vendor Unique Identifier */
 	tlx->mac_addr[0] = 0xC4;
 	tlx->mac_addr[1] = 0x19;
@@ -524,8 +519,9 @@ ALWAYS_INLINE static void tlx_update_rssi_and_lqi(const struct device *dev, stru
 	int8_t rssi;
 	uint8_t lqi;
 
-	rssi = ((signed char)(tlx->rx_buffer
-			      [tlx->rx_buffer[TLX_LENGTH_OFFSET] + TLX_RSSI_OFFSET])) - 110;
+	rssi = ((signed char)(tlx->rx_buffer[tlx->rx_buffer[TLX_LENGTH_OFFSET] +
+					     TLX_RSSI_OFFSET])) -
+	       110;
 	lqi = tlx_convert_rssi_to_lqi(rssi);
 
 	net_pkt_set_ieee802154_lqi(pkt, lqi);
@@ -555,8 +551,8 @@ ALWAYS_INLINE static void tlx_handle_ack(const struct device *dev, const void *b
 					 uint64_t rx_time)
 {
 	struct tlx_data *tlx = dev->data;
-	struct net_pkt *ack_pkt = net_pkt_rx_alloc_with_buffer(
-		tlx->iface, buf_len, AF_UNSPEC, 0, K_NO_WAIT);
+	struct net_pkt *ack_pkt =
+		net_pkt_rx_alloc_with_buffer(tlx->iface, buf_len, AF_UNSPEC, 0, K_NO_WAIT);
 
 	do {
 		if (!ack_pkt) {
@@ -591,7 +587,7 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 	size_t ack_len;
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-		rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
+	rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
 #endif
 	rf_set_txmode();
 	rf_clr_irq_mask(FLD_RF_IRQ_TX); /* clear TX interrupt mask bit */
@@ -606,8 +602,7 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 		0,
 		0,
 		0,
-		1
-	};
+		1};
 
 	if (frame->general.ver == IEEE802154_FRAME_FCF_VER_2015) {
 		if (frame->general.se_bit) {
@@ -682,12 +677,13 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL323X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
-		SYSTEM_TIMER_TICK_1US;
+			      SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 	uint32_t delta_time = (rf_bb_timer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
-		BB_TIMER_TICK_1US;
+			      BB_TIMER_TICK_1US;
 #endif
 	rx_time -= delta_time;
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
@@ -702,7 +698,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 					IEEE802154_RX_FAIL_INVALID_FCS;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 			break;
 		}
@@ -715,14 +711,14 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 					IEEE802154_RX_FAIL_NOT_RECEIVED;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 			break;
 		}
 		uint8_t *payload = (tlx->rx_buffer + TLX_PAYLOAD_OFFSET);
 
 		if (IS_ENABLED(CONFIG_IEEE802154_RAW_MODE) ||
-			IS_ENABLED(CONFIG_NET_L2_OPENTHREAD)) {
+		    IS_ENABLED(CONFIG_NET_L2_OPENTHREAD)) {
 			tlx_ieee802154_frame_parse(payload, length - TLX_FCS_LENGTH, &frame);
 		} else {
 			length -= TLX_FCS_LENGTH;
@@ -735,7 +731,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 					IEEE802154_RX_FAIL_NOT_RECEIVED;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 			break;
 		}
@@ -743,8 +739,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 			if (tlx->ack_handler_en) {
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 				if (isThreadCommissioned) {
-					if(frame.general.fp_bit == false)
-					{
+					if (frame.general.fp_bit == false) {
 						shouldPowerDownRFEarly = true;
 						rf_set_tx_rx_off();
 					}
@@ -768,7 +763,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 					IEEE802154_RX_FAIL_ADDR_FILTERED;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 			break;
 		}
@@ -779,8 +774,9 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 			if (tlx_require_pending_bit(&frame)) {
 				if (frame.src_addr) {
 					if (!tlx->src_match_table->enabled ||
-						tlx_src_match_table_search(tlx->src_match_table,
-							frame.src_addr, frame.src_addr_ext)) {
+					    tlx_src_match_table_search(tlx->src_match_table,
+								       frame.src_addr,
+								       frame.src_addr_ext)) {
 						frame_pending = true;
 					}
 				}
@@ -793,7 +789,8 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 			if (enh_ack) {
 				ack_se_bit = frame.general.se_bit ? true : false;
-				int idx = tlx_enh_ack_table_search(tlx->enh_ack_table,
+				int idx = tlx_enh_ack_table_search(
+					tlx->enh_ack_table,
 					frame.src_addr_ext ? NULL : frame.src_addr,
 					frame.src_addr_ext ? frame.src_addr : NULL);
 				if (idx >= 0) {
@@ -827,11 +824,10 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 		if (!pkt) {
 			LOG_ERR("No pkt available.");
 			if (tlx->event_handler) {
-				enum ieee802154_rx_fail_reason reason =
-					IEEE802154_RX_FAIL_OTHER;
+				enum ieee802154_rx_fail_reason reason = IEEE802154_RX_FAIL_OTHER;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 			break;
 		}
@@ -839,11 +835,10 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 		if (net_pkt_write(pkt, payload, length)) {
 			LOG_ERR("Failed to write to a packet.");
 			if (tlx->event_handler) {
-				enum ieee802154_rx_fail_reason reason =
-					IEEE802154_RX_FAIL_OTHER;
+				enum ieee802154_rx_fail_reason reason = IEEE802154_RX_FAIL_OTHER;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 			break;
 		}
@@ -855,11 +850,10 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 		if (status < 0) {
 			LOG_ERR("RCV Packet dropped by NET stack: %d", status);
 			if (tlx->event_handler) {
-				enum ieee802154_rx_fail_reason reason =
-					IEEE802154_RX_FAIL_OTHER;
+				enum ieee802154_rx_fail_reason reason = IEEE802154_RX_FAIL_OTHER;
 
 				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
+						   (void *)&reason);
 			}
 		}
 	} while (0);
@@ -869,15 +863,16 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	}
 
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-	if(!shouldPowerDownRFEarly)
+	if (!shouldPowerDownRFEarly) {
 #endif
-	{
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
 		rf_set_rxmode();
 		dma_chn_en(DMA1);
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	}
+#endif
 }
 
 /* TX IRQ handler */
@@ -931,13 +926,16 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
-				if(tl_rf_is_inited()){
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X
+				if (tl_rf_is_inited()) {
+#endif
 					rf_baseband_reset();
 					rf_reset_dma();
-				}
-				else{
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X
+				} else {
 					tl_rf_change_to_inited();
 				}
+#endif
 
 				tlx->rf_mode_154 = true;
 			}
@@ -963,14 +961,15 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
 		riscv_plic_irq_enable(DT_INST_IRQN(0));
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-		if(!isThreadCommissioned)
+		if (!isThreadCommissioned) {
 #endif
-		{
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 			rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
 			rf_set_rxmode();
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 		}
+#endif
 		tlx->is_started = true;
 	}
 	return 0;
@@ -988,7 +987,8 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 #ifdef CONFIG_PM_DEVICE
 		/* Reset Radio */
 		rf_radio_reset();
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL323X
 		rf_reset_dma();
 		rf_baseband_reset();
 #endif
@@ -1099,9 +1099,8 @@ static void tlx_iface_init(struct net_if *iface)
 static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS |
-		IEEE802154_HW_FILTER |
-		IEEE802154_HW_TX_RX_ACK;
+	enum ieee802154_hw_caps caps =
+		IEEE802154_HW_FCS | IEEE802154_HW_FILTER | IEEE802154_HW_TX_RX_ACK;
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
@@ -1125,8 +1124,8 @@ static int tlx_cca(const struct device *dev)
 		isFirstCcaBeforeTx = false;
 		return 0;
 	}
-	else
 #endif
+
 	{
 		signed int rssi = 0, cnt = 0;
 		unsigned int t1 = stimer_get_tick();
@@ -1134,20 +1133,20 @@ static int tlx_cca(const struct device *dev)
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
-	rf_set_rxmode();
-	delay_us(85);
+		rf_set_rxmode();
+		delay_us(85);
 
-	do {
-		rssi += rf_get_rssi();
-		cnt++;
-	} while (!clock_time_exceed(t1, TLX_CCA_TIME_MAX_US));
-	rssi /= cnt;
-	if (rssi > CONFIG_IEEE802154_TLX_CCA_RSSI_THRESHOLD) {
+		do {
+			rssi += rf_get_rssi();
+			cnt++;
+		} while (!clock_time_exceed(t1, TLX_CCA_TIME_MAX_US));
+		rssi /= cnt;
+		if (rssi > CONFIG_IEEE802154_TLX_CCA_RSSI_THRESHOLD) {
+			return -EBUSY;
+		} else {
+			return 0;
+		}
 		return -EBUSY;
-	} else {
-		return 0;
-	}
-	return -EBUSY;
 	}
 }
 
@@ -1160,9 +1159,7 @@ static int tlx_set_channel(const struct device *dev, uint16_t channel)
 
 /* API implementation: filter */
 RAM_CODE_SECTION_IEEE802154
-static int tlx_filter(const struct device *dev,
-		      bool set,
-		      enum ieee802154_filter_type type,
+static int tlx_filter(const struct device *dev, bool set, enum ieee802154_filter_type type,
 		      const struct ieee802154_filter *filter)
 {
 	if (!set) {
@@ -1242,8 +1239,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 
 	/* check for supported mode */
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
-	if (mode != IEEE802154_TX_MODE_DIRECT &&
-		mode != IEEE802154_TX_MODE_TXTIME_CCA) {
+	if (mode != IEEE802154_TX_MODE_DIRECT && mode != IEEE802154_TX_MODE_TXTIME_CCA) {
 #else
 	if (mode != IEEE802154_TX_MODE_DIRECT) {
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
@@ -1287,7 +1283,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		}
 
 		const uint8_t sec_level =
-				frame.sec_header[0] & IEEE802154_FRAME_SECCTRL_SEC_LEVEL_MASK;
+			frame.sec_header[0] & IEEE802154_FRAME_SECCTRL_SEC_LEVEL_MASK;
 
 		if (sec_level == IEEE802154_FRAME_SECCTRL_SEC_LEVEL_0) {
 			break;
@@ -1295,8 +1291,8 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 
 		net_pkt_set_ieee802154_frame_secured(pkt, true);
 
-		const uint8_t *src_addr = frame.src_addr_ext ? frame.src_addr :
-			tlx->filter_ieee_addr;
+		const uint8_t *src_addr =
+			frame.src_addr_ext ? frame.src_addr : tlx->filter_ieee_addr;
 
 		if (!src_addr) {
 			LOG_WRN("no extended source address");
@@ -1357,15 +1353,16 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 					tag_size[sec_level - IEEE802154_FRAME_SECCTRL_SEC_LEVEL_5];
 				const uint8_t *open_data = frame.header;
 				uint8_t *private_data = (uint8_t *)frame.payload;
-				uint8_t *tag_data = frame.payload ?
-					(uint8_t *)&frame.payload[frame.payload_len] : NULL;
+				uint8_t *tag_data =
+					frame.payload ? (uint8_t *)&frame.payload[frame.payload_len]
+						      : NULL;
 
 				if (private_data && tag_data &&
-					tag_data - private_data >= tag_len) {
+				    tag_data - private_data >= tag_len) {
 					/* Adjust tag */
 					tag_data -= tag_len;
-					private_data = (tag_data > private_data) ?
-						private_data : NULL;
+					private_data =
+						(tag_data > private_data) ? private_data : NULL;
 				} else {
 					key_id = 0;
 					LOG_WRN("invalid payload length MIC");
@@ -1388,27 +1385,28 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 					if (private_data) {
 						private_data = (uint8_t *)tlx_ieee802154_get_data(
 							private_data, tag_data - private_data);
-						private_data = (private_data &&
-							tag_data > private_data) ?
-								private_data : NULL;
+						private_data =
+							(private_data && tag_data > private_data)
+								? private_data
+								: NULL;
 					} else {
 						key_id = 0;
 						LOG_WRN("invalid payload length IE");
 						break;
 					}
-
 				}
 
 				if (frame.general.ver < IEEE802154_FRAME_FCF_VER_2015 &&
-					frame.general.type == IEEE802154_FRAME_FCF_TYPE_CMD) {
+				    frame.general.type == IEEE802154_FRAME_FCF_TYPE_CMD) {
 					/* command id should be open
 					 * if frame version less than 2015
 					 */
 					if (private_data) {
 						private_data++;
-						private_data = (private_data &&
-							tag_data > private_data) ?
-								private_data : NULL;
+						private_data =
+							(private_data && tag_data > private_data)
+								? private_data
+								: NULL;
 					} else {
 						key_id = 0;
 						LOG_WRN("invalid payload length CID");
@@ -1482,8 +1480,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		irq_connect_dynamic(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
 				    stimer_rf_handler, 0, 0);
 		plic_interrupt_disable(IRQ_SYSTIMER);
-		stimer_set_irq_capture(stimer_get_tick() +
-				       800 * SYSTEM_TIMER_TICK_1US);
+		stimer_set_irq_capture(stimer_get_tick() + 800 * SYSTEM_TIMER_TICK_1US);
 		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 		stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
 		plic_interrupt_enable(IRQ_SYSTIMER);
@@ -1504,19 +1501,6 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 
 	/* wait for ACK if requested */
 	if (!status && tlx->ack_handler_en) {
-#if 0
-		if (isThreadCommissioned == true) {
-			plic_interrupt_disable(IRQ_SYSTIMER);
-			stimer_clr_irq_status(FLD_SYSTEM_IRQ);
-			stimer_set_irq_capture(stimer_get_tick() +
-					       TLX_ACK_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
-			plic_interrupt_enable(IRQ_SYSTIMER);
-			core_entry_wfi_mode();
-			if (k_sem_take(&tlx->ack_wait, K_MSEC(0)) != 0) {
-				status = -ENOMSG;
-			}
-		} else
-#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 		{
 			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
 				tlx->ack_handler_en = false;
@@ -1529,8 +1513,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 }
 
 /* API implementation: ed_scan */
-static int tlx_ed_scan(const struct device *dev, uint16_t duration,
-		       energy_scan_done_cb_t done_cb)
+static int tlx_ed_scan(const struct device *dev, uint16_t duration, energy_scan_done_cb_t done_cb)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(duration);
@@ -1542,8 +1525,7 @@ static int tlx_ed_scan(const struct device *dev, uint16_t duration,
 }
 
 /* API implementation: configure */
-static int tlx_configure(const struct device *dev,
-			 enum ieee802154_config_type type,
+static int tlx_configure(const struct device *dev, enum ieee802154_config_type type,
 			 const struct ieee802154_config *config)
 {
 	struct tlx_data *tlx = dev->data;
@@ -1561,97 +1543,86 @@ static int tlx_configure(const struct device *dev,
 	case IEEE802154_CONFIG_ACK_FPB:
 		if (config->ack_fpb.addr) {
 			if (config->ack_fpb.enabled) {
-				tlx_src_match_table_add(tlx->src_match_table,
-					config->ack_fpb.addr, config->ack_fpb.extended);
+				tlx_src_match_table_add(tlx->src_match_table, config->ack_fpb.addr,
+							config->ack_fpb.extended);
 			} else {
 				tlx_src_match_table_remove(tlx->src_match_table,
-					config->ack_fpb.addr, config->ack_fpb.extended);
+							   config->ack_fpb.addr,
+							   config->ack_fpb.extended);
 			}
 		} else if (!config->ack_fpb.enabled) {
 			tlx_src_match_table_remove_group(tlx->src_match_table,
-				config->ack_fpb.extended);
+							 config->ack_fpb.extended);
 		} else {
 			result = -ENOTSUP;
 		}
 		break;
 #endif /* CONFIG_OPENTHREAD_FTD */
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
-		case IEEE802154_CONFIG_EXPECTED_RX_TIME: {
-			tlx->csl_sample_time_us = config->expected_rx_time / NSEC_PER_USEC;
-		} break;
-		case IEEE802154_CONFIG_RX_SLOT: {
-			uint64_t rx_start_us = config->rx_slot.start / NSEC_PER_USEC;
+	case IEEE802154_CONFIG_EXPECTED_RX_TIME: {
+		tlx->csl_sample_time_us = config->expected_rx_time / NSEC_PER_USEC;
+	} break;
+	case IEEE802154_CONFIG_RX_SLOT: {
+		uint64_t rx_start_us = config->rx_slot.start / NSEC_PER_USEC;
 
-			tlx->csl_rx_duration_us = config->rx_slot.duration / NSEC_PER_USEC;
-			tlx->csl_rx_channel = config->rx_slot.channel;
+		tlx->csl_rx_duration_us = config->rx_slot.duration / NSEC_PER_USEC;
+		tlx->csl_rx_channel = config->rx_slot.channel;
 
-			uint64_t now_us = k_ticks_to_us_near64(k_uptime_ticks());
-			uint64_t delay_us = (rx_start_us > now_us) ? (rx_start_us - now_us) : 0;
-			/* reduce by 1 tick, better to turn radio earlier (resolution is 1 tick) */
-			delay_us =
-				(delay_us > USEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
-					? delay_us - USEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC
-					: 0;
-			(void)k_work_reschedule(&tlx->csl_rx_work, K_USEC(delay_us));
-		} break;
-		case IEEE802154_CONFIG_CSL_PERIOD: {
-			tlx->csl_period = config->csl_period;
-		} break;
+		uint64_t now_us = k_ticks_to_us_near64(k_uptime_ticks());
+		uint64_t delay_us = (rx_start_us > now_us) ? (rx_start_us - now_us) : 0;
+		/* reduce by 1 tick, better to turn radio earlier (resolution is 1 tick) */
+		delay_us = (delay_us > USEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
+				   ? delay_us - USEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC
+				   : 0;
+		(void)k_work_reschedule(&tlx->csl_rx_work, K_USEC(delay_us));
+	} break;
+	case IEEE802154_CONFIG_CSL_PERIOD: {
+		tlx->csl_period = config->csl_period;
+	} break;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
-		case IEEE802154_CONFIG_EVENT_HANDLER:
-			tlx->event_handler = config->event_handler;
-			break;
+	case IEEE802154_CONFIG_EVENT_HANDLER:
+		tlx->event_handler = config->event_handler;
+		break;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-	case IEEE802154_CONFIG_MAC_KEYS:
-		{
-			uint32_t cnt = tlx->mac_keys->frame_cnt;
+	case IEEE802154_CONFIG_MAC_KEYS: {
+		uint32_t cnt = tlx->mac_keys->frame_cnt;
 
-			tlx_mac_keys_data_clean(tlx->mac_keys);
-			tlx->mac_keys->frame_cnt = cnt;
-			for (size_t i = 0; config->mac_keys[i].key_value; i++) {
-				if (i < TLX_MAC_KEYS_ITEMS) {
-					memcpy(tlx->mac_keys->item[i].key,
-						config->mac_keys[i].key_value,
-						IEEE802154_CRYPTO_LENGTH_AES_BLOCK);
-					tlx->mac_keys->item[i].frame_cnt_local =
+		tlx_mac_keys_data_clean(tlx->mac_keys);
+		tlx->mac_keys->frame_cnt = cnt;
+		for (size_t i = 0; config->mac_keys[i].key_value; i++) {
+			if (i < TLX_MAC_KEYS_ITEMS) {
+				memcpy(tlx->mac_keys->item[i].key, config->mac_keys[i].key_value,
+				       IEEE802154_CRYPTO_LENGTH_AES_BLOCK);
+				tlx->mac_keys->item[i].frame_cnt_local =
 					config->mac_keys[i].frame_counter_per_key;
-					tlx->mac_keys->item[i].key_id =
-						*config->mac_keys[i].key_id;
-				} else {
-					LOG_WRN("can't save key id %u",
-						*config->mac_keys[i].key_id);
-				}
+				tlx->mac_keys->item[i].key_id = *config->mac_keys[i].key_id;
+			} else {
+				LOG_WRN("can't save key id %u", *config->mac_keys[i].key_id);
 			}
 		}
-		break;
+	} break;
 	case IEEE802154_CONFIG_FRAME_COUNTER:
 		tlx->mac_keys->frame_cnt = config->frame_counter;
 		break;
-	case IEEE802154_CONFIG_ENH_ACK_HEADER_IE:
-		{
-			uint8_t short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
-			uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT];
+	case IEEE802154_CONFIG_ENH_ACK_HEADER_IE: {
+		uint8_t short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
+		uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT];
 
-			sys_put_le16(config->ack_ie.short_addr, short_addr);
-			sys_memcpy_swap(ext_addr, config->ack_ie.ext_addr,
+		sys_put_le16(config->ack_ie.short_addr, short_addr);
+		sys_memcpy_swap(ext_addr, config->ack_ie.ext_addr,
 				IEEE802154_FRAME_LENGTH_ADDR_EXT);
-			if (!config->ack_ie.purge_ie) {
-				if (config->ack_ie.header_ie &&
-					config->ack_ie.header_ie->length) {
-					tlx_enh_ack_table_add(tlx->enh_ack_table,
-						short_addr, ext_addr,
-						config->ack_ie.header_ie);
-				} else {
-					tlx_enh_ack_table_remove(tlx->enh_ack_table,
-						short_addr, ext_addr);
-				}
-
+		if (!config->ack_ie.purge_ie) {
+			if (config->ack_ie.header_ie && config->ack_ie.header_ie->length) {
+				tlx_enh_ack_table_add(tlx->enh_ack_table, short_addr, ext_addr,
+						      config->ack_ie.header_ie);
 			} else {
-				tlx_enh_ack_table_remove(tlx->enh_ack_table,
-					short_addr, ext_addr);
+				tlx_enh_ack_table_remove(tlx->enh_ack_table, short_addr, ext_addr);
 			}
+
+		} else {
+			tlx_enh_ack_table_remove(tlx->enh_ack_table, short_addr, ext_addr);
 		}
-		break;
+	} break;
 #endif
 	default:
 		LOG_WRN("Unhandled cfg %d", type);
@@ -1701,24 +1672,21 @@ static struct ieee802154_radio_api tlx_radio_api = {
 	.get_sch_acc = tlx_get_sch_acc,
 };
 
-
 #if defined(CONFIG_NET_L2_IEEE802154)
-#define L2 IEEE802154_L2
+#define L2          IEEE802154_L2
 #define L2_CTX_TYPE NET_L2_GET_CTX_TYPE(IEEE802154_L2)
-#define MTU 125
+#define MTU         125
 #elif defined(CONFIG_NET_L2_OPENTHREAD)
-#define L2 OPENTHREAD_L2
+#define L2          OPENTHREAD_L2
 #define L2_CTX_TYPE NET_L2_GET_CTX_TYPE(OPENTHREAD_L2)
-#define MTU 1280
+#define MTU         1280
 #endif
 
 /* IEEE802154 driver registration */
 #if defined(CONFIG_NET_L2_IEEE802154) || defined(CONFIG_NET_L2_OPENTHREAD)
-NET_DEVICE_DT_INST_DEFINE(0, tlx_init, NULL, &data, NULL,
-			  CONFIG_IEEE802154_TLX_INIT_PRIO,
+NET_DEVICE_DT_INST_DEFINE(0, tlx_init, NULL, &data, NULL, CONFIG_IEEE802154_TLX_INIT_PRIO,
 			  &tlx_radio_api, L2, L2_CTX_TYPE, MTU);
 #else
-DEVICE_DT_INST_DEFINE(0, tlx_init, NULL, &data, NULL,
-		      POST_KERNEL, CONFIG_IEEE802154_TLX_INIT_PRIO,
+DEVICE_DT_INST_DEFINE(0, tlx_init, NULL, &data, NULL, POST_KERNEL, CONFIG_IEEE802154_TLX_INIT_PRIO,
 		      &tlx_radio_api);
 #endif

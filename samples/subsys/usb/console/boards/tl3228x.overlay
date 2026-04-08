@@ -17,5 +17,6 @@
 };
 
 &cpu0 {
-	clock-frequency = <96000000>;		/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
+	/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
+	clock-frequency = <96000000>;
 };

@@ -28,6 +28,13 @@ void __wrap_main(void)
 	}
 }
 
+void print_buffer(uint8_t *buffer, size_t size)
+{
+	for (size_t i = 0; i < size; i++) {
+		printk("%c", buffer[i]);
+	}
+}
+
 /* Vendor specific code during MCUBoot startup */
 static bool telink_tlx_mcu_boot_startup(void)
 {
@@ -41,9 +48,8 @@ static bool telink_tlx_mcu_boot_startup(void)
 
 	if (device_is_ready(uart_con)) {
 
-	/* Use the uart corresponding to your zephyr_console configuration */
-		#define UART_RX_PINMUX \
-			DT_PROP(DT_PINCTRL_BY_IDX(DT_NODELABEL(uart0), 0, 1), pinmux)
+/* Use the uart corresponding to your zephyr_console configuration */
+#define UART_RX_PINMUX DT_PROP(DT_PINCTRL_BY_IDX(DT_NODELABEL(uart0), 0, 1), pinmux)
 		gpio_pin_e uart_rx = TLX_PINMUX_GET_PIN(UART_RX_PINMUX);
 
 		/* Disable The UART RX PIN */
@@ -68,6 +74,7 @@ static bool telink_tlx_mcu_boot_startup(void)
 		extern drv_api_status_e efuse_get_ieee_addr(unsigned char *chip_id_buff);
 		uint8_t chip_id[21] = {0};
 		uint8_t ieee_addr[8] = {0};
+
 		if (efuse_get_ieee_addr(ieee_addr) == DRV_API_SUCCESS) {
 
 			memcpy(chip_id + 2, ieee_addr, 8);
@@ -85,11 +92,4 @@ static bool telink_tlx_mcu_boot_startup(void)
 	}
 #endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
 	return result;
-}
-
-void print_buffer(uint8_t *buffer, size_t size)
-{
-	for (size_t i = 0; i < size; i++) {
-		printk("%c", buffer[i]);
-	}
 }

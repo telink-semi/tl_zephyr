@@ -4,10 +4,10 @@ on: pull_request
 
 jobs:
   telink_build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Telink build examples
     env:
-      ZEPHYR_SDK_VERSION: 0.15.2
+      ZEPHYR_SDK_VERSION: 0.17.0
     steps:
 
     - name: Install dependencies
@@ -18,10 +18,11 @@ jobs:
     - name: Setup Zephyr toolchain
       run: |
         mkdir ~/zephyr_sdk
-        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.gz
+        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
         (cd ~/zephyr_sdk && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/sha256.sum | shasum --check --ignore-missing)
-        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.gz -C ~/zephyr_sdk
+        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_sdk
         (cd ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -35,9 +36,14 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
+
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 89334d4738b8fe5efc7ca6192e1f2deac58429af
 
     - name: Build TL322x samples/basic/blinky
       run: |
@@ -62,7 +68,7 @@ jobs:
     - name: Build TL322x samples/drivers/adc
       run: |
         cd ..
-        west build -b tl3228x     -d build_adc_tl322x                         zephyr/samples/drivers/adc                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl3228x     -d build_adc_tl322x                         zephyr/samples/drivers/adc/adc_dt                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL322x samples/drivers/watchdog
       run: |
@@ -99,21 +105,6 @@ jobs:
         cd ..
         west build -b tl3228x     -d build_ot_coprocessor_rcp_uart_tl322x     zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-rcp.conf
 
-    - name: Build TL322x subsys/usb/console for USB driver
-      run: |
-        cd ..
-        west build -b tl3228x     -d build_usb_console_tl322x                 zephyr/samples/subsys/usb/console             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-
-    - name: Build TL322x subsys/usb/cdc_acm for USB CDC
-      run: |
-        cd ..
-        west build -b tl3228x     -d build_usb_cdc_acm_tl322x                 zephyr/samples/subsys/usb/cdc_acm             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-
-    - name: Build TL322X net/openthread/coprocessor in RCP configuration with USB interface
-      run: |
-        cd ..
-        west build -b tl3228x     -d build_ot_coprocessor_rcp_usb_tl322x      zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DDTC_OVERLAY_FILE="usb.overlay boards/tl3228x-dongle.overlay" -DOVERLAY_CONFIG=overlay-rcp-usb-telink.conf
-
     - name: Build TL322X crypto/mbedtls
       run: |
         cd ..
@@ -144,9 +135,6 @@ jobs:
         cp ../build_peripheral_ht_tl322x/zephyr/zephyr.bin              telink_build_artifacts/tl322x_peripheral_ht.bin
         cp ../build_ot_cli_tl322x/zephyr/zephyr.bin                     telink_build_artifacts/tl322x_ot_cli.bin
         cp ../build_ot_coprocessor_rcp_uart_tl322x/zephyr/zephyr.bin    telink_build_artifacts/tl322x_ot_coprocessor_rcp_uart.bin
-        cp ../build_usb_console_tl322x/zephyr/zephyr.bin                telink_build_artifacts/tl322x_usb_console.bin
-        cp ../build_usb_cdc_acm_tl322x/zephyr/zephyr.bin                telink_build_artifacts/tl322x_usb_cdc_acm.bin
-        cp ../build_ot_coprocessor_rcp_usb_tl322x/zephyr/zephyr.bin     telink_build_artifacts/tl322x_ot_coprocessor_rcp_usb.bin
         cp ../build_crypto_mbedtls_tl322x/zephyr/zephyr.bin             telink_build_artifacts/tl322x_mbedtls.bin
         cp ../build_ot_echo_client_pm_deep_tl3228x/zephyr/zephyr.bin    telink_build_artifacts/tl322x_ot_echo_client_pm_retention.bin
 

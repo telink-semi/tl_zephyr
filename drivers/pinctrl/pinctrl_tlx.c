@@ -20,7 +20,8 @@
 
 #define DT_DRV_COMPAT telink_tlx_pinctrl
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 /**
  *      GPIO Function Enable Register
  *      ADDR                 PINS
@@ -31,11 +32,13 @@
  *      gpio_en + 4*0x10:    PORT_E[0-7]
  *      gpio_en + 5*0x10:    PORT_F[0-7]
  */
-#define reg_gpio_en(pin) (*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_en) + \
-						((pin >> 8) * 0x10)))
+#define reg_gpio_en(pin)                                                                           \
+	(*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_en) +                    \
+			       ((pin >> 8) * 0x10)))
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 /**
  *      Function Multiplexer Register
  *         ADDR              PINS
@@ -61,11 +64,9 @@
 		(((y) & BIT(30)) ? 30 : (((y) & BIT(31)) ? 31 : 32 \
 		))))))))))))))))))))))))))))))))
 
-#define reg_pin_mux(pin) \
-		(*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, pin_mux) + \
-					((pin >> 8) * 8) + \
-					PINCTR_BIT_LOW_BIT(pin) \
-		))
+#define reg_pin_mux(pin)                                                                           \
+	(*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, pin_mux) + ((pin >> 8) * 8) + \
+			       PINCTR_BIT_LOW_BIT(pin)))
 #endif
 
 /**
@@ -91,10 +92,9 @@
  *      pull_up_en + 16:    PORT_I[0-3]
  *      pull_up_en + 17:    PORT_I[4-7]
  */
-#define reg_pull_up_en(pin) ((uint8_t)(DT_INST_REG_ADDR_BY_NAME(0, pull_up_en) + \
-				       ((pin >> 8) * 2) +			 \
-				       ((pin & 0xf0) ? 1 : 0)))
-
+#define reg_pull_up_en(pin)                                                                        \
+	((uint8_t)(DT_INST_REG_ADDR_BY_NAME(0, pull_up_en) + ((pin >> 8) * 2) +                    \
+		   ((pin & 0xf0) ? 1 : 0)))
 
 #if CONFIG_PM_DEVICE && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 
@@ -113,7 +113,6 @@ static int pinctrl_tlx_pm_action(const struct device *dev, enum pm_device_action
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME:
 		if (pm_has_resumed_from_deep_sleep_retention()) {
-
 		}
 		break;
 
@@ -128,8 +127,8 @@ static int pinctrl_tlx_pm_action(const struct device *dev, enum pm_device_action
 }
 
 PM_DEVICE_DEFINE(pinctrl_tlx_pm, pinctrl_tlx_pm_action);
-DEVICE_DEFINE(pinctrl_tlx, "pinctrl_tlx", pinctrl_tlx_init, PM_DEVICE_GET(pinctrl_tlx_pm),
-	NULL, NULL, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, NULL);
+DEVICE_DEFINE(pinctrl_tlx, "pinctrl_tlx", pinctrl_tlx_init, PM_DEVICE_GET(pinctrl_tlx_pm), NULL,
+	      NULL, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, NULL);
 
 #else
 
@@ -208,7 +207,7 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 		return status;
 	}
 
-	mask = (uint8_t) ~(BIT(offset) | BIT(offset + 1));
+	mask = (uint8_t)~(BIT(offset) | BIT(offset + 1));
 
 	/* set func value */
 #if CONFIG_SOC_RISCV_TELINK_TL721X
