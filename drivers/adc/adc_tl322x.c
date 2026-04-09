@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT telink_tlx_adc
+#define DT_DRV_COMPAT telink_tl322x_adc
 
 /* Local driver headers */
 #define ADC_CONTEXT_USES_KERNEL_TIMER
@@ -15,11 +15,14 @@
 
 /* Zephyr Logging headers */
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(adc_tlx, CONFIG_ADC_LOG_LEVEL);
+LOG_MODULE_REGISTER(adc_tl322x, CONFIG_ADC_LOG_LEVEL);
 
 /* Telink HAL headers */
 #include <adc.h>
 #include <zephyr/drivers/pinctrl.h>
+#ifdef CONFIG_PM_DEVICE
+#include <zephyr/pm/device.h>
+#endif /* CONFIG_PM_DEVICE */
 
 /* Set ADC resolution value */
 static inline void adc_set_resolution(adc_num_e sar_adc_num,adc_res_e res)
@@ -50,6 +53,10 @@ struct tlx_adc_cfg {
 	uint16_t vref_internal_mv;
 	const struct pinctrl_dev_config *pcfg;
 };
+
+#ifdef CONFIG_PM_DEVICE
+struct adc_channel_cfg tlx_channel_cfg;
+#endif /* CONFIG_PM_DEVICE */
 
 /* Validate ADC data buffer size */
 static int adc_tlx_validate_buffer_size(const struct adc_sequence *sequence)
@@ -427,6 +434,9 @@ static int adc_tlx_channel_setup(const struct device *dev,
 		};
 		adc_channel_sample_init(ADC0, ADC_GPIO_MODE, ADC_M_CHANNEL, &adc_gpio_cfg_m);
 	}
+#ifdef CONFIG_PM_DEVICE
+	memcpy(&tlx_channel_cfg, channel_cfg, sizeof(struct adc_channel_cfg));
+#endif
 	return 0;
 }
 
@@ -446,6 +456,37 @@ static int adc_tlx_read_async(const struct device *dev,
 	return status;
 }
 #endif /* CONFIG_ADC_ASYNC */
+
+#ifdef CONFIG_PM_DEVICE
+__GENERIC_SECTION(.ram_code)
+static int adc_tlx_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	extern volatile bool tlx_deep_sleep_retention;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+	{
+		if (tlx_deep_sleep_retention) {
+			adc_tlx_channel_setup(dev, &tlx_channel_cfg);
+		}
+	}
+	break;
+
+	case PM_DEVICE_ACTION_SUSPEND:
+	{
+
+	}
+	break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+
+PM_DEVICE_DT_INST_DEFINE(0, adc_tlx_pm_action);
+#endif /* CONFIG_PM_DEVICE */
 
 static struct tlx_adc_data data_0 = {
 	ADC_CONTEXT_INIT_TIMER(data_0, ctx),
