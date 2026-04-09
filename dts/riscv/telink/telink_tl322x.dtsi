@@ -275,7 +275,7 @@
 		};
 
 		adc: adc@ea {
-			compatible = "telink,tlx-adc";
+			compatible = "telink,tl322x-adc";
 			reg = <0xea 0x18>;
 			status = "disabled";
 			#io-channel-cells = <1>;

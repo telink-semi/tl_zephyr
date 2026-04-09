@@ -63,7 +63,7 @@ jobs:
     - name: Build TL322x samples/drivers/adc
       run: |
         cd ..
-        west build -b tl3228x     -d build_adc_tl322x                         zephyr/samples/drivers/adc                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl3228x     -d build_adc_tl322x                         zephyr/samples/drivers/adc/adc_dt                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL322x samples/drivers/watchdog
       run: |
