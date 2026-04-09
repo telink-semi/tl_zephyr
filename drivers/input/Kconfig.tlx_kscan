@@ -1,0 +1,11 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig INPUT_TELINK_TLX_KSCAN
+	bool "Telink TLX KSCAN driver"
+	default y
+	depends on DT_HAS_TELINK_TLX_KSCAN_ENABLED
+
+if INPUT_TELINK_TLX_KSCAN
+
+endif # INPUT_TELINK_TLX_KSCAN

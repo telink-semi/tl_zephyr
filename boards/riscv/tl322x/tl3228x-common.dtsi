@@ -9,6 +9,7 @@
 #include <freq.h>
 #include <telink/telink_tl322x.dtsi>
 #include "tl3228x-pinctrl.dtsi"
+#include <zephyr/dt-bindings/input/tl322x-kscan.h>
 
 / {
 	model = "telink,tl322x";
@@ -261,4 +262,13 @@ zephyr_udc0: &usbd {
 
 &wdt {
 	status = "okay";
+};
+
+&tlx_kscan {
+	pinctrl-row = <&kscan_pg3_default>, <&kscan_pg2_default>;
+	pinctrl-col = <&kscan_pg1_default>, <&kscan_pg0_default>;
+	col-pull-type = <TL322X_KSCAN_COL_INT_PULL_DOWN>;
+	debounce-period = <TL322X_KSCAN_DEBOUNCE_PERIOD_8MS>;
+	idle-period = <1>;
+	scan-times = <TL322X_KSCAN_SCAN_TIMES_TRIPLE>;
 };

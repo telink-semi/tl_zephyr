@@ -287,7 +287,8 @@ static int soc_tlx_init(void)
 		break;
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL322X
+/* Clock define not available in SDK */
+#if 0 /* CONFIG_SOC_RISCV_TELINK_TL322X */
 	case CLK_192MHZ:
 		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
@@ -430,7 +431,8 @@ void soc_tlx_restore(void)
 		break;
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL322X
+/* Clock define not available in SDK */
+#if 0 /* CONFIG_SOC_RISCV_TELINK_TL322X */
 	case CLK_192MHZ:
 		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;

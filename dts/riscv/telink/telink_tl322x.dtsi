@@ -294,5 +294,13 @@
 			reg = <0x140140 0x10>;
 			status = "disabled";
 		};
+
+		tlx_kscan: tlx-kscan@80140700 {
+			compatible = "telink,tlx-kscan";
+			reg = <0x80140700 0x40>;
+			interrupts = <61 1>;
+			interrupt-parent = <&plic0>;
+			status = "disabled";
+		};
 	};
 };

@@ -109,4 +109,19 @@
 	adc_pc7_default: adc_pc7_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_7, TL322X_FUNC_DEFAULT)>;
 	};
+
+	/* KSCAN: ROW(PG3, PG2), COL(PG1, PG0) */
+	kscan_pg0_default: kscan_pg0_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_0, TL322X_FUNC_DEFAULT)>;
+	};
+	kscan_pg1_default: kscan_pg1_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_1, TL322X_FUNC_DEFAULT)>;
+	};
+	kscan_pg2_default: kscan_pg2_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_2, TL322X_FUNC_DEFAULT)>;
+	};
+	kscan_pg3_default: kscan_pg3_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_3, TL322X_FUNC_DEFAULT)>;
+	};
+
 };

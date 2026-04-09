@@ -8,6 +8,7 @@ menu "Input drivers"
 source "drivers/input/Kconfig.ft5336"
 source "drivers/input/Kconfig.gpio_keys"
 source "drivers/input/Kconfig.sdl"
+source "drivers/input/Kconfig.tlx_kscan"
 
 endmenu # Input Drivers
 

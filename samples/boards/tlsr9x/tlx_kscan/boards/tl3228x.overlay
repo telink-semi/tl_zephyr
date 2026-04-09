@@ -1,0 +1,5 @@
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+&tlx_kscan {
+	status = "okay";
+};
