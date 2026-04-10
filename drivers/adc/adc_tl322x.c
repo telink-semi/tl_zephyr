@@ -45,7 +45,7 @@ struct tlx_adc_data {
 	struct k_sem acq_sem;
 	struct k_thread thread;
 
-	K_THREAD_STACK_MEMBER(stack, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE);
+	K_KERNEL_STACK_MEMBER(stack, CONFIG_ADC_TLX_ACQUISITION_THREAD_STACK_SIZE);
 };
 
 struct tlx_adc_cfg {

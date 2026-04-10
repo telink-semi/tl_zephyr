@@ -199,7 +199,7 @@ void soc_load_rf_parameters_deep_retention(void)
 }
 #endif
 
-#if CONFIG_PM
+#if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL323X
 #define RST_BIT_CLR(x, n)    ((x) |= (n))
 #define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
 __attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((optimize("O2")))
