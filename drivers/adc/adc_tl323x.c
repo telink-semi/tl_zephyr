@@ -96,7 +96,7 @@ static sd_adc_p_input_pin_def_e adc_tl323x_get_p_pin(uint8_t dt_pin)
 
     return adc_pin;
 }
-
+#if 0
 /* Convert dts pin to tl323x SDK negative pin */
 static sd_adc_n_input_pin_def_e adc_tl323x_get_n_pin(uint8_t dt_pin)
 {
@@ -140,7 +140,7 @@ static sd_adc_n_input_pin_def_e adc_tl323x_get_n_pin(uint8_t dt_pin)
 
     return adc_pin;
 }
-
+#endif
 /* Helper function to set up sampling frequency */
 static int adc_tl323x_setup_sample_freq(uint32_t sample_freq, sd_adc_sample_clk_freq_e *sample_clk)
 {
