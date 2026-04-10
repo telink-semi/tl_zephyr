@@ -161,7 +161,6 @@ static int pwm_tlx_pm_action(const struct device *dev, enum pm_device_action act
 			}
 		}
 	}
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
