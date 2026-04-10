@@ -931,13 +931,17 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X
 				if(tl_rf_is_inited()){
+#endif
 					rf_baseband_reset();
 					rf_reset_dma();
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X
 				}
 				else{
 					tl_rf_change_to_inited();
 				}
+#endif
 
 				tlx->rf_mode_154 = true;
 			}
