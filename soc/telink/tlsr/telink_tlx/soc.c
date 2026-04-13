@@ -33,7 +33,7 @@
 #endif
 
 /* Drivers changes for hal_v2, so should not change castart.s, add external*/
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
 __attribute__((section(".ram_code_retention"))) __attribute__((noinline))
 void pm_retention_register_recover(void){
@@ -334,9 +334,9 @@ void soc_early_init_hook(void)
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
-		#if CONFIG_PM
-			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
-		#endif /* CONFIG_PM  */
+#if CONFIG_PM
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
+#endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
@@ -373,7 +373,9 @@ void soc_early_init_hook(void)
 	//	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_96MHZ:
+#if CONFIG_PM
 		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
+#endif /* CONFIG_PM  */
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
@@ -487,10 +489,10 @@ void soc_tlx_restore(void)
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
-		#if CONFIG_PM
-			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
-			gen_fsk_close_unused_clock();
-		#endif /* CONFIG_PM  */
+#if CONFIG_PM
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
+		gen_fsk_close_unused_clock();
+#endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
@@ -527,7 +529,9 @@ void soc_tlx_restore(void)
 	//	break;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_96MHZ:
+#if CONFIG_PM
 		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
+#endif /* CONFIG_PM  */
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif

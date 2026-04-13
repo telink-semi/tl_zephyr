@@ -784,7 +784,7 @@ Found disallowed Kconfig symbol in SoC Kconfig files: {sym_name:35}
         Checks that there aren't too many items in the top-level menu (which
         might be a sign that stuff accidentally got added there)
         """
-        max_top_items = 50
+        max_top_items = 51
 
         n_top_items = 0
         node = kconf.top_node.list

@@ -13,116 +13,103 @@
 
 #include "rf_common.h"
 
-#define rf_stimer_get_tick() stimer_get_tick()
-#define RF_SYSTEM_TIMER_TICK_1US   SYSTEM_TIMER_TICK_1US
+#define rf_stimer_get_tick()     stimer_get_tick()
+#define RF_SYSTEM_TIMER_TICK_1US SYSTEM_TIMER_TICK_1US
 
-#define RF_CRC_LENGTH   3
-#define pp_rf_packet_crc_ok(p)            ((p[(p[5]+13+RF_CRC_LENGTH)] & 0x01) == 0x0)
-
+#define RF_CRC_LENGTH          3
+#define pp_rf_packet_crc_ok(p) ((p[(p[5] + 13 + RF_CRC_LENGTH)] & 0x01) == 0x0)
 
 extern int device_ack_received;
 extern const unsigned char rf_chn[];
 extern uint8_t device_status;
 
-
-typedef enum
-{
-	RF_IDLE_STATUS =	0,
-    RF_TX_START_STATUS=1,
-    RF_TX_END_STATUS=2,
-    RF_RX_START_STATUS=3,
-    RF_RX_END_STATUS=4,
-	RF_RX_TIMEOUT_STATUS=5,
-
-}APP_RF_STATUS_E;
+typedef enum {
+	RF_IDLE_STATUS = 0,
+	RF_TX_START_STATUS = 1,
+	RF_TX_END_STATUS = 2,
+	RF_RX_START_STATUS = 3,
+	RF_RX_END_STATUS = 4,
+	RF_RX_TIMEOUT_STATUS = 5,
+} APP_RF_STATUS_E;
 extern volatile unsigned int rf_status;
 
-enum
-{
-    EMPTY_CMD = 0x00,
-    EMPTY_ACK_CMD = 1,
+enum {
+	EMPTY_CMD = 0x00,
+	EMPTY_ACK_CMD = 1,
 
-    PAIR_CMD=2,//pair cmd
-    PAIR_ACK_CMD=3,//pair ack cmd
+	PAIR_CMD = 2,     /* pair cmd */
+	PAIR_ACK_CMD = 3, /* pair ack cmd */
 
-	MOUSE_CMD=4,//mouse cmd
-	MOUSE_ACK_CMD=5,//mouse ack cmd
+	MOUSE_CMD = 4,     /* mouse cmd */
+	MOUSE_ACK_CMD = 5, /* mouse ack cmd */
 
-	KB_CMD=6,//kb cmd
-	KB_ACK_CMD=7,//kb ack cmd
+	KB_CMD = 6,     /* kb cmd */
+	KB_ACK_CMD = 7, /* kb ack cmd */
 
-	RECONNECT_CMD=8,//reconnect cmd
-	RECONNECT_ACK_CMD=9,//reconnect ack cmd
+	RECONNECT_CMD = 8,     /* reconnect cmd */
+	RECONNECT_ACK_CMD = 9, /* reconnect ack cmd */
 
-	D24G_OTA_CMD = 10, //ota cmd
-	D24G_OTA_ACK_CMD = 11, //ota ack cmd
+	D24G_OTA_CMD = 10,     /* ota cmd */
+	D24G_OTA_ACK_CMD = 11, /* ota ack cmd */
 };
 
+typedef struct {
+	uint32_t dma_len; /* dma len */
 
-typedef struct{
-    uint32_t dma_len;//dma len
-
-    uint8_t rf_len; //rf len
-    uint8_t  dat[59];
+	uint8_t rf_len; /* rf len */
+	uint8_t dat[59];
 } rf_packet_t;
 
-typedef struct
-{
-	uint8_t cmd;//data type
+typedef struct {
+	uint8_t cmd; /* data type */
 	uint8_t seq_no;
 	uint8_t pno_no;
 	uint8_t resv;
-	uint32_t did;//device id
-	uint8_t key[12]; //key
-} pair_data_t;//pair data struct
+	uint32_t did;    /* device id */
+	uint8_t key[12]; /* key */
+} pair_data_t;           /* pair data struct */
 
-typedef struct
-{
-	uint8_t cmd;//data type
+typedef struct {
+	uint8_t cmd; /* data type */
 	uint8_t seq_no;
 	uint8_t pno_no;
 	uint8_t resv;
 	uint8_t tick_0;
 	uint8_t tick_1;
 	uint8_t chn;
-	uint8_t host_led_status;//host led status
+	uint8_t host_led_status; /* host led status */
 
-	uint32_t gid;	//dongle ID
-	uint32_t did;	//Device ID
-	uint8_t key[12]; //key
+	uint32_t gid;    /* dongle ID */
+	uint32_t did;    /* Device ID */
+	uint8_t key[12]; /* key */
 
-} pair_ack_data_t;	//Paired ACK packet
+} pair_ack_data_t; /* Paired ACK packet */
 
-
-typedef struct
-{
-	uint8_t	cmd;//bit7=0: no aes  =1: aes
-	uint8_t	seq_no;	//The frame serial number
-	uint8_t	pn_no;	//
+typedef struct {
+	uint8_t cmd;    /* bit7=0: no aes  =1: aes */
+	uint8_t seq_no; /* The frame serial number */
+	uint8_t pn_no;
 	uint8_t key_type;
-	uint32_t did;	//Device ID
-	uint8_t  km_dat[8];//mouse data or kb
+	uint32_t did;      /* Device ID */
+	uint8_t km_dat[8]; /* mouse data or kb */
 
-	uint16_t crc16;	//Software CRC16
+	uint16_t crc16; /* Software CRC16 */
 
-} km_data_t;	//Communication packet
+} km_data_t; /* Communication packet */
 
-typedef struct
-{
+typedef struct {
 
-	uint8_t cmd;//data type
-	uint8_t seq_no;	//The frame serial number
+	uint8_t cmd;    /* data type */
+	uint8_t seq_no; /* The frame serial number */
 	uint8_t pno_no;
 	uint8_t tick_0;
 	uint8_t tick_1;
-	uint8_t chn;//chanel
-	uint8_t host_led_status;//host led status
+	uint8_t chn;             /* chanel */
+	uint8_t host_led_status; /* host led status */
 	uint8_t resv;
-} km_ack_data_t;//km ack data struct
+} km_ack_data_t; /* km ack data struct */
 
-
-typedef enum
-{
+typedef enum {
 	RP_125,
 	RP_250,
 	RP_500,
@@ -130,28 +117,23 @@ typedef enum
 	RP_2000,
 	RP_4000,
 	RP_8000,
-}REPORT_RATE;
+} REPORT_RATE;
 
-
-
-typedef struct{
+typedef struct {
 	uint8_t map[5];
 	uint8_t table[37];
 	uint8_t hop;
 	signed char idx;
 } rf_channel_param_t;
 
-
-
-typedef struct
-{
+typedef struct {
 	uint32_t side_id;
 
 	uint8_t dev_now_status;
 	uint8_t pair_success_flag;
 	uint8_t rsv[2];
 } app_async_st;
-extern app_async_st  app_inf;
+extern app_async_st app_inf;
 
 /**
 *  @brief	 Passing spp data (not mouse) to the underlying protocol layer
@@ -162,7 +144,7 @@ extern app_async_st  app_inf;
 *  @return	0:success  ,other :fail
 */
 
-int pp_notify_spp(uint8_t cmd,uint8_t *buf,int length);
+int pp_notify_spp(uint8_t cmd, uint8_t *buf, int length);
 /**
  * @brief   2.4g rf init
  * @param[in]   none
@@ -209,15 +191,13 @@ void pp_set_cconnect_timeout(int timeoout_ms);
 
 void pp_timer0_init(void);
 
-
- /**
-  *  @brief	 get fifo number
-  *  @param[in]  none
-  *  @return	 fifo  number
+/**
+ *  @brief   get fifo number
+ *  @param[in]  none
+ *  @return  fifo  number
  */
 
 uint32_t pp_get_rf_tx_fifo_num(void);
-
 
 _attribute_ram_code_sec_ uint8_t get_next_channel_with_mask(uint32_t mask, uint8_t chn);
 
@@ -249,4 +229,4 @@ extern "C" {
 }
 #endif
 
-#endif // __APP_2P4G_H__
+#endif /* __APP_2P4G_H__  */

@@ -74,9 +74,9 @@ void idle(void *unused1, void *unused2, void *unused3)
 	 (defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)))
 
 #if CONFIG_BT_B9X
-		#include "b9x_bt.h"
+#include "b9x_bt.h"
 #else
-		#include "tlx_bt.h"
+#include "tlx_bt.h"
 #endif
 		extern uint32_t blc_ll_checkBleRfFsmIsBusy(void);
 

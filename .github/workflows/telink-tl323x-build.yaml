@@ -43,7 +43,7 @@ jobs:
       run: |
         cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk.git 20eb59b1003eec87e547eac663a6e0a97b70947
 
     - name: Build TL323x samples/basic/blinky
       run: |

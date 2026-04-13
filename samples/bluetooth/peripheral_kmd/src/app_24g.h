@@ -15,63 +15,46 @@
 
 typedef void (*p24g_sm_cmd_handler_t)(uint8_t *data, uint16_t len);
 
-// enum {
-//     EMPTY_DATA_CMD=0,
-//     PAIR_DATA_CMD=1,
-//     RECONNECT_DATA_CMD=2,
-//     MOUSE_DATA=3,
-//     SPP_DATA=4,
-//     SPP_DATA_ACK=5,
-//     NORMAL_KB_DATA_CMD=6,
-//     CONSUME_KB_DATA_CMD=7,
-//     SYSTEM_KB_DATA_CMD=8,
-//     ALL_KB_DATA_CMD=9,
-// };
-
 /* Definition of mailbox 2.4g packet types */
 typedef enum {
-    P24G_MB_CMD_NONE = 0x00,
-    P24G_MB_CMD_USB  = 0x01,
+	P24G_MB_CMD_NONE = 0x00,
+	P24G_MB_CMD_USB = 0x01,
 } p24g_mailbox_cmd_e;
 
 typedef enum {
-    P24G_USB_OP_EP_WRITE = 0x00,
-    P24G_USB_OP_EP_READ  = 0x01,
+	P24G_USB_OP_EP_WRITE = 0x00,
+	P24G_USB_OP_EP_READ = 0x01,
 } p24g_usb_opcode_e;
 
-typedef enum
-{
-    CLOCK_CONFIG_1V1_192_96  = 0,
-    CLOCK_CONFIG_1V1_96_96,
-    CLOCK_CONFIG_1V1_48_48,
-    CLOCK_CONFIG_1V_72_36,
-    CLOCK_CONFIG_1V_64_32,
-    CLOCK_CONFIG_1V_48_24,
+typedef enum {
+	CLOCK_CONFIG_1V1_192_96 = 0,
+	CLOCK_CONFIG_1V1_96_96,
+	CLOCK_CONFIG_1V1_48_48,
+	CLOCK_CONFIG_1V_72_36,
+	CLOCK_CONFIG_1V_64_32,
+	CLOCK_CONFIG_1V_48_24,
 } app_clock_config_e;
 
 /* Generic event header */
-typedef struct p24g_evt
-{
-    uint8_t type;
-    uint8_t opcode;
-    uint8_t len;
-    uint8_t data[0];
+typedef struct p24g_evt {
+	uint8_t type;
+	uint8_t opcode;
+	uint8_t len;
+	uint8_t data[0];
 } __attribute__((packed)) p24g_evt_t;
 
 /* USB packet header */
-typedef struct p24g_usb_packet_header
-{
-    uint8_t ep_addr;
-    uint8_t len;
-    uint8_t data[0];
+typedef struct p24g_usb_packet_header {
+	uint8_t ep_addr;
+	uint8_t len;
+	uint8_t data[0];
 } __attribute__((packed)) p24g_usb_pkt_t;
 
 extern volatile p24g_device_status_e g_state;
 
-
 typedef struct {
-    uint8_t rf_mode;
-    uint8_t mac[MAC_ADDR_LEN];
+	uint8_t rf_mode;
+	uint8_t mac[MAC_ADDR_LEN];
 } app_ctx_t;
 extern app_ctx_t app_ctx;
 
@@ -94,7 +77,6 @@ extern app_ctx_t app_ctx;
  */
 uint8_t p24g_register_sm_cmd_handler(p24g_sm_cmd_e cmd, p24g_sm_cmd_handler_t handler);
 
-
 /**
  * @brief     Shared memory (SM) receive callback for 2.4GHz D25F core
  *
@@ -113,7 +95,6 @@ uint8_t p24g_register_sm_cmd_handler(p24g_sm_cmd_e cmd, p24g_sm_cmd_handler_t ha
  * @return    None
  */
 void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint32_t len);
-
 
 /**
  * @brief     Send a shared memory (SM) message in the 2.4GHz protocol
@@ -134,9 +115,7 @@ void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint32_t len);
  *            is fully copied or processed by the receiving core.
  *
  */
-uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op,  uint8_t *data, uint8_t len);
-
-
+uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint8_t *data, uint8_t len);
 
 /**
  * @brief     Send SPP (Serial Port Profile) data through 2.4GHz protocol
@@ -170,7 +149,6 @@ uint8_t p24g_send_spp_data(uint8_t cmd, unsigned char *data, unsigned char len);
  */
 uint8_t p24g_enable_pairing(bool enable);
 
-
 /**
  * @brief     Terminate the current 2.4GHz connection
  *
@@ -192,7 +170,6 @@ uint8_t p24g_enable_pairing(bool enable);
  */
 uint8_t p24g_terminate_connect(void);
 
-
 /**
  * @brief     Put the 2.4GHz RF module into idle state
  *
@@ -213,7 +190,6 @@ uint8_t p24g_terminate_connect(void);
  */
 uint8_t p24g_rf_enter_idle(void);
 
-
 /**
  * @brief     Enable or disable the 2.4GHz automatic reconnection feature
  *
@@ -230,7 +206,6 @@ uint8_t p24g_rf_enter_idle(void);
  *
  */
 uint8_t p24g_enable_reconn(bool enable);
-
 
 /**
  * @brief     Initialize 2.4GHz application module
@@ -297,7 +272,7 @@ void app_2p4g_main_loop(void);
  * @note       This function should be registered as the mailbox callback
  *             for keyboard/mouse data reception in the 2.4GHz stack.
  */
-void app_2p4g_mb_km_data_cb(uint8_t* data);
+void app_2p4g_mb_km_data_cb(uint8_t *data);
 
 /**
  * @brief     Get the current 2.4GHz device state
@@ -313,7 +288,7 @@ void app_2p4g_mb_km_data_cb(uint8_t* data);
  */
 static inline p24g_device_status_e app_d24p_get_state(void)
 {
-    return g_state;
+	return g_state;
 }
 
 /**
@@ -333,7 +308,7 @@ static inline p24g_device_status_e app_d24p_get_state(void)
  */
 static inline void app_d24p_set_state(p24g_device_status_e state)
 {
-    g_state = state;
+	g_state = state;
 }
 
 /**
@@ -365,15 +340,12 @@ static inline void app_d24p_set_state(p24g_device_status_e state)
  */
 void app_2p4g_clock_reover(void);
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // __APP_2P4G_H__
+#endif /* __APP_2P4G_H__  */

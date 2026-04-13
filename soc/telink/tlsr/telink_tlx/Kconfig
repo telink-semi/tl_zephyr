@@ -53,7 +53,7 @@ config TELINK_TL323X_PMP
 
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on SOC_SERIES_RISCV_TELINK_TLX && MBEDTLS
+	depends on MBEDTLS
 	default y
 	help
 		This option enables Telink TLx hardware accelerated mbedtls version.

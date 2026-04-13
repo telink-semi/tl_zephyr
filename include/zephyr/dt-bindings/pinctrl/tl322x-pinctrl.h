@@ -223,4 +223,4 @@
 #define TLX_PINMUX_GET_PIN(pinmux)        ((pinmux >> TLX_PIN_POS) & TLX_PIN_MSK)
 #define TLX_PINMUX_GET_PIN_ID(pinmux)     ((pinmux >> TLX_PIN_POS) & TLX_PIN_ID_MSK)
 
-#endif  /* ZEPHYR_TL322X_PINCTRL_COMMON_H_ */
+#endif /* ZEPHYR_TL322X_PINCTRL_COMMON_H_ */
