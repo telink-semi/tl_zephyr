@@ -28,6 +28,13 @@ void __wrap_main(void)
 	}
 }
 
+void print_buffer(uint8_t *buffer, size_t size)
+{
+	for (size_t i = 0; i < size; i++) {
+		printk("%c", buffer[i]);
+	}
+}
+
 /* Vendor specific code during MCUBoot startup */
 static bool telink_tlx_mcu_boot_startup(void)
 {
@@ -85,11 +92,4 @@ static bool telink_tlx_mcu_boot_startup(void)
 	}
 #endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
 	return result;
-}
-
-void print_buffer(uint8_t *buffer, size_t size)
-{
-	for (size_t i = 0; i < size; i++) {
-		printk("%c", buffer[i]);
-	}
 }
