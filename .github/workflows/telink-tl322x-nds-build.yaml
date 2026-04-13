@@ -42,10 +42,9 @@ jobs:
 
     - name: Fetch Telink BLE SDK
       run: |
-        cd modules/hal/telink/hal_v2
+        cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
         ./fetch_sdk.sh
-        cd -
 
     - name: Build TL322x samples/basic/blinky
       run: |
