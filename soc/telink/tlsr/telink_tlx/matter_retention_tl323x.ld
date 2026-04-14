@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2024 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "telink_tlx_regions.ld"
+
+/*
+ * Moving BLE library sections (without suffix) to RAM DLM (non-retention)
+ */
+SECTION_DATA_PROLOGUE(ram_dlm_data,,)
+{
+	. = ALIGN(4);
+	*(.data)
+	*(.sdata)
+	*(.retention_data_ble)
+	*(".retention_data_ble.*")
+	PROVIDE (_RAM_DLM_DATA_VMA_END = .);
+	PROVIDE (_RAM_DLM_DATA_VMA_START = ADDR(ram_dlm_data));
+	PROVIDE (_RAM_DLM_DATA_LMA_START = LOADADDR(ram_dlm_data));
+} GROUP_DATA_LINK_IN(TELINK_RAM_DATA_REGION, ROMABLE_REGION)
+
+SECTION_DATA_PROLOGUE(ram_dlm_bss,(NOLOAD),)
+{
+	. = ALIGN(4);
+	*(.bss)
+
+	/* Arrange a portion of the RAM to RAM_ILM_N to free RAM space for use
+	 * Moving the "malloc_arena" of noinit_ilm section to ram_dlm_bss
+	 */
+	"*malloc.c.obj*"(".noinit.*")
+
+	PROVIDE (_RAM_DLM_BSS_VMA_END = .);
+	PROVIDE (_RAM_DLM_BSS_VMA_START = ADDR(ram_dlm_bss));
+	PROVIDE (_RAM_DLM_BSS_LMA_START = LOADADDR(ram_dlm_bss));
+} GROUP_DATA_LINK_IN(TELINK_RAM_DATA_REGION, TELINK_RAM_DATA_REGION)
+
+/*
+ * Moving BLE relative ramcode to special section
+ */
+SECTION_DATA_PROLOGUE(ram_code_ble,,)
+{
+	. = ALIGN(4);
+	*(.ram_code_ble)
+	*(".ram_code_ble.*")
+	"*tlx_bt.c.obj*"(.ram_code)
+
+	PROVIDE (_RAMCODE_BLE_VMA_END = .);
+	PROVIDE (_RAMCODE_BLE_VMA_START = ADDR(ram_code_ble));
+	PROVIDE (_RAMCODE_BLE_LMA_START = LOADADDR(ram_code_ble));
+} GROUP_DATA_LINK_IN(TELINK_RAM_CODE_BLE_REGION, ROMABLE_REGION)
