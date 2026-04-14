@@ -575,6 +575,11 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 	struct tlx_data *tlx = dev->data;
 	uint8_t ack_buf[64];
 	size_t ack_len;
+
+	rf_set_txmode();
+	rf_clr_irq_mask(FLD_RF_IRQ_TX); /* clear TX interrupt mask bit */
+	unsigned int t0 = stimer_get_tick();
+
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	const uint8_t *key = NULL;
 	uint32_t frame_cnt = 0;
@@ -617,9 +622,6 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 #endif
 
 	if (tlx_ieee802154_frame_build(frame, ack_buf, sizeof(ack_buf), &ack_len)) {
-		tlx->ack_sending = true;
-		k_sem_reset(&tlx->tx_wait);
-		rf_set_txmode();
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 		if (frame->general.se_bit) {
 			if (!ieee802154_tlx_crypto_encrypt(
@@ -630,14 +632,20 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 				    THREAD_FRAME_SECCTRL_MIC_LENGTH)) {
 				LOG_WRN("encrypt ack failed");
 			}
-		} else {
-			delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
 		}
-#else
-		delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
 #endif
 		tlx_set_tx_payload(dev, ack_buf, ack_len);
+		unsigned int t1 = (stimer_get_tick() - t0) / SYSTEM_TIMER_TICK_1US;
+
+		if (t1 < CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US) {
+			delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US - t1);
+		}
 		rf_tx_pkt(tlx->tx_buffer);
+		while (!rf_get_irq_status(FLD_RF_IRQ_TX) &&
+		       !clock_time_exceed(stimer_get_tick(), 1000)) {
+		}
+		rf_clr_irq_status(FLD_RF_IRQ_TX);
+		rf_set_irq_mask(FLD_RF_IRQ_TX);
 	} else {
 		LOG_ERR("Failed to create ACK.");
 	}
@@ -718,6 +726,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 #else
 					tlx_handle_ack(dev, payload, length, 0);
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+					tlx->ack_handler_en = false;
 				}
 			}
 			break;
@@ -828,6 +837,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	if (status < 0 && pkt != NULL) {
 		net_pkt_unref(pkt);
 	}
+	rf_set_rxmode();
 	dma_chn_en(DMA1);
 }
 
@@ -840,14 +850,11 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 	/* clear irq status */
 	rf_clr_irq_status(FLD_RF_IRQ_TX);
 
-	/* ack sent */
-	tlx->ack_sending = false;
+	/* set to rx mode */
+	rf_set_rxmode();
 
 	/* release tx semaphore */
 	k_sem_give(&tlx->tx_wait);
-
-	/* set to rx mode */
-	rf_set_rxmode();
 }
 
 /* IRQ handler */
@@ -892,6 +899,7 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 			rf_set_zigbee_250K_mode();
 			tlx_rf_zigbee_250K_mode = true;
 		}
+		rf_set_rx_maxlen(144);
 		rf_set_tx_dma(1, TLX_TRX_LENGTH);
 		rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
 		if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
@@ -913,11 +921,6 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 {
 	/* check if RF is already stopped */
 	if (tlx->is_started) {
-		if (tlx->ack_sending) {
-			if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
-				tlx->ack_sending = false;
-			}
-		}
 		riscv_plic_irq_disable(DT_INST_IRQN(0));
 		rf_set_tx_rx_off();
 #ifdef CONFIG_PM_DEVICE
@@ -1168,13 +1171,6 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		return -ENOTSUP;
 	}
 
-	if (tlx->ack_sending) {
-		if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
-			tlx->ack_sending = false;
-			rf_set_rxmode();
-		}
-	}
-
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 
 	struct ieee802154_frame frame;
@@ -1414,13 +1410,14 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
 		rf_set_rxmode();
 		status = -EIO;
+	} else if ((frag->data[0] & IEEE802154_FRAME_FCF_ACK_REQ_MASK) ==
+		   IEEE802154_FRAME_FCF_ACK_REQ_ON) {
+		tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
+		tlx->ack_handler_en = true;
 	}
 
 	/* wait for ACK if requested */
-	if (!status && (frag->data[0] & IEEE802154_FRAME_FCF_ACK_REQ_MASK) ==
-		IEEE802154_FRAME_FCF_ACK_REQ_ON) {
-		tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
-		tlx->ack_handler_en = true;
+	if (!status && tlx->ack_handler_en) {
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 		if (isThreadCommissioned == true) {
 			plic_interrupt_disable(IRQ_SYSTIMER);
@@ -1436,10 +1433,10 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 #endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 		{
 			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
+				tlx->ack_handler_en = false;
 				status = -ENOMSG;
 			}
 		}
-		tlx->ack_handler_en = false;
 	}
 
 	return status;
