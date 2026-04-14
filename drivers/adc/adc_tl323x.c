@@ -35,6 +35,8 @@ struct tl323x_adc_data {
 	struct k_thread thread;
 	uint8_t mode;
 
+	/* To save resources, the ADC thread will not be created because the user is not using */
+	/* K_KERNEL_STACK_MEMBER(stack, CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE); */
 	K_KERNEL_STACK_MEMBER(stack, CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE);
 };
 
@@ -398,6 +400,14 @@ static int adc_tl323x_init(const struct device *dev)
 			(k_thread_entry_t)adc_tl323x_acquisition_thread, (void *)dev, NULL, NULL,
 			CONFIG_ADC_TL323X_ACQUISITION_THREAD_PRIO, 0, K_NO_WAIT);
 
+	/* To save resources, the ADC thread will not be created because the user is not using */
+	/* k_thread_create(&data->thread, data->stack,
+	 *  CONFIG_ADC_TL323X_ACQUISITION_THREAD_STACK_SIZE,
+	 *  (k_thread_entry_t)adc_tl323x_acquisition_thread,
+	 *  (void *)dev, NULL, NULL,
+	 *  CONFIG_ADC_TL323X_ACQUISITION_THREAD_PRIO,
+	 *  0, K_NO_WAIT);
+	 */
 	adc_context_unlock_unconditionally(&data->ctx);
 
 	return 0;
