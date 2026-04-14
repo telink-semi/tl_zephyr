@@ -123,7 +123,7 @@ jobs:
     - name: Build TL323X bootloader/mcuboot/boot for compressed LZMA image
       run: |
         cd ..
-        west build -b tl3238x     -d build_mcuboot_tl323x_lzma                bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y
+        west build -b tl3238x     -d build_mcuboot_tl323x_lzma                bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y -DCONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE=y
 
     - name: Build TL323X net/sockets/echo_client for OpenThread with PM deep-sleep
       run: |
