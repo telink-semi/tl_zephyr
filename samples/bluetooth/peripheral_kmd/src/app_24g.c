@@ -683,7 +683,7 @@ _attribute_ram_code_sec_ void app_pp_check_connect_status(void)
 		/* print_app_public("d24g_status=%d\r\n", last_connect_status); */
 
 		/* if((app_inf.dev_now_status == STATE_NORMAL)) */
-		if ((app_d24p_get_state() == STATE_CONNECTED)) {
+		if (app_d24p_get_state() == STATE_CONNECTED) {
 			gpio_set_level(PAIR_LED_PIN, LED_IS_ON);
 		}
 	}

@@ -156,6 +156,7 @@ static uint16_t adc_tlx_get_pin(uint16_t dt_pin, bool positive)
 static signed short adc_tlx_get_code(adc_num_e sar_adc_num)
 {
 	signed short adc_code;
+
 	adc_code = adc_get_raw_code(sar_adc_num);
 	return adc_code;
 }
@@ -411,7 +412,7 @@ static int adc_tlx_channel_setup(const struct device *dev,
 	input_positive = (adc_input_pch_e)adc_tlx_get_pin(channel_cfg->input_positive, true);
 	input_negative = (adc_input_nch_e)adc_tlx_get_pin(channel_cfg->input_negative, false);
 	if ((input_positive == (uint16_t)ADC_VBAT_P || input_negative == (uint16_t)ADC_GND_N) &&
-		channel_cfg->differential) {
+	    channel_cfg->differential) {
 		LOG_ERR("VBAT or GND is not available for differential mode.");
 		return -EINVAL;
 	} else if (channel_cfg->differential && (input_negative == (uint16_t)0)) {
