@@ -216,6 +216,7 @@ static int sd_adc_collect_and_calculate_average(struct tl323x_adc_data *data)
 
 	while (cnt < SD_ADC_SAMPLE_CNT) {
 		int sample_cnt = sd_adc_get_rxfifo_cnt();
+
 		if (sample_cnt > 0) {
 			sd_adc_sample_buffer[cnt] = sd_adc_get_raw_code();
 			cnt++;
@@ -226,9 +227,9 @@ static int sd_adc_collect_and_calculate_average(struct tl323x_adc_data *data)
 	for (int i = 1; i < SD_ADC_SAMPLE_CNT; i++) {
 		if (sd_adc_sample_buffer[i] < sd_adc_sample_buffer[i - 1]) {
 			signed int temp = sd_adc_sample_buffer[i];
+
 			sd_adc_sample_buffer[i] = sd_adc_sample_buffer[i - 1];
-			int j;
-			for (j = i - 1; j >= 0 && sd_adc_sample_buffer[j] > temp; j--) {
+			for (int j = i - 1; j >= 0 && sd_adc_sample_buffer[j] > temp; j--) {
 				sd_adc_sample_buffer[j + 1] = sd_adc_sample_buffer[j];
 			}
 			sd_adc_sample_buffer[j + 1] = temp;

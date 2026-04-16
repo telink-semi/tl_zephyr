@@ -1,7 +1,7 @@
 sample:
   name: USB HID keyboard-nested sample
 tests:
-  sample.usb.hid-keyboard-nested
+  sample.usb.hid-keyboard-nested:
     depends_on: usb_device gpio
     harness: button
     filter: dt_alias_exists("sw0") and

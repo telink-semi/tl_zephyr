@@ -45,6 +45,13 @@ jobs:
         chmod +x fetch_sdk.sh
         ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk.git 20eb59b1003eec87e547eac663a6e0a97b70947
 
+    - name: Download and extract TL323X firmware binaries
+      run: |
+        wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl323x_fw/TL323X_FW.zip -O /tmp/TL323X_FW.zip
+        unzip -q /tmp/TL323X_FW.zip -d ${{ github.workspace }}
+        ls -la ${{ github.workspace }}/TL323X_FW/
+        rm -f /tmp/TL323X_FW.zip
+
     - name: Build TL323x samples/basic/blinky
       run: |
         cd ..
