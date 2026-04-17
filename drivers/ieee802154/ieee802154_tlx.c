@@ -864,6 +864,8 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (!shouldPowerDownRFEarly)
+#else
+	if (true)
 #endif
 	{
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
@@ -961,6 +963,8 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 		riscv_plic_irq_enable(DT_INST_IRQN(0));
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 		if (!isThreadCommissioned)
+#else
+		if (true)
 #endif
 		{
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
@@ -1122,6 +1126,8 @@ static int tlx_cca(const struct device *dev)
 		isFirstCcaBeforeTx = false;
 		return 0;
 	} else
+#else
+	if (true)
 #endif
 	{
 		signed int rssi = 0, cnt = 0;

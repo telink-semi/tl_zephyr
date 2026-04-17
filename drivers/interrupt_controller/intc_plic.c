@@ -713,8 +713,8 @@ static int cmd_stats_clear(const struct shell *sh, size_t argc, char *argv[])
 	struct plic_stats stat = data->stats;
 
 	memset(stat.irq_count, 0,
-		   config->nr_irqs *
-			   COND_CODE_1(CONFIG_MP_MAX_NUM_CPUS, (1),
+	       config->nr_irqs *
+		       COND_CODE_1(CONFIG_MP_MAX_NUM_CPUS, (1),
 				   (UTIL_INC(CONFIG_MP_MAX_NUM_CPUS))) *
 							   sizeof(uint16_t));
 
@@ -799,7 +799,7 @@ static int cmd_affinity_get(const struct shell *sh, size_t argc, char **argv)
 
 		if (local_irq >= config->nr_irqs) {
 			shell_error(sh, "local_irq (%d) > nr_irqs (%d)", local_irq,
-					config->nr_irqs);
+				    config->nr_irqs);
 			return -EINVAL;
 		}
 
@@ -825,39 +825,39 @@ SHELL_DYNAMIC_CMD_CREATE(dsub_device_name, device_name_get);
 
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
 SHELL_STATIC_SUBCMD_SET_CREATE(plic_stats_cmds,
-				   SHELL_CMD_ARG(get, &dsub_device_name,
-						 "Read PLIC's stats.\n"
-						 "Usage: plic stats get <device> [minimum hits]",
-						 cmd_stats_get, 2, 1),
-				   SHELL_CMD_ARG(clear, &dsub_device_name,
-						 "Reset PLIC's stats.\n"
-						 "Usage: plic stats clear <device>",
-						 cmd_stats_clear, 2, 0),
-				   SHELL_SUBCMD_SET_END);
+			       SHELL_CMD_ARG(get, &dsub_device_name,
+					     "Read PLIC's stats.\n"
+					     "Usage: plic stats get <device> [minimum hits]",
+					     cmd_stats_get, 2, 1),
+			       SHELL_CMD_ARG(clear, &dsub_device_name,
+					     "Reset PLIC's stats.\n"
+					     "Usage: plic stats clear <device>",
+					     cmd_stats_clear, 2, 0),
+			       SHELL_SUBCMD_SET_END);
 #endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
 
 #ifdef CONFIG_PLIC_SHELL_IRQ_AFFINITY
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	plic_affinity_cmds,
 	SHELL_CMD_ARG(set, &dsub_device_name,
-			  "Set IRQ affinity.\n"
-			  "Usage: plic affinity set <device> <local_irq> <cpumask>",
-			  cmd_affinity_set, 4, 0),
+		      "Set IRQ affinity.\n"
+		      "Usage: plic affinity set <device> <local_irq> <cpumask>",
+		      cmd_affinity_set, 4, 0),
 	SHELL_CMD_ARG(get, &dsub_device_name,
-			  "Get IRQ affinity.\n"
-			  "Usage: plic affinity get <device> <local_irq>",
-			  cmd_affinity_get, 2, 1),
+		      "Get IRQ affinity.\n"
+		      "Usage: plic affinity get <device> <local_irq>",
+		      cmd_affinity_get, 2, 1),
 	SHELL_SUBCMD_SET_END);
 #endif /* CONFIG_PLIC_SHELL_IRQ_AFFINITY */
 
 SHELL_STATIC_SUBCMD_SET_CREATE(plic_cmds,
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
-				   SHELL_CMD(stats, &plic_stats_cmds, "IRQ stats", NULL),
+			       SHELL_CMD(stats, &plic_stats_cmds, "IRQ stats", NULL),
 #endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
 #ifdef CONFIG_PLIC_SHELL_IRQ_AFFINITY
-				   SHELL_CMD(affinity, &plic_affinity_cmds, "IRQ affinity", NULL),
+			       SHELL_CMD(affinity, &plic_affinity_cmds, "IRQ affinity", NULL),
 #endif /* CONFIG_PLIC_SHELL_IRQ_AFFINITY */
-				   SHELL_SUBCMD_SET_END);
+			       SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(plic, &plic_cmds, "PLIC shell commands", NULL);
 #endif /* CONFIG_PLIC_SHELL */
@@ -938,6 +938,6 @@ SHELL_CMD_REGISTER(plic, &plic_cmds, "PLIC shell commands", NULL);
 	PLIC_INTC_CONFIG_INIT(n)                                                                   \
 	PLIC_INTC_DATA_INIT(n)                                                                     \
 	DEVICE_DT_INST_DEFINE(n, &plic_init, NULL, &plic_data_##n, &plic_config_##n, PRE_KERNEL_1, \
-				  CONFIG_INTC_INIT_PRIORITY, NULL);
+			      CONFIG_INTC_INIT_PRIORITY, NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(PLIC_INTC_DEVICE_INIT)
