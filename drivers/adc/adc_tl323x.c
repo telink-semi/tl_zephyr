@@ -97,51 +97,7 @@ static sd_adc_p_input_pin_def_e adc_tl323x_get_p_pin(uint8_t dt_pin)
 
 	return adc_pin;
 }
-#if 0
-/* Convert dts pin to tl323x SDK negative pin */
-static sd_adc_n_input_pin_def_e adc_tl323x_get_n_pin(uint8_t dt_pin)
-{
-	sd_adc_n_input_pin_def_e adc_pin;
 
-	switch (dt_pin) {
-	case DT_ADC_GPIO_PB0:
-		adc_pin = SD_ADC_GPIO_PB0N;
-		break;
-	case DT_ADC_GPIO_PB1:
-		adc_pin = SD_ADC_GPIO_PB1N;
-		break;
-	case DT_ADC_GPIO_PB2:
-		adc_pin = SD_ADC_GPIO_PB2N;
-		break;
-	case DT_ADC_GPIO_PB3:
-		adc_pin = SD_ADC_GPIO_PB3N;
-		break;
-	case DT_ADC_GPIO_PB4:
-		adc_pin = SD_ADC_GPIO_PB4N;
-		break;
-	case DT_ADC_GPIO_PB5:
-		adc_pin = SD_ADC_GPIO_PB5N;
-		break;
-	case DT_ADC_GPIO_PB6:
-		adc_pin = SD_ADC_GPIO_PB6N;
-		break;
-	case DT_ADC_GPIO_PB7:
-		adc_pin = SD_ADC_GPIO_PB7N;
-		break;
-	case DT_ADC_GPIO_PD0:
-		adc_pin = SD_ADC_GPIO_PD0N;
-		break;
-	case DT_ADC_GPIO_PD1:
-		adc_pin = SD_ADC_GPIO_PD1N;
-		break;
-	default:
-		adc_pin = SD_ADC_GNDN;
-		break;
-	}
-
-	return adc_pin;
-}
-#endif
 /* Helper function to set up sampling frequency */
 static int adc_tl323x_setup_sample_freq(uint32_t sample_freq, sd_adc_sample_clk_freq_e *sample_clk)
 {
@@ -194,7 +150,7 @@ static int adc_tl323x_setup_downsample_rate(uint32_t downsample_rate,
  */
 static int sd_adc_collect_and_calculate_average(struct tl323x_adc_data *data)
 {
-	signed int sd_adc_sample_buffer[SD_ADC_SAMPLE_CNT] __attribute__((aligned(4))) = {0};
+	signed int sd_adc_sample_buffer[SD_ADC_SAMPLE_CNT] __aligned(4) = {0};
 	signed int code_average = 0;
 
 	/* Enable ADC and start sampling */
@@ -227,9 +183,10 @@ static int sd_adc_collect_and_calculate_average(struct tl323x_adc_data *data)
 	for (int i = 1; i < SD_ADC_SAMPLE_CNT; i++) {
 		if (sd_adc_sample_buffer[i] < sd_adc_sample_buffer[i - 1]) {
 			signed int temp = sd_adc_sample_buffer[i];
+			int j;
 
 			sd_adc_sample_buffer[i] = sd_adc_sample_buffer[i - 1];
-			for (int j = i - 1; j >= 0 && sd_adc_sample_buffer[j] > temp; j--) {
+			for (j = i - 1; j >= 0 && sd_adc_sample_buffer[j] > temp; j--) {
 				sd_adc_sample_buffer[j + 1] = sd_adc_sample_buffer[j];
 			}
 			sd_adc_sample_buffer[j + 1] = temp;
@@ -454,6 +411,7 @@ static int adc_tl323x_pm_action(const struct device *dev, enum pm_device_action 
 	case PM_DEVICE_ACTION_RESUME: {
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		extern volatile bool tlx_deep_sleep_retention;
+
 		if (tlx_deep_sleep_retention) {
 			adc_tl323x_channel_setup(dev, &tl323x_channel_cfg);
 		}

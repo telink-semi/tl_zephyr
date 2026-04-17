@@ -344,6 +344,7 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 	}
 #elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
+
 	if (irq == IRQ_GPIO0) {
 		BM_SET(reg_gpio_irq0_en(gpio_pin_elem), BIT(pin));
 	} else if (irq == IRQ_GPIO1) {
@@ -400,6 +401,7 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 	}
 #elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
+
 	if (irq == IRQ_GPIO0) {
 		BM_CLR(reg_gpio_irq0_en(gpio_pin_elem), BIT(pin));
 	} else if (irq == IRQ_GPIO1) {
@@ -461,6 +463,7 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 	}
 #elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8);
+
 	if (irq == IRQ_GPIO0) {
 		status = reg_gpio_irq0_en(gpio_pin_elem);
 	} else if (irq == IRQ_GPIO1) {
