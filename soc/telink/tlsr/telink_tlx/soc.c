@@ -8,7 +8,9 @@
 #include <clock.h>
 #include <gpio.h>
 #include <ext_driver/ext_pm.h>
+#if !CONFIG_SOC_RISCV_TELINK_TL523X
 #include "rf_common.h"
+#endif
 #include "flash.h"
 #include <watchdog.h>
 #include <zephyr/kernel.h>
@@ -289,7 +291,9 @@ void soc_early_init_hook(void)
 #endif
 
 	/* system init */
+#if !CONFIG_SOC_RISCV_TELINK_TL523X
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+#endif /* CONFIG_SOC_RISCV_TELINK_TL523X */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	if (cclk == CLK_240MHZ) {
@@ -325,6 +329,10 @@ void soc_early_init_hook(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_24MHZ:
 		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL523X
+	case CLK_24MHZ:
+		/* fpga has no clk to set for now */
 		break;
 #endif
 
