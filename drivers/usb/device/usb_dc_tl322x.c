@@ -122,7 +122,7 @@ static struct ep_buf_t eps_buf_inf = {.init_list = {0, 0, 0, 0, 0, 0, 0, 0, 0},
  */
 struct tlx_usbd_ep_cfg {
 	usb_dc_ep_callback cb;
-	unsigned short max_sz; // uint32_t -> unsigned short
+	unsigned short max_sz;
 	bool en;
 	uint8_t addr;
 	enum usb_dc_ep_transfer_type type;
@@ -465,7 +465,7 @@ static inline void usb_event_out_complete_handler(uint8_t ep)
 
 	ep_ctx->cfg.out_ack = false;
 
-	if ((USB_EP_GET_IDX(ep) == USBD_EP0_IDX)) {
+	if (USB_EP_GET_IDX(ep) == USBD_EP0_IDX) {
 		if ((xfered_len == 0)) {
 			usb0hw_read_ep_data(USB_EP_GET_IDX(ep), ep_ctx->buf.data,
 					    ep_ctx->cfg.max_sz);
@@ -600,6 +600,7 @@ static inline void usb_irq_out(void)
 			if (doepint & FLD_USB_DOEPINT_XFERCOMPL) {
 				usb0hw_clear_doepint(ep_num, FLD_USB_DOEPINT_XFERCOMPL);
 				unsigned int len = usb0hw_get_epout_len(ep_num);
+
 				submit_usbd_event(USBD_EVT_OUT_COMPLETE,
 						  USB_EP_GET_ADDR(ep_num, USB_EP_DIR_OUT));
 			}
@@ -620,8 +621,9 @@ static inline void usb_irq_out(void)
 static inline void usb_irq_in(void)
 {
 	for (unsigned char ep_num = 0; ep_num < USBD_EP_TOTAL_CNT; ep_num++) {
-		if ((usb0hw_get_daint())&BIT(ep_num)) {
+		if (usb0hw_get_daint() & BIT(ep_num)) {
 			unsigned int diepint = usb0hw_get_diepint(ep_num);
+
 			if (diepint & FLD_USB_DIEPINT_XFERCOMPL) {
 				usb0hw_clear_diepint(ep_num, FLD_USB_DIEPINT_XFERCOMPL);
 				submit_usbd_event(USBD_EVT_IN_COMPLETE,

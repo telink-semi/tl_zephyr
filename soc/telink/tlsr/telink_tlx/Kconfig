@@ -177,7 +177,7 @@ if SOC_RISCV_TELINK_TL323X
 config SOC_PMOS_SWITCH_TIME_CTL
 	bool "Add pmos switch time"
 	default n
-    depends on SOC_RISCV_TELINK_TL323X
+	depends on SOC_RISCV_TELINK_TL323X
 	help
 		This option can increase the PMOS switching time when the inductance value is below 6.8uH
 endif

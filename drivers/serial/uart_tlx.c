@@ -658,7 +658,7 @@ static int uart_tlx_pm_action(const struct device *dev, enum pm_device_action ac
 		break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
-		// /* reset TX/RX byte index */
+		/* reset TX/RX byte index */
 		data->tx_byte_index = 0;
 		data->rx_byte_index = 0;
 		uart->txrx_status |= FLD_UART_RX_BUF_IRQ | FLD_UART_TX_BUF_IRQ;

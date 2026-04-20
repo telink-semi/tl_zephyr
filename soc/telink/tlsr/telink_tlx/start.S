@@ -15,7 +15,9 @@
     .equ __N22_IRAM_SIZE,    5 //160KB
     .equ __N22_DRAM_SIZE,    2 //64KB
 
-    .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12)|(__N22_DRAM_SIZE<<8)|(__D25F_DRAM_SIZE)
+    .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12) | \
+                                 (__N22_DRAM_SIZE<<8) | \
+                                 (__D25F_DRAM_SIZE)
 
     .section .vectors, "ax"
 
@@ -273,7 +275,8 @@ _CORE_FEATURES_SETUP:
 	csrs   NDS_MMISC_CTL, t0
 
 	/* flash wakeup */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X \
+	|| CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	/* we are not in ISR so use ISR stack to restore registers */
 	la     sp, z_interrupt_stacks
 	li     t0, CONFIG_ISR_STACK_SIZE

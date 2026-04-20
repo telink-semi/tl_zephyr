@@ -863,17 +863,16 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	}
 
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-	if (!shouldPowerDownRFEarly)
-#else
-	if (true)
+	if (!shouldPowerDownRFEarly) {
 #endif
-	{
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-		rf_rx_performance_mode(RF_RX_LOW_POWER);
+	rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
-		rf_set_rxmode();
-		dma_chn_en(DMA1);
+	rf_set_rxmode();
+	dma_chn_en(DMA1);
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	}
+#endif
 }
 
 /* TX IRQ handler */
@@ -962,16 +961,15 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
 		riscv_plic_irq_enable(DT_INST_IRQN(0));
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-		if (!isThreadCommissioned)
-#else
-		if (true)
+		if (!isThreadCommissioned) {
 #endif
-		{
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 			rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
 			rf_set_rxmode();
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 		}
+#endif
 		tlx->is_started = true;
 	}
 	return 0;
@@ -1125,10 +1123,9 @@ static int tlx_cca(const struct device *dev)
 	if (isFirstCcaBeforeTx && isThreadCommissioned) {
 		isFirstCcaBeforeTx = false;
 		return 0;
-	} else
-#else
-	if (true)
+	}
 #endif
+
 	{
 		signed int rssi = 0, cnt = 0;
 		unsigned int t1 = stimer_get_tick();
@@ -1504,19 +1501,6 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 
 	/* wait for ACK if requested */
 	if (!status && tlx->ack_handler_en) {
-#if 0
-		if (isThreadCommissioned == true) {
-			plic_interrupt_disable(IRQ_SYSTIMER);
-			stimer_clr_irq_status(FLD_SYSTEM_IRQ);
-			stimer_set_irq_capture(stimer_get_tick() +
-					       TLX_ACK_WAIT_TIME_MS * SYSTEM_TIMER_TICK_1MS);
-			plic_interrupt_enable(IRQ_SYSTIMER);
-			core_entry_wfi_mode();
-			if (k_sem_take(&tlx->ack_wait, K_MSEC(0)) != 0) {
-				status = -ENOMSG;
-			}
-		} else
-#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 		{
 			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
 				tlx->ack_handler_en = false;
