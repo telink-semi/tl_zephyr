@@ -36,7 +36,7 @@ zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS
 	mcuboot_status_change.c
 )
 
-zephyr_sources_ifdef(CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+zephyr_sources_ifdef(CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 	soc_irq0.c
 )
 
@@ -57,15 +57,11 @@ else()
 zephyr_linker_sources(ROM_START SORT_KEY 0x0 init.ld)
 endif()
 zephyr_linker_sources_ifdef(CONFIG_ANDES_CODENSE RODATA SORT_KEY 0x0 execit.ld)
-if(CONFIG_TELINK_TLX_MATTER_RETENTION_LAYOUT)
+if(CONFIG_TELINK_TL5X_MATTER_RETENTION_LAYOUT)
 if(CONFIG_MCUBOOT AND (CONFIG_SOC_RISCV_TELINK_TL321X OR CONFIG_SOC_RISCV_TELINK_TL323X))
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 mcu_boot_tlx.ld)
 else()
-if(CONFIG_SOC_RISCV_TELINK_TL323X)
-zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention_tl323x.ld)
-else()
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention.ld)
-endif()
 endif()
 endif()
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm.ld)
@@ -73,7 +69,7 @@ set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
 zephyr_cc_option_ifdef(CONFIG_ANDES_CODENSE -mexecit)
 zephyr_ld_option_ifdef(CONFIG_ANDES_CODENSE -Wl,--mexecit)
 
-if(CONFIG_TELINK_B9X_MATTER_RETENTION_LAYOUT)
+if(CONFIG_TELINK_TL5X_MATTER_RETENTION_LAYOUT)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention.ld)
 endif()
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm.ld)

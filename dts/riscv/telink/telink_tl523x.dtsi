@@ -7,7 +7,6 @@
 /dts-v1/;
 
 #include <zephyr/dt-bindings/adc/adc.h>
-#include <zephyr/dt-bindings/adc/tl323x-adc.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/dt-bindings/i2c/i2c.h>
 #include <zephyr/dt-bindings/pwm/pwm.h>
@@ -22,7 +21,7 @@
 		cpu0: cpu@0 {
 			reg = <0>;
 			clock-frequency = <24000000>;
-			compatible ="telink,tlx", "riscv";
+			compatible ="telink,tl5x", "riscv";
 			riscv,isa = "rv32imac_zicsr_zifencei";
 			hlic: interrupt-controller {
 				compatible = "riscv,cpu-intc";
@@ -46,14 +45,10 @@
 	soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
-		compatible = "telink,telink_tl323x-soc";
+		compatible = "telink,telink_tl523x-soc";
 		ranges;
 
-		ram_ilm: memory@68000 {
-			compatible = "mmio-sram";
-		};
-
-		ram_ilm_non_retention: memory@80000 {
+		ram_ilm: memory@80840000 {
 			compatible = "mmio-sram";
 		};
 
@@ -72,7 +67,7 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			flash: flash@20000000 {
+			flash: flash@80000000 {
 				compatible = "soc-nv-flash";
 				write-block-size = <1>;
 				erase-block-size = <4096>;
@@ -80,7 +75,7 @@
 		};
 
 		power: power@80140180 {
-			compatible = "telink,tl323x-power";
+			compatible = "telink,tl523x-power";
 			reg = <0x80140180 0x40>;
 			power-mode = "DCDC_1P25_LDO_1P8";
 			vbat-type = "VBAT_MAX_VALUE_GREATER_THAN_3V6";
@@ -88,7 +83,7 @@
 		};
 
 		gpioa: gpio@80140c00 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -98,7 +93,7 @@
 		};
 
 		gpiob: gpio@80140c10 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -108,7 +103,7 @@
 		};
 
 		gpioc: gpio@80140c20 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -118,7 +113,7 @@
 		};
 
 		gpiod: gpio@80140c30 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -128,7 +123,7 @@
 		};
 
 		gpioe: gpio@80140c40 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -138,7 +133,7 @@
 		};
 
 		gpiof: gpio@80140c50 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -160,7 +155,7 @@
 		};
 
 		uart0: serial@80140080 {
-			compatible = "telink,tlx-uart";
+			compatible = "telink,tl5x-uart";
 			reg = <0x80140080 0x40>;
 			interrupts = <19 1>;
 			interrupt-parent = <&plic0>;
@@ -168,7 +163,7 @@
 		};
 
 		uart1: serial@801400C0 {
-			compatible = "telink,tlx-uart";
+			compatible = "telink,tl5x-uart";
 			reg = <0x801400C0 0x40>;
 			interrupts = <18 1>;
 			interrupt-parent = <&plic0>;
@@ -189,7 +184,7 @@
 		};
 
 		trng0: trng@80103000 {
-			compatible = "telink,tlx-trng";
+			compatible = "telink,tl5x-trng";
 			reg = <0x80103000 0x20>;
 			status = "disabled";
 		};
@@ -231,7 +226,7 @@
 		};
 
 		pinctrl: pinctrl@80140cb0 {
-			compatible = "telink,tlx-pinctrl";
+			compatible = "telink,tl5x-pinctrl";
 			reg = <0x80140cb0 0x30
 				   0x80140c06 0x50
 				   0x00000017 0x0C>;

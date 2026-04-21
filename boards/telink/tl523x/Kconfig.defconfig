@@ -5,7 +5,7 @@ if BOARD_TL5238X || BOARD_TL5238X_RETENTION
 
 config SOC_FLASH_TELINK_TLX
 	bool
-	default y if FLASH
+	default n if FLASH
 
 if BT
 
