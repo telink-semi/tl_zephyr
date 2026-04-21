@@ -43,40 +43,9 @@ void pm_retention_register_recover(void){
 #endif
 
 /* Power Mode value */
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	/* List of supported CCLK frequencies */
-	#define CLK_24MHZ                   24000000u
-	#define CLK_48MHZ                   48000000u
-	#define CLK_96MHZ                   96000000u
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	/* List of supported CCLK frequencies */
-	#define CLK_48MHZ                   48000000u
-	#define CLK_64MHZ                   64000000u
-	#define CLK_72MHZ                   72000000u
-	#define CLK_96MHZ                   96000000u
-	#define CLK_192MHZ                  192000000u
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	#define CLK_24MHZ                   24000000u
-	#define CLK_48MHZ                   48000000u
-	#define CLK_96MHZ                   96000000u
-#elif CONFIG_SOC_RISCV_TELINK_TL523X
+#if CONFIG_SOC_RISCV_TELINK_TL523X
 	#define CLK_24MHZ                   24000000u
 	#define CLK_48MHZ  					48000000u
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-#define CLK_40MHZ  40000000u
-#define CLK_48MHZ  48000000u
-#define CLK_60MHZ  60000000u
-#define CLK_80MHZ  80000000u
-#define CLK_120MHZ 120000000u
-#define CLK_240MHZ 240000000u
-#endif
-
-
-#if CONFIG_SOC_RISCV_TELINK_TL322X && CONFIG_USB_TELINK_TLX
-	/* Check Clock value for USB0. */
-	#if DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) < CLK_96MHZ
-		#error "USB0 digital voltage must be 1.1V and HCLK min's 48M"
-	#endif
 #endif
 
 /* MID register flash size */
@@ -84,51 +53,13 @@ void pm_retention_register_recover(void){
 #define FLASH_MID_SIZE_MASK   0x00ff0000
 
 /* Power Mode value */
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL523X
 	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
 		#define POWER_MODE      LDO_1P25_LDO_1P8
 	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
 		#define POWER_MODE      DCDC_1P25_LDO_1P8
 	#else
 		#error "Wrong value for power-mode parameter"
-	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
-		#define POWER_MODE      LDO_1P25_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
-		#define POWER_MODE      DCDC_1P25_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 2
-		#define POWER_MODE      DCDC_1P25_DCDC_1P8
-	#else
-	#error "Wrong value for power-mode parameter"
-	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
-		#define POWER_MODE      LDO_1P25_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
-		#define POWER_MODE      DCDC_1P25_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 2
-		#define POWER_MODE      DCDC_1P25_DCDC_1P8
-	#else
-	#error "Wrong value for power-mode parameter"
-	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL523X
-	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
-		#define POWER_MODE      LDO_1P25_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
-		#define POWER_MODE      DCDC_1P25_LDO_1P8
-	#else
-		#error "Wrong value for power-mode parameter"
-	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
-		#define POWER_MODE      LDO_0P94_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
-		#define POWER_MODE      DCDC_0P94_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 2
-		#define POWER_MODE      DCDC_0P94_DCDC_1P8
-	#else
-	#error "Wrong value for power-mode parameter"
 	#endif
 #endif
 
@@ -142,40 +73,11 @@ void pm_retention_register_recover(void){
 #endif
 
 /* Check System Clock value. */
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL523X
 	#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
-		#error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
+		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ))
+		#error "Invalid clock-frequency. Supported values: 24, 48 MHz"
 	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_64MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_72MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_192MHZ))
-		#error "Invalid clock-frequency. Supported values: 48,64,72,96,192 MHz"
-	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
-		#error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
-	#endif
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_40MHZ) &&	  \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&  \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_60MHZ) &&  \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_80MHZ) &&  \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_120MHZ) && \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_240MHZ))
-#error "Invalid clock-frequency. Supported values: 24, 40, 48, 60, 80, 120, 240 MHz"
-#endif
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
-	extern drv_api_status_e efuse_calib_sd_adc_vref(void);
-	_attribute_data_retention_sec_ unsigned int g_adc_calib_flag;
 #endif
 
 #if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
@@ -710,18 +612,3 @@ static int soc_tlx_check_flash(void)
 }
 
 SYS_INIT(soc_tlx_check_flash, POST_KERNEL, 0);
-
-#ifdef CONFIG_TELINK_TL322X_ENABLE_N22
-static int soc_tlx_mcc_init(void)
-{
-	extern void mb_irq_handler(void);
-    IRQ_CONNECT(IRQ_MAILBOX_N22_TO_D25 + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2, mb_irq_handler, 0, 0);
-	volatile uint32_t key = arch_irq_lock();
-    sys_n22_start();
-    mcc_d25f_service_init();
-	arch_irq_unlock(key);
-
-	return 0;
-}
-SYS_INIT(soc_tlx_mcc_init, POST_KERNEL, 1);
-#endif

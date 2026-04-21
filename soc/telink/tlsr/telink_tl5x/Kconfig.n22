@@ -1,0 +1,42 @@
+# Copyright (c) 2024 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config TELINK_TL322X_ENABLE_N22
+	bool "Enable N22 core"
+	default n
+	depends on SOC_SERIES_RISCV_TELINK_TLX
+	help
+		This option enables N22 usage.
+
+config TELINK_TL322X_N22_HART
+	int "N22 HART ID"
+	default 1
+	depends on SOC_SERIES_RISCV_TELINK_TLX && TELINK_TL322X_ENABLE_N22
+	help
+		This option sets N22 HART ID.
+
+config TELINK_TL322X_FETCH_N22_BIN
+	bool "Fetch N22 binary after build"
+	default y
+	depends on SOC_SERIES_RISCV_TELINK_TLX && TELINK_TL322X_ENABLE_N22
+	help
+		This option fetching N22 binary after build.
+
+config TELINK_TL322X_FETCH_N22_BIN_REVISION
+	string "N22 binaries revision"
+	default "c8397b726468c1c63b098bc06eec2d9acad4887d"
+	depends on TELINK_TL322X_FETCH_N22_BIN && TELINK_TL322X_ENABLE_N22
+	help
+		This option sets N22 binary revision.
+
+config TELINK_TL322X_N22_PARTITION_ADDR
+	hex "N22 partition address"
+	depends on SOC_SERIES_RISCV_TELINK_TLX && TELINK_TL322X_ENABLE_N22
+	default $(dt_node_reg_addr_hex,$(dt_nodelabel_path,n22_partition),0)
+
+config TELINK_TL322X_N22_MATTER_OTA_LAYOUT
+	bool "Support Matter dual core OTA"
+	depends on TELINK_TL322X_FETCH_N22_BIN && TELINK_TL322X_ENABLE_N22
+	default n
+	help
+		This option enables support Matter dual core OTA

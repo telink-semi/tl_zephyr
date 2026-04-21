@@ -127,18 +127,15 @@
 };
 
 &cpu0 {
-	clock-frequency = <48000000>;
+	clock-frequency = <24000000>;
 };
 
 &ram_ilm {
-	reg = <0x00068000 0x00018000>;
-};
-&ram_ilm_non_retention {
-	reg = <0x00080000 0x00010000>;
+	reg = <0x80840000 0x00010000>;
 };
 
 &flash {
-	reg = <0x20000000 0x100000>;
+	reg = <0x80000000 0x100000>;
 
 	partitions {
 		compatible = "fixed-partitions";

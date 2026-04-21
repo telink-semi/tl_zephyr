@@ -66,7 +66,7 @@ config SOC_RISCV_TELINK_TL323X
 
 config SOC_RISCV_TELINK_TL523X
 	bool "Telink TL523 SoC implementation"
-	select SOC_RISCV_TELINK_TLX
+	select SOC_RISCV_TELINK_TL5X
 	help
 	  Telink TL523X
 
