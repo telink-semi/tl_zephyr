@@ -130,31 +130,30 @@ pm_retention_register_recover(void)
 
 /* Check System Clock value. */
 #if CONFIG_SOC_RISCV_TELINK_TL321X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&                              \
+#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&    \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
 	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_64MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_72MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_192MHZ))
-#error "Invalid clock-frequency. Supported values: 48,64,72,96,192 MHz"
+#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&    \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_64MHZ) && \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_72MHZ) && \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
+#error "Invalid clock-frequency. Supported values: 48,64,72,96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&                              \
+#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&    \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
 	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_40MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_60MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_80MHZ) &&                              \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_120MHZ) &&                             \
+#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_40MHZ) &&     \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&  \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_60MHZ) &&  \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_80MHZ) &&  \
+	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_120MHZ) && \
 	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_240MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 40, 48, 60, 80, 120, 240 MHz"
 #endif
@@ -384,10 +383,11 @@ void soc_early_init_hook(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-	case CLK_192MHZ:
-		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		break;
+		/* case CLK_192MHZ:
+		 *  pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		 *  PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		 *  break;
+		 */
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -536,10 +536,11 @@ void soc_tlx_restore(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-	case CLK_192MHZ:
-		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		break;
+		/* case CLK_192MHZ:
+		 *  pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		 *  PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		 *  break;
+		 */
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X

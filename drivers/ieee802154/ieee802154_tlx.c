@@ -587,7 +587,7 @@ ALWAYS_INLINE static void tlx_send_ack(const struct device *dev, struct ieee8021
 	size_t ack_len;
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-		rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
+	rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
 #endif
 	rf_set_txmode();
 	rf_clr_irq_mask(FLD_RF_IRQ_TX); /* clear TX interrupt mask bit */
@@ -866,10 +866,10 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	if (!shouldPowerDownRFEarly) {
 #endif
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-	rf_rx_performance_mode(RF_RX_LOW_POWER);
+		rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
-	rf_set_rxmode();
-	dma_chn_en(DMA1);
+		rf_set_rxmode();
+		dma_chn_en(DMA1);
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	}
 #endif
