@@ -43,6 +43,9 @@ zephyr_sources_ifdef(CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 # Force using BFD-LD
 zephyr_ld_options(-fuse-ld=bfd)
 
+
+zephyr_linker_sources(ROM_START SORT_KEY 0x00ramcode ramcode.ld)
+
 # Set compile options
 zephyr_linker_sources_ifdef(CONFIG_RISCV_VECTORED_MODE
 	ROM_START
@@ -54,7 +57,7 @@ zephyr_compile_options_ifndef(CONFIG_RISCV_GP -mno-relax)
 if(CONFIG_MCUBOOT)
 zephyr_linker_sources(ROM_START SORT_KEY 0x0 init_boot.ld)
 else()
-zephyr_linker_sources(ROM_START SORT_KEY 0x0 init.ld)
+zephyr_linker_sources(ROM_START SORT_KEY 0x01init init.ld)
 endif()
 zephyr_linker_sources_ifdef(CONFIG_ANDES_CODENSE RODATA SORT_KEY 0x0 execit.ld)
 if(CONFIG_TELINK_TL5X_MATTER_RETENTION_LAYOUT)
