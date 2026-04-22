@@ -6,27 +6,18 @@
 
 #include "telink_tl5x_regions.ld"
 
-SECTION_DATA_PROLOGUE(ram_code,,)
+/* ram_code section is defined in ramcode.ld */
+SECTION_DATA_PROLOGUE(ram_code_reserved, (NOLOAD),)
 {
-	. = ALIGN(4);
-	*(.ram_code)
-	*(".ram_code.*")
-	*(.ram_code_ble)
-	*(".ram_code_ble.*")
-
-	. = ALIGN(256);	
-	PROVIDE (_RAMCODE_VMA_END = .);
-	PROVIDE (_RAMCODE_VMA_START = ADDR(ram_code));
-	PROVIDE (_RAMCODE_LMA_START = LOADADDR(ram_code));
-} GROUP_DATA_LINK_IN(TELINK_RAM_CODE_REGION, ROMABLE_REGION)
-
-SECTION_DATA_PROLOGUE(cache,,)
+	. = (0x80840000 + ((0 + _ramcode_size_align_256_) * 1));
+	. = ALIGN(256);
+} GROUP_DATA_LINK_IN(TELINK_RAM_REGION, RAMABLE_REGION)
+ 
+SECTION_DATA_PROLOGUE(cache, (NOLOAD),)
 {
-	. = ALIGN(256);	
 	. += 0x900;
 	. = ALIGN(256);
-		
-} GROUP_DATA_LINK_IN(TELINK_RAM_REGION, ROMABLE_REGION)
+} GROUP_DATA_LINK_IN(TELINK_RAM_REGION, RAMABLE_REGION)
 
 SECTION_DATA_PROLOGUE(retention_data,,)
 {
@@ -47,3 +38,6 @@ SECTION_DATA_PROLOGUE(noinit_ilm, (NOLOAD),)
 	*(.noinit)
 	*(".noinit.*")
 } GROUP_DATA_LINK_IN(TELINK_RAM_REGION, TELINK_RAM_REGION)
+
+
+
