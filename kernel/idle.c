@@ -68,9 +68,9 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 * which is essential for the kernel's scheduling
 		 * logic.
 		 */
-#if ((defined(CONFIG_BT_B9X) && defined(CONFIG_SOC_RISCV_TELINK_B92)) || \
-	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL321X)) || \
-	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X)) || \
+#if ((defined(CONFIG_BT_B9X) && defined(CONFIG_SOC_RISCV_TELINK_B92)) ||                           \
+	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL321X)) ||                        \
+	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X)) ||                        \
 	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)))
 
 #if CONFIG_BT_B9X

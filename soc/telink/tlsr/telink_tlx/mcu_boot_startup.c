@@ -48,9 +48,8 @@ static bool telink_tlx_mcu_boot_startup(void)
 
 	if (device_is_ready(uart_con)) {
 
-		/* Use the uart corresponding to your zephyr_console configuration */
-		#define UART_RX_PINMUX \
-			DT_PROP(DT_PINCTRL_BY_IDX(DT_NODELABEL(uart0), 0, 1), pinmux)
+/* Use the uart corresponding to your zephyr_console configuration */
+#define UART_RX_PINMUX DT_PROP(DT_PINCTRL_BY_IDX(DT_NODELABEL(uart0), 0, 1), pinmux)
 		gpio_pin_e uart_rx = TLX_PINMUX_GET_PIN(UART_RX_PINMUX);
 
 		/* Disable The UART RX PIN */

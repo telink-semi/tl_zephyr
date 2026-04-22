@@ -16,6 +16,6 @@
 #define DT_ADC_GPIO_PC6 0x07
 #define DT_ADC_GPIO_PC7 0x08
 /* only SAR0 support */
-#define DT_ADC_VBAT 0x00
+#define DT_ADC_VBAT     0x00
 
 #endif /* ZEPHYR_INCLUDE_DT_BINDINGS_ADC_TLX_ADC_H_ */
