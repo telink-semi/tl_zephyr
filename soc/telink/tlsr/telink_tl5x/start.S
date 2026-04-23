@@ -177,7 +177,6 @@ start:
 
 	/* ic tag initialization */
 ZERO_TAG:
-	j ZERO_TAG
     lui    t0, 0
     la     t2, _ictag_start_
     la     t3, _ictag_end_
