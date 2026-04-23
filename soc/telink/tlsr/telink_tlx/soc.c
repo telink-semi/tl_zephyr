@@ -335,7 +335,7 @@ void soc_early_init_hook(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 		#if CONFIG_PM
-			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
+			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P925V);
 		#endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
@@ -403,10 +403,18 @@ void soc_early_init_hook(void)
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 	extern void pke_dig_en(void);
 	pke_dig_en();
+
+	/*  32k watchdog is set by hardware ,init is 5s
+	    to avoid lpd block mspi ,should open 32k wd.*/
+	wd_32k_stop();
+	wd_32k_set_interval_ms(20000);	
+	wd_32k_start();
+#else
+	/* Stop 32k watchdog */
+    wd_32k_stop();
+
 #endif
 
-	/* Stop 32k watchdog */
-	wd_32k_stop();
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 #undef N22_FW_DOWNLOAD_FLASH_ADDR
 #if defined(CONFIG_BT_ID_FOR_KMD)
@@ -449,6 +457,12 @@ void soc_tlx_restore(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+	/*after exit from suspend or deep-retention ,start 32k wd before lpd*/
+	wd_32k_feed();
+	wd_32k_start();
+#endif
+
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
 	analog_write_reg8(0x01,(analog_read_reg8(0x01)&0xf8)|0x06);// change from 0x04 to 0x06 for the board changes.
@@ -488,7 +502,7 @@ void soc_tlx_restore(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 		#if CONFIG_PM
-			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
+			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P925V);
 			gen_fsk_close_unused_clock();
 		#endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -699,4 +713,23 @@ static int soc_tlx_mcc_init(void)
 	return 0;
 }
 SYS_INIT(soc_tlx_mcc_init, POST_KERNEL, 1);
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+#include <zephyr/kernel.h>
+
+struct k_timer wd_32k_timer;
+void wd_32k_timer_callback(struct k_timer *timer)
+{
+	wd_32k_feed();
+}
+
+static int soc_tlx_wd_32k_init()
+{
+	wd_32k_feed();
+	k_timer_init(&wd_32k_timer, wd_32k_timer_callback, NULL);
+	k_timer_start(&wd_32k_timer,  K_MSEC(0), K_MSEC(3000));
+	return 0;
+}
+SYS_INIT(soc_tlx_wd_32k_init, POST_KERNEL, 2);
 #endif
