@@ -157,6 +157,7 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 
 		irq_lock();
         clock_set_all_clock_to_default();
+		wd_32k_feed();
 		((void (*)(void))boot_app)();
 	}
 }
