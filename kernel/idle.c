@@ -51,8 +51,15 @@ void idle(void *unused1, void *unused2, void *unused3)
 		(void) arch_irq_lock();
 
 #ifdef CONFIG_PM
-		_kernel.idle = z_get_next_timeout_expiry();
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+		extern struct k_timer wd_32k_timer;
 
+		k_timer_stop(&wd_32k_timer);
+#endif
+		_kernel.idle = z_get_next_timeout_expiry();
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+		k_timer_start(&wd_32k_timer,  K_MSEC(0), K_MSEC(3000));
+#endif
 		/*
 		 * Call the suspend hook function of the soc interface
 		 * to allow entry into a low power state. The function

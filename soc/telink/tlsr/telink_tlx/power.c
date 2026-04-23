@@ -105,6 +105,11 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		return;
 	}
 
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+	/* before go into deep , should feed 32k watchdog */
+	wd_32k_feed();
+#endif
+
 	uint64_t stimer_sleep_ticks = mticks_to_systicks(wakeup_time - current_time);
 
 	switch (state) {
@@ -112,17 +117,30 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+		/*before go into suspend or deep-retention ,should stop 32k watchdog quickly*/
+		wd_32k_stop();
+#endif
 		if (tl_suspend(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
 		}
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+		/*after exit from suspend or deep-retention ,should start 32k watdog quickly*/
+		wd_32k_feed();
+		wd_32k_start();
+#endif
 		break;
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	case PM_STATE_STANDBY:
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+		/*before go into suspend or deep-retention ,should stop 32k watchdog quickly*/
+		wd_32k_stop();
+#endif
 		if (tl_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
