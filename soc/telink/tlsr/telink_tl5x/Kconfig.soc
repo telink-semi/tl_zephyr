@@ -11,11 +11,7 @@ config SOC_SERIES
 	default "telink_tl5x" if SOC_RISCV_TELINK_TL5X
 
 config SOC
-	default "telink_tl321x" if SOC_RISCV_TELINK_TL321X
-	default "telink_tl322x" if SOC_RISCV_TELINK_TL322X
-	default "telink_tl323x" if SOC_RISCV_TELINK_TL323X
 	default "telink_tl523x" if SOC_RISCV_TELINK_TL523X
-	default "telink_tl721x" if SOC_RISCV_TELINK_TL721X
 
 config NORMAL_MODE
 	int "independent matter mode"
