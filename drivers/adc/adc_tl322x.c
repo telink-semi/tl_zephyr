@@ -476,11 +476,11 @@ static int adc_tlx_read_async(const struct device *dev, const struct adc_sequenc
 __GENERIC_SECTION(.ram_code)
 static int adc_tlx_pm_action(const struct device *dev, enum pm_device_action action)
 {
-	extern volatile bool tlx_deep_sleep_retention;
+	extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME: {
-		if (tlx_deep_sleep_retention) {
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 			adc_tlx_channel_setup(dev, &tlx_channel_cfg);
 		}
 	} break;
