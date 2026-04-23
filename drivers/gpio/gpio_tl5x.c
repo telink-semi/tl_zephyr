@@ -89,7 +89,7 @@ static void gpio_tlx_config_in_out(volatile struct gpio_tlx_t *gpio,
 /* GPIO driver initialization */
 static int gpio_tlx_init(const struct device *dev)
 {
-
+	return 0;
 }
 
 /* API implementation: pin_configure */

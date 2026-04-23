@@ -29,26 +29,26 @@ struct uart_tl5x_config {
 
 static int uart_tl5x_driver_init(const struct device *dev)
 {
-	const struct uart_tl5x_config *cfg = dev->config;
-	struct uart_tl5x_data *data = dev->data;
-	int status;
+// 	const struct uart_tl5x_config *cfg = dev->config;
+// 	struct uart_tl5x_data *data = dev->data;
+// 	int status;
 
-	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
-	if (status < 0) {
-		return status;
-	}
+// 	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+// 	if (status < 0) {
+// 		return status;
+// 	}
 
-	data->cfg.baudrate = cfg->baud_rate;
-	data->cfg.parity = UART_CFG_PARITY_NONE;
-	data->cfg.stop_bits = UART_CFG_STOP_BITS_1;
-	data->cfg.data_bits = UART_CFG_DATA_BITS_8;
-	data->cfg.flow_ctrl = cfg->hw_flow_control ?
-			      UART_CFG_FLOW_CTRL_RTS_CTS :
-			      UART_CFG_FLOW_CTRL_NONE;
+// 	data->cfg.baudrate = cfg->baud_rate;
+// 	data->cfg.parity = UART_CFG_PARITY_NONE;
+// 	data->cfg.stop_bits = UART_CFG_STOP_BITS_1;
+// 	data->cfg.data_bits = UART_CFG_DATA_BITS_8;
+// 	data->cfg.flow_ctrl = cfg->hw_flow_control ?
+// 			      UART_CFG_FLOW_CTRL_RTS_CTS :
+// 			      UART_CFG_FLOW_CTRL_NONE;
 
-#ifdef CONFIG_UART_INTERRUPT_DRIVEN
-	cfg->pirq_connect();
-#endif
+// #ifdef CONFIG_UART_INTERRUPT_DRIVEN
+// 	cfg->pirq_connect();
+// #endif
 
 	return 0;
 }

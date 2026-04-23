@@ -52,9 +52,9 @@
 			compatible = "mmio-sram";
 		};
 
-		mtimer: timer@c6000000 {
+		mtimer: timer@860400 {
 			compatible = "riscv,machine-timer";
-			reg = <0xc6000000 0x8 0xc6000008 0x8>;
+			reg = <0x860420 0x8 0x860410 0x8>;
 			interrupts = <7 0>;
 			interrupts-extended = <&hlic 7>;
 			interrupt-parent = <&hlic>;

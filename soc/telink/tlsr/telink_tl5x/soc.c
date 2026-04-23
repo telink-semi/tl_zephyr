@@ -204,9 +204,7 @@ void soc_early_init_hook(void)
 #endif
 
 	/* system init */
-#if !CONFIG_SOC_RISCV_TELINK_TL523X
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
-#endif /* CONFIG_SOC_RISCV_TELINK_TL523X */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	if (cclk == CLK_240MHZ) {
@@ -347,7 +345,16 @@ void soc_early_init_hook(void)
 // #else
 // 	(void)deepRetWakeUp;	// remove warning
 // #endif
+    wd_stop();
+	gpio_shutdown(GPIO_ALL);
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
+	
+	gpio_function_en(GPIO_PA0);
+	gpio_output_en(GPIO_PA0);
+
+	gpio_set_high_level(GPIO_PA0);
+	gpio_set_low_level(GPIO_PA0);
 }
 
 /**
@@ -357,7 +364,7 @@ void sys_arch_reboot(int type)
 {
 	ARG_UNUSED(type);
 
-	protected_sys_reboot();
+	// protected_sys_reboot();
 }
 
 /**
@@ -473,12 +480,12 @@ void soc_tlx_restore(void)
 	extern void pke_dig_en(void);
 	pke_dig_en();
 #endif
-	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
-#if DEBUG_GPIO_ENABLE
-	gpio_init(!deepRetWakeUp);
-#else
-	(void)deepRetWakeUp;	// remove warning
-#endif
+// 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
+// #if DEBUG_GPIO_ENABLE
+// 	gpio_init(!deepRetWakeUp);
+// #else
+// 	(void)deepRetWakeUp;	// remove warning
+// #endif
 }
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -551,63 +558,6 @@ unsigned char flash_set_4line_read_write(unsigned int flash_mid)
  */
 static int soc_tlx_check_flash(void)
 {
-	#if CONFIG_SOC_RISCV_TELINK_TL523X
-
-	#else
-
-	static const size_t dts_flash_size = DT_REG_SIZE(DT_CHOSEN(zephyr_flash));
-	size_t hw_flash_size = 0;
-	flash_capacity_e hw_flash_cap;
-	uint32_t mid;
-
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
-	mid = flash_read_mid();
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	mid = flash_read_mid_with_device_num(SLAVE0);
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-	mid = flash_read_mid_with_device_num(SLAVE0);
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
-	hw_flash_cap = (flash_capacity_e)((mid & FLASH_MID_SIZE_MASK) >> FLASH_MID_SIZE_OFFSET);
-
-	/* Enable Quad SPI (4x) read and write mode */
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
-	if (flash_set_4line_read_write(mid) != 1) {
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
-		printk("!!! Error: Failed to switch flash model 0x%X to quad mode\n", mid);
-	}
-
-	switch (hw_flash_cap) {
-	case FLASH_SIZE_1M:
-		hw_flash_size = 1 * 1024 * 1024;
-		break;
-	case FLASH_SIZE_2M:
-		hw_flash_size = 2 * 1024 * 1024;
-		break;
-	case FLASH_SIZE_4M:
-		hw_flash_size = 4 * 1024 * 1024;
-		break;
-	case FLASH_SIZE_8M:
-		hw_flash_size = 8 * 1024 * 1024;
-		break;
-	case FLASH_SIZE_16M:
-		hw_flash_size = 16 * 1024 * 1024;
-		break;
-	default:
-		break;
-	}
-
-	if (hw_flash_size < dts_flash_size) {
-		printk("!!! flash error: expected (.dts) %u, actually %u\n", dts_flash_size,
-		       hw_flash_size);
-		abort();
-	}
-
-	#endif /* CONFIG_SOC_RISCV_TELINK_TL523X */
-
 	return 0;
 }
 
