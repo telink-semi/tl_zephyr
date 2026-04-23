@@ -21,7 +21,6 @@
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
 __attribute__((section(".retention_data"))) static bool led_state = true;
-extern uint32_t 	_ramcode_size_align_256_;
 
 int main(void)
 {
@@ -45,7 +44,6 @@ int main(void)
 
 		led_state = !led_state;
 		printf("LED state: %s\n", led_state ? "ON" : "OFF");
-		printf("ramcode size align 256: %d\n", _ramcode_size_align_256_);
 		k_msleep(SLEEP_TIME_MS);
 	}
 	return 0;

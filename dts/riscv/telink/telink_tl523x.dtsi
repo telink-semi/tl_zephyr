@@ -142,16 +142,16 @@
 			#gpio-cells = <2>;
 		};
 
-		plic0: interrupt-controller@c4000000 {
+		plic0: interrupt-controller@860000 {
 			compatible = "sifive,plic-1.0.0";
 			#address-cells = <0>;
 			#interrupt-cells = <2>;
 			interrupt-controller;
 			interrupts-extended = <&hlic 11>;
 			interrupt-parent = <&cpu0>;
-			reg = < 0xc4000000 0x00210000>;
+			reg = < 0x860000 0x00000200>;	/** actual size is 0x130 */
 			riscv,max-priority = <3>;
-			riscv,ndev = <46>;
+			riscv,ndev = <40>;
 		};
 
 		uart0: serial@80140080 {
