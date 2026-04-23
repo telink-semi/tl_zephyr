@@ -420,9 +420,9 @@ static int adc_tl323x_pm_action(const struct device *dev, enum pm_device_action 
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME: {
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-		extern volatile bool tlx_deep_sleep_retention;
+		extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
-		if (tlx_deep_sleep_retention) {
+		if (pm_has_resumed_from_deep_sleep_retention()) {
 			adc_tl323x_channel_setup(dev, &tl323x_channel_cfg);
 		}
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
