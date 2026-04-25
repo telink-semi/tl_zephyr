@@ -349,12 +349,15 @@ void soc_early_init_hook(void)
 	gpio_shutdown(GPIO_ALL);
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
-	
-	gpio_function_en(GPIO_PA0);
-	gpio_output_en(GPIO_PA0);
+	gpio_function_en(GPIOB_ALL);
+	gpio_output_en(GPIOB_ALL);
+	// gpio_set_high_level(GPIOB_ALL);
+	// gpio_set_low_level(GPIOB_ALL);
 
-	gpio_set_high_level(GPIO_PA0);
-	gpio_set_low_level(GPIO_PA0);
+	gpio_function_en(GPIOC_ALL);
+	gpio_output_en(GPIOC_ALL);
+	// gpio_set_high_level(GPIOC_ALL);
+	// gpio_set_low_level(GPIOC_ALL);
 }
 
 /**

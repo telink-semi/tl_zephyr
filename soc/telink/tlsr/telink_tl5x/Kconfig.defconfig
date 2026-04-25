@@ -31,10 +31,10 @@ config XIP
 	default n
 
 config FLASH
-	default y
+	default n
 
 config FLASH_HAS_EXPLICIT_ERASE
-	default y
+	default n
 
 config STACK_SENTINEL
 	default y
@@ -46,7 +46,7 @@ config MAIN_STACK_SIZE
 	default 2048
 
 config IDLE_STACK_SIZE
-	default 1536
+	default 2048
 
 config SYSTEM_WORKQUEUE_STACK_SIZE
 	int

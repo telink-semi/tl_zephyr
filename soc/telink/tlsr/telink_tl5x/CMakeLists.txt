@@ -115,4 +115,4 @@ zephyr_link_libraries(
 
 endif()
 
-zephyr_linker_sources(ROM_START SORT_KEY 0x00ramcode ramcode.ld)
+zephyr_linker_sources(ROM_START SORT_KEY 0x1ramcode ramcode.ld)
