@@ -65,18 +65,17 @@ config TELINK_TLX_PFT
 
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on MBEDTLS
+	depends on MBEDTLS || BOOTLOADER_MCUBOOT
 	default y
 	help
 		This option enables Telink TLx hardware accelerated mbedtls version.
 
-config TELINK_TLX_MBEDTLS_HW_SHA_ACCELERATION
-	bool "Use Telink TLx platform mbedtls HW SHA256 acceleration"
-	depends on TELINK_TLX_MBEDTLS_HW_ACCELERATION
-	default y if MCUBOOT
+config TELINK_TLX_TINYCRYPT_HW_ACCELERATION
+	bool "Use Telink TLx platform tinycrypt HW acceleration"
+	depends on TINYCRYPT || BOOTLOADER_MCUBOOT
+	default y
 	help
-		This option enables Telink TLx hardware accelerated
-		SHA256 for MbedTLS in bootloader only.
+		This option enables Telink TLx hardware accelerated tinycrypt version.
 
 config TELINK_SOC_REBOOT_ON_FAULT
 	bool "Reboot system when fault happened"
