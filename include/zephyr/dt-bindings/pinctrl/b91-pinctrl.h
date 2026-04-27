@@ -68,9 +68,9 @@
 
 /* Setters and getters */
 
-#define B9x_PINMUX_SET(port, pin, func)   ((func << B9x_FUNC_POS) | \
-					   (port << B9x_PORT_POS) | \
-					   (pin << B9x_PIN_POS))
+#define B9x_PINMUX_SET(port, pin, func)   (((func) << B9x_FUNC_POS) | \
+					   ((port) << B9x_PORT_POS) | \
+					   ((pin) << B9x_PIN_POS))
 #define B9x_PINMUX_GET_PULL(pinmux)       ((pinmux >> B9x_PULL_POS) & B9x_PULL_MSK)
 #define B9x_PINMUX_GET_FUNC(pinmux)       ((pinmux >> B9x_FUNC_POS) & B91_FUNC_MSK)
 #define B9x_PINMUX_GET_PIN(pinmux)        ((pinmux >> B9x_PIN_POS) & B9x_PIN_MSK)
