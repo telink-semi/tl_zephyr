@@ -37,12 +37,12 @@
 
 &pinctrl {
 	pwm_ch0_pc1_default: pwm_ch0_pc1_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_1, TL523X_FUNC_PWM0)>;
+		pinmux = <TL5X_PINMUX_SET(TL5X_PORT_C, TL5X_PIN_1, TL523X_FUNC_PWM0)>;
 	};
 	pwm_ch1_pc3_default: pwm_ch1_pc3_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_3, TL523X_FUNC_PWM1)>;
+		pinmux = <TL5X_PINMUX_SET(TL5X_PORT_C, TL5X_PIN_3, TL523X_FUNC_PWM1)>;
 	};
 	pwm_ch2_pc2_default: pwm_ch2_pc2_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_2, TL523X_FUNC_PWM2)>;
+		pinmux = <TL5X_PINMUX_SET(TL5X_PORT_C, TL5X_PIN_2, TL523X_FUNC_PWM2)>;
 	};
 };
