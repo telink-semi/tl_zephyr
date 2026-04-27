@@ -5,6 +5,7 @@
  */
 
 #include <bootutil/mcuboot_status.h>
+#include <watchdog.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/devicetree/fixed-partitions.h>
 #include <zephyr/irq.h>

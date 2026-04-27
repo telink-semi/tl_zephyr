@@ -8,6 +8,7 @@
 #include <zephyr/pm/pm.h>
 #include <stimer.h>
 #include <tl_sleep.h>
+#include <watchdog.h>
 #include <zephyr/kernel.h>
 
 LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
@@ -118,7 +119,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-		/*before go into suspend or deep-retention ,should stop 32k watchdog quickly*/
+		/* before go into suspend or deep-retention ,should stop 32k watchdog quickly */
 		wd_32k_stop();
 #endif
 		if (tl_suspend(tl_sleep_tick + stimer_sleep_ticks)) {
@@ -127,7 +128,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			set_mtime(current_time);
 		}
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-		/*after exit from suspend or deep-retention ,should start 32k watdog quickly*/
+		/* after exit from suspend or deep-retention ,should start 32k watdog quickly */
 		wd_32k_feed();
 		wd_32k_start();
 #endif
@@ -138,7 +139,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-		/*before go into suspend or deep-retention ,should stop 32k watchdog quickly*/
+		/* before go into suspend or deep-retention ,should stop 32k watchdog quickly */
 		wd_32k_stop();
 #endif
 		if (tl_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
