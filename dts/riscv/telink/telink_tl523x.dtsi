@@ -52,9 +52,9 @@
 			compatible = "mmio-sram";
 		};
 
-		mtimer: timer@860400 {
+		mtimer: timer@860410 {
 			compatible = "riscv,machine-timer";
-			reg = <0x860420 0x8 0x860410 0x8>;
+			reg = <0x860420 0x10 0x860410 0x10>;
 			interrupts = <7 0>;
 			interrupts-extended = <&hlic 7>;
 			interrupt-parent = <&hlic>;
@@ -154,18 +154,18 @@
 			riscv,ndev = <40>;
 		};
 
-		uart0: serial@80140080 {
+		uart0: serial@800090 {
 			compatible = "telink,tl5x-uart";
-			reg = <0x80140080 0x40>;
-			interrupts = <19 1>;
+			reg = <0x800090 0x10>;
+			interrupts = <7 1>;
 			interrupt-parent = <&plic0>;
-			status = "disabled";
+			status = "okay";
 		};
 
-		uart1: serial@801400C0 {
+		uart1: serial@8000c0 {
 			compatible = "telink,tl5x-uart";
-			reg = <0x801400C0 0x40>;
-			interrupts = <18 1>;
+			reg = <0x8000c0 0x10>;
+			interrupts = <17 1>;
 			interrupt-parent = <&plic0>;
 			status = "disabled";
 		};
@@ -197,10 +197,10 @@
 			#pwm-cells = <3>;
 		};
 
-		gspi: spi@8BFFFF00 {
-			compatible = "telink,tl323x-spi";
+		spi: spi@8BFFFF00 {
+			compatible = "telink,tl523x-spi";
 			reg = <0x8BFFFF00 0x100>;
-			peripheral-id = "GSPI_MODULE";
+			peripheral-id = "SPI_MODULE";
 			cs0-pin = "0";
 			cs1-pin = "0";
 			cs2-pin = "0";
@@ -218,20 +218,13 @@
 			clock-frequency = <I2C_BITRATE_STANDARD>;
 		};
 
-		adc: adc@801401c0 {
-			compatible = "telink,tl323x-adc";
-			reg = <0x801401c0 0x32>;
-			status = "disabled";
-			#io-channel-cells = <1>;
-		};
-
-		pinctrl: pinctrl@80140cb0 {
+		pinctrl: pinctrl@800500 {
 			compatible = "telink,tl5x-pinctrl";
-			reg = <0x80140cb0 0x30
-				   0x80140c06 0x50
-				   0x00000017 0x0C>;
-			reg-names = "pin_mux",
-						"gpio_en",
+			reg = <0x800560 0x30
+				   0x800506 0x50
+				   0x000017 0x08>;
+			reg-names = "gpio_func_mux",
+						"gpio_func",
 						"pull_up_en";
 			status = "okay";
 		};
