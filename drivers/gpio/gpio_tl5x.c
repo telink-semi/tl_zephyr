@@ -234,7 +234,7 @@ static void gpio_tl5x_config_in_out(volatile struct gpio_tl5x_t *gpio,
 		ie_addr = areg_gpio_pc_ie;
 	}
 
-	WRITE_BIT(gpio->oe, pin, flags & GPIO_OUTPUT);
+	WRITE_BIT(gpio->oe, pin, ~flags & GPIO_OUTPUT);
 
 	if (ie_addr != 0) {
 		if (flags & GPIO_INPUT) {
