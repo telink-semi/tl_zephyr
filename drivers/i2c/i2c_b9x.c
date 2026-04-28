@@ -136,12 +136,14 @@ static int i2c_b9x_init(const struct device *dev)
 		return status;
 	}
 
+#if(!CONFIG_TOKEN_PERIPHERALS)
 	/* configure pins */
 	status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
 	if (status < 0) {
 		LOG_ERR("Failed to configure I2C pins");
 		return status;
 	}
+#endif
 
 #ifdef CONFIG_PM
 	const pinctrl_soc_pin_t *i2cPinsMux = cfg->pcfg->states->pins;

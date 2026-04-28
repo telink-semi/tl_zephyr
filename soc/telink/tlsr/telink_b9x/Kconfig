@@ -157,4 +157,10 @@ config STARTUP_OPTIMIZATE
 	help
 		This option supports startup optimizate.
 
+config TOKEN_PERIPHERALS
+	bool "Configure Hardware Peripherals"
+	default n
+	help
+		Configure Hardware Peripherals .
+
 endif # SOC_RISCV_TELINK_B9X
