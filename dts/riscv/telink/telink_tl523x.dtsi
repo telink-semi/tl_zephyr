@@ -82,62 +82,52 @@
 			status = "okay";
 		};
 
-		gpioa: gpio@80140c00 {
+		gpioa: gpio@800500 {
 			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c00 0x10>;
+			reg = <0x800500 0x10>;
 			status = "disabled";
 			#gpio-cells = <2>;
 		};
 
-		gpiob: gpio@80140c10 {
+		gpiob: gpio@800510 {
 			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c10 0x10>;
+			reg = <0x800510 0x10>;
 			status = "disabled";
 			#gpio-cells = <2>;
 		};
 
-		gpioc: gpio@80140c20 {
+		gpioc: gpio@800520 {
 			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c20 0x10>;
+			reg = <0x800520 0x10>;
 			status = "disabled";
 			#gpio-cells = <2>;
 		};
 
-		gpiod: gpio@80140c30 {
+		gpiod: gpio@800530 {
 			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c30 0x10>;
+			reg = <0x800530 0x10>;
 			status = "disabled";
 			#gpio-cells = <2>;
 		};
 
-		gpioe: gpio@80140c40 {
+		gpioe: gpio@800540 {
 			compatible = "telink,tl5x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c40 0x10>;
-			status = "disabled";
-			#gpio-cells = <2>;
-		};
-
-		gpiof: gpio@80140c50 {
-			compatible = "telink,tl5x-gpio";
-			gpio-controller;
-			interrupt-parent = <&plic0>;
-			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
-			reg = <0x80140c50 0x10>;
+			reg = <0x800540 0x10>;
 			status = "disabled";
 			#gpio-cells = <2>;
 		};
