@@ -81,6 +81,7 @@ static int pwm_b9x_set_cycles(const struct device *dev, uint32_t channel,
 		pwm_32k_chn_en(BIT(channel));
 	}
 
+#if(!CONFIG_TOKEN_PERIPHERALS)
 	/* connect output */
 	if (config->pins[channel] != UINT32_MAX) {
 		const struct pinctrl_state pinctrl_state = {
@@ -99,6 +100,7 @@ static int pwm_b9x_set_cycles(const struct device *dev, uint32_t channel,
 			return -EIO;
 		}
 	}
+#endif
 
 #ifdef CONFIG_PM_DEVICE
 	data->ch[channel].period = period_cycles;
