@@ -21,12 +21,10 @@
  */
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
-__attribute__((section(".retention_data"))) static bool led_state = true;
-
 int main(void)
 {
 	int ret;
-	// bool led_state = true;
+	bool led_state = true;
 
 	if (!gpio_is_ready_dt(&led)) {
 		return 0;
