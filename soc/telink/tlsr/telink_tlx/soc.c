@@ -421,7 +421,10 @@ void soc_early_init_hook(void)
 	wd_32k_start();
 #else
 	wd_32k_stop();
+#endif
 
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+#undef N22_FW_DOWNLOAD_FLASH_ADDR
 #define N22_FW_DOWNLOAD_FLASH_ADDR 0x20080000 + 0x13040
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
 #if !defined(TLK_ONLY_BLE_HOST)
@@ -438,15 +441,6 @@ void soc_early_init_hook(void)
 	/* remove warning */
 	(void)deepRetWakeUp;
 #endif
-=======
-// 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
-// #if DEBUG_GPIO_ENABLE
-// 	gpio_init(!deepRetWakeUp);
-// #else
-// 	(void)deepRetWakeUp;	// remove warning
-// #endif
-
->>>>>>> 0e6c31fc135 (feat: add a compile-able version.)
 }
 
 /**

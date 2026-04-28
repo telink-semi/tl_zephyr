@@ -62,7 +62,8 @@ struct gpio_tl5x_t {
 #define IRQ_GPIO6                ((uint8_t)40u)
 #define IRQ_GPIO7                ((uint8_t)41u)
 
-#define GET_IRQ_NUM(dev)         (irq_from_level_2(((const struct gpio_tl5x_config *)dev->config)->irq_num))
+#define GET_IRQ_NUM(dev)         (irq_from_level_2(((const struct gpio_tl5x_config *) \
+										dev->config)->irq_num))
 #define GET_LV2_IRQ_NUM(irq)     (IRQ_TO_L2(irq) + CONFIG_2ND_LVL_INTR_00_OFFSET)
 #define GET_IRQ_PRIORITY(dev)    (((const struct gpio_tl5x_config *)dev->config)->irq_priority)
 
@@ -131,7 +132,7 @@ static inline void gpio_tl5x_irq_status_clr(const struct device *dev)
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 	uint8_t irq_idx = irq - IRQ_GPIO0;
 	gpio_irq_e status = BIT(irq_idx);
- 
+
 	REG_GPIO_IRQ_STATUS(gpio) = status;
 }
 
@@ -262,8 +263,6 @@ static int gpio_tl5x_pin_configure(const struct device *dev,
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 
-	printk("gpio_tl5x_pin_configure: pin %d, flags 0x%x\n", pin, flags);
-
 	if (pin > PIN_NUM_MAX) {
 		return -ENOTSUP;
 	}
@@ -281,22 +280,16 @@ static int gpio_tl5x_pin_configure(const struct device *dev,
 	}
 
 	if ((flags & GPIO_OUTPUT_INIT_HIGH) != 0) {
-		printk("gpio_tl5x_pin_configure: pin %d is output high\n", pin);
 		GPIO_SET_HIGH_LEVEL(gpio, pin);
 	} else if ((flags & GPIO_OUTPUT_INIT_LOW) != 0) {
-		printk("gpio_tl5x_pin_configure: pin %d is output low\n", pin);
 		GPIO_SET_LOW_LEVEL(gpio, pin);
 	}
-
-	printk("gpio_tl5x_pin_configure: pin %d is configured\n", pin);
 
 	WRITE_BIT(gpio->func, pin, 1);
 
 	gpio_tl5x_config_up_down_res(gpio, pin, flags);
 
 	gpio_tl5x_config_in_out(gpio, pin, flags);
-
-	
 
 	return 0;
 }

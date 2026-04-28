@@ -69,9 +69,9 @@
 
 /* TL5x pinctrl pull-up/down */
 #define TL5X_PULL_NONE    0
-// #define TLX_PULLUP_1M    1
-#define TL5X_PULL_DOWN    2 // pull-down 100K
-#define TL5X_PULL_UP      3 // pull-up 20K
+/* #define TLX_PULLUP_1M    1 */
+#define TL5X_PULL_DOWN    2
+#define TL5X_PULL_UP      3
 
 /* Pin function positions， TODO */
 #define TL5X_PIN_FUNC_POS    0xFF

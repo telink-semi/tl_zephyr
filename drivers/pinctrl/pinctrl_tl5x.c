@@ -49,8 +49,9 @@
  *      gpio_func + 3*0x10:    PORT_D[0-7]
  *      gpio_func + 4*0x10:    PORT_E[0-7]
  */
-#define pinctrl_reg_gpio_func(pin) (*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_func) + \
-					   ((pin >> 8) * 0x10)))
+#define pinctrl_reg_gpio_func(pin) (*(volatile uint8_t *) \
+									((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_func) + \
+					   				((pin >> 8) * 0x10)))
 
 /**
  *      Pull Up resistors enable

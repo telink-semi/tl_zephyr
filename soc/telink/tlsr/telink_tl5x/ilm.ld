@@ -12,7 +12,7 @@ SECTION_DATA_PROLOGUE(ram_code_reserved, (NOLOAD),)
 	. = (0x80840000 + ((0 + _ramcode_size_align_256_) * 1));
 	. = ALIGN(256);
 } GROUP_DATA_LINK_IN(TELINK_RAM_REGION, RAMABLE_REGION)
- 
+
 SECTION_DATA_PROLOGUE(cache, (NOLOAD),)
 {
 	. += 0x900;

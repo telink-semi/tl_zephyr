@@ -29,15 +29,15 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 
 void __soc_handle_irq(unsigned long mcause)
 {
-    __irq_pending = false;
-    __asm__ volatile (
-        "li t1, 1\n\t"
-        "sll t0, t1, %0\n\t"
-        "csrrc t1, mip, t0"
-        : 
-        : "r"(mcause)
-        : "t0", "t1", "memory"
-    );
+	__irq_pending = false;
+	__asm__ volatile (
+		"li t1, 1\n\t"
+		"sll t0, t1, %0\n\t"
+		"csrrc t1, mip, t0"
+		:
+		: "r"(mcause)
+		: "t0", "t1", "memory"
+	);
 }
 #endif /* CONFIG_ARCH_HAS_CUSTOM_CPU_IDLE || CONFIG_ARCH_HAS_CUSTOM_CPU_ATOMIC_IDLE */
 

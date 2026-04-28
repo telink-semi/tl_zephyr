@@ -22,8 +22,8 @@
 #define ZIGBEE_PARTITION	slot0_zb_partition
 #define ZIGBEE_PARTITION_DEVICE	FIXED_PARTITION_DEVICE(ZIGBEE_PARTITION)
 #define ZIGBEE_PARTITION_OFFSET	FIXED_PARTITION_OFFSET(ZIGBEE_PARTITION)
-#define ZIGBEE_PARTITION_SIZE 	FIXED_PARTITION_SIZE(ZIGBEE_PARTITION) 
-// fw magic number
+#define ZIGBEE_PARTITION_SIZE 	FIXED_PARTITION_SIZE(ZIGBEE_PARTITION)
+/* fw magic number */
 #define ZB_FW_FLAG_OFFSET       0x20
 
 #define DUAL_MODE_PARTITION		dual_mode_partition
@@ -31,14 +31,14 @@
 #define DUAL_MODE_PARTITION_OFFSET	FIXED_PARTITION_OFFSET(DUAL_MODE_PARTITION)
 #define DUAL_MODE_PARTITION_SIZE 	FIXED_PARTITION_SIZE(DUAL_MODE_PARTITION) 
 
-// init mode will jump to matter, if zigbee trigger action will jump to zigbee
+/** init mode will jump to matter, if zigbee trigger action will jump to zigbee */
 #define MODE_VAL_INIT           0xff
 #define ACTION_SWITCH_INIT      0xff
-// after matter paired , it will go to matter, only if trigger action.
+/** after matter paired , it will go to matter, only if trigger action. */
 #define MODE_VAL_MATTER_PAIR    0x55
 #define ACTION_SWITCH_ZIGBEE    0xaa
 
-// after zb paired , it will go to zb, only if trigger action.
+/** after zb paired , it will go to zb, only if trigger action. */
 #define MODE_VAL_ZB_PAIR        0xaa
 #define ACTION_SWITCH_MATTER    0x55
 
@@ -77,7 +77,7 @@ static uint8_t jump_zb_dispatch(uint8_t *flag)
     uint8_t mode = flag[0];
     uint8_t action = flag[1];
     if(mode == MODE_VAL_INIT){
-        // init mode is matter(may changed) , so should return 0, only action trigger
+        /* init mode is matter(may changed) , so should return 0, only action trigger */
         if(action == ACTION_SWITCH_INIT){
             return 0;
         }else if(action == ACTION_SWITCH_ZIGBEE){
@@ -88,12 +88,12 @@ static uint8_t jump_zb_dispatch(uint8_t *flag)
             return 0;
         }
     }else if(mode == MODE_VAL_ZB_PAIR && action != ACTION_SWITCH_MATTER){
-        // only zigbee paired , and not trigger to matter.
+        /* only zb paired , and not trigger to matter. */
         return 1;
     }else if (mode == MODE_VAL_MATTER_PAIR && action == ACTION_SWITCH_ZIGBEE){
         return 1;
     }else{
-        // other wise , it will jump to matter
+        /* other wise , will jump to matter */
         return 0;
     }
 }
@@ -125,8 +125,8 @@ void mcuboot_status_change(mcuboot_status_type_t status)
     	flash_read(flash_zb_dev, ZIGBEE_PARTITION_OFFSET + ZB_FW_FLAG_OFFSET, zb_fw_flag, sizeof(zb_fw_flag));
     	if (memcmp(zb_fw_flag, zb_magic_flag, sizeof(zb_magic_flag))){
         	/* Zigbee firmware flag not found, boot to Matter */
-        	//printk("Zigbee flag not found, jump to matter \n");
-        	// jump to matter,app_start_addr is init is matter.
+        	/* printk("Zigbee flag not found, jump to matter \n"); */
+        	/* jump to matter,app_start_addr is init is matter. */
 			app_start_addr = DT_FIXED_PARTITION_ADDR(DT_NODELABEL(slot0_partition)) +
 			BOOTLOADER_MCUBOOT_ROM_START_OFFSET;
     	}else{
@@ -146,7 +146,7 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 			}
     	}
 
-		// Print the start address for debugging
+		/* Print the start address for debugging */
 		printk("start adr is %x \n",app_start_addr);
 #else
 		uintptr_t app_start_addr = DT_FIXED_PARTITION_ADDR(DT_NODELABEL(slot0_partition)) +
