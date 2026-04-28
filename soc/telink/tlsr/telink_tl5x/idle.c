@@ -7,17 +7,11 @@
 #include <zephyr/toolchain.h>
 #include <zephyr/tracing/tracing.h>
 
-#include <plmt.h>
-
 #if CONFIG_ARCH_HAS_CUSTOM_CPU_IDLE || CONFIG_ARCH_HAS_CUSTOM_CPU_ATOMIC_IDLE
 
 /* Due to silicon bug in B92 platform, the WFI emulation is implemented */
 static volatile bool __irq_pending;
-__attribute__((used)) volatile uint32_t mstatus_flag = 0;
-__attribute__((used)) volatile uint32_t mie_flag = 0;
 
-__attribute__((used)) volatile uint64_t AAA_mcmp = 0;
-__attribute__((used)) volatile uint64_t AAA_mtime = 0;
 static ALWAYS_INLINE void riscv_idle(unsigned int key)
 {
 	sys_trace_idle();
@@ -26,17 +20,9 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 
 	/* Wait for interrupt */
 	#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL523X
-		mstatus_flag = csr_read(mstatus);
-		mie_flag = csr_read(mie);
-		AAA_mcmp = mtime_get_cmp_value();
-		AAA_mtime = mtime_get_value();
 		__asm__ volatile("wfi");
 	#else
-		mstatus_flag = csr_read(mstatus);
-		mie_flag = csr_read(mie);
 		while (__irq_pending) {
-			AAA_mcmp = mtime_get_cmp_value();
-			AAA_mtime = mtime_get_value();
 		}
 	#endif
 }
