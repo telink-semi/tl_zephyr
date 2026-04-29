@@ -63,8 +63,7 @@ static double pow_val(double x, double y)
 	return result;
 }
 
-static uint8_t notify_func(struct bt_conn *conn,
-			   struct bt_gatt_subscribe_params *params,
+static uint8_t notify_func(struct bt_conn *conn, struct bt_gatt_subscribe_params *params,
 			   const void *data, uint16_t length)
 {
 	double get_temperature;
@@ -89,8 +88,7 @@ static uint8_t notify_func(struct bt_conn *conn,
 	return BT_GATT_ITER_CONTINUE;
 }
 
-static uint8_t discover_func(struct bt_conn *conn,
-			     const struct bt_gatt_attr *attr,
+static uint8_t discover_func(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			     struct bt_gatt_discover_params *params)
 {
 	int err;
@@ -113,8 +111,7 @@ static uint8_t discover_func(struct bt_conn *conn,
 		if (err) {
 			printk("Discover failed (err %d)\n", err);
 		}
-	} else if (!bt_uuid_cmp(discover_params.uuid,
-				BT_UUID_HTS_MEASUREMENT)) {
+	} else if (!bt_uuid_cmp(discover_params.uuid, BT_UUID_HTS_MEASUREMENT)) {
 		memcpy(&discover_uuid, BT_UUID_GATT_CCC, sizeof(discover_uuid));
 		discover_params.uuid = &discover_uuid.uuid;
 		discover_params.start_handle = attr->handle + 2;
@@ -151,7 +148,7 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
 
 	bt_conn_get_info(conn, &info);
 
-	if (info.role ==  BT_CONN_ROLE_CENTRAL) {
+	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		printk("Connection type: Master %d\r\n", info.role);
 
 		bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
@@ -227,11 +224,9 @@ static bool eir_found(struct bt_data *data, void *user_data)
 			}
 
 			err = bt_conn_le_create(addr, BT_CONN_LE_CREATE_CONN,
-						BT_LE_CONN_PARAM_DEFAULT,
-						&default_conn);
+						BT_LE_CONN_PARAM_DEFAULT, &default_conn);
 			if (err) {
-				printk("Create connection failed (err %d)\n",
-				       err);
+				printk("Create connection failed (err %d)\n", err);
 				scan_start();
 			}
 
@@ -248,8 +243,7 @@ static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	char dev[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(addr, dev, sizeof(dev));
-	printk("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i\n",
-	       dev, type, ad->len, rssi);
+	printk("[DEVICE]: %s, AD evt type %u, AD data len %u, RSSI %i\n", dev, type, ad->len, rssi);
 
 	/* We're only interested in connectable events */
 	if (type == BT_HCI_ADV_IND || type == BT_HCI_ADV_DIRECT_IND) {
@@ -334,8 +328,7 @@ static struct bt_conn_auth_cb auth_cb_display = {
 	.cancel = auth_cancel,
 };
 
-static void htmc_ccc_cfg_changed(const struct bt_gatt_attr *attr,
-				 uint16_t value)
+static void htmc_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
 	simulate_htm = (value == BT_GATT_CCC_INDICATE) ? 1 : 0;
 }
@@ -352,12 +345,10 @@ static void indicate_destroy(struct bt_gatt_indicate_params *params)
 }
 
 /* Health Thermometer Service Declaration */
-BT_GATT_SERVICE_DEFINE(hts_svc,
-	BT_GATT_PRIMARY_SERVICE(BT_UUID_HTS),
+BT_GATT_SERVICE_DEFINE(hts_svc, BT_GATT_PRIMARY_SERVICE(BT_UUID_HTS),
 	BT_GATT_CHARACTERISTIC(BT_UUID_HTS_MEASUREMENT, BT_GATT_CHRC_INDICATE,
-			       BT_GATT_PERM_NONE, NULL, NULL, NULL),
-	BT_GATT_CCC(htmc_ccc_cfg_changed,
-		    BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+	BT_GATT_PERM_NONE, NULL, NULL, NULL),
+	BT_GATT_CCC(htmc_ccc_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 	/* more optional Characteristics */
 );
 

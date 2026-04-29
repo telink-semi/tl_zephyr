@@ -2,4 +2,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 config BOARD_TL3238X_RETENTION
-	bool "Telink TL323X Platform with retention"
+	help
+		Telink TL323X Platform with retention

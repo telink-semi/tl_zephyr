@@ -36,10 +36,8 @@ static const struct bt_data sd[] = {
 	BT_DATA(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-/* 保存当前连接，供工作队列使用 */
 static struct bt_conn *default_conn;
 
-/* 自建工作队列与延迟工作 */
 K_THREAD_STACK_DEFINE(conn_wq_stack, 1024);
 static struct k_work_q conn_wq;
 static struct k_work_delayable conn_param_work;
@@ -74,11 +72,9 @@ static void connected(struct bt_conn *conn, uint8_t err)
 
 	printk("Connected %s\n", addr);
 
-	/* 请求加密（可触发配对） */
 	/* int res = bt_conn_set_security(conn, BT_SECURITY_L2); */
 	/* printk("set security err: %d\n", res); */
 
-	/* 记录连接并在 2 秒后更新连接参数 */
 	if (!default_conn) {
 		default_conn = bt_conn_ref(conn);
 	}
@@ -93,7 +89,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 
 	printk("Disconnected from %s (reason 0x%02x)\n", addr, reason);
 
-	/* 取消延迟任务并释放连接引用 */
 	k_work_cancel_delayable(&conn_param_work);
 	if (default_conn) {
 		bt_conn_unref(default_conn);
@@ -171,7 +166,6 @@ int main(void)
 {
 	int err;
 
-	/* 启动自建工作队列并初始化延迟工作 */
 	k_work_queue_start(&conn_wq, conn_wq_stack, K_THREAD_STACK_SIZEOF(conn_wq_stack),
 			   K_PRIO_PREEMPT(8), NULL);
 	k_work_init_delayable(&conn_param_work, conn_param_work_handler);
