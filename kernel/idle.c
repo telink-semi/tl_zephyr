@@ -58,7 +58,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 #endif
 		_kernel.idle = z_get_next_timeout_expiry();
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-		k_timer_start(&wd_32k_timer,  K_MSEC(0), K_MSEC(3000));
+		k_timer_start(&wd_32k_timer, K_MSEC(0), K_MSEC(3000));
 #endif
 		/*
 		 * Call the suspend hook function of the soc interface

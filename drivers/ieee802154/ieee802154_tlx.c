@@ -943,7 +943,7 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 				tlx->rf_mode_154 = true;
 			}
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-			sys_n22_init(0x20080000);
+			sys_n22_init(CONFIG_FLASH_BASE_ADDRESS + 0x80000);
 			rf_n22_dig_init();
 			rf_clr_irq_mask(FLD_RF_IRQ_ALL);
 #endif
