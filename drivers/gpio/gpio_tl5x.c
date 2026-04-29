@@ -63,7 +63,7 @@ struct gpio_tl5x_t {
 #define IRQ_GPIO7                ((uint8_t)41u)
 
 #define GET_IRQ_NUM(dev)         (irq_from_level_2(((const struct gpio_tl5x_config *) \
-										dev->config)->irq_num))
+								    dev->config)->irq_num))
 #define GET_LV2_IRQ_NUM(irq)     (IRQ_TO_L2(irq) + CONFIG_2ND_LVL_INTR_00_OFFSET)
 #define GET_IRQ_PRIORITY(dev)    (((const struct gpio_tl5x_config *)dev->config)->irq_priority)
 

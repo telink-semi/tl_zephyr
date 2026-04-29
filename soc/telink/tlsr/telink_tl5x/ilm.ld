@@ -38,6 +38,3 @@ SECTION_DATA_PROLOGUE(noinit_ram, (NOLOAD),)
 	*(.noinit)
 	*(".noinit.*")
 } GROUP_DATA_LINK_IN(TELINK_RAM_REGION, RAMABLE_REGION)
-
-
-

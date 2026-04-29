@@ -33,7 +33,7 @@ entry:
 
 	# not need to add
 	# .org 0x18
-    # .word   (_bin_size_) 
+    # .word   (_bin_size_)
 
 	.option pop
 
