@@ -42,16 +42,24 @@ config TELINK_TLX_PFT
 	default y
 	select RISCV_SOC_CONTEXT_SAVE
 
+# To pass CI on Zephyr 4.1
+config BOOT_USE_MBEDTLS
+	bool
+
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on MBEDTLS || BOOTLOADER_MCUBOOT
+	depends on MBEDTLS || BOOT_USE_MBEDTLS
 	default y
 	help
 		This option enables Telink TLx hardware accelerated mbedtls version.
 
+# To pass CI on Zephyr 4.1
+config BOOT_USE_TINYCRYPT
+	bool
+
 config TELINK_TLX_TINYCRYPT_HW_ACCELERATION
 	bool "Use Telink TLx platform tinycrypt HW acceleration"
-	depends on TINYCRYPT || BOOTLOADER_MCUBOOT
+	depends on TINYCRYPT || BOOT_USE_TINYCRYPT
 	default y
 	help
 		This option enables Telink TLx hardware accelerated tinycrypt version.
