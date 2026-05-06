@@ -19,7 +19,7 @@
 #include "gpio_default.h"
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 #include "tlx_bt_flash.h"
 #endif
 
@@ -129,42 +129,34 @@ pm_retention_register_recover(void)
 #endif
 
 /* Check System Clock value. */
+#define CCLK_FREQ DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency)
 #if CONFIG_SOC_RISCV_TELINK_TL321X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&    \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
+#if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&    \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_64MHZ) && \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_72MHZ) && \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
+#if ((CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_64MHZ) && (CCLK_FREQ != CLK_72MHZ) &&           \
+	 (CCLK_FREQ != CLK_96MHZ))
 #error "Invalid clock-frequency. Supported values: 48,64,72,96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&    \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) && \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
+#if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
-#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_40MHZ) &&     \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&  \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_60MHZ) &&  \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_80MHZ) &&  \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_120MHZ) && \
-	 (DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_240MHZ))
-#error "Invalid clock-frequency. Supported values: 24, 40, 48, 60, 80, 120, 240 MHz"
+#if ((CCLK_FREQ != CLK_40MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_60MHZ) &&           \
+	 (CCLK_FREQ != CLK_80MHZ) && (CCLK_FREQ != CLK_120MHZ) && (CCLK_FREQ != CLK_240MHZ))
+#error "Invalid clock-frequency. Supported values: 40, 48, 60, 80, 120, 240 MHz"
 #endif
 #endif
+#undef CCLK_FREQ
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
 extern drv_api_status_e efuse_calib_sd_adc_vref(void);
 _attribute_data_retention_sec_ unsigned int g_adc_calib_flag;
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 /* SOC Parameters structure */
 _attribute_data_retention_sec_ struct {
 	unsigned char cap_freq_offset_en;
@@ -312,7 +304,7 @@ void soc_early_init_hook(void)
 	g_adc_calib_flag = efuse_calib_sd_adc_vref();
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
 #endif
 
@@ -479,7 +471,7 @@ void soc_tlx_restore(void)
 	}
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
 #endif
 

@@ -1,0 +1,13 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+# Telink TL5x UART configuration options
+
+config UART_TELINK_TL5X
+	bool "Telink TL5x UART driver"
+	default y
+	depends on DT_HAS_TELINK_TL5X_UART_ENABLED
+	select SERIAL_HAS_DRIVER
+	select SERIAL_SUPPORT_INTERRUPT
+	help
+	  This option enables the TL5x serial driver.

@@ -1,7 +1,7 @@
 # Copyright (c) 2024 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-config SOC_RISCV_TELINK_TLX
+config SOC_RISCV_TELINK_TL5X
 	bool
 	select RISCV
 	select RISCV_ISA_RV32I
@@ -20,36 +20,16 @@ config SOC_RISCV_TELINK_TLX
 	select PINCTRL
 	imply XIP
 	select SOC_EARLY_INIT_HOOK
+	select ARCH_HAS_CUSTOM_CPU_IDLE
 
-if SOC_RISCV_TELINK_TLX
+if SOC_RISCV_TELINK_TL5X
 
-config TELINK_TL321X_PMP
+config TELINK_TL523X_PMP
 	bool "Support Hardware Memory Protection"
-	depends on SOC_RISCV_TELINK_TL321X
+	depends on SOC_RISCV_TELINK_TL523X
 	select RISCV_PMP
 	help
-		This option enables Telink TL321 PMP(memory protection) module.
-
-config TELINK_TL721X_PMP
-	bool "Support Hardware Memory Protection"
-	depends on SOC_RISCV_TELINK_TL721X
-	select RISCV_PMP
-	help
-		This option enables Telink TL721X PMP(memory protection) module.
-
-config TELINK_TL322X_PMP
-	bool "Support Hardware Memory Protection"
-	depends on SOC_RISCV_TELINK_TL322X
-	select RISCV_PMP
-	help
-		This option enables Telink TL322X PMP(memory protection) module.
-
-config TELINK_TL323X_PMP
-	bool "Support Hardware Memory Protection"
-	depends on SOC_RISCV_TELINK_TL323X
-	select RISCV_PMP
-	help
-		This option enables Telink TL323X PMP(memory protection) module.
+		This option enables Telink TL523X PMP(memory protection) module.
 
 config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW acceleration"
@@ -100,7 +80,7 @@ config TELINK_TLX_MALLOC_FAILED_HOOK
 	help
 		This option stops SW execution when system heap allocation failed.
 
-config SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+config SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 	bool "Telink TLx SoCs retention memory layout"
 	help
 		Telink TLx SoCs retention memory layout
@@ -118,68 +98,4 @@ config TELINK_TLX_MATTER_RETENTION_LAYOUT
 	help
 		This option enables support Matter retention layout
 
-if BOOTLOADER_MCUBOOT || MCUBOOT
-
-config TELINK_TLX_MCUBOOT_STARTUP
-	bool "Telink TLx MCUBoot startup handler"
-	depends on MCUBOOT
-	select CRC
-	select UART_DRV_CMD
-	default y if SOC_RISCV_TELINK_TL323X
-	default n
-	help
-		Run Telink specific vendor code before MCUBoot
-		main process
-
-config COMPRESS_LZMA
-	bool "Support LZMA compression"
-	default n
-	select BOOT_IMAGE_ACCESS_HOOKS
-	help
-		This option enables LZMA compression with MCUBoot
-
-config COMPRESS_LZMA_DICTIONARY_SIZE
-	int "Set LZMA compression dictionary size"
-	default 32768
-	depends on COMPRESS_LZMA
-	help
-		This option sets LZMA compression dictionary size
-
-# Fix ram overflow during bootloader compilation after config LZMA
-config TELINK_TLX_MATTER_RETENTION_LAYOUT
-	bool "link mcu_boot_tlx.ld for tl321X/tl323x"
-	default y if SOC_RISCV_TELINK_TL321X
-	default y if SOC_RISCV_TELINK_TL323X
-	default n
-	help
-		This option link mcu_boot_tlx.ld to optimize RAM usage
-
-endif # BOOTLOADER_MCUBOOT || MCUBOOT
-
-config MICRO_SPEECH_EXTRA_DRIVER
-	bool "Add extra driver for micro speech sample"
-	default n
-	depends on SOC_RISCV_TELINK_TL721X
-	help
-	  This option enables audio and dma driver for micro speech sample
-
-endif # SOC_RISCV_TELINK_TLX
-
-
-if SOC_RISCV_TELINK_TL323X
-config SOC_PMOS_SWITCH_TIME_CTL
-	bool "Add pmos switch time"
-	default n
-	depends on SOC_RISCV_TELINK_TL323X
-	help
-		This option can increase the PMOS switching time when the inductance value is below 6.8uH
-endif
-
-config MCUBOOT_START_OFFSET
-	hex
-	default 0x5000 if SOC_RISCV_TELINK_TL323X
-	default 0x0
-	help
-		The MCUboot offset value.
-
-source "soc/telink/tlsr/telink_tlx/Kconfig.n22"
+endif # SOC_RISCV_TELINK_TL5X

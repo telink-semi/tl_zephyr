@@ -1,0 +1,12 @@
+# Copyright (c) 2024 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+# Telink TLx-series GPIO configuration options
+
+config ENTROPY_TELINK_TL5X_TRNG
+	bool "Telink TL5x Entropy driver"
+	default y
+	depends on DT_HAS_TELINK_TL5X_TRNG_ENABLED
+	select ENTROPY_HAS_DRIVER
+	help
+	  Enable the TL5x Entropy driver.
