@@ -18,26 +18,24 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 	__irq_pending = true;
 	irq_unlock(key);
 
-	/* Wait for interrupt */
-	#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL523X
-		__asm__ volatile("wfi");
-	#else
-		while (__irq_pending) {
-		}
-	#endif
+/* Wait for interrupt */
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL523X
+	__asm__ volatile("wfi");
+#else
+	while (__irq_pending) {
+	}
+#endif
 }
 
 void __soc_handle_irq(unsigned long mcause)
 {
 	__irq_pending = false;
-	__asm__ volatile (
-		"li t1, 1\n\t"
-		"sll t0, t1, %0\n\t"
-		"csrrc t1, mip, t0"
-		:
-		: "r"(mcause)
-		: "t0", "t1", "memory"
-	);
+	__asm__ volatile("li t1, 1\n\t"
+			 "sll t0, t1, %0\n\t"
+			 "csrrc t1, mip, t0"
+			 :
+			 : "r"(mcause)
+			 : "t0", "t1", "memory");
 }
 #endif /* CONFIG_ARCH_HAS_CUSTOM_CPU_IDLE || CONFIG_ARCH_HAS_CUSTOM_CPU_ATOMIC_IDLE */
 
@@ -47,7 +45,6 @@ void arch_cpu_idle(void)
 	riscv_idle(MSTATUS_IEN);
 }
 #endif /* CONFIG_ARCH_HAS_CUSTOM_CPU_IDLE */
-
 
 #if CONFIG_ARCH_HAS_CUSTOM_CPU_ATOMIC_IDLE
 void arch_cpu_atomic_idle(unsigned int key)

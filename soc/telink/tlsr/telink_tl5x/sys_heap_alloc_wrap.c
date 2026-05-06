@@ -33,8 +33,8 @@ void *__wrap_sys_heap_alloc(struct sys_heap *heap, size_t bytes)
 
 void *__wrap_sys_heap_aligned_alloc(struct sys_heap *heap, size_t align, size_t bytes)
 {
-	extern void *__real_sys_heap_aligned_alloc(
-		struct sys_heap *heap, size_t align, size_t bytes);
+	extern void *__real_sys_heap_aligned_alloc(struct sys_heap *heap, size_t align,
+						   size_t bytes);
 	void *result = __real_sys_heap_aligned_alloc(heap, align, bytes);
 #ifdef CONFIG_TELINK_TLX_MALLOC_FAILED_HOOK
 	if (!result) {
@@ -46,8 +46,8 @@ void *__wrap_sys_heap_aligned_alloc(struct sys_heap *heap, size_t align, size_t 
 
 void *__wrap_sys_heap_aligned_realloc(struct sys_heap *heap, void *ptr, size_t align, size_t bytes)
 {
-	extern void *__real_sys_heap_aligned_realloc(
-		struct sys_heap *heap, void *ptr, size_t align, size_t bytes);
+	extern void *__real_sys_heap_aligned_realloc(struct sys_heap *heap, void *ptr,
+						     size_t align, size_t bytes);
 	void *result = __real_sys_heap_aligned_realloc(heap, ptr, align, bytes);
 #ifdef CONFIG_TELINK_TLX_MALLOC_FAILED_HOOK
 	if (!result) {

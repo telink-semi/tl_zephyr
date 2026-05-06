@@ -48,7 +48,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 * unmasked.  It does not take a spinlock or other
 		 * higher level construct.
 		 */
-		(void) arch_irq_lock();
+		(void)arch_irq_lock();
 
 #ifdef CONFIG_PM
 #if CONFIG_SOC_RISCV_TELINK_TL323X
@@ -58,7 +58,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 #endif
 		_kernel.idle = z_get_next_timeout_expiry();
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-		k_timer_start(&wd_32k_timer,  K_MSEC(0), K_MSEC(3000));
+		k_timer_start(&wd_32k_timer, K_MSEC(0), K_MSEC(3000));
 #endif
 		/*
 		 * Call the suspend hook function of the soc interface
@@ -75,11 +75,17 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 * which is essential for the kernel's scheduling
 		 * logic.
 		 */
-#if ((defined(CONFIG_BT_B9X) && defined(CONFIG_SOC_RISCV_TELINK_B92)) ||   \
-	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL321X)) || \
-	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X)) || \
-	(defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)))
+#if defined(CONFIG_BT_B9X) && defined(CONFIG_SOC_RISCV_TELINK_B92)
+#define TELINK_BT_IDLE_HOOK
+#elif defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL321X)
+#define TELINK_BT_IDLE_HOOK
+#elif defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL721X)
+#define TELINK_BT_IDLE_HOOK
+#elif defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)
+#define TELINK_BT_IDLE_HOOK
+#endif
 
+#ifdef TELINK_BT_IDLE_HOOK
 #if CONFIG_BT_B9X
 #include "b9x_bt.h"
 #else
@@ -96,13 +102,14 @@ void idle(void *unused1, void *unused2, void *unused3)
 		if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
 			k_cpu_idle();
 		}
-#endif /* CONFIG_BT_B9X || CONFIG_BT_TLX */
+#endif /* TELINK_BT_IDLE_HOOK */
+#undef TELINK_BT_IDLE_HOOK
 #else
 		k_cpu_idle();
 #endif /* CONFIG_PM */
 
 #if !defined(CONFIG_PREEMPT_ENABLED)
-# if !defined(CONFIG_USE_SWITCH) || defined(CONFIG_SPARC)
+#if !defined(CONFIG_USE_SWITCH) || defined(CONFIG_SPARC)
 		/* A legacy mess: the idle thread is by definition
 		 * preemptible as far as the modern scheduler is
 		 * concerned, but older platforms use
@@ -115,7 +122,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 		if (_kernel.ready_q.cache != _current) {
 			z_swap_unlocked();
 		}
-# endif /* !defined(CONFIG_USE_SWITCH) || defined(CONFIG_SPARC) */
+#endif /* !defined(CONFIG_USE_SWITCH) || defined(CONFIG_SPARC) */
 #endif /* !defined(CONFIG_PREEMPT_ENABLED) */
 	}
 }

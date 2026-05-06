@@ -24,13 +24,12 @@ typedef uint32_t pinctrl_soc_pin_t;
  * @param prop Property name.
  * @param idx Property entry index.
  */
-#define Z_PINCTRL_STATE_PIN_INIT(node_id, prop, idx)					\
-	(DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), pinmux) |				\
-	 ((TL5X_PULL_DOWN * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_down))	\
-		<< TL5X_PULL_POS) |							\
-	 ((TL5X_PULL_UP * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_up))	\
-		<< TL5X_PULL_POS)							\
-	),
+#define Z_PINCTRL_STATE_PIN_INIT(node_id, prop, idx)                                               \
+	(DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), pinmux) |                                     \
+	 ((TL5X_PULL_DOWN * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_down))           \
+	  << TL5X_PULL_POS) |                                                                      \
+	 ((TL5X_PULL_UP * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_up))               \
+	  << TL5X_PULL_POS)),
 
 /**
  * @brief Utility macro to initialize state pins contained in a given property.
@@ -38,7 +37,7 @@ typedef uint32_t pinctrl_soc_pin_t;
  * @param node_id Node identifier.
  * @param prop Property name describing state pins.
  */
-#define Z_PINCTRL_STATE_PINS_INIT(node_id, prop) \
-	{ DT_FOREACH_PROP_ELEM(node_id, prop, Z_PINCTRL_STATE_PIN_INIT) }
+#define Z_PINCTRL_STATE_PINS_INIT(node_id, prop)                                                   \
+	{DT_FOREACH_PROP_ELEM(node_id, prop, Z_PINCTRL_STATE_PIN_INIT)}
 
-#endif  /* SOC_RISCV_TELINK_TL5X_PINCTRL_SOC_H */
+#endif /* SOC_RISCV_TELINK_TL5X_PINCTRL_SOC_H */

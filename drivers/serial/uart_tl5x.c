@@ -13,24 +13,24 @@
 #define DT_DRV_COMPAT telink_tl5x_uart
 
 /* Get UART instance */
-#define GET_UART(dev)      ((volatile struct uart_tl5x_t *) \
-			    ((const struct uart_tl5x_config *)dev->config)->uart_addr)
+#define GET_UART(dev)                                                                              \
+	((volatile struct uart_tl5x_t *)((const struct uart_tl5x_config *)dev->config)->uart_addr)
 
 /* UART TX buffer count max value */
-#define UART_TX_BUF_CNT    ((uint8_t)8u)
+#define UART_TX_BUF_CNT ((uint8_t)8u)
 
 /* UART TX/RX data registers size */
-#define UART_DATA_SIZE     ((uint8_t)4u)
+#define UART_DATA_SIZE ((uint8_t)4u)
 
 /* Parity type */
-#define UART_PARITY_NONE   ((uint8_t)0u)
-#define UART_PARITY_EVEN   ((uint8_t)1u)
-#define UART_PARITY_ODD    ((uint8_t)2u)
+#define UART_PARITY_NONE ((uint8_t)0u)
+#define UART_PARITY_EVEN ((uint8_t)1u)
+#define UART_PARITY_ODD  ((uint8_t)2u)
 
 /* Stop bits length */
-#define UART_STOP_BIT_1    ((uint8_t)0u)
-#define UART_STOP_BIT_1P5  BIT(4)
-#define UART_STOP_BIT_2    BIT(5)
+#define UART_STOP_BIT_1   ((uint8_t)0u)
+#define UART_STOP_BIT_1P5 BIT(4)
+#define UART_STOP_BIT_2   BIT(5)
 
 /* tl5x UART registers structure */
 struct __packed uart_tl5x_t {
@@ -75,42 +75,42 @@ enum {
 
 /* ctrl0 register enums */
 enum {
-	FLD_UART_BPWC_O         = BIT_RNG(0, 3),
-	FLD_UART_RX_DMA_EN      = BIT(4),
-	FLD_UART_TX_DMA_EN      = BIT(5),
-	FLD_UART_RX_IRQ_EN      = BIT(6),
-	FLD_UART_TX_IRQ_EN      = BIT(7),
+	FLD_UART_BPWC_O = BIT_RNG(0, 3),
+	FLD_UART_RX_DMA_EN = BIT(4),
+	FLD_UART_TX_DMA_EN = BIT(5),
+	FLD_UART_RX_IRQ_EN = BIT(6),
+	FLD_UART_TX_IRQ_EN = BIT(7),
 };
 
 /* ctrl1 register enums */
 enum {
 	FLD_UART_TX_CTS_POLARITY = BIT(0),
-	FLD_UART_TX_CTS_ENABLE   = BIT(1),
-	FLD_UART_PARITY_ENABLE   = BIT(2),
+	FLD_UART_TX_CTS_ENABLE = BIT(1),
+	FLD_UART_PARITY_ENABLE = BIT(2),
 	FLD_UART_PARITY_POLARITY = BIT(3),
-	FLD_UART_STOP_SEL        = BIT_RNG(4, 5),
+	FLD_UART_STOP_SEL = BIT_RNG(4, 5),
 };
 
 /* ctrl2 register enums */
 enum {
-	FLD_UART_RTS_TRIQ_LEV    = BIT_RNG(0, 3),
-	FLD_UART_RTS_POLARITY    = BIT(4),
-	FLD_UART_RTS_MANUAL_M    = BIT(6),
-	FLD_UART_RTS_EN          = BIT(7),
+	FLD_UART_RTS_TRIQ_LEV = BIT_RNG(0, 3),
+	FLD_UART_RTS_POLARITY = BIT(4),
+	FLD_UART_RTS_MANUAL_M = BIT(6),
+	FLD_UART_RTS_EN = BIT(7),
 };
 
 /* ctrl3 register enums */
 enum {
 	FLD_UART_RX_IRQ_TRIQ_LEV_OFFSET = 0,
 	FLD_UART_TX_IRQ_TRIQ_LEV_OFFSET = 4,
-	FLD_UART_RX_IRQ_TRIQ_LEV        = BIT_RNG(0, 3),
-	FLD_UART_TX_IRQ_TRIQ_LEV        = BIT_RNG(4, 7),
+	FLD_UART_RX_IRQ_TRIQ_LEV = BIT_RNG(0, 3),
+	FLD_UART_TX_IRQ_TRIQ_LEV = BIT_RNG(4, 7),
 };
 
 /* rxtimeoutH register enums */
 enum {
-	FLD_UART_MASK_RX_IRQ  = BIT(4),
-	FLD_UART_MASK_TX_IRQ  = BIT(6),
+	FLD_UART_MASK_RX_IRQ = BIT(4),
+	FLD_UART_MASK_TX_IRQ = BIT(6),
 	FLD_UART_MASK_ERR_IRQ = BIT(7),
 };
 
@@ -118,13 +118,13 @@ enum {
 enum {
 	FLD_UART_RX_BUF_CNT_OFFSET = 0,
 	FLD_UART_TX_BUF_CNT_OFFSET = 4,
-	FLD_UART_RX_BUF_CNT        = BIT_RNG(0, 3),
-	FLD_UART_TX_BUF_CNT        = BIT_RNG(4, 7),
+	FLD_UART_RX_BUF_CNT = BIT_RNG(0, 3),
+	FLD_UART_TX_BUF_CNT = BIT_RNG(4, 7),
 };
 
 /* status register enums */
 enum {
-	FLD_UART_IRQ_O       = BIT(3),
+	FLD_UART_IRQ_O = BIT(3),
 	FLD_UART_RX_ERR_FLAG = BIT(7),
 };
 
@@ -134,7 +134,6 @@ enum {
 	FLD_UART_TX_BUF_IRQ = BIT(1),
 	FLD_UART_RX_BUF_IRQ = BIT(3),
 };
-
 
 static inline uint8_t uart_tl5x_get_tx_bufcnt(volatile struct uart_tl5x_t *uart)
 {
@@ -165,8 +164,8 @@ static uint8_t uart_tl5x_is_prime(uint32_t n)
 	return 1;
 }
 
-static void uart_tl5x_cal_div_and_bwpc(uint32_t baudrate, uint32_t pclk,
-					uint16_t *divider, uint8_t *bwpc)
+static void uart_tl5x_cal_div_and_bwpc(uint32_t baudrate, uint32_t pclk, uint16_t *divider,
+				       uint8_t *bwpc)
 {
 	uint8_t i = 0, j = 0;
 	uint32_t primeInt = 0;
@@ -223,8 +222,8 @@ static void uart_tl5x_cal_div_and_bwpc(uint32_t baudrate, uint32_t pclk,
 	}
 }
 
-static void uart_tl5x_init(volatile struct uart_tl5x_t *uart, uint16_t divider,
-			   uint8_t bwpc, uint8_t parity, uint8_t stop_bit)
+static void uart_tl5x_init(volatile struct uart_tl5x_t *uart, uint16_t divider, uint8_t bwpc,
+			   uint8_t parity, uint8_t stop_bit)
 {
 	uart->ctrl0 = ((uart->ctrl0 & (~FLD_UART_BPWC_O)) | bwpc);
 
@@ -261,8 +260,7 @@ static void uart_tl5x_irq_handler(const struct device *dev)
 }
 
 #ifdef CONFIG_UART_USE_RUNTIME_CONFIGURE
-static int uart_tl5x_configure(const struct device *dev,
-			       const struct uart_config *cfg)
+static int uart_tl5x_configure(const struct device *dev, const struct uart_config *cfg)
 {
 	struct uart_tl5x_data *data = dev->data;
 	uint16_t divider;
@@ -293,7 +291,7 @@ static int uart_tl5x_configure(const struct device *dev,
 	}
 
 	if (cfg->flow_ctrl != UART_CFG_FLOW_CTRL_NONE &&
-		cfg->flow_ctrl != UART_CFG_FLOW_CTRL_RTS_CTS) {
+	    cfg->flow_ctrl != UART_CFG_FLOW_CTRL_RTS_CTS) {
 		return -ENOTSUP;
 	}
 
@@ -315,8 +313,7 @@ static int uart_tl5x_configure(const struct device *dev,
 	return 0;
 }
 
-static int uart_tl5x_config_get(const struct device *dev,
-				struct uart_config *cfg)
+static int uart_tl5x_config_get(const struct device *dev, struct uart_config *cfg)
 {
 	struct uart_tl5x_data *data = dev->data;
 
@@ -408,13 +405,9 @@ static int uart_tl5x_err_check(const struct device *dev)
 	return ((uart->status & FLD_UART_RX_ERR_FLAG) != 0) ? 1 : 0;
 }
 
-
-
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 
-static int uart_tl5x_fifo_fill(const struct device *dev,
-			       const uint8_t *tx_data,
-			       int size)
+static int uart_tl5x_fifo_fill(const struct device *dev, const uint8_t *tx_data, int size)
 {
 	int i = 0;
 	volatile struct uart_tl5x_t *uart = GET_UART(dev);
@@ -439,9 +432,7 @@ static int uart_tl5x_fifo_fill(const struct device *dev,
 	return i;
 }
 
-static int uart_tl5x_fifo_read(const struct device *dev,
-			       uint8_t *rx_data,
-			       const int size)
+static int uart_tl5x_fifo_read(const struct device *dev, uint8_t *rx_data, const int size)
 {
 	int rx_count;
 	volatile struct uart_tl5x_t *uart = GET_UART(dev);
@@ -463,8 +454,8 @@ static void uart_tl5x_irq_tx_enable(const struct device *dev)
 {
 	volatile struct uart_tl5x_t *uart = GET_UART(dev);
 
-	uart->ctrl3 = (uart->ctrl3 & (~FLD_UART_TX_IRQ_TRIQ_LEV)) |
-		      BIT(FLD_UART_TX_IRQ_TRIQ_LEV_OFFSET);
+	uart->ctrl3 =
+		(uart->ctrl3 & (~FLD_UART_TX_IRQ_TRIQ_LEV)) | BIT(FLD_UART_TX_IRQ_TRIQ_LEV_OFFSET);
 
 	uart->rxtimeoutH |= FLD_UART_MASK_TX_IRQ;
 }
@@ -481,7 +472,9 @@ static int uart_tl5x_irq_tx_ready(const struct device *dev)
 	volatile struct uart_tl5x_t *uart = GET_UART(dev);
 
 	return ((uart_tl5x_get_tx_bufcnt(uart) < UART_TX_BUF_CNT) &&
-		((uart->rxtimeoutH & FLD_UART_MASK_TX_IRQ) != 0)) ? 1 : 0;
+		((uart->rxtimeoutH & FLD_UART_MASK_TX_IRQ) != 0))
+		       ? 1
+		       : 0;
 }
 
 static int uart_tl5x_irq_tx_complete(const struct device *dev)
@@ -495,8 +488,8 @@ static void uart_tl5x_irq_rx_enable(const struct device *dev)
 {
 	volatile struct uart_tl5x_t *uart = GET_UART(dev);
 
-	uart->ctrl3 = (uart->ctrl3 & (~FLD_UART_RX_IRQ_TRIQ_LEV)) |
-		      BIT(FLD_UART_RX_IRQ_TRIQ_LEV_OFFSET);
+	uart->ctrl3 =
+		(uart->ctrl3 & (~FLD_UART_RX_IRQ_TRIQ_LEV)) | BIT(FLD_UART_RX_IRQ_TRIQ_LEV_OFFSET);
 
 	uart->rxtimeoutH |= FLD_UART_MASK_RX_IRQ;
 }
@@ -543,8 +536,7 @@ static int uart_tl5x_irq_update(const struct device *dev)
 	return 1;
 }
 
-static void uart_tl5x_irq_callback_set(const struct device *dev,
-				       uart_irq_callback_user_data_t cb,
+static void uart_tl5x_irq_callback_set(const struct device *dev, uart_irq_callback_user_data_t cb,
 				       void *cb_data)
 {
 	struct uart_tl5x_data *data = dev->data;
@@ -581,37 +573,30 @@ static const struct uart_driver_api uart_tl5x_driver_api = {
 #endif
 };
 
-#define UART_TL5X_INIT(n)							    \
-										    \
-	static void uart_tl5x_irq_connect_##n(void);				    \
-										    \
-	PINCTRL_DT_INST_DEFINE(n);						    \
-										    \
-	static const struct uart_tl5x_config uart_tl5x_cfg_##n =		    \
-	{									    \
-		.uart_addr = DT_INST_REG_ADDR(n),				    \
-		.baud_rate = DT_INST_PROP(n, current_speed),			    \
-		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),			    \
-		.pirq_connect = uart_tl5x_irq_connect_##n,			    \
-		.hw_flow_control = DT_INST_PROP(n, hw_flow_control)		    \
-	};									    \
-										    \
-	static struct uart_tl5x_data uart_tl5x_data_##n;			    \
-										    \
-	DEVICE_DT_INST_DEFINE(n, uart_tl5x_driver_init,				    \
-			      NULL,						    \
-			      &uart_tl5x_data_##n,				    \
-			      &uart_tl5x_cfg_##n,				    \
-			      PRE_KERNEL_1,					    \
-			      CONFIG_SERIAL_INIT_PRIORITY,			    \
-			      (void *)&uart_tl5x_driver_api);			    \
-										    \
-	static void uart_tl5x_irq_connect_##n(void)				    \
-	{									    \
-		IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority),		    \
-			    uart_tl5x_irq_handler,				    \
-			    DEVICE_DT_INST_GET(n), 0);				    \
-		irq_enable(DT_INST_IRQN(n));					    \
+#define UART_TL5X_INIT(n)                                                                          \
+                                                                                                   \
+	static void uart_tl5x_irq_connect_##n(void);                                               \
+                                                                                                   \
+	PINCTRL_DT_INST_DEFINE(n);                                                                 \
+                                                                                                   \
+	static const struct uart_tl5x_config uart_tl5x_cfg_##n = {                                 \
+		.uart_addr = DT_INST_REG_ADDR(n),                                                  \
+		.baud_rate = DT_INST_PROP(n, current_speed),                                       \
+		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(n),                                         \
+		.pirq_connect = uart_tl5x_irq_connect_##n,                                         \
+		.hw_flow_control = DT_INST_PROP(n, hw_flow_control)};                              \
+                                                                                                   \
+	static struct uart_tl5x_data uart_tl5x_data_##n;                                           \
+                                                                                                   \
+	DEVICE_DT_INST_DEFINE(n, uart_tl5x_driver_init, NULL, &uart_tl5x_data_##n,                 \
+			      &uart_tl5x_cfg_##n, PRE_KERNEL_1, CONFIG_SERIAL_INIT_PRIORITY,       \
+			      (void *)&uart_tl5x_driver_api);                                      \
+                                                                                                   \
+	static void uart_tl5x_irq_connect_##n(void)                                                \
+	{                                                                                          \
+		IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority), uart_tl5x_irq_handler,      \
+			    DEVICE_DT_INST_GET(n), 0);                                             \
+		irq_enable(DT_INST_IRQN(n));                                                       \
 	}
 
 DT_INST_FOREACH_STATUS_OKAY(UART_TL5X_INIT)

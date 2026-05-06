@@ -43,13 +43,6 @@ config TELINK_TLX_PFT
 	default y
 	select RISCV_SOC_CONTEXT_SAVE
 
-config TELINK_TLX_MBEDTLS_HW_ACCELERATION
-	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on MBEDTLS
-	default y
-	help
-		This option enables Telink TLx hardware accelerated mbedtls version.
-
 config TELINK_TLX_MBEDTLS_HW_SHA_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW SHA256 acceleration"
 	depends on TELINK_TLX_MBEDTLS_HW_ACCELERATION
@@ -87,7 +80,7 @@ config TELINK_TLX_MALLOC_FAILED_HOOK
 	help
 		This option stops SW execution when system heap allocation failed.
 
-config SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+config SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 	bool "Telink TLx SoCs retention memory layout"
 	help
 		Telink TLx SoCs retention memory layout
@@ -104,7 +97,5 @@ config TELINK_TLX_MATTER_RETENTION_LAYOUT
 	depends on SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	help
 		This option enables support Matter retention layout
-		
-endif # SOC_RISCV_TELINK_TL5X
 
-source "soc/telink/tlsr/telink_tlx/Kconfig.n22"
+endif # SOC_RISCV_TELINK_TL5X

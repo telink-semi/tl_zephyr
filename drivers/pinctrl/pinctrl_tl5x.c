@@ -12,35 +12,6 @@
 #define DT_DRV_COMPAT telink_tl5x_pinctrl
 
 /**
- *      GPIO Function Multiplexer Register
- *         ADDR              PINS
- *      gpio_func_mux:          PORT_A[0]
- *      gpio_func_mux + 1:      PORT_A[1]
- *      ...........             ...........
- *      gpio_func_mux + 0x27:   PORT_E[7]
- */
-
-#define PINCTR_BIT_LOW_BIT(y) \
-		(((y) & BIT(0))  ? 0  : (((y) & BIT(1))  ?  1 : (((y) & BIT(2))  ?  2 : \
-		(((y) & BIT(3))  ? 3  : (((y) & BIT(4))  ?  4 : (((y) & BIT(5))  ?  5 : \
-		(((y) & BIT(6))  ? 6  : (((y) & BIT(7))  ?  7 : (((y) & BIT(8))  ?  8 : \
-		(((y) & BIT(9))  ? 9  : (((y) & BIT(10)) ? 10 : (((y) & BIT(11)) ? 11 : \
-		(((y) & BIT(12)) ? 12 : (((y) & BIT(13)) ? 13 : (((y) & BIT(14)) ? 14 : \
-		(((y) & BIT(15)) ? 15 : (((y) & BIT(16)) ? 16 : (((y) & BIT(17)) ? 17 : \
-		(((y) & BIT(18)) ? 18 : (((y) & BIT(19)) ? 19 : (((y) & BIT(20)) ? 20 : \
-		(((y) & BIT(21)) ? 21 : (((y) & BIT(22)) ? 22 : (((y) & BIT(23)) ? 23 : \
-		(((y) & BIT(24)) ? 24 : (((y) & BIT(25)) ? 25 : (((y) & BIT(26)) ? 26 : \
-		(((y) & BIT(27)) ? 27 : (((y) & BIT(28)) ? 28 : (((y) & BIT(29)) ? 29 : \
-		(((y) & BIT(30)) ? 30 : (((y) & BIT(31)) ? 31 : 32 \
-		))))))))))))))))))))))))))))))))
-
-#define pinctrl_reg_gpio_func_mux(pin) \
-		(*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_func_mux) + \
-				((pin >> 8) * 8) + \
-				PINCTR_BIT_LOW_BIT(pin) \
-		))
-
-/**
  *      GPIO Function Enable Register
  *      ADDR                 PINS
  *      gpio_func + 0*0x10:    PORT_A[0-7]
@@ -49,9 +20,9 @@
  *      gpio_func + 3*0x10:    PORT_D[0-7]
  *      gpio_func + 4*0x10:    PORT_E[0-7]
  */
-#define pinctrl_reg_gpio_func(pin) (*(volatile uint8_t *) \
-					    ((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_func) + \
-					    ((pin >> 8) * 0x10)))
+#define pinctrl_reg_gpio_func(pin)                                                                 \
+	(*(volatile uint8_t *)((uint32_t)DT_INST_REG_ADDR_BY_NAME(0, gpio_func) +                  \
+			       ((pin >> 8) * 0x10)))
 
 /**
  *      Pull Up resistors enable
@@ -67,9 +38,9 @@
  *      pull_up_en + 8:     PORT_E[0-3]
  *      pull_up_en + 9:     PORT_E[4-7]
  */
-#define pinctrl_reg_pull_up_en(pin) ((uint8_t)(DT_INST_REG_ADDR_BY_NAME(0, pull_up_en) + \
-				       ((pin >> 8) * 2) + \
-				       ((pin & 0xf0) ? 1 : 0)))
+#define pinctrl_reg_pull_up_en(pin)                                                                \
+	((uint8_t)(DT_INST_REG_ADDR_BY_NAME(0, pull_up_en) + ((pin >> 8) * 2) +                    \
+		   ((pin & 0xf0) ? 1 : 0)))
 
 static int pinctrl_tl5x_init(void)
 {
@@ -136,7 +107,7 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 		return status;
 	}
 
-	mask = (uint8_t) ~(BIT(offset) | BIT(offset + 1));
+	mask = (uint8_t)~(BIT(offset) | BIT(offset + 1));
 
 	reg_gpio_func_mux(pin) = func;
 

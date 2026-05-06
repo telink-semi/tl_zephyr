@@ -70,13 +70,6 @@ config TELINK_TLX_PFT
 	default y
 	select RISCV_SOC_CONTEXT_SAVE
 
-config TELINK_TLX_MBEDTLS_HW_ACCELERATION
-	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on MBEDTLS
-	default y
-	help
-		This option enables Telink TLx hardware accelerated mbedtls version.
-
 config TELINK_TLX_MBEDTLS_HW_SHA_ACCELERATION
 	bool "Use Telink TLx platform mbedtls HW SHA256 acceleration"
 	depends on TELINK_TLX_MBEDTLS_HW_ACCELERATION

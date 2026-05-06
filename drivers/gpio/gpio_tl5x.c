@@ -30,42 +30,41 @@ struct gpio_tl5x_t {
 	uint8_t out_clear;
 };
 
-#define GET_GPIO(dev)           ((volatile struct gpio_tl5x_t *) \
-				 ((const struct gpio_tl5x_config *)dev->config)->gpio_base)
+#define GET_GPIO(dev)                                                                              \
+	((volatile struct gpio_tl5x_t *)((const struct gpio_tl5x_config *)dev->config)->gpio_base)
 
-#define GET_PORT_NUM(gpio)      ((uint8_t)(((uint32_t)gpio - \
-					   DT_REG_ADDR(DT_NODELABEL(gpioa))) / \
-					   DT_REG_SIZE(DT_NODELABEL(gpioa))))
+#define GET_PORT_NUM(gpio)                                                                         \
+	((uint8_t)(((uint32_t)gpio - DT_REG_ADDR(DT_NODELABEL(gpioa))) /                           \
+		   DT_REG_SIZE(DT_NODELABEL(gpioa))))
 
-#define IS_PORT_C(gpio)         ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpioc)))
-#define IS_PORT_E(gpio)         ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpioe)))
+#define IS_PORT_C(gpio) ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpioc)))
+#define IS_PORT_E(gpio) ((uint32_t)gpio == DT_REG_ADDR(DT_NODELABEL(gpioe)))
 
 #define PIN_NUM_MAX ((uint8_t)7u)
 
 #define GPIO_SET_LOW_LEVEL(gpio, pin)  WRITE_BIT(gpio->out_clear, pin, 1)
 #define GPIO_SET_HIGH_LEVEL(gpio, pin) WRITE_BIT(gpio->out_set, pin, 1)
 
-#define GPIO_PIN_UP_DOWN_FLOAT   ((uint8_t)0u)
-#define GPIO_PIN_PULLUP_1M       ((uint8_t)1u)
-#define GPIO_PIN_PULLDOWN_100K   ((uint8_t)2u)
-#define GPIO_PIN_PULLUP_20K      ((uint8_t)3u)
+#define GPIO_PIN_UP_DOWN_FLOAT ((uint8_t)0u)
+#define GPIO_PIN_PULLUP_1M     ((uint8_t)1u)
+#define GPIO_PIN_PULLDOWN_100K ((uint8_t)2u)
+#define GPIO_PIN_PULLUP_20K    ((uint8_t)3u)
 
-#define INTR_RISING_EDGE         ((uint8_t)0u)
-#define INTR_FALLING_EDGE        ((uint8_t)1u)
+#define INTR_RISING_EDGE  ((uint8_t)0u)
+#define INTR_FALLING_EDGE ((uint8_t)1u)
 
-#define IRQ_GPIO0                ((uint8_t)34u)
-#define IRQ_GPIO1                ((uint8_t)35u)
-#define IRQ_GPIO2                ((uint8_t)36u)
-#define IRQ_GPIO3                ((uint8_t)37u)
-#define IRQ_GPIO4                ((uint8_t)38u)
-#define IRQ_GPIO5                ((uint8_t)39u)
-#define IRQ_GPIO6                ((uint8_t)40u)
-#define IRQ_GPIO7                ((uint8_t)41u)
+#define IRQ_GPIO0 ((uint8_t)34u)
+#define IRQ_GPIO1 ((uint8_t)35u)
+#define IRQ_GPIO2 ((uint8_t)36u)
+#define IRQ_GPIO3 ((uint8_t)37u)
+#define IRQ_GPIO4 ((uint8_t)38u)
+#define IRQ_GPIO5 ((uint8_t)39u)
+#define IRQ_GPIO6 ((uint8_t)40u)
+#define IRQ_GPIO7 ((uint8_t)41u)
 
-#define GET_IRQ_NUM(dev)         (irq_from_level_2(((const struct gpio_tl5x_config *) \
-										dev->config)->irq_num))
-#define GET_LV2_IRQ_NUM(irq)     (IRQ_TO_L2(irq) + CONFIG_2ND_LVL_INTR_00_OFFSET)
-#define GET_IRQ_PRIORITY(dev)    (((const struct gpio_tl5x_config *)dev->config)->irq_priority)
+#define GET_IRQ_NUM(dev) (irq_from_level_2(((const struct gpio_tl5x_config *)dev->config)->irq_num))
+#define GET_LV2_IRQ_NUM(irq)  (IRQ_TO_L2(irq) + CONFIG_2ND_LVL_INTR_00_OFFSET)
+#define GET_IRQ_PRIORITY(dev) (((const struct gpio_tl5x_config *)dev->config)->irq_priority)
 
 #define GET_GPIO_BASE_ADDR(gpio) ((uint32_t)(gpio) - (GET_PORT_NUM(gpio) * 0x10))
 
@@ -73,10 +72,10 @@ struct gpio_tl5x_t {
 #define REG_GPIO_IRQ_PAD_MASK(gpio) (*(volatile uint8_t *)(GET_GPIO_BASE_ADDR(gpio) + 0x91))
 #define REG_GPIO_IRQ_LVL(gpio)      (*(volatile uint8_t *)(GET_GPIO_BASE_ADDR(gpio) + 0x92))
 #define REG_GPIO_IRQ_STATUS(gpio)   (*(volatile uint8_t *)(GET_GPIO_BASE_ADDR(gpio) + 0x93))
-#define REG_GPIO_IRQ_EN(gpio, irq)  (*(volatile uint8_t *)(GET_GPIO_BASE_ADDR(gpio) + \
-						    0x94 + (GET_PORT_NUM(gpio) << 3) + (irq)))
+#define REG_GPIO_IRQ_EN(gpio, irq)                                                                 \
+	(*(volatile uint8_t *)(GET_GPIO_BASE_ADDR(gpio) + 0x94 + (GET_PORT_NUM(gpio) << 3) + (irq)))
 
-#define areg_gpio_pc_ie  0xa4
+#define areg_gpio_pc_ie 0xa4
 
 struct gpio_tl5x_pin_irq_config {
 	gpio_port_value_t pin_last_value;
@@ -136,8 +135,7 @@ static inline void gpio_tl5x_irq_status_clr(const struct device *dev)
 	REG_GPIO_IRQ_STATUS(gpio) = status;
 }
 
-static void gpio_tl5x_irq_set(const struct device *dev, gpio_pin_t pin,
-		      uint8_t trigger_type)
+static void gpio_tl5x_irq_set(const struct device *dev, gpio_pin_t pin, uint8_t trigger_type)
 {
 	uint8_t irq_lvl = 0;
 	uint8_t irq_mask = 0;
@@ -175,9 +173,8 @@ static void gpio_tl5x_irq_set(const struct device *dev, gpio_pin_t pin,
 	riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_priority);
 }
 
-static void gpio_tl5x_up_down_res_set(volatile struct gpio_tl5x_t *gpio,
-				     gpio_pin_t pin,
-				     uint8_t up_down_res)
+static void gpio_tl5x_up_down_res_set(volatile struct gpio_tl5x_t *gpio, gpio_pin_t pin,
+				      uint8_t up_down_res)
 {
 	uint8_t val;
 	uint8_t mask;
@@ -212,9 +209,8 @@ static void gpio_tl5x_up_down_res_set(volatile struct gpio_tl5x_t *gpio,
 	analog_write_reg8(analog_reg, (analog_read_reg8(analog_reg) & mask) | val);
 }
 
-static void gpio_tl5x_config_up_down_res(volatile struct gpio_tl5x_t *gpio,
-					gpio_pin_t pin,
-					gpio_flags_t flags)
+static void gpio_tl5x_config_up_down_res(volatile struct gpio_tl5x_t *gpio, gpio_pin_t pin,
+					 gpio_flags_t flags)
 {
 	if ((flags & GPIO_PULL_UP) != 0) {
 		gpio_tl5x_up_down_res_set(gpio, pin, GPIO_PIN_PULLUP_20K);
@@ -225,9 +221,8 @@ static void gpio_tl5x_config_up_down_res(volatile struct gpio_tl5x_t *gpio,
 	}
 }
 
-static void gpio_tl5x_config_in_out(volatile struct gpio_tl5x_t *gpio,
-				   gpio_pin_t pin,
-				   gpio_flags_t flags)
+static void gpio_tl5x_config_in_out(volatile struct gpio_tl5x_t *gpio, gpio_pin_t pin,
+				    gpio_flags_t flags)
 {
 	uint8_t ie_addr = 0;
 
@@ -257,9 +252,7 @@ static int gpio_tl5x_init(const struct device *dev)
 	return 0;
 }
 
-static int gpio_tl5x_pin_configure(const struct device *dev,
-				  gpio_pin_t pin,
-				  gpio_flags_t flags)
+static int gpio_tl5x_pin_configure(const struct device *dev, gpio_pin_t pin, gpio_flags_t flags)
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 
@@ -294,8 +287,7 @@ static int gpio_tl5x_pin_configure(const struct device *dev,
 	return 0;
 }
 
-static int gpio_tl5x_port_get_raw(const struct device *dev,
-				 gpio_port_value_t *value)
+static int gpio_tl5x_port_get_raw(const struct device *dev, gpio_port_value_t *value)
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 
@@ -304,9 +296,8 @@ static int gpio_tl5x_port_get_raw(const struct device *dev,
 	return 0;
 }
 
-static int gpio_tl5x_port_set_masked_raw(const struct device *dev,
-					gpio_port_pins_t mask,
-					gpio_port_value_t value)
+static int gpio_tl5x_port_set_masked_raw(const struct device *dev, gpio_port_pins_t mask,
+					 gpio_port_value_t value)
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 
@@ -316,8 +307,7 @@ static int gpio_tl5x_port_set_masked_raw(const struct device *dev,
 	return 0;
 }
 
-static int gpio_tl5x_port_set_bits_raw(const struct device *dev,
-				      gpio_port_pins_t mask)
+static int gpio_tl5x_port_set_bits_raw(const struct device *dev, gpio_port_pins_t mask)
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 
@@ -326,8 +316,7 @@ static int gpio_tl5x_port_set_bits_raw(const struct device *dev,
 	return 0;
 }
 
-static int gpio_tl5x_port_clear_bits_raw(const struct device *dev,
-					gpio_port_pins_t mask)
+static int gpio_tl5x_port_clear_bits_raw(const struct device *dev, gpio_port_pins_t mask)
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 
@@ -336,8 +325,7 @@ static int gpio_tl5x_port_clear_bits_raw(const struct device *dev,
 	return 0;
 }
 
-static int gpio_tl5x_port_toggle_bits(const struct device *dev,
-				     gpio_port_pins_t mask)
+static int gpio_tl5x_port_toggle_bits(const struct device *dev, gpio_port_pins_t mask)
 {
 	volatile struct gpio_tl5x_t *gpio = GET_GPIO(dev);
 	uint8_t bits = (mask & 0xff);
@@ -353,17 +341,16 @@ static void gpio_tl5x_irq_handler(const struct device *dev)
 	const struct gpio_tl5x_config *cfg = dev->config;
 	uint8_t irq = GET_IRQ_NUM(dev);
 
-	gpio_port_value_t current_pins       = GET_GPIO(dev)->input;
-	gpio_port_value_t changed_pins0      = (cfg->pin_irq_state->pin_last_value ^ current_pins)
-		& (~current_pins);
-	gpio_port_value_t changed_pins1      = (cfg->pin_irq_state->pin_last_value ^ current_pins)
-		& current_pins;
-	gpio_port_value_t fired_irqs_rising  = changed_pins1 & cfg->pin_irq_state->irq_en_rising;
+	gpio_port_value_t current_pins = GET_GPIO(dev)->input;
+	gpio_port_value_t changed_pins0 =
+		(cfg->pin_irq_state->pin_last_value ^ current_pins) & (~current_pins);
+	gpio_port_value_t changed_pins1 =
+		(cfg->pin_irq_state->pin_last_value ^ current_pins) & current_pins;
+	gpio_port_value_t fired_irqs_rising = changed_pins1 & cfg->pin_irq_state->irq_en_rising;
 	gpio_port_value_t fired_irqs_falling = changed_pins0 & cfg->pin_irq_state->irq_en_falling;
-	gpio_port_value_t fired_irqs_both    = (changed_pins0 | changed_pins1)
-		& cfg->pin_irq_state->irq_en_both;
-	gpio_port_value_t fired_irqs         = fired_irqs_rising | fired_irqs_falling
-		| fired_irqs_both;
+	gpio_port_value_t fired_irqs_both =
+		(changed_pins0 | changed_pins1) & cfg->pin_irq_state->irq_en_both;
+	gpio_port_value_t fired_irqs = fired_irqs_rising | fired_irqs_falling | fired_irqs_both;
 
 	cfg->pin_irq_state->pin_last_value = current_pins;
 	GET_GPIO(dev)->polarity ^= (changed_pins0 | changed_pins1);
@@ -372,10 +359,8 @@ static void gpio_tl5x_irq_handler(const struct device *dev)
 	gpio_fire_callbacks(&data->callbacks, dev, fired_irqs);
 }
 
-static int gpio_tl5x_pin_interrupt_configure(const struct device *dev,
-					    gpio_pin_t pin,
-					    enum gpio_int_mode mode,
-					    enum gpio_int_trig trig)
+static int gpio_tl5x_pin_interrupt_configure(const struct device *dev, gpio_pin_t pin,
+					     enum gpio_int_mode mode, enum gpio_int_trig trig)
 {
 	const struct gpio_tl5x_config *cfg = dev->config;
 	int ret_status = 0;
@@ -417,8 +402,8 @@ static int gpio_tl5x_pin_interrupt_configure(const struct device *dev,
 		}
 
 		if (ret_status == 0) {
-			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin)) :
-				BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
+			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin))
+					  : BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
 		}
 		break;
 
@@ -431,9 +416,8 @@ static int gpio_tl5x_pin_interrupt_configure(const struct device *dev,
 	return ret_status;
 }
 
-static int gpio_tl5x_manage_callback(const struct device *dev,
-				    struct gpio_callback *callback,
-				    bool set)
+static int gpio_tl5x_manage_callback(const struct device *dev, struct gpio_callback *callback,
+				     bool set)
 {
 	struct gpio_tl5x_data *data = dev->data;
 
@@ -448,40 +432,30 @@ static const struct gpio_driver_api gpio_tl5x_driver_api = {
 	.port_clear_bits_raw = gpio_tl5x_port_clear_bits_raw,
 	.port_toggle_bits = gpio_tl5x_port_toggle_bits,
 	.pin_interrupt_configure = gpio_tl5x_pin_interrupt_configure,
-	.manage_callback = gpio_tl5x_manage_callback
-};
+	.manage_callback = gpio_tl5x_manage_callback};
 
-#define IS_INST_IRQ_EN(inst)    (DT_NUM_IRQS(DT_DRV_INST(inst)) >= 1)
+#define IS_INST_IRQ_EN(inst) (DT_NUM_IRQS(DT_DRV_INST(inst)) >= 1)
 
-#define GPIO_TL5X_IRQ_CONNECT(n)					    \
-	static void gpio_tl5x_irq_connect_##n(void)			    \
-	{								    \
-		IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority),	    \
-			    gpio_tl5x_irq_handler,			    \
-			    DEVICE_DT_INST_GET(n), 0);			    \
-		irq_enable(DT_INST_IRQN(n));				    \
+#define GPIO_TL5X_IRQ_CONNECT(n)                                                                   \
+	static void gpio_tl5x_irq_connect_##n(void)                                                \
+	{                                                                                          \
+		IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority), gpio_tl5x_irq_handler,      \
+			    DEVICE_DT_INST_GET(n), 0);                                             \
+		irq_enable(DT_INST_IRQN(n));                                                       \
 	}
 
-#define GPIO_TL5X_INIT(n)					    \
-	static struct gpio_tl5x_pin_irq_config gpio_tl5x_pin_irq_state_##n; \
-	GPIO_TL5X_IRQ_CONNECT(n)					    \
-	static const struct gpio_tl5x_config gpio_tl5x_config_##n = {	    \
-		.common = {						    \
-			.port_pin_mask = GPIO_PORT_PIN_MASK_FROM_DT_INST(n)  \
-		},							    \
-		.gpio_base = DT_INST_REG_ADDR(n),			    \
-		.irq_num = DT_INST_IRQN(n),				    \
-		.irq_priority = DT_INST_IRQ(n, priority),		    \
-		.pin_irq_state = &gpio_tl5x_pin_irq_state_##n,		    \
-		.pirq_connect = gpio_tl5x_irq_connect_##n		    \
-	};								    \
-	static struct gpio_tl5x_data gpio_tl5x_data_##n;		    \
-	DEVICE_DT_INST_DEFINE(n, gpio_tl5x_init,				    \
-			      NULL,					    \
-			      &gpio_tl5x_data_##n,				    \
-			      &gpio_tl5x_config_##n,				    \
-			      PRE_KERNEL_1,				    \
-			      CONFIG_GPIO_INIT_PRIORITY,			    \
-			      &gpio_tl5x_driver_api);
+#define GPIO_TL5X_INIT(n)                                                                          \
+	static struct gpio_tl5x_pin_irq_config gpio_tl5x_pin_irq_state_##n;                        \
+	GPIO_TL5X_IRQ_CONNECT(n)                                                                   \
+	static const struct gpio_tl5x_config gpio_tl5x_config_##n = {                              \
+		.common = {.port_pin_mask = GPIO_PORT_PIN_MASK_FROM_DT_INST(n)},                   \
+		.gpio_base = DT_INST_REG_ADDR(n),                                                  \
+		.irq_num = DT_INST_IRQN(n),                                                        \
+		.irq_priority = DT_INST_IRQ(n, priority),                                          \
+		.pin_irq_state = &gpio_tl5x_pin_irq_state_##n,                                     \
+		.pirq_connect = gpio_tl5x_irq_connect_##n};                                        \
+	static struct gpio_tl5x_data gpio_tl5x_data_##n;                                           \
+	DEVICE_DT_INST_DEFINE(n, gpio_tl5x_init, NULL, &gpio_tl5x_data_##n, &gpio_tl5x_config_##n, \
+			      PRE_KERNEL_1, CONFIG_GPIO_INIT_PRIORITY, &gpio_tl5x_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(GPIO_TL5X_INIT)

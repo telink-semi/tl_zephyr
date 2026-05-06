@@ -14,13 +14,13 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 
 #define DT_DRV_COMPAT riscv_machine_timer
 
-#define MTIME_REG	DT_INST_REG_ADDR(0)
-#define MTIMECMP_REG	(DT_INST_REG_ADDR(0) + 8)
+#define MTIME_REG    DT_INST_REG_ADDR(0)
+#define MTIMECMP_REG (DT_INST_REG_ADDR(0) + 8)
 
 #define mticks_to_systicks(mticks)                                                                 \
-	(((uint64_t)(mticks)*SYSTEM_TIMER_TICK_1S) / CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC)
+	(((uint64_t)(mticks) * SYSTEM_TIMER_TICK_1S) / CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC)
 #define systicks_to_mticks(sticks)                                                                 \
-	(((uint64_t)(sticks)*CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / SYSTEM_TIMER_TICK_1S)
+	(((uint64_t)(sticks) * CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / SYSTEM_TIMER_TICK_1S)
 
 #if CONFIG_BT
 #define SYSTICKS_MAX_SLEEP 0x40000000
@@ -39,7 +39,7 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 static uint64_t get_mtime_compare(void)
 {
 	return *(const volatile uint64_t *const)((uint32_t)(MTIMECMP_REG +
-		(_current_cpu->id * sizeof(uint64_t))));
+							    (_current_cpu->id * sizeof(uint64_t))));
 }
 
 /**
@@ -63,7 +63,7 @@ static uint64_t get_mtime(void)
 static void set_mtime_compare(uint64_t time_cmp)
 {
 	*(volatile uint64_t *const)((uint32_t)(MTIMECMP_REG +
-		(_current_cpu->id * sizeof(uint64_t)))) = time_cmp;
+					       (_current_cpu->id * sizeof(uint64_t)))) = time_cmp;
 }
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 
@@ -73,8 +73,7 @@ static void set_mtime_compare(uint64_t time_cmp)
 static void set_mtime(uint64_t time)
 {
 	volatile uint32_t *const rl = (volatile uint32_t *const)MTIME_REG;
-	volatile uint32_t *const rh =
-		(volatile uint32_t *const)(MTIME_REG + sizeof(uint32_t));
+	volatile uint32_t *const rh = (volatile uint32_t *const)(MTIME_REG + sizeof(uint32_t));
 
 	*rl = 0;
 	*rh = (uint32_t)(time >> 32);
@@ -113,8 +112,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
 		if (tl_suspend(tl_sleep_tick + stimer_sleep_ticks)) {
-			current_time +=
-				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
+			current_time += systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
 		}
 		break;
@@ -124,8 +122,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
 		if (tl_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
-			current_time +=
-				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
+			current_time += systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime_compare(wakeup_time);
 			set_mtime(current_time);
 			tlx_resumed_from_deep_sleep_retention = true;

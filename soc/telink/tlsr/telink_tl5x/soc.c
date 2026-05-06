@@ -21,7 +21,7 @@
 #include "gpio_default.h"
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 #include "tlx_bt_flash.h"
 #endif
 
@@ -29,24 +29,24 @@
 
 /* List of supported CCLK frequencies */
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-# if TLK_ONLY_BLE_HOST
-	#include "stack/multicore_comm/service/service_d25f.h"
-# endif
+#if TLK_ONLY_BLE_HOST
+#include "stack/multicore_comm/service/service_d25f.h"
+#endif
 #endif
 
 /* Drivers changes for hal_v2, so should not change castart.s, add external*/
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
-__attribute__((section(".ram_code_retention"))) __attribute__((noinline))
-void pm_retention_register_recover(void)
+__attribute__((section(".ram_code_retention"))) __attribute__((noinline)) void
+pm_retention_register_recover(void)
 {
 }
 #endif
 
 /* Power Mode value */
 #if CONFIG_SOC_RISCV_TELINK_TL523X
-	#define CLK_24MHZ                   24000000u
-	#define CLK_48MHZ				48000000u
+#define CLK_24MHZ 24000000u
+#define CLK_48MHZ 48000000u
 #endif
 
 /* MID register flash size */
@@ -55,13 +55,13 @@ void pm_retention_register_recover(void)
 
 /* Power Mode value */
 #if CONFIG_SOC_RISCV_TELINK_TL523X
-	#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
-		#define POWER_MODE      LDO_1P25_LDO_1P8
-	#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
-		#define POWER_MODE      DCDC_1P25_LDO_1P8
-	#else
-		#error "Wrong value for power-mode parameter"
-	#endif
+#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
+#define POWER_MODE LDO_1P25_LDO_1P8
+#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
+#define POWER_MODE DCDC_1P25_LDO_1P8
+#else
+#error "Wrong value for power-mode parameter"
+#endif
 #endif
 
 /* Vbat Type value */
@@ -74,14 +74,15 @@ void pm_retention_register_recover(void)
 #endif
 
 /* Check System Clock value. */
+#define CCLK_FREQ DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency)
 #if CONFIG_SOC_RISCV_TELINK_TL523X
-	#if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) && \
-		(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ))
-		#error "Invalid clock-frequency. Supported values: 24, 48 MHz"
-	#endif
+#if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ))
+#error "Invalid clock-frequency. Supported values: 24, 48 MHz"
 #endif
+#endif
+#undef CCLK_FREQ
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 /* SOC Parameters structure */
 _attribute_data_retention_sec_ struct {
 	unsigned char cap_freq_offset_en;
@@ -116,10 +117,10 @@ void soc_load_rf_parameters_deep_retention(void)
 #endif
 
 #if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL323X
-#define RST_BIT_CLR(x, n)    ((x) |= (n))
-#define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
-__attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((optimize("O2")))
-void gen_fsk_close_unused_clock(void)
+#define RST_BIT_CLR(x, n)   ((x) |= (n))
+#define CLOCK_BIT_CLR(x, n) ((x) &= ~(n))
+__attribute__((noinline)) __attribute__((section(".ram_code")))
+__attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 {
 	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
 	RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
@@ -141,7 +142,7 @@ void gen_fsk_close_unused_clock(void)
 	RST_BIT_CLR(reg_rst4, FLD_RST4_DC);
 	RST_BIT_CLR(reg_rst4, FLD_RST4_UART4);
 	RST_BIT_CLR(reg_rst4, FLD_RST4_SKE);
-	RST_BIT_CLR(reg_rst4, FLD_RST4_HASH);	/* will enable when HW HASH used */
+	RST_BIT_CLR(reg_rst4, FLD_RST4_HASH); /* will enable when HW HASH used */
 
 	RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
 	RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
@@ -169,7 +170,7 @@ void gen_fsk_close_unused_clock(void)
 	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_DC_EN);
 	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_UART4_EN);
 	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_SKE_EN);
-	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_HASH_EN);	// will enable when HW HASH used
+	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_HASH_EN); /* will enable when HW HASH used */
 
 	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_UART2_EN);
 	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_PEM_EN);
@@ -179,7 +180,6 @@ void gen_fsk_close_unused_clock(void)
 	CLOCK_BIT_CLR(reg_clk_en7, FLD_CLK7_USB1_EN);
 }
 #endif /* CONFIG_PM  */
-
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
 #include "pm.h"
@@ -216,8 +216,9 @@ void soc_early_init_hook(void)
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
-	analog_write_reg8(0x01,(analog_read_reg8(0x01)&0xf8)|0x06);// change from 0x04 to 0x06 for the board changes.
-#endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
+	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) |
+					0x06); /* change from 0x04 to 0x06 for the board changes. */
+#endif                                         /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
@@ -227,138 +228,43 @@ void soc_early_init_hook(void)
 	g_adc_calib_flag = efuse_calib_sd_adc_vref();
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
 #endif
 
 	/* clocks init: CCLK, HCLK, PCLK */
 	switch (cclk) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case CLK_24MHZ:
-		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
-		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	case CLK_24MHZ:
-		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
-		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL523X
+#if CONFIG_SOC_RISCV_TELINK_TL523X
 	case CLK_24MHZ:
 		/* fpga has no clk to set for now */
 		break;
 #endif
-
-	case CLK_48MHZ:
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-		PLL_192M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
-		#if CONFIG_PM
-			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
-		#endif /* CONFIG_PM  */
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+	default:
 		break;
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-	case CLK_60MHZ:
-		PLL_240M_CCLK_60M_HCLK_60M_PCLK_15M_MSPI_48M;
-		break;
-	case CLK_80MHZ:
-		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_48M;
-		break;
-#endif /* CONFIG_SOC_RISCV_TELINK_TL721X */
-
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-	case CLK_64MHZ:
-		PLL_192M_D25F_64M_HCLK_N22_32M_PCLK_32M_MSPI_48M;
-		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
-		break;
-
-	case CLK_72MHZ:
-		PLL_144M_D25F_72M_HCLK_N22_36M_PCLK_36M_MSPI_48M;
-		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
-		break;
-
-	case CLK_96MHZ:
-		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
-		break;
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	// case CLK_96MHZ:
-	// 	PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
-	// 	break;
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	case CLK_96MHZ:
-		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
-		break;
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-	case CLK_192MHZ:
-		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		break;
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-	case CLK_120MHZ:
-		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
-		break;
-	case CLK_240MHZ:
-		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_48M;
-		break;
-#endif
 	}
 
 	/* Init Machine Timer source clock: 32 KHz RC */
-	// clock_32k_init(CLK_32K_RC);
-	// clock_cal_32k_rc();
-
-	/* pke is not enabled by default on TL323X */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-	extern void pke_dig_en(void);
-	pke_dig_en();
-#endif
+	/* clock_32k_init(CLK_32K_RC); */
+	/* clock_cal_32k_rc(); */
 
 	/* Stop 32k watchdog */
 	wd_32k_stop();
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-#undef N22_FW_DOWNLOAD_FLASH_ADDR
-#if defined(CONFIG_BT_ID_FOR_KMD)
-#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20048000
-#else
-#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20080000+0x13040
-#endif
-	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
-    #if !defined(TLK_ONLY_BLE_HOST)
-        rf_n22_dig_init();
-    #endif
-#endif
 
-// 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
-// #if DEBUG_GPIO_ENABLE
-// 	gpio_init(!deepRetWakeUp);
-// #else
-// 	(void)deepRetWakeUp;	// remove warning
-// #endif
-    wd_stop();
+	/* int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); */
+	/* #if DEBUG_GPIO_ENABLE */
+	/* gpio_init(!deepRetWakeUp); */
+	/* #else */
+	/* (void)deepRetWakeUp; */
+	/* #endif */
+	wd_stop();
 	gpio_shutdown(GPIO_ALL);
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 	gpio_function_en(GPIOB_ALL);
 	gpio_output_en(GPIOB_ALL);
-	// gpio_set_high_level(GPIOB_ALL);
-	// gpio_set_low_level(GPIOB_ALL);
 
 	gpio_function_en(GPIOC_ALL);
 	gpio_output_en(GPIOC_ALL);
-	// gpio_set_high_level(GPIOC_ALL);
-	// gpio_set_low_level(GPIOC_ALL);
 }
 
 /**
@@ -368,7 +274,7 @@ void sys_arch_reboot(int type)
 {
 	ARG_UNUSED(type);
 
-	// protected_sys_reboot();
+	/* protected_sys_reboot(); */
 }
 
 /**
@@ -381,181 +287,20 @@ void soc_tlx_restore(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
-/* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
-	analog_write_reg8(0x01,(analog_read_reg8(0x01)&0xf8)|0x06);// change from 0x04 to 0x06 for the board changes.
-#endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
-
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
-	if (g_adc_calib_flag == DRV_API_SUCCESS) {
-		g_adc_calib_flag = efuse_calib_sd_adc_vref();
-	}
-#endif
-
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
 #endif
 
 	/* clocks init: CCLK, HCLK, PCLK */
 	switch (cclk) {
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case CLK_24MHZ:
-		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+	default:
 		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	case CLK_24MHZ:
-		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
-		break;
-#endif
-
-	case CLK_48MHZ:
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-		PLL_192M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
-		#if CONFIG_PM
-			pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P900V);
-			gen_fsk_close_unused_clock();
-		#endif /* CONFIG_PM  */
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
-		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
-		break;
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-	case CLK_60MHZ:
-		PLL_240M_CCLK_60M_HCLK_60M_PCLK_15M_MSPI_48M;
-		break;
-	case CLK_80MHZ:
-		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_48M;
-		break;
-#endif /* CONFIG_SOC_RISCV_TELINK_TL721X */
-
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-	case CLK_64MHZ:
-		PLL_192M_D25F_64M_HCLK_N22_32M_PCLK_32M_MSPI_48M;
-		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
-		break;
-
-	case CLK_72MHZ:
-		PLL_144M_D25F_72M_HCLK_N22_36M_PCLK_36M_MSPI_48M;
-		pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000);
-		break;
-
-	case CLK_96MHZ:
-		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
-		break;
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	// case CLK_96MHZ:
-	// 	PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
-	// 	break;
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-	case CLK_96MHZ:
-		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1000V);
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
-		break;
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-	case CLK_192MHZ:
-		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		break;
-#endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-	case CLK_120MHZ:
-		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
-	case CLK_240MHZ:
-		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_48M;
-		break;
-#endif
 	}
-	/* pke is not enabled by default on TL323X */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-	extern void pke_dig_en(void);
-	pke_dig_en();
-#endif
-// 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup(); //MCU deep retention wakeUp
-// #if DEBUG_GPIO_ENABLE
-// 	gpio_init(!deepRetWakeUp);
-// #else
-// 	(void)deepRetWakeUp;	// remove warning
-// #endif
 }
-
-#if CONFIG_SOC_RISCV_TELINK_TL721X
-#include "flash/flash_common.h"
-#include "flash_base.h"
-/**
- * @brief       This function is used to set the use of four lines when reading and writing flash.
- * @param[in]   device_num	- the number of slave device.
- * @param[in]   flash_mid	- the mid of flash.
- * @return      1: success, 0: error, 2: mid is not supported.
- */
-unsigned char flash_set_4line_read_write(mspi_slave_device_num_e device_num, unsigned int flash_mid)
-{
-	unsigned char status = flash_4line_en_with_device_num(device_num, flash_mid);
-
-	if (status == 1) {
-		flash_read_page = flash_4read;
-		flash_set_rd_xip_config_sram(device_num, FLASH_X4READ_CMD);
-		flash_write_page = flash_quad_page_program;
-	}
-
-	return status;
-}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X
-#include "flash/flash_common.h"
-#include "flash_base.h"
-/**
- * @brief       This function is used to set the use of four lines when reading and writing flash.
- * @param[in]   device_num	- the number of slave device.
- * @param[in]   flash_mid	- the mid of flash.
- * @return      1: success, 0: error, 2: mid is not supported.
- */
-unsigned char flash_set_4line_read_write(mspi_slave_device_num_e device_num, unsigned int flash_mid)
-{
-	unsigned char status = flash_4line_en_with_device_num(device_num, flash_mid);
-
-	if (status == 1) {
-		flash_read_page = flash_4read;
-		flash_set_rd_xip_config_sram(device_num, FLASH_X4READ_CMD);
-		flash_write_page = flash_quad_page_program;
-	}
-
-	return status;
-}
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
-#include "flash/flash_common.h"
-#include "flash_base.h"
-/**
- * @brief       This function is used to set the use of four lines when reading and writing flash.
- * @param[in]   flash_mid   - the mid of flash.
- * @return      1: success, 0: error, 2: mid is not supported.
- */
-unsigned char flash_set_4line_read_write(unsigned int flash_mid)
-{
-	unsigned char status = flash_4line_en(flash_mid);
-
-	if (status == 1) {
-		flash_read_page = flash_4read;
-		flash_set_rd_xip_config_sram(FLASH_X4READ_CMD);
-		flash_write_page = flash_quad_page_program;
-	}
-
-	return status;
-}
-#endif
-
 
 /**
  * @brief Check mounted flash size (should be greater than in .dts).
