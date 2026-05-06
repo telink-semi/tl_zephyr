@@ -1,0 +1,12 @@
+# Copyright (c) 2025, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TL5x-series RNG
+
+compatible: "telink,tl5x-trng"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
