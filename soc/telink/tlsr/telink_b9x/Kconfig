@@ -59,6 +59,13 @@ config TELINK_B9X_TINYCRYPT_HW_ACCELERATION
 	help
 		This option enables Telink B9x hardware accelerated tinycrypt version.
 
+config TELINK_B9X_TINYCRYPT_HW_ACCELERATION
+	bool "Use Telink B9x platform tinycrypt HW acceleration"
+	depends on TINYCRYPT
+	default y
+	help
+		This option enables Telink B9x hardware accelerated tinycrypt version
+
 config TELINK_SOC_REBOOT_ON_FAULT
 	bool "Reboot system when fault happened"
 	help
