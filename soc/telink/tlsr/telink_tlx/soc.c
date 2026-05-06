@@ -8,7 +8,9 @@
 #include <clock.h>
 #include <gpio.h>
 #include <ext_driver/ext_pm.h>
+#if !CONFIG_SOC_RISCV_TELINK_TL523X
 #include "rf_common.h"
+#endif
 #include "flash.h"
 #include <watchdog.h>
 #include <zephyr/kernel.h>
@@ -289,7 +291,9 @@ void soc_early_init_hook(void)
 #endif
 
 	/* system init */
+#if !CONFIG_SOC_RISCV_TELINK_TL523X
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+#endif /* CONFIG_SOC_RISCV_TELINK_TL523X */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	if (cclk == CLK_240MHZ) {
@@ -325,6 +329,10 @@ void soc_early_init_hook(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	case CLK_24MHZ:
 		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL523X
+	case CLK_24MHZ:
+		/* fpga has no clk to set for now */
 		break;
 #endif
 
@@ -412,9 +420,7 @@ void soc_early_init_hook(void)
 	wd_32k_set_interval_ms(20000);
 	wd_32k_start();
 #else
-	/* Stop 32k watchdog */
 	wd_32k_stop();
-
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
@@ -652,6 +658,10 @@ unsigned char flash_set_4line_read_write(unsigned int flash_mid)
  */
 static int soc_tlx_check_flash(void)
 {
+	#if CONFIG_SOC_RISCV_TELINK_TL523X
+
+	#else
+
 	static const size_t dts_flash_size = DT_REG_SIZE(DT_CHOSEN(zephyr_flash));
 	size_t hw_flash_size = 0;
 	flash_capacity_e hw_flash_cap;
@@ -702,6 +712,8 @@ static int soc_tlx_check_flash(void)
 		       hw_flash_size);
 		abort();
 	}
+
+	#endif /* CONFIG_SOC_RISCV_TELINK_TL523X */
 
 	return 0;
 }

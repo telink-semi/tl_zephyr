@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef SOC_RISCV_TELINK_TLX_PINCTRL_SOC_H
-#define SOC_RISCV_TELINK_TLX_PINCTRL_SOC_H
+#ifndef SOC_RISCV_TELINK_TL5X_PINCTRL_SOC_H
+#define SOC_RISCV_TELINK_TL5X_PINCTRL_SOC_H
 
 #include <stdint.h>
 #include <zephyr/devicetree.h>
@@ -17,6 +17,8 @@
 #include <zephyr/dt-bindings/pinctrl/tl322x-pinctrl.h>
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 #include <zephyr/dt-bindings/pinctrl/tl323x-pinctrl.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL523X
+#include <zephyr/dt-bindings/pinctrl/tl523x-pinctrl.h>
 #endif
 
 /**
@@ -48,4 +50,4 @@ typedef uint32_t pinctrl_soc_pin_t;
 #define Z_PINCTRL_STATE_PINS_INIT(node_id, prop) \
 	{ DT_FOREACH_PROP_ELEM(node_id, prop, Z_PINCTRL_STATE_PIN_INIT) }
 
-#endif  /* SOC_RISCV_TELINK_TLX_PINCTRL_SOC_H */
+#endif  /* SOC_RISCV_TELINK_TL5X_PINCTRL_SOC_H */
