@@ -58,6 +58,13 @@ config TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	help
 		This option enables Telink TLx hardware accelerated mbedtls version.
 
+config TELINK_TLX_TINYCRYPT_HW_ACCELERATION
+	bool "Use Telink TLx platform tinycrypt HW acceleration"
+	depends on TINYCRYPT
+	default y
+	help
+		This option enables Telink TLx hardware accelerated tinycrypt version
+
 config TELINK_TLX_PFT
 	bool "Support performance throttling"
 	default y
