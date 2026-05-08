@@ -20,6 +20,7 @@ config SOC_RISCV_TELINK_TLX
 	select PINCTRL
 	imply XIP
 	select SOC_EARLY_INIT_HOOK
+	select ARCH_HAS_CUSTOM_CPU_IDLE
 
 if SOC_RISCV_TELINK_TLX
 
@@ -190,8 +191,8 @@ config SOC_PMOS_SWITCH_TIME_CTL
 endif
 
 config MCUBOOT_START_OFFSET
-	hex
-	default 0x5000 if SOC_RISCV_TELINK_TL323X
+	hex "Leave space during building MCUBoot"
+	default 0x5000 if SOC_RISCV_TELINK_TL323X && MCUBOOT
 	default 0x0
 	help
 		The MCUboot offset value.
