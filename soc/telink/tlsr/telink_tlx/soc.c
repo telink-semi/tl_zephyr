@@ -401,7 +401,8 @@ void soc_early_init_hook(void)
 	 * to avoid lpd block mspi ,should open 32k wd.
 	 */
 	wd_32k_stop();
-	wd_32k_set_interval_ms(20000);
+	/*  in zephyr with BT, max sleep time is about 23s*/
+	wd_32k_set_interval_ms(30000);
 	wd_32k_start();
 #else
 	/* Stop 32k watchdog */
