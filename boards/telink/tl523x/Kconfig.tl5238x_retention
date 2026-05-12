@@ -1,0 +1,6 @@
+# Copyright (c) 2025 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_TL5238X_RETENTION
+	help
+		Telink TL523X Platform with retention

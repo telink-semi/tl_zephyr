@@ -1,0 +1,18 @@
+# Copyright (c) 2025, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TL5x UART
+
+compatible: "telink,tl5x-uart"
+
+include: [uart-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  pinctrl-0:
+    required: true
