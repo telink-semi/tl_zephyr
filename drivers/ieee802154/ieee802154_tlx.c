@@ -909,6 +909,10 @@ volatile bool tlx_rf_zigbee_250K_mode;
 
 ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 {
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+	wd_32k_feed();
+#endif
+	
 	tlx_disable_pm(tlx);
 	/* check if RF is already started */
 	if (!tlx->is_started) {
