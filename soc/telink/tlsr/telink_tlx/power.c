@@ -132,10 +132,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-		/*before go into suspend or deep-retention ,should stop 32k watchdog quickly*/
-		wd_32k_stop();
-#endif
+
 		if (tl_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
