@@ -24,7 +24,11 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 	(((uint64_t)(sticks)*CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / SYSTEM_TIMER_TICK_1S)
 
 #if CONFIG_BT
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+#define SYSTICKS_MAX_SLEEP 0x20000000
+#else
 #define SYSTICKS_MAX_SLEEP 0x40000000
+#endif
 #else
 #define SYSTICKS_MAX_SLEEP 0xe0000000
 #endif /* CONFIG_BT */
@@ -101,15 +105,14 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 	uint64_t current_time = get_mtime();
 	uint64_t wakeup_time = get_mtime_compare();
 
-	if (wakeup_time <= current_time) {
-		LOG_DBG("Sleep Time = 0 or less\n");
-		return;
-	}
-
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 	/* before go into deep , should feed 32k watchdog */
 	wd_32k_feed();
 #endif
+	if (wakeup_time <= current_time) {
+		LOG_DBG("Sleep Time = 0 or less\n");
+		return;
+	}
 
 	uint64_t stimer_sleep_ticks = mticks_to_systicks(wakeup_time - current_time);
 
@@ -118,17 +121,13 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-		/* before go into suspend or deep-retention ,should stop 32k watchdog quickly */
-		wd_32k_stop();
-#endif
 		if (tl_suspend(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
 		}
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-		/* after exit from suspend or deep-retention ,should start 32k watdog quickly */
+		/*after exit from suspend or deep-retention ,should feed 32k watdog quickly*/
 		wd_32k_feed();
 		wd_32k_start();
 #endif
@@ -138,10 +137,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-		/* before go into suspend or deep-retention ,should stop 32k watchdog quickly */
-		wd_32k_stop();
-#endif
+
 		if (tl_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
