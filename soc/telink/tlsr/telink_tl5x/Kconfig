@@ -31,13 +31,6 @@ config TELINK_TL523X_PMP
 	help
 		This option enables Telink TL523X PMP(memory protection) module.
 
-config TELINK_TLX_MBEDTLS_HW_ACCELERATION
-	bool "Use Telink TLx platform mbedtls HW acceleration"
-	depends on MBEDTLS
-	default y
-	help
-		This option enables Telink TLx hardware accelerated mbedtls version.
-
 config TELINK_TLX_PFT
 	bool "Support performance throttling"
 	default y
