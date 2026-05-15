@@ -8,27 +8,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-///////////////////////// flash address Configuration////////////////////////////////////////////////
-#define P24G_OTHER_INF_FLASH_ADDR_1M  0xFE000    //4K
-#define P24G_PAIR_INF_FLASH_ADDR_1M   0xFD000    //4K
-#define BLE_APP_PIPE_FLASH_ADDR_1M    0xFC000    //4K
-#define BLE_APP_SMP_FLASH_ADDR_1M     0xFB000    //4K
-#define BLE_STACK_SMP_FLASH_ADDR_1M   0xF7000    //16K 0xF7000~0xFAFFF
-
-#define P24G_OTHER_INF_FLASH_ADDR_2M  0x1FE000    //4K
-#define P24G_PAIR_INF_FLASH_ADDR_2M   0x1FD000    //4K
-#define BLE_APP_PIPE_FLASH_ADDR_2M    0x1FC000    //4K
-#define BLE_APP_SMP_FLASH_ADDR_2M     0x1FB000    //4K
-#define BLE_STACK_SMP_FLASH_ADDR_2M   0x1F7000    //16K 0x3F7000~0x3FAFFF
-
-
-#define P24G_OTHER_INF_FLASH_ADDR_4M  0x3FE000    //4K
-#define P24G_PAIR_INF_FLASH_ADDR_4M   0x3FD000    //4K
-#define BLE_APP_PIPE_FLASH_ADDR_4M    0x3FC000    //4K
-#define BLE_APP_SMP_FLASH_ADDR_4M     0x3FB000    //4K
-#define BLE_STACK_SMP_FLASH_ADDR_4M   0x3F7000    //16K 0x3F7000~0x3FAFFF
-
-
 /////////////////////////////////////////////////////////////////////////
 
 #define TLK_ERR_BASE_NUM                                    (0x0)    /**< Global error base */
@@ -47,41 +26,9 @@
 #define TLK_ERR_CMD_NOT_SUPPORT                             (TLK_ERR_BASE_NUM + 11)   /**< cmd not supported */
 #define TLK_ERR_BUFFER_FULL                                 (TLK_ERR_BASE_NUM + 12)   /**< Buffer/FIFO is full */
 
-/////////////////////////////////////////////////////////////////////////
-
-#define SPP_TX_FIFO_SIZE            32
-#define SPP_TX_FIFO_SIZE_KB         24 //In 8K mode, the spp buffer size cannot exceed 24 on kb side.
-
-#define MAC_ADDR_LEN                6 //MAC address length
 
 /////////////////////////////////////////////////////////////////////////
 #define TLKAPI_DEBUG_ENABLE         0
-
-#define DBG_2P4G_IO_EN              0 //2.4G global gpio debug control
-#define APP_IO_EN                   0
-
-#define DBG_GPIO_NOOP()             do {} while(0)
-#if (DBG_2P4G_IO_EN)
-
-    #define DBG_GPIO_SET_LEVEL(en, pin, level)      \
-        do {                                        \
-            if (en) {                               \
-                gpio_set_level(pin, level);         \
-            }                                       \
-        } while(0)
-
-
-    #define DBG_GPIO_TOGGLE(en, pin)                \
-        do {                                        \
-            if (en) {                               \
-                gpio_toggle(pin);                   \
-            }                                       \
-        } while(0)
-#else
-
-    #define DBG_GPIO_SET_LEVEL(en, pin, level)       DBG_GPIO_NOOP()
-    #define DBG_GPIO_TOGGLE(en, pin)                 DBG_GPIO_NOOP()
-#endif
 
 
 typedef enum {
@@ -90,29 +37,6 @@ typedef enum {
     KB_MODE_USB                         =   2,
 } kb_mode_t;
 
-typedef enum
-{
-    STATE_POWERON                       =   0,
-    STATE_PAIRING,
-    STATE_RECONNECT,
-    STATE_NORMAL,
-    STATE_CONNECTED,
-    STATE_DISCONNECTED,
-    STATE_RF_IDLE,
-    STATE_PAIRING_TIMEOUT,
-    STATE_NONE,
-    STATE_BUSY,
-    STATE_TO_IDLE,
-    STATE_IDLE,
-    STATE_TO_SLEEP,
-    STATE_SLEEP,
-
-    STATE_PAIR_NONE                     =   0,
-    STATE_PAIR_INIT,
-    STATE_PAIR_RSP,
-    STATE_PAIR_CFM,
-    STATE_REJOIN,
-} p24g_device_status_e;
 
 typedef enum {
 
@@ -146,63 +70,12 @@ typedef enum {
 } p24g_sm_op_e;
 
 
-typedef enum
-{
-    P24G_SPP_NONE                       =   0x60,
-    P24G_SPP_LED_STATUS                 =   0x61,
-    P24G_SPP_REPORT_RATE                =   0x62,
-    P24G_SPP_BATT_CAP                   =   0x63,
-    P24G_SPP_CHG_STATUS                 =   0x64,
-    P24G_SPP_TEST_DATA                  =   0x65,
-    P24G_SPP_ALL_KEY_DATA               =   0x66,
-    P24G_SPP_CONSUME_KEY_DATA           =   0x67,
-} p24g_spp_cmd_e;
-
-
-typedef enum
-{
-    P24G_LL_CMD_NONE                    =   0x70,
-    P24G_LL_CMD_TERMINATE_CONN          =   0x71,
-    P24G_LL_CMD_TERMINATE_CONN_RSP      =   0x72,
-    P24G_LL_CMD_8K_RR_ADAPT             =   0x73,
-    P24G_LL_CMD_8K_RR_ADAPT_RSP         =   0x74,
-} p24g_ll_cmd_e;
-
-
 typedef enum {
     P24G_KB_MODE_USB                    =   0x00,
     P24G_KB_MODE_2P4G                   =   0x01,
-
-    P24G_FLOW_SN                        =   0x01,
-    P24G_FLOW_NESN                      =   0x02,
-
-    P24G_LL_CONN_TIMEOUT                =   0x01,
-    P24G_LL_CONN_TERMINATION_BY_PEER    =   0x02,
-    P24G_LL_CONN_TERMINATION_BY_LOCAL   =   0x03,
-
-    P24G_8K_KM_SLOT                     =   0x00,
-    P24G_8K_SPP_SLOT                    =   0x01,
-    P24G_8K_SLOT_POS                    =   0x03,
 
     DEVICE_TYPE_KB                      =   BIT(0),
     DEVICE_TYPE_MS                      =   BIT(1),
 
 } p24G_enum_Type;
-
-typedef enum
-{
-    REPORT_RATE_8K                      = BIT(7),
-    REPORT_RATE_4K                      = BIT(0),
-    REPORT_RATE_2K                      = BIT(1),
-    REPORT_RATE_1K                      = BIT(2),
-    REPORT_RATE_500                     = BIT(3),
-    REPORT_RATE_250                     = BIT(4),
-    REPORT_RATE_125                     = BIT(5),
-
-    RR_8K_HIGH                          = 0,
-    RR_8K_LOW                           = 1,
-    REPORT_RATE_8K_MODE_LOW             = REPORT_RATE_500,
-    REPORT_RATE_8K_MODE_HIGH            = REPORT_RATE_8K,
-} report_rate_t;
-
 

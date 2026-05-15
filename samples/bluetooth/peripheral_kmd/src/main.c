@@ -23,7 +23,7 @@
 #include <zephyr/bluetooth/gatt.h>
 
 #include "app_public.h"
-#include "keyscan_ana.h"
+#include "driver.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 #include <zephyr/logging/log.h>
@@ -32,6 +32,10 @@ LOG_MODULE_REGISTER(main);
 int main(void)
 {
 	keyboard_comm_init();
+
+	// gpio_function_en(GPIO_PG4 | GPIO_PG5 | GPIO_PG6 | GPIO_PG7);
+	// gpio_output_en(GPIO_PG4 | GPIO_PG5 | GPIO_PG6 | GPIO_PG7);
+	// gpio_input_dis(GPIO_PG4 | GPIO_PG5 | GPIO_PG6 | GPIO_PG7);
 
 	while(1) {
 		public_loop();
