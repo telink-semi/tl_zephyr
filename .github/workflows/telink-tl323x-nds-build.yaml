@@ -3,7 +3,7 @@
 
 name: Telink TL323X build examples using Andes GCC
 
-# suspend Andes build for TL322X since the mis-matches of toolchains and
+# suspend Andes build for TL323X since the mis-matches of toolchains and
 # compile options, and will be re-enabled after the toolchain issue is resolved
 # on: pull_request
 

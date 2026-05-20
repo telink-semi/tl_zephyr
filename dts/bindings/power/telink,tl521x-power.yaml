@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TL521X power control node
+
+compatible: "telink,tl521x-power"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  power-mode:
+    type: string
+    required: true
+    enum:
+      - "LDO_1P25_LDO_1P8"
+      - "DCDC_1P25_LDO_1P8"
+
+  vbat-type:
+    type: string
+    required: true
+    enum:
+      - "VBAT_MAX_VALUE_LESS_THAN_3V6"
+      - "VBAT_MAX_VALUE_GREATER_THAN_3V6"

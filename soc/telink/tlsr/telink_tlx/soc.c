@@ -33,7 +33,7 @@
 #endif
 
 /* Drivers changes for hal_v2, so should not change castart.s, add external*/
-#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
 __attribute__((section(".ram_code_retention"))) __attribute__((noinline)) void
 pm_retention_register_recover(void)
@@ -55,6 +55,10 @@ pm_retention_register_recover(void)
 #define CLK_96MHZ  96000000u
 #define CLK_192MHZ 192000000u
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
+#define CLK_24MHZ 24000000u
+#define CLK_48MHZ 48000000u
+#define CLK_96MHZ 96000000u
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
 #define CLK_24MHZ 24000000u
 #define CLK_48MHZ 48000000u
 #define CLK_96MHZ 96000000u
@@ -107,6 +111,16 @@ pm_retention_register_recover(void)
 #else
 #error "Wrong value for power-mode parameter"
 #endif
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+#if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
+#define POWER_MODE LDO_1P25_LDO_1P8
+#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 1
+#define POWER_MODE DCDC_1P25_LDO_1P8
+#elif DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 2
+#define POWER_MODE DCDC_1P25_DCDC_1P8
+#else
+#error "Wrong value for power-mode parameter"
+#endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if DT_ENUM_IDX(DT_NODELABEL(power), power_mode) == 0
 #define POWER_MODE LDO_0P94_LDO_1P8
@@ -143,6 +157,10 @@ pm_retention_register_recover(void)
 #if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+#if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
+#error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
+#endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if ((CCLK_FREQ != CLK_40MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_60MHZ) &&           \
 	 (CCLK_FREQ != CLK_80MHZ) && (CCLK_FREQ != CLK_120MHZ) && (CCLK_FREQ != CLK_240MHZ))
@@ -152,6 +170,11 @@ pm_retention_register_recover(void)
 #undef CCLK_FREQ
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+extern drv_api_status_e efuse_calib_sd_adc_vref(void);
+_attribute_data_retention_sec_ unsigned int g_adc_calib_flag;
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL521X && CONFIG_ADC_TELINK_TL521X
 extern drv_api_status_e efuse_calib_sd_adc_vref(void);
 _attribute_data_retention_sec_ unsigned int g_adc_calib_flag;
 #endif
@@ -190,7 +213,7 @@ void soc_load_rf_parameters_deep_retention(void)
 }
 #endif
 
-#if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_PM && (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X)
 #define RST_BIT_CLR(x, n)   ((x) |= (n))
 #define CLOCK_BIT_CLR(x, n) ((x) &= ~(n))
 __attribute__((noinline)) __attribute__((section(".ram_code")))
@@ -257,7 +280,7 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 }
 #endif /* CONFIG_PM  */
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && CONFIG_PM
 #include "pm.h"
 #endif
 
@@ -276,7 +299,7 @@ void soc_early_init_hook(void)
 #endif /* CONFIG_PM  */
 
 	/* in non pm mode ,will set ldo to 1.2v to make it work ok */
-#if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && !CONFIG_PM
 	cclk = CLK_96MHZ;
 #endif
 
@@ -291,7 +314,7 @@ void soc_early_init_hook(void)
 #endif
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore. */
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
 	/* change from 0x04 to 0x06 for the board changes. */
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
@@ -301,6 +324,10 @@ void soc_early_init_hook(void)
 #endif /* CONFIG_PM */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	g_adc_calib_flag = efuse_calib_sd_adc_vref();
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL521X && CONFIG_ADC_TELINK_TL521X
 	g_adc_calib_flag = efuse_calib_sd_adc_vref();
 #endif
 
@@ -318,6 +345,10 @@ void soc_early_init_hook(void)
 	case CLK_24MHZ:
 		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
 		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	case CLK_24MHZ:
+		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		break;
 #endif
 
 	case CLK_48MHZ:
@@ -326,6 +357,11 @@ void soc_early_init_hook(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
+		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
+#if CONFIG_PM
+		pm_set_calib_0p925V_dig_ldo_voltage();
+#endif /* CONFIG_PM  */
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 #if CONFIG_PM
 		pm_set_calib_0p925V_dig_ldo_voltage();
@@ -372,6 +408,13 @@ void soc_early_init_hook(void)
 #endif /* CONFIG_PM  */
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	case CLK_96MHZ:
+#if CONFIG_PM
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1025V);
+#endif /* CONFIG_PM  */
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
@@ -392,8 +435,8 @@ void soc_early_init_hook(void)
 	/* Init Machine Timer source clock: 32 KHz RC */
 	clock_32k_init(CLK_32K_RC);
 	clock_cal_32k_rc();
-	/* pke is not enabled by default on TL323X */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+	/* pke is not enabled by default on TL323X and TL521X */
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	extern void pke_dig_en(void);
 	pke_dig_en();
 
@@ -450,14 +493,14 @@ void soc_tlx_restore(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	/*after exit from suspend or deep-retention ,start 32k wd before lpd*/
 	wd_32k_feed();
 	wd_32k_start();
 #endif
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
 	/* change from 0x04 to 0x06 for the board changes. */
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
@@ -467,6 +510,12 @@ void soc_tlx_restore(void)
 #endif /* CONFIG_PM */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
+	if (g_adc_calib_flag == DRV_API_SUCCESS) {
+		g_adc_calib_flag = efuse_calib_sd_adc_vref();
+	}
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL521X && CONFIG_ADC_TELINK_TL521X
 	if (g_adc_calib_flag == DRV_API_SUCCESS) {
 		g_adc_calib_flag = efuse_calib_sd_adc_vref();
 	}
@@ -486,6 +535,10 @@ void soc_tlx_restore(void)
 	case CLK_24MHZ:
 		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
 		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	case CLK_24MHZ:
+		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		break;
 #endif
 
 	case CLK_48MHZ:
@@ -494,6 +547,12 @@ void soc_tlx_restore(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 		PLL_192M_D25F_48M_HCLK_N22_24M_PCLK_12M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
+		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
+#if CONFIG_PM
+		pm_set_calib_0p925V_dig_ldo_voltage();
+		gen_fsk_close_unused_clock();
+#endif /* CONFIG_PM  */
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 #if CONFIG_PM
 		pm_set_calib_0p925V_dig_ldo_voltage();
@@ -541,6 +600,13 @@ void soc_tlx_restore(void)
 #endif /* CONFIG_PM  */
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	case CLK_96MHZ:
+#if CONFIG_PM
+		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1025V);
+#endif /* CONFIG_PM  */
+		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
@@ -559,8 +625,8 @@ void soc_tlx_restore(void)
 		break;
 #endif
 	}
-	/* pke is not enabled by default on TL323X */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+	/* pke is not enabled by default on TL323X and TL521X */
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	extern void pke_dig_en(void);
 	pke_dig_en();
 #endif
@@ -618,7 +684,7 @@ unsigned char flash_set_4line_read_write(mspi_slave_device_num_e device_num, uns
 
 	return status;
 }
-#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#elif CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 #include "flash/flash_common.h"
 #include "flash_base.h"
 /**
@@ -650,7 +716,7 @@ static int soc_tlx_check_flash(void)
 	flash_capacity_e hw_flash_cap;
 	uint32_t mid;
 
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	mid = flash_read_mid();
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 	mid = flash_read_mid_with_device_num(SLAVE0);
@@ -660,12 +726,12 @@ static int soc_tlx_check_flash(void)
 	hw_flash_cap = (flash_capacity_e)((mid & FLASH_MID_SIZE_MASK) >> FLASH_MID_SIZE_OFFSET);
 
 	/* Enable Quad SPI (4x) read and write mode */
-#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	if (flash_set_4line_read_write(mid) != 1) {
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
-	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {
+	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {	
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		printk("!!! Error: Failed to switch flash model 0x%X to quad mode\n", mid);
 	}
@@ -718,7 +784,7 @@ static int soc_tlx_mcc_init(void)
 SYS_INIT(soc_tlx_mcc_init, POST_KERNEL, 1);
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 #include <zephyr/kernel.h>
 
 struct k_timer wd_32k_timer;

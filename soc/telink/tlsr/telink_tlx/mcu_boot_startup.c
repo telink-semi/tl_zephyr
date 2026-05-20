@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -13,6 +13,10 @@
 #include "efuse.h"
 #include "gpio.h"
 #include <zephyr/dt-bindings/pinctrl/tl323x-pinctrl.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+#include "efuse.h"
+#include "gpio.h"
+#include <zephyr/dt-bindings/pinctrl/tl521x-pinctrl.h>
 #endif
 
 BOOT_LOG_MODULE_REGISTER(telink_tlx_mcuboot);
@@ -40,7 +44,7 @@ static bool telink_tlx_mcu_boot_startup(void)
 {
 	bool result = true; /* run MCUBoot main */
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	bool show_chip_id = false;
 
 	/* Check if Console UART RX line is at low level - shorted to ground */
@@ -90,6 +94,6 @@ static bool telink_tlx_mcu_boot_startup(void)
 			BOOT_LOG_ERR("chip id read error");
 		}
 	}
-#endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X */
 	return result;
 }

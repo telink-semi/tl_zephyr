@@ -1,34 +1,34 @@
-.. _tl3238x:
+.. _tl5218x:
 
-Telink TL3238X
+Telink TL5218X
 #####################
 
 Overview
 ********
 
-The TL3238X Generic Starter Kit is a hardware platform which
+The TL5218X Generic Starter Kit is a hardware platform which
 can be used to verify the Telink TLx series chipset and develop applications
 for several 2.4 GHz air interface standards including Bluetooth LE, Zigbee, RF4CE,
 Thread, Matter, and 2.4GHz proprietary standard.
 
-.. figure:: img/TL3238X-EVB-TOP.jpg
+.. figure:: img/TL5218X-EVB-TOP.jpg
      :align: center
-     :alt: TL3238X
+     :alt: TL5218X
 
 .. More information about the board can be found at the `Telink B92 Generic Starter Kit Hardware Guide`_ website.
 
 Hardware
 ********
 
-The TL3238X SoC integrates a powerful 32-bit RISC-V MCU, DSP, 2.4 GHz ISM Radio, 160 KB SRAM
-including 160 KB retention feature SRAM, external Flash memory, 12-bit AUX ADC, PWM, flexible
+The TL5218X SoC integrates a powerful 32-bit RISC-V MCU, DSP, 2.4 GHz ISM Radio, 256 KB SRAM
+including 256 KB retention feature SRAM, external Flash memory, 12-bit AUX ADC, PWM, flexible
 IO interfaces, and other peripheral blocks required for advanced IoTapplications.
 
-.. figure:: img/tl3238_block_diagram.png
+.. figure:: img/tl5218_block_diagram.png
      :align: center
-     :alt: TL3238X_SOC
+     :alt: TL5218X_SOC
 
-The TL3238X default board configuration provides the following hardware components:
+The TL5218X default board configuration provides the following hardware components:
 
 - RF conducted antenna
 - 2 MB External SPI Flash memory with reset button. (Possible to mount 1/2/4 MB)
@@ -41,7 +41,7 @@ The TL3238X default board configuration provides the following hardware componen
 Supported Features
 ==================
 
-The Zephyr TL3238X board configuration supports the following hardware features:
+The Zephyr TL5218X board configuration supports the following hardware features:
 
 +----------------+------------+------------------------------+
 | Interface      | Controller | Driver/Component             |
@@ -106,10 +106,10 @@ Default configuration and IOs
 System Clock
 ------------
 
-The TL3238X board is configured to use the 24 MHz external crystal oscillator
+The TL5218X board is configured to use the 24 MHz external crystal oscillator
 with the on-chip PLL/DIV generating the 96 MHz system clock.
 The following values also could be assigned to the system clock in the board DTS file
-(``boards/riscv/tl323x/tl3238x-common.dtsi``):
+(``boards/riscv/tl521x/tl5218x-common.dtsi``):
 
 - 24000000
 - 48000000
@@ -124,14 +124,14 @@ The following values also could be assigned to the system clock in the board DTS
 PINs Configuration
 ------------------
 
-The TL3238X SoC has five GPIO controllers (PORT_A to PORT_F), and the next are
+The TL5218X SoC has five GPIO controllers (PORT_A to PORT_F), and the next are
 currently enabled:
 
 - LED0 (white): PD0, LED1 (green): PB0, LED2 (red): PB1, LED3 (blue): PB2
 - Key Matrix SW3: PB3_PB6, SW4: PB3_PB7, SW5: PB5_PB6, SW6: PB5_PB7
 
 Peripheral's pins on the SoC are mapped to the following GPIO pins in the
-``boards/riscv/tl323x/tl3238x-common.dtsi`` file:
+``boards/riscv/tl521x/tl5218x-common.dtsi`` file:
 
 - UART0 TX: PE0, RX: PE1
 - PWM Channel 0: PB2
@@ -141,7 +141,7 @@ Peripheral's pins on the SoC are mapped to the following GPIO pins in the
 Serial Port
 -----------
 
-The TL3238X SoC has 1 UART. The Zephyr console output is assigned to UART0.
+The TL5218X SoC has 1 UART. The Zephyr console output is assigned to UART0.
 The default settings are 115200 8N1.
 
 USB COM Port (ACM) as Serial Port Configuration
@@ -206,7 +206,7 @@ Here is an example for the "hello_world" application.
 .. code-block:: console
 
    # From the root of the zephyr repository
-   west build -b tl3238x samples/hello_world
+   west build -b tl5218x samples/hello_world
 
 Open a serial terminal with the following settings:
 
@@ -221,13 +221,13 @@ serial port:
 .. code-block:: console
 
    *** Booting Zephyr OS build zephyr-v3.3.0-xxxx-xxxxxxxxxxxxx  ***
-   Hello World! tl3238x
+   Hello World! tl5218x
 
 
 Flashing
 ========
 
-To flash the TL3238X board see the sources below:
+To flash the TL5218X board see the sources below:
 
 - ``Burning and Debugging Tools for all Series``_
 

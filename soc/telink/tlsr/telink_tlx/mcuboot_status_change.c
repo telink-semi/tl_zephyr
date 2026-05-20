@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -166,7 +166,7 @@ void mcuboot_status_change(mcuboot_status_type_t status)
 
 		irq_lock();
 		clock_set_all_clock_to_default();
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 		wd_32k_feed();
 #endif
 		((void (*)(void))boot_app)();
