@@ -194,9 +194,9 @@
 			status = "disabled";
 		};
 
-		pwm0: pwm@80140400 {
+		pwm0: pwm@80140e00 {
 			compatible = "telink,tlx-pwm";
-			reg = <0x80140400 0x80>;
+			reg = <0x80140e00 0x80>;
 			channels = <6>;
 			status = "disabled";
 			#pwm-cells = <3>;
@@ -223,9 +223,9 @@
 			clock-frequency = <I2C_BITRATE_STANDARD>;
 		};
 
-		adc: adc@801401c0 {
+		adc: adc@80140680 {
 			compatible = "telink,tl521x-adc";
-			reg = <0x801401c0 0x32>;
+			reg = <0x80140680 0x32>;
 			status = "disabled";
 			#io-channel-cells = <1>;
 		};

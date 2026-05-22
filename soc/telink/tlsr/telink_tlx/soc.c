@@ -731,7 +731,7 @@ static int soc_tlx_check_flash(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
-	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {	
+	if (flash_set_4line_read_write(SLAVE0, mid) != 1) {
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		printk("!!! Error: Failed to switch flash model 0x%X to quad mode\n", mid);
 	}
