@@ -19,12 +19,12 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 	irq_unlock(key);
 
 	/* Wait for interrupt */
-	#if CONFIG_SOC_RISCV_TELINK_TL322X && CONFIG_SOC_RISCV_TELINK_TL323X
-		__asm__ volatile("wfi");
-	#else
-		while (__irq_pending) {
-		}
-	#endif
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	__asm__ volatile("wfi");
+#else
+	while (__irq_pending) {
+	}
+#endif
 }
 
 void __soc_handle_irq(unsigned long mcause)
