@@ -70,9 +70,9 @@ _attribute_ram_code_sec_ uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint
     }
 
     if (!mcc_d25f_shm_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len, TLK_SHM_MSG_2P4G)) {
-        tlkapi_printf(APP_IO_EN, "d25f send sm message success\n");
+        printk("d25f send sm message success\n");
     } else {
-        tlkapi_printf(APP_IO_EN, "d25f send sm message fail\n");
+        printk("d25f send sm message fail\n");
         return 1;
     }
 
@@ -100,7 +100,7 @@ _attribute_ram_code_sec_ void app_2p4g_d25f_sm_rx_cb(uint8_t *data, uint16_t len
     }
     else
     {
-        tlkapi_send_string_data(APP_LOG_EN, "error! unknow sm command", data, len);
+        printk("error! unknow sm command\n");
     }
 }
 
@@ -117,7 +117,7 @@ uint8_t p24g_register_sm_cmd_handler(p24g_sm_cmd_e cmd, p24g_sm_cmd_handler_t ha
         p24g_cmd_table[cmd] = handler;
         ret = TLK_SUCCESS;
     }else {
-        tlkapi_printf(APP_LOG_EN, "p24g_register_sm_cmd_handler error %x\n", cmd);
+        printk("p24g_register_sm_cmd_handler error %x\n", cmd);
     }
 
     return ret;
@@ -137,7 +137,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
     switch (p_evt->opcode) {
         case P24G_SM_OP_MISC_REPORT_RATE:
-            tlkapi_send_string_data(APP_LOG_EN, "report rate changed", data, len);
+            printk("report rate changed\n");
             break;
 
     default:
@@ -181,7 +181,7 @@ void p24g_user_init_normal(void)
 
     p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
  
-    tlkapi_send_string_data(APP_LOG_EN, "d25f kb _p24g_init end", 0, 0);
+    printk("d25f kb_p24g_init end\n");
 }
 
 
@@ -193,10 +193,6 @@ void p24g_user_init_normal(void)
 _attribute_no_inline_ void app_2p4g_main_loop(void)
 {
     mcc_d25f_loop();
-////////////////////////////////////// Debug entry /////////////////////////////////
-#if (TLKAPI_DEBUG_ENABLE)
-    tlkapi_debug_handler();
-#endif
-
+    // printk("d25f\n");
     wd_clear();
 }

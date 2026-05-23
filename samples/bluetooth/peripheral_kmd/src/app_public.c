@@ -80,9 +80,6 @@ void keyboard_comm_init(void)
     soc_tlx_mcc_init();
     tlk_d25f_to_n22_mode_info(KB_MODE_2P4G);
 
-    pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-    PLL_192M_D25F_96M_HCLK_N22_96M_PCLK_96M_MSPI_48M; // 96M 96M
-
     p24g_user_init_normal();
 
     user_timer_init();

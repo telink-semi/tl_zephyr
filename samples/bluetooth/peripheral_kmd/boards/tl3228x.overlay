@@ -3,12 +3,12 @@
 };
 
 &uart0 {
-	status = "disabled";
+	status = "okay";
 	/*alg keyboard*/
 	/*pinctrl-0 = <&uart0_tx_pd4_default &uart0_rx_pd5_default>;*/
 	/*digital keyboard*/
 	pinctrl-0 = <&uart0_tx_pe5_default &uart0_rx_pd7_default>;
-	current-speed = <2000000>;			/* Baud rate for serial port logging */
+	current-speed = <1000000>;			/* Baud rate for serial port logging */
 };
 
 &gpioa {
