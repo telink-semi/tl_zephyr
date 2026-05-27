@@ -49,7 +49,7 @@
 		compatible = "telink,telink_tl521x-soc";
 		ranges;
 
-		ram_ilm: memory@68000 {
+		ram_ilm: memory@60000 {
 			compatible = "mmio-sram";
 		};
 
