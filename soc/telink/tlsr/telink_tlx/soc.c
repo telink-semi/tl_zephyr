@@ -199,7 +199,6 @@ void soc_load_rf_parameters_deep_retention(void)
 #endif
 
 #if CONFIG_PM
-#define RST_BIT_SET(x, n)    ((x) |=~(n))
 #define RST_BIT_CLR(x, n)    ((x) &=~(n))
 #define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
 #if CONFIG_SOC_RISCV_TELINK_TL323X
@@ -207,32 +206,34 @@ __attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((o
 void gen_fsk_close_unused_clock(void)
 {
 	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
-	RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
+	/* comment because some user cases need UART1*/
+    /* RST_BIT_CLR(reg_rst0, FLD_RST0_UART1); */
 
-	RST_BIT_CLR(reg_rst1, FLD_RST1_UART3);
-	RST_BIT_CLR(reg_rst1, FLD_RST1_GSPI);
-	RST_BIT_CLR(reg_rst1, FLD_RST1_DMA);
-	RST_BIT_CLR(reg_rst1, FLD_RST1_SPISLV);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_UART3);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_GSPI);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_DMA);
+    RST_BIT_CLR(reg_rst1, FLD_RST1_SPISLV);
 
-	RST_BIT_CLR(reg_rst2, FLD_RST2_I2C1);
+    RST_BIT_CLR(reg_rst2, FLD_RST2_I2C1);
 	RST_BIT_CLR(reg_rst2, FLD_RST2_TRNG);
 
-	RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC1);
+    RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC1);
 	RST_BIT_CLR(reg_rst3, FLD_RST3_BROM);
-	RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC);
+    RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC);
 
-	RST_BIT_CLR(reg_rst4, FLD_RST4_UART4);
+    RST_BIT_CLR(reg_rst4, FLD_RST4_UART4);
 
-	RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
-	RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
+    RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
+    RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
 
-	RST_BIT_CLR(reg_rst6, FLD_RST6_RZ);
+    RST_BIT_CLR(reg_rst6, FLD_RST6_RZ);
 
-	RST_BIT_CLR(reg_rst7, FLD_RST7_USB1);
+    RST_BIT_CLR(reg_rst7, FLD_RST7_USB1);
 
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_LSPI_EN);
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C0_EN);
-	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN);
+	/* comment because some user cases need UART1*/
+	/* CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN); */
 
 	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK0_UART3_EN);
 	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_DMA_EN);
