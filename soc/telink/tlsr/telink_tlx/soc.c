@@ -14,7 +14,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
+
+#if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM && !CONFIG_MCUBOOT
 #include "tlx_bt.h"
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM && !CONFIG_MCUBOOT */
 
 #if DEBUG_GPIO_ENABLE
 #include "gpio_default.h"
@@ -192,10 +195,10 @@ void soc_load_rf_parameters_deep_retention(void)
 #endif
 
 #if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL323X
-#define RST_BIT_CLR(x, n)   ((x) |= (n))
-#define CLOCK_BIT_CLR(x, n) ((x) &= ~(n))
-__attribute__((noinline)) __attribute__((section(".ram_code")))
-__attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
+#define RST_BIT_CLR(x, n)    ((x) &=~(n))
+#define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
+__attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((optimize("O2")))
+void gen_fsk_close_unused_clock(void)
 {
 	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
 	RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
@@ -206,19 +209,13 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 	RST_BIT_CLR(reg_rst1, FLD_RST1_SPISLV);
 
 	RST_BIT_CLR(reg_rst2, FLD_RST2_I2C1);
-	RST_BIT_CLR(reg_rst2, FLD_RST2_LM);
 	RST_BIT_CLR(reg_rst2, FLD_RST2_TRNG);
 
 	RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC1);
-	RST_BIT_CLR(reg_rst3, FLD_RST3_TRACE);
 	RST_BIT_CLR(reg_rst3, FLD_RST3_BROM);
 	RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC);
 
-	RST_BIT_CLR(reg_rst4, FLD_RST4_DC);
 	RST_BIT_CLR(reg_rst4, FLD_RST4_UART4);
-	RST_BIT_CLR(reg_rst4, FLD_RST4_SKE);
-	/* will enable when HW HASH used */
-	RST_BIT_CLR(reg_rst4, FLD_RST4_HASH);
 
 	RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
 	RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
@@ -239,15 +236,10 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_I2C1_EN);
 
 	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_QDEC1_EN);
-	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_TRACE_EN);
 	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_BROM_EN);
 	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_QDEC0_EN);
 
-	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_DC_EN);
 	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_UART4_EN);
-	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_SKE_EN);
-	/* will enable when HW HASH used */
-	CLOCK_BIT_CLR(reg_clk_en4, FLD_CLK4_HASH_EN);
 
 	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_UART2_EN);
 	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_PEM_EN);
