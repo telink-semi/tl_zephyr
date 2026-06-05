@@ -1,0 +1,297 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+name: Telink openthread libraries builder
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  telink_ot_lib_build:
+    runs-on: ubuntu-latest
+    name: Telink openthread libraries builder
+    env:
+      ZEPHYR_COMPILER_VERSION: 0.17.0
+      ANDES_COMPILER_VERSION: 14.2.0
+      BUILD_SOC: tl7218x
+      SAMPLE_SRC_PATH: "samples/net/openthread/lib_builder"
+    steps:
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends libdigest-sha-perl cmake python3 ninja-build
+
+    - name: Setup Zephyr toolchain
+      run: |
+        mkdir ~/zephyr_gcc
+        wget -q -P ~/zephyr_gcc https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_COMPILER_VERSION}"/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz
+        (cd ~/zephyr_gcc && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_COMPILER_VERSION}"/sha256.sum | shasum --check --ignore-missing)
+        tar xf ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_gcc
+        (cd ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz
+
+    - name: Setup Andes toolchain
+      run: |
+        mkdir ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz -C ~/nds-gcc
+        rm -rf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
+
+    - name: Checkout Zephyr
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
+    - name: West setup
+      run: |
+        pip install west
+        cd ..
+        west init -l zephyr
+        west update
+        west blobs fetch hal_telink
+        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_b91.a$' && exit 1
+        west zephyr-export
+        pip install -r zephyr/scripts/requirements.txt
+
+    - name: Prepare build
+      run: |
+        mkdir -p build_telink_ot_lib_artifacts/include
+        mkdir -p build_telink_ot_lib_artifacts/lib
+        mkdir -p build_telink_ot_lib_artifacts/zephyr
+        mkdir -p build_telink_ot_lib_artifacts/configs
+
+    - name: Build libraries with Zephyr compiler
+      run: |
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config="${build_config#"${SAMPLE_SRC_PATH}"/}"
+            echo "build configuration: $config"
+            rm -rf build_tmp
+            west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -- \
+                       -DOVERLAY_CONFIG="$config" \
+                       -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+            libname="libopenthread-zephyr-${config##*/}"
+            libname="${libname%.conf}.a"
+            cp build_tmp/zephyr/libopenthread.a \
+               "build_telink_ot_lib_artifacts/lib/$libname"
+          done
+        fi
+
+    - name: Build libraries with Andes compiler
+      run: |
+        export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
+        export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config="${build_config#"${SAMPLE_SRC_PATH}"/}"
+            echo "build configuration: $config"
+            rm -rf build_tmp
+            west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -- \
+                       -DOVERLAY_CONFIG="$config" \
+                       -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+            libname="libopenthread-andes-${config##*/}"
+            libname="${libname%.conf}.a"
+            cp build_tmp/zephyr/libopenthread.a \
+               "build_telink_ot_lib_artifacts/lib/$libname"
+          done
+        fi
+        unset ZEPHYR_TOOLCHAIN_VARIANT
+        unset ANDES_GCC_PATH
+
+    - name: Install headers
+      run: |
+        rm -rf build_tmp
+        west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -t ot-headers
+        cp -r build_tmp/zephyr/ot-include/* \
+             "build_telink_ot_lib_artifacts/include"
+
+    - name: Make Zephyr module
+      run: |
+        cat << EOF > build_telink_ot_lib_artifacts/zephyr/module.yml
+        # Copyright (c) 2026 Telink Semiconductor
+        # SPDX-License-Identifier: Apache-2.0"
+
+        name: openthread_telink_lib
+        build:
+          cmake: .
+          kconfig: Kconfig
+        EOF
+
+    - name: Create CMakeList
+      run: |
+        cat << EOF > build_telink_ot_lib_artifacts/CMakeLists.txt
+        #
+        # Copyright (c) 2026, Telink
+        #
+        # SPDX-License-Identifier: Apache-2.0
+        #
+
+        if(CONFIG_OPENTHREAD_TELINK_LIBRARY)
+
+        if(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "zephyr")
+          set(TELINK_COMPILER "zephyr")
+        elseif(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "andes-gcc")
+          set(TELINK_COMPILER "andes")
+        else()
+          message(FATAL_ERROR "Unknown openthread Telink library compiler")
+        endif()
+
+        zephyr_include_directories(
+          \${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+
+        if(FALSE)
+        EOF
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config_name=$(basename "${build_config}" .conf)
+            cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
+        elseif(CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^})
+          zephyr_link_libraries(
+            \${CMAKE_CURRENT_SOURCE_DIR}/lib/libopenthread-\${TELINK_COMPILER}-${config_name}.a
+          )
+        EOF
+          done
+        fi
+        cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
+        else()
+          message(FATAL_ERROR "Unknown openthread Telink library version")
+        endif()
+
+        add_library(ot-config INTERFACE)
+
+        endif() # CONFIG_OPENTHREAD_TELINK_LIBRARY
+        EOF
+
+    - name: Create Kconfig
+      run: |
+        cat << EOF > build_telink_ot_lib_artifacts/Kconfig
+        # Copyright (c) 2026 Telink Semiconductor
+        # SPDX-License-Identifier: Apache-2.0
+
+        if SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
+
+        choice OPENTHREAD_IMPLEMENTATION
+          default OPENTHREAD_SOURCES
+
+        config OPENTHREAD_TELINK_LIBRARY
+          bool "openthread from Telink library"
+          help
+            Use Zephyr's openthread port from Telink library.
+
+        endchoice # OPENTHREAD_IMPLEMENTATION
+
+        choice OPENTHREAD_TELINK_LIBRARY_VERSION
+          prompt "openthread Telink library version"
+        EOF
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          config_name=$(basename "${conf_files[0]}" .conf)
+          cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+          default OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^}
+
+        EOF
+          for build_config in "${conf_files[@]}"; do
+            config_name=$(basename "${build_config}" .conf)
+          cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+        config OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^}
+          bool "openthread Telink ${config_name} library"
+
+        EOF
+          done
+        fi
+        cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+        endchoice # OPENTHREAD_TELINK_LIBRARY_VERSION
+        EOF
+
+        cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+
+        endif # SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
+        EOF
+
+    - name: Export configurations
+      run: |
+        rm -rf build_tmp
+        west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -t ot-headers
+        build_timestamp="$(sed -n 's/^CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP=//p' build_tmp/zephyr/.config)"
+        build_year=$(date -d @"${build_timestamp}" +%Y)
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config_name=$(basename "${build_config}" .conf)
+            cat << EOF > build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
+        # Copyright (c) ${build_year} Telink Semiconductor
+        # SPDX-License-Identifier: Apache-2.0
+
+        CONFIG_OPENTHREAD_TELINK_LIBRARY=y
+        CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^}=y
+
+        EOF
+            while IFS= read -r line; do
+              [[ -z "${line}" || "${line}" =~ ^[[:space:]]*# ]] && continue
+              echo "${line}" >> \
+                    build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
+            done < "${SAMPLE_SRC_PATH}"/openthread.conf
+            while IFS= read -r line; do
+              [[ -z "${line}" || "${line}" =~ ^[[:space:]]*# ]] && continue
+              echo "${line}" >> \
+                    build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
+            done < "${build_config}"
+          done
+        fi
+
+    - name: Generate readme
+      run: |
+        rm -rf build_tmp
+        west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -t ot-headers
+        build_timestamp="$(sed -n 's/^CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP=//p' build_tmp/zephyr/.config)"
+        build_timezone="$(date +%::z) ($(date +%Z))"
+        build_datetime="$(date -d @${build_timestamp})"
+        zephyr_hash=$(git rev-parse HEAD)
+        [[ -n "$(git status --porcelain)" ]] && zephyr_hash+="-dirty"
+        ot_submodule_path="$(sed -n 's/^# openthread (\(.*\))$/\1/p' build_tmp/zephyr/.config)"
+        ot_hash=$(cd "${ot_submodule_path}" && git rev-parse HEAD)
+        [[ -n "$(cd "${ot_submodule_path}" && git status --porcelain)" ]] && ot_hash+="-dirty"
+        zephyr_gcc_ver="$(~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-gcc --version)"
+        andes_gcc_ver="$(~/nds-gcc/nds32le-elf-newlib-v5f/bin/riscv32-elf-gcc --version)"
+        cat << EOF > build_telink_ot_lib_artifacts/README.md
+        # openthread Telink prebuilt libraries
+
+        ## Zephyr revision
+        *${zephyr_hash}*
+
+        ## openthread revision
+        *${ot_hash}*
+
+        ## zephyr compiler version
+        \`\`\`text
+        ${zephyr_gcc_ver}
+        \`\`\`
+
+        ## andes compiler version
+        \`\`\`text
+        ${andes_gcc_ver}
+        \`\`\`
+
+        ## build time
+        time zone: *${build_timezone}*
+
+        timestamp: *${build_timestamp}*
+
+        date/time: *${build_datetime}*
+
+        ## prebuilt configurations
+        See *configs/* directory.
+        EOF
+
+    - name: Publish artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          build_telink_ot_lib_artifacts/*

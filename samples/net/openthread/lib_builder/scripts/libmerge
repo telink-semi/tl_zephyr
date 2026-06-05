@@ -1,0 +1,59 @@
+#!/bin/bash
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+# Usage: libmerge output.a input1.a input2.a ...
+
+if [ $# -lt 3 ]; then
+    echo "Usage: $0 output.a input1.a input2.a ..."
+    exit 1
+fi
+
+output="$1"
+shift
+
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+index=0
+for lib in "$@"; do
+    if [ ! -f "$lib" ]; then
+        echo "Error: $lib not found"
+        exit 1
+    fi
+    echo "Extracting $lib..."
+    abspath=$(realpath "$lib")
+
+    # Make a subdir for each library
+    subdir="$tmpdir/lib$index"
+    mkdir -p "$subdir"
+    (cd "$subdir" && ar x "$abspath")
+
+    # Rename object files to avoid collisions
+    libbase=$(basename "$lib" .a)
+    for f in "$subdir"/*.o "$subdir"/*.obj; do
+        [ -e "$f" ] || continue
+        ext="${f##*.}"  # o or obj
+        mv "$f" "$tmpdir/${libbase}_${index}_$(basename "$f" ."$ext").$ext"
+    done
+    index=$((index + 1))
+done
+
+# Collect all renamed object files
+shopt -s nullglob
+objects=("$tmpdir"/*.o "$tmpdir"/*.obj)
+shopt -u nullglob
+
+if [ ${#objects[@]} -eq 0 ]; then
+    echo "Error: no object files extracted!"
+    exit 1
+fi
+
+# Create the merged library
+echo "Creating $output..."
+ar rcs "$output" "${objects[@]}"
+
+# Rebuild index
+ranlib "$output" 2>/dev/null || true
+
+echo "Merged library created: $output"
