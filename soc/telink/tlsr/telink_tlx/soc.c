@@ -14,6 +14,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
+#include "tlx_bt.h"
 
 #if DEBUG_GPIO_ENABLE
 #include "gpio_default.h"
@@ -282,6 +283,18 @@ void soc_early_init_hook(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
+
+	/* Only need for lighting to switch from zigbee to matter */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM && !CONFIG_MCUBOOT
+	/* Enable clock before operate rf register */
+	rf_mode_init();
+	/* Reset Radio */
+	rf_radio_reset();
+	rf_reset_dma();
+	rf_baseband_reset();
+
+	rf_clr_irq_status(FLD_RF_IRQ_ALL);
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM && !CONFIG_MCUBOOT */
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	if (cclk == CLK_240MHZ) {
