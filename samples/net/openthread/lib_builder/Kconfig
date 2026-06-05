@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+menu "OpenThread Telink library"
+
+config TELINK_OT_LIB_BUILD_TIMESTAMP
+	int "Telink openthread library build timestamp"
+	default 1767218400
+
+endmenu
+
+source "Kconfig.zephyr"
