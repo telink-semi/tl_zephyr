@@ -199,7 +199,8 @@ static int hci_tlx_open(const struct device *dev, bt_hci_recv_t recv)
 	hci_dev = dev;
 	hci_recv = recv;
 	tlx_bt_host_callback_register(&vhci_host_cb);
-	LOG_DBG("TLNK BT started");
+
+	LOG_DBG("TLX BT started");
 
 	return 0;
 }

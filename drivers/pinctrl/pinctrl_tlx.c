@@ -151,7 +151,7 @@ static inline void pinctrl_tlx_gpio_function_disable(uint32_t pin)
 	reg_gpio_en(pin) &= ~bit;
 }
 
-/* Get pull up (and function for B91) value bits start position (offset) */
+/* Get pull up (and function) value bits start position (offset) */
 static inline int pinctrl_tlx_get_offset(uint32_t pin, uint8_t *offset)
 {
 	switch (TLX_PINMUX_GET_PIN_ID(pin)) {
