@@ -21,7 +21,7 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 	/* unlock interrupts */
 	irq_unlock(key);
 
-	/* Due to silicon bug in B92 platform, the WFI emulation is implemented */
+	/* Due to silicon bug, the WFI emulation is implemented */
 	while (__irq_pending) {
 	}
 }
@@ -58,7 +58,7 @@ void arch_cpu_atomic_idle(unsigned int key)
 }
 
 /**
- * @brief Telink B92 SOC handle IRQ implementation
+ * @brief Telink SOC handle IRQ implementation
  *
  * - __soc_handle_irq: handle SoC-specific details for a pending IRQ
  *   (e.g. clear a pending bit in a SoC-specific register)

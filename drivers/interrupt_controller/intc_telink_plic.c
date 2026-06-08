@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT sifive_plic_1_0_0
+#define DT_DRV_COMPAT telink_plic
 
 /**
  * @brief Platform Level Interrupt Controller (PLIC) driver
@@ -27,7 +27,7 @@
 #define PLIC_REG	DT_INST_REG_ADDR_BY_NAME(0, reg)
 
 #define PLIC_IRQS        (CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET)
-#define PLIC_EN_SIZE     ((PLIC_IRQS >> 5) + 1)
+#define PLIC_EN_SIZE     ((PLIC_IRQS + 31) >> 5)
 
 struct plic_regs_t {
 	uint32_t threshold_prio;
@@ -148,10 +148,19 @@ static void plic_irq_handler(const void *arg)
 	save_irq = irq;
 
 	/*
+	 * On Telink retention targets, the CPU can occasionally take a machine
+	 * external interrupt while PLIC claim/complete returns 0. In this case
+	 * there is no pending PLIC source to service or complete, so ignore it.
+	 */
+	if (irq == 0U) {
+		return;
+	}
+
+	/*
 	 * If the IRQ is out of range, call z_irq_spurious.
 	 * A call to z_irq_spurious will not return.
 	 */
-	if (irq == 0U || irq >= PLIC_IRQS)
+	if (irq >= PLIC_IRQS)
 		z_irq_spurious(NULL);
 
 	irq += CONFIG_2ND_LVL_ISR_TBL_OFFSET;
@@ -188,7 +197,8 @@ static int plic_init(void)
 	}
 
 	/* Set priority of each interrupt line to 0 initially */
-	for (i = 0; i < PLIC_IRQS; i++) {
+	prio++; /* no zero ISR, it's reserved for PLIC features */
+	for (i = 1; i < PLIC_IRQS; i++) {
 		*prio = 0U;
 		prio++;
 	}

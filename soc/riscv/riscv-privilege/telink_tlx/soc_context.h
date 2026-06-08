@@ -9,7 +9,7 @@
 
 #ifdef CONFIG_RISCV_SOC_CONTEXT_SAVE
 
-/* Telink B91 specific registers. */
+/* Telink specific registers. */
 #if defined(CONFIG_TELINK_TLX_PFT) && defined(CONFIG_ANDES_HWDSP)
 
 	#define SOC_ESF_MEMBERS     \

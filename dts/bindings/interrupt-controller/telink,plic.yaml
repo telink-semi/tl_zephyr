@@ -1,0 +1,14 @@
+# Copyright (c) 2018, SiFive Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink RISCV-V platform-local interrupt controller
+
+compatible: "telink,plic"
+
+include: riscv,plic0.yaml
+
+properties:
+  riscv,ndev:
+    type: int
+    description: Number of external interrupts supported
+    required: true
