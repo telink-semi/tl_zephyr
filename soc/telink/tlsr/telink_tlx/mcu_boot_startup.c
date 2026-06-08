@@ -8,14 +8,14 @@
 #include <zephyr/drivers/uart.h>
 #include <bootutil/bootutil_log.h>
 #include <zephyr/sys/crc.h>
-BOOT_LOG_MODULE_REGISTER(telink_b9x_mcuboot);
+BOOT_LOG_MODULE_REGISTER(telink_tlx_mcuboot);
 
-static bool telink_b9x_mcu_boot_startup(void);
+static bool telink_tlx_mcu_boot_startup(void);
 static __maybe_unused void printk_buf(const char *comment, void *buf, size_t buf_len);
 
 void __wrap_main(void)
 {
-	if (telink_b9x_mcu_boot_startup()) {
+	if (telink_tlx_mcu_boot_startup()) {
 		extern void __real_main(void);
 
 		__real_main();
@@ -23,11 +23,11 @@ void __wrap_main(void)
 }
 
 /* Vendor specific code during MCUBoot startup */
-static bool telink_b9x_mcu_boot_startup(void)
+static bool telink_tlx_mcu_boot_startup(void)
 {
 	bool result = true; /* run MCUBoot main */
 
-	BOOT_LOG_INF("telink B9x MCUBoot on early boot");
+	BOOT_LOG_INF("telink TLX MCUBoot on early boot");
 #if CONFIG_SOC_RISCV_TELINK_B92
 	bool show_chip_id = false;
 

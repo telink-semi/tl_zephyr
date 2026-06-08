@@ -16,7 +16,7 @@
 #endif
 
 /**
- * @brief Telink B9X-series pin type.
+ * @brief Telink TLX-series pin type.
  */
 typedef uint32_t pinctrl_soc_pin_t;
 

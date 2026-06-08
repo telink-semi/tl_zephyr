@@ -200,11 +200,7 @@ static int hci_tlx_open(const struct device *dev, bt_hci_recv_t recv)
 	hci_recv = recv;
 	tlx_bt_host_callback_register(&vhci_host_cb);
 
-#if CONFIG_SOC_RISCV_TELINK_B91
-	LOG_DBG("B91 BT started");
-#elif CONFIG_SOC_RISCV_TELINK_B92
-	LOG_DBG("B92 BT started");
-#endif
+	LOG_DBG("TLX BT started");
 
 	return 0;
 }
