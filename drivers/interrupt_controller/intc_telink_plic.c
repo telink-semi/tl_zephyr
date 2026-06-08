@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT sifive_plic_1_0_0
+#define DT_DRV_COMPAT telink_plic
 
 /**
  * @brief Platform Level Interrupt Controller (PLIC) driver
@@ -132,7 +132,7 @@ static inline uint32_t get_plic_enabled_size(const struct device *dev)
 {
 	const struct plic_config *config = dev->config;
 
-	return local_irq_to_reg_index(config->nr_irqs) + 1;
+	return local_irq_to_reg_index(config->nr_irqs + PLIC_REG_SIZE - 1);
 }
 
 static ALWAYS_INLINE uint32_t get_hart_context(const struct device *dev, uint32_t hartid)
@@ -537,10 +537,19 @@ static void plic_irq_handler(const struct device *dev)
 	save_dev[cpu_id] = dev;
 
 	/*
+	 * On Telink retention targets, the CPU can occasionally take a machine
+	 * external interrupt while PLIC claim/complete returns 0. In this case
+	 * there is no pending PLIC source to service or complete, so ignore it.
+	 */
+	if (local_irq == 0U) {
+		return;
+	}
+
+	/*
 	 * If the IRQ is out of range, call z_irq_spurious.
 	 * A call to z_irq_spurious will not return.
 	 */
-	if ((local_irq == 0U) || (local_irq >= config->nr_irqs)) {
+	if (local_irq >= config->nr_irqs) {
 		z_irq_spurious(NULL);
 	}
 
@@ -602,7 +611,7 @@ static int plic_init(const struct device *dev)
 	}
 
 	/* Set priority of each interrupt line to 0 initially */
-	for (uint32_t i = 0; i < config->nr_irqs; i++) {
+	for (uint32_t i = 1; i < config->nr_irqs; i++) {
 		sys_write32(0U, prio_addr + (i * sizeof(uint32_t)));
 	}
 
