@@ -38,3 +38,5 @@ fi
 
 "$script_path/libmerge" "$build_output_path/zephyr/libopenthread.a" "${ot_lib_gnerated[@]}"
 "$platform_nm_util" --strip-unneeded "$build_output_path/zephyr/libopenthread.a"
+echo "Generated openthread library:"
+sha256sum "$build_output_path/zephyr/libopenthread.a"
