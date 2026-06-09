@@ -34,22 +34,22 @@
 		compatible = "gpio-leds";
 
 		led_red: led_0 {
-			gpios = <&gpioc 2 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
 			label = "LED Red";
 		};
 
 		led_blue: led_1 {
-			gpios = <&gpioc 3 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioa 4 GPIO_ACTIVE_HIGH>;
 			label = "LED Blue";
 		};
 
 		led_white: led_2 {
-			gpios = <&gpioc 0 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioa 0 GPIO_ACTIVE_HIGH>;
 			label = "LED White";
 		};
 
 		led_green: led_3 {
-			gpios = <&gpioc 1 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioa 2 GPIO_ACTIVE_HIGH>;
 			label = "LED Green";
 		};
 	};
@@ -131,10 +131,10 @@
 };
 
 &ram_ilm {
-	reg = <0x00060000 0x00020000>;
+	reg = <0x10000000 0x00020000>;
 };
 &ram_ilm_non_retention {
-	reg = <0x00080000 0x00020000>;
+	reg = <0x11000000 0x00020000>;
 };
 
 &flash {

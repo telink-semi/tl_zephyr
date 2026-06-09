@@ -342,7 +342,7 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 	} else {
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
 
 	if (irq == IRQ_GPIO0) {
@@ -364,6 +364,8 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 	} else {
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	BM_SET(reg_gpio_irq_en((GET_PORT_NUM(gpio) << 8) | pin, irq), BIT(pin));
 #endif
 }
 
@@ -399,7 +401,7 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 	} else if (irq == IRQ_GPIO7) {
 		BM_CLR(gpio->irq7, BIT(pin));
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
 
 	if (irq == IRQ_GPIO0) {
@@ -421,6 +423,8 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 	} else {
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	BM_CLR(reg_gpio_irq_en((GET_PORT_NUM(gpio) << 8) | pin, irq), BIT(pin));
 #endif
 
 #if CONFIG_PM_DEVICE
@@ -461,7 +465,7 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 	} else if (irq == IRQ_GPIO7) {
 		status = gpio->irq7;
 	}
-#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#elif CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8);
 
 	if (irq == IRQ_GPIO0) {
@@ -481,6 +485,8 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 	} else if (irq == IRQ_GPIO7) {
 		status = reg_gpio_irq7_en(gpio_pin_elem);
 	}
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	status = reg_gpio_irq_en(GET_PORT_NUM(gpio) << 8, irq);
 #endif
 	return status;
 }

@@ -61,7 +61,8 @@ pm_retention_register_recover(void)
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
 #define CLK_24MHZ 24000000u
 #define CLK_48MHZ 48000000u
-#define CLK_96MHZ 96000000u
+#define CLK_72MHZ 72000000u
+#define CLK_144MHZ 144000000u
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #define CLK_40MHZ  40000000u
 #define CLK_48MHZ  48000000u
@@ -158,8 +159,8 @@ pm_retention_register_recover(void)
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-#if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
-#error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
+#if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_72MHZ) && (CCLK_FREQ != CLK_144MHZ))
+#error "Invalid clock-frequency. Supported values: 24, 48, 72, 144 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if ((CCLK_FREQ != CLK_40MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_60MHZ) &&           \
@@ -280,7 +281,7 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 }
 #endif /* CONFIG_PM  */
 
-#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && CONFIG_PM
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
 #include "pm.h"
 #endif
 
@@ -299,7 +300,7 @@ void soc_early_init_hook(void)
 #endif /* CONFIG_PM  */
 
 	/* in non pm mode ,will set ldo to 1.2v to make it work ok */
-#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && !CONFIG_PM
+#if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM
 	cclk = CLK_96MHZ;
 #endif
 
@@ -314,7 +315,7 @@ void soc_early_init_hook(void)
 #endif
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore. */
-#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+#if (CONFIG_SOC_RISCV_TELINK_TL323X) && CONFIG_SOC_PMOS_SWITCH_TIME_CTL
 	/* change from 0x04 to 0x06 for the board changes. */
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
@@ -347,7 +348,7 @@ void soc_early_init_hook(void)
 		break;
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
 	case CLK_24MHZ:
-		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		PLL_144M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
 		break;
 #endif
 
@@ -362,10 +363,7 @@ void soc_early_init_hook(void)
 		pm_set_calib_0p925V_dig_ldo_voltage();
 #endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
-#if CONFIG_PM
-		pm_set_calib_0p925V_dig_ldo_voltage();
-#endif /* CONFIG_PM  */
+		PLL_144M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
@@ -395,6 +393,14 @@ void soc_early_init_hook(void)
 		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
+#if CONFIG_SOC_RISCV_TELINK_TL521X
+	case CLK_72MHZ:
+		PLL_144M_CCLK_72M_HCLK_72M_PCLK_72M_MSPI_72M;
+		break;
+	case CLK_144MHZ:
+		PLL_144M_CCLK_144M_HCLK_72M_PCLK_36M_MSPI_48M;
+		break;
+#endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 		/* case CLK_96MHZ:
@@ -402,13 +408,6 @@ void soc_early_init_hook(void)
 		 *  break;
 		 */
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
-	case CLK_96MHZ:
-#if CONFIG_PM
-		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1025V);
-#endif /* CONFIG_PM  */
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
-		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL521X
 	case CLK_96MHZ:
 #if CONFIG_PM
 		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1025V);
@@ -537,7 +536,7 @@ void soc_tlx_restore(void)
 		break;
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
 	case CLK_24MHZ:
-		PLL_192M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
+		PLL_144M_CCLK_24M_HCLK_24M_PCLK_24M_MSPI_48M;
 		break;
 #endif
 
@@ -553,11 +552,7 @@ void soc_tlx_restore(void)
 		gen_fsk_close_unused_clock();
 #endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
-#if CONFIG_PM
-		pm_set_calib_0p925V_dig_ldo_voltage();
-		gen_fsk_close_unused_clock();
-#endif /* CONFIG_PM  */
+		PLL_144M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
@@ -587,6 +582,14 @@ void soc_tlx_restore(void)
 		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
 		break;
 #endif
+#if CONFIG_SOC_RISCV_TELINK_TL521X
+	case CLK_72MHZ:
+		PLL_144M_CCLK_72M_HCLK_72M_PCLK_72M_MSPI_72M;
+		break;
+	case CLK_144MHZ:
+		PLL_144M_CCLK_144M_HCLK_72M_PCLK_36M_MSPI_48M;
+		break;
+#endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 		/* case CLK_96MHZ:
@@ -594,13 +597,6 @@ void soc_tlx_restore(void)
 		 *  break;
 		 */
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
-	case CLK_96MHZ:
-#if CONFIG_PM
-		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1025V);
-#endif /* CONFIG_PM  */
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
-		break;
-#elif CONFIG_SOC_RISCV_TELINK_TL521X
 	case CLK_96MHZ:
 #if CONFIG_PM
 		pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P1025V);
