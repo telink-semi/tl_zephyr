@@ -1,0 +1,66 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+name: Telink OpenThread libraries builder
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  telink_ot_lib_build:
+    runs-on: ubuntu-latest
+    name: Telink OpenThread libraries builder
+    env:
+      ZEPHYR_COMPILER_VERSION: 0.17.0
+      ANDES_COMPILER_VERSION: 14.2.0
+      BUILD_SOC: tl7218x
+    steps:
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends libdigest-sha-perl cmake python3 ninja-build
+
+    - name: Setup Zephyr toolchain
+      run: |
+        mkdir ~/zephyr_gcc
+        wget -q -P ~/zephyr_gcc https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_COMPILER_VERSION}"/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz
+        (cd ~/zephyr_gcc && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_COMPILER_VERSION}"/sha256.sum | shasum --check --ignore-missing)
+        tar xf ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_gcc
+        (cd ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz
+
+    - name: Setup Andes toolchain
+      run: |
+        mkdir ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz -C ~/nds-gcc
+        rm -rf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
+
+    - name: Checkout Zephyr
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
+    - name: West setup
+      run: |
+        pip install west
+        cd ..
+        west init -l zephyr
+        west update
+        west blobs fetch hal_telink
+        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_b91.a$' && exit 1
+        west zephyr-export
+        pip install -r zephyr/scripts/requirements.txt
+
+    - name: Prepare build
+      run: |
+        mkdir -p "$GITHUB_WORKSPACE/telink_ot_lib_artifacts"
+
+    - name: Publish artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          telink_ot_lib_artifacts/*
