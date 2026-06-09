@@ -8,6 +8,13 @@ manifest:
       revision: 053c1629f452b43339e7cd5c66fc89a143f4827a
       path: modules/lib/lzma
 
+    - name: mcuboot
+      url: https://github.com/telink-semi/mcuboot
+      revision: ce0da85c39c749df49b0ec62b33d2ecdea24c927
+      path: bootloader/mcuboot
+      groups:
+        - bootloader
+
     - name: openthread
       url: https://github.com/telink-semi/openthread
       revision: 3ae741f95e7dfb391dec35c48742862049eb62e8
