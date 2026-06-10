@@ -22,6 +22,11 @@ else()
 	endif()
 endif()
 
+# use compilation wrapper
+set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_BINARY_DIR}/scripts/exec-wrap CACHE STRING "" FORCE)
+set(CMAKE_CXX_COMPILER_LAUNCHER ${CMAKE_BINARY_DIR}/scripts/exec-wrap CACHE STRING "" FORCE)
+set(CMAKE_ASM_COMPILER_LAUNCHER ${CMAKE_BINARY_DIR}/scripts/exec-wrap CACHE STRING "" FORCE)
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(telink_ot_lib)
 
@@ -37,9 +42,14 @@ add_custom_target(post_build ALL
 add_dependencies(post_build zephyr_final)
 
 # deterministic build
-set(ENV{SOURCE_DATE_EPOCH} "${CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP}")
-string(TIMESTAMP OT_LIB_BUILD_TIME)
-message(STATUS "***OT Telink library build time: ${OT_LIB_BUILD_TIME}***")
+message(STATUS "***OT Telink library build time: ${CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP}***")
+set(TELINK_OT_LIB_BUILD_TIMESTAMP "${CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP}")
+configure_file(
+	${CMAKE_SOURCE_DIR}/scripts/exec-wrap.in
+	${CMAKE_BINARY_DIR}/scripts/exec-wrap
+	@ONLY
+)
+file(CHMOD ${CMAKE_BINARY_DIR}/scripts/exec-wrap PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 
 set(CMAKE_C_ARCHIVE_CREATE "<CMAKE_AR> qcD <TARGET> <OBJECTS>")
 set(CMAKE_C_ARCHIVE_APPEND "<CMAKE_AR> qD <TARGET> <OBJECTS>")

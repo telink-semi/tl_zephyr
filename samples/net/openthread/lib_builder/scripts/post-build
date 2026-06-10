@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
 
 script_path="$(dirname "$(readlink -f "$0")")"
 build_output_path="$1"

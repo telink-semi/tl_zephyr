@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
 # Usage: libmerge output.a input1.a input2.a ...
 
 if [ $# -lt 3 ]; then
