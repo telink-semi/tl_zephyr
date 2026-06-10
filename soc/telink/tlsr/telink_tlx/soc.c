@@ -399,6 +399,12 @@ void soc_early_init_hook(void)
 	clock_32k_init(CLK_32K_RC);
 	clock_cal_32k_rc();
 	/* pke is not enabled by default on TL323X */
+
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+	extern void pke_dig_en(void);
+	pke_dig_en();
+#endif
+
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 	extern void pke_dig_en(void);
 	pke_dig_en();
@@ -565,8 +571,9 @@ void soc_tlx_restore(void)
 		break;
 #endif
 	}
+
 	/* pke is not enabled by default on TL323X */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
 	extern void pke_dig_en(void);
 	pke_dig_en();
 #endif
