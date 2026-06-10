@@ -187,6 +187,9 @@ void soc_load_rf_parameters_normal(void)
 /**
  * @brief Perform SOC calibration at boot time (deep retention)
  */
+#if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL721X
+__GENERIC_SECTION(.ram_code)
+#endif
 void soc_load_rf_parameters_deep_retention(void)
 {
 	if (soc_nvParam.cap_freq_offset_value) {
@@ -195,9 +198,10 @@ void soc_load_rf_parameters_deep_retention(void)
 }
 #endif
 
-#if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_PM
 #define RST_BIT_CLR(x, n)    ((x) &=~(n))
 #define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
+#if CONFIG_SOC_RISCV_TELINK_TL323X
 __attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((optimize("O2")))
 void gen_fsk_close_unused_clock(void)
 {
@@ -249,6 +253,42 @@ void gen_fsk_close_unused_clock(void)
 
 	CLOCK_BIT_CLR(reg_clk_en7, FLD_CLK7_USB1_EN);
 }
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
+__attribute__((noinline)) __attribute__((section(".ram_code")))
+__attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
+{
+	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C);
+	RST_BIT_CLR(reg_rst0, FLD_RST0_USB);
+	RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
+	RST_BIT_CLR(reg_rst1, FLD_RST1_SPISLV);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_AUD);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_I2C1);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_LM);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_TRNG);
+	RST_BIT_CLR(reg_rst2, FLD_RST2_DPR);
+	RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC);
+	RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
+	RST_BIT_CLR(reg_rst5, FLD_RST5_KEY_SCAN);
+	RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
+	RST_BIT_CLR(reg_rst5, FLD_RST5_CHACHA20);
+	RST_BIT_CLR(reg_rst6, FLD_RST6_RZ);
+
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C_EN);
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_USB_EN);
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN);
+	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_SPISLV_EN);
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_AUD_EN);
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_I2C1_EN);
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_TRNG_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_TRACE_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_BROM_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_UART2_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_KEYSCAN_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_PEM_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_CHACHA20_EN);
+	CLOCK_BIT_CLR(reg_clk_en6, FLD_CLK6_RZ_EN);
+}
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
 #endif /* CONFIG_PM  */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
@@ -296,6 +336,8 @@ void soc_early_init_hook(void)
 		pm_set_dvdd(CORE_0P9V_SRAM_0P9V_BB_0P9V, DMA1, 1000);
 	}
 #if CONFIG_PM
+	pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P750V);
+	cclk = CLK_48MHZ;
 	pm_set_ret_ldo_voltage(RET_LDO_TRIM_0P65V);
 #endif
 #endif
@@ -459,6 +501,10 @@ void sys_arch_reboot(int type)
 /**
  * @brief Restore SOC after deep-sleep.
  */
+
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void soc_tlx_restore(void)
 {
 	unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
@@ -486,6 +532,10 @@ void soc_tlx_restore(void)
 	if (g_adc_calib_flag == DRV_API_SUCCESS) {
 		g_adc_calib_flag = efuse_calib_sd_adc_vref();
 	}
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+	cclk = CLK_48MHZ;
 #endif
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
@@ -516,6 +566,9 @@ void soc_tlx_restore(void)
 		gen_fsk_close_unused_clock();
 #endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_PM
+		gen_fsk_close_unused_clock();
+#endif /* CONFIG_PM  */
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		break;

@@ -930,13 +930,13 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X \
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
 	CONFIG_SOC_RISCV_TELINK_TL721X
 				if (tl_rf_is_inited()) {
 #endif
 					rf_baseband_reset();
 					rf_reset_dma();
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X \
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
 	CONFIG_SOC_RISCV_TELINK_TL721X
 				} else {
 					tl_rf_change_to_inited();
@@ -1233,6 +1233,25 @@ static int tlx_stop(const struct device *dev)
 	return tlx_stop_radio(dev->data);
 }
 
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+RAM_CODE_SECTION_IEEE802154
+static int tlx_wfi_direct(uint32_t time_ms)
+{
+	irq_connect_dynamic(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
+			    stimer_rf_handler, 0, 0);
+	plic_set_priority(IRQ_SYSTIMER, 2);
+	plic_interrupt_disable(IRQ_SYSTIMER);
+	stimer_set_irq_capture(stimer_get_tick() + time_ms * SYSTEM_TIMER_TICK_1US);
+	stimer_clr_irq_status(FLD_SYSTEM_IRQ);
+	stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
+	plic_interrupt_enable(IRQ_SYSTIMER);
+	pf0_set();
+	core_entry_wfi_mode();
+	pf0_clr();
+}
+
+#endif
+
 /* API implementation: tx */
 RAM_CODE_SECTION_IEEE802154
 static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct net_pkt *pkt,
@@ -1483,14 +1502,11 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	}
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isThreadCommissioned == true) {
-		irq_connect_dynamic(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
-				    stimer_rf_handler, 0, 0);
-		plic_interrupt_disable(IRQ_SYSTIMER);
-		stimer_set_irq_capture(stimer_get_tick() + 800 * SYSTEM_TIMER_TICK_1US);
-		stimer_clr_irq_status(FLD_SYSTEM_IRQ);
-		stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
-		plic_interrupt_enable(IRQ_SYSTIMER);
-		core_entry_wfi_mode();
+#if CONFIG_SOC_RISCV_TELINK_TL323X
+		tlx_wfi_direct(800);
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
+		tlx_wfi_direct(880);
+#endif
 	}
 #endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
@@ -1508,6 +1524,11 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	/* wait for ACK if requested */
 	if (!status && tlx->ack_handler_en) {
 		{
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+			tlx_wfi_direct(300);
+#endif
+#endif
 			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {
 				tlx->ack_handler_en = false;
 				status = -ENOMSG;

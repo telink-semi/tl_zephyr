@@ -54,6 +54,9 @@ static struct _timeout *next(struct _timeout *t)
 	return (n == NULL) ? NULL : CONTAINER_OF(n, struct _timeout, node);
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 static void remove_timeout(struct _timeout *t)
 {
 	if (next(t) != NULL) {

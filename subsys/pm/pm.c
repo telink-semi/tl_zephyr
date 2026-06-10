@@ -91,6 +91,9 @@ static inline int32_t ticks_expiring_sooner(int32_t ticks1, int32_t ticks2)
 	return MIN(ticks1, ticks2);
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void pm_system_resume(void)
 {
 	uint8_t id = _current_cpu->id;
@@ -140,6 +143,9 @@ bool pm_state_force(uint8_t cpu, const struct pm_state_info *info)
 	return true;
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 bool pm_system_suspend(int32_t kernel_ticks)
 {
 	uint8_t id = _current_cpu->id;

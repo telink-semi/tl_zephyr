@@ -15,6 +15,7 @@
 #include <openthread/tasklet.h>
 
 #include "platform-zephyr.h"
+#include "openthread_ram_code.h"
 
 void otSysInit(int argc, char *argv[])
 {
@@ -25,6 +26,7 @@ void otSysInit(int argc, char *argv[])
 	platformAlarmInit();
 }
 
+OT_SED_RAM
 void otSysProcessDrivers(otInstance *aInstance)
 {
 	platformRadioProcess(aInstance);

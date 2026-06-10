@@ -251,3 +251,12 @@ config OPENTHREAD_MLE_CHILD_TIMEOUT
 	default 240
 	help
 	  The value of MLE child timeout in seconds.
+
+config OPENTHREAD_SED_RAM_CODE
+	bool "Place OpenThread SED standby code in RAM"
+	depends on OPENTHREAD_MTD
+	default y
+	help
+	  Move SED standby critical path code (DataPollSender,
+	  platform radio sleep/receive/transmit) from Flash (XIP)
+	  to Retention RAM to reduce wakeup latency and power.

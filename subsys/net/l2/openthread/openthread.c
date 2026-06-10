@@ -39,6 +39,7 @@ LOG_MODULE_REGISTER(net_l2_openthread, CONFIG_OPENTHREAD_L2_LOG_LEVEL);
 #include <platform-zephyr.h>
 
 #include "openthread_utils.h"
+#include "openthread_ram_code.h"
 
 #if defined(CONFIG_OPENTHREAD_NAT64_TRANSLATOR)
 #include <openthread/nat64.h>
@@ -169,6 +170,7 @@ void otPlatRadioGetIeeeEui64(otInstance *instance, uint8_t *ieee_eui64)
 }
 #endif /* CONFIG_HDLC_RCP_IF */
 
+OT_SED_RAM
 void otTaskletsSignalPending(otInstance *instance)
 {
 	struct openthread_context *ot_context = openthread_get_default_context();
@@ -178,6 +180,7 @@ void otTaskletsSignalPending(otInstance *instance)
 	}
 }
 
+OT_SED_RAM
 void otSysEventSignalPending(void)
 {
 	otTaskletsSignalPending(NULL);
@@ -337,6 +340,7 @@ static void ot_joiner_start_handler(otError error, void *context)
 	}
 }
 
+OT_SED_RAM
 static void openthread_process(struct k_work *work)
 {
 	struct openthread_context *ot_context
@@ -366,6 +370,7 @@ static bool is_ipv6_frag(struct net_pkt *pkt)
 	return hdr->nexthdr == NET_IPV6_NEXTHDR_FRAG ? true : false;
 }
 
+OT_SED_RAM
 static enum net_verdict openthread_recv(struct net_if *iface, struct net_pkt *pkt)
 {
 	struct openthread_context *ot_context = net_if_l2_data(iface);
@@ -399,6 +404,7 @@ static enum net_verdict openthread_recv(struct net_if *iface, struct net_pkt *pk
 	return NET_OK;
 }
 
+OT_SED_RAM
 int openthread_send(struct net_if *iface, struct net_pkt *pkt)
 {
 	int len = net_pkt_get_len(pkt);
