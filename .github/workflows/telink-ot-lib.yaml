@@ -15,6 +15,7 @@ jobs:
       ZEPHYR_COMPILER_VERSION: 0.17.0
       ANDES_COMPILER_VERSION: 14.2.0
       BUILD_SOC: tl7218x
+      SAMPLE_SRC_PATH: "samples/net/openthread/lib_builder"
     steps:
 
     - name: Install dependencies
@@ -57,10 +58,44 @@ jobs:
 
     - name: Prepare build
       run: |
-        mkdir -p "$GITHUB_WORKSPACE/telink_ot_lib_artifacts"
+        mkdir -p build_telink_ot_lib_artifacts/include
+        mkdir -p build_telink_ot_lib_artifacts/lib
+        mkdir -p build_telink_ot_lib_artifacts/zephyr
+
+    - name: Build libraries with Zephyr compiler
+      run: |
+        for build_config in "$GITHUB_WORKSPACE/$SAMPLE_SRC_PATH/overlays/*.conf"
+        do
+          [ -e "$build_config" ] || continue
+          echo "build configuration: $build_config"
+          rm -rf build_tmp
+          west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
+                     -DOVERLAY_CONFIG="$build_config" \
+                     -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+          cp build_tmp/zephyr/libopenthread.a \
+             build_telink_ot_lib_artifacts/lib/libopenthread-zephyr-"${build_config%.conf}.a"
+        done
+
+    - name: Build libraries with Andes compiler
+      run: |
+        export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
+        export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
+        for build_config in "$GITHUB_WORKSPACE/$SAMPLE_SRC_PATH/overlays/*.conf"
+        do
+          [ -e "$build_config" ] || continue
+          echo "build configuration: $build_config"
+          rm -rf build_tmp
+          west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
+                     -DOVERLAY_CONFIG="$build_config" \
+                     -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+          cp build_tmp/zephyr/libopenthread.a \
+             build_telink_ot_lib_artifacts/lib/libopenthread-andes-"${build_config%.conf}.a"
+        done
+        unset ZEPHYR_TOOLCHAIN_VARIANT
+        unset ANDES_GCC_PATH
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
       with:
         path: |
-          telink_ot_lib_artifacts/*
+          build_telink_ot_lib_artifacts/*
