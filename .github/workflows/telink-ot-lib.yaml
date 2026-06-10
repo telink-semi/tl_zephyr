@@ -64,32 +64,36 @@ jobs:
 
     - name: Build libraries with Zephyr compiler
       run: |
-        for build_config in "$GITHUB_WORKSPACE/$SAMPLE_SRC_PATH/overlays/*.conf"
+        for build_config in "$SAMPLE_SRC_PATH"/overlays/*.conf
         do
-          [ -e "$build_config" ] || continue
-          echo "build configuration: $build_config"
+          config="${build_config#"$SAMPLE_SRC_PATH"/}"
+          echo "build configuration: $config"
           rm -rf build_tmp
           west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
-                     -DOVERLAY_CONFIG="$build_config" \
+                     -DOVERLAY_CONFIG="$config" \
                      -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+          libname="libopenthread-zephyr-${config##*/}"
+          libname="${libname%.conf}.a"
           cp build_tmp/zephyr/libopenthread.a \
-             build_telink_ot_lib_artifacts/lib/libopenthread-zephyr-"${build_config%.conf}.a"
+             "build_telink_ot_lib_artifacts/lib/$libname"
         done
 
     - name: Build libraries with Andes compiler
       run: |
         export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
         export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
-        for build_config in "$GITHUB_WORKSPACE/$SAMPLE_SRC_PATH/overlays/*.conf"
+        for build_config in "$SAMPLE_SRC_PATH"/overlays/*.conf
         do
-          [ -e "$build_config" ] || continue
-          echo "build configuration: $build_config"
+          config="${build_config#"$SAMPLE_SRC_PATH"/}"
+          echo "build configuration: $config"
           rm -rf build_tmp
           west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
-                     -DOVERLAY_CONFIG="$build_config" \
+                     -DOVERLAY_CONFIG="$config" \
                      -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+          libname="libopenthread-andes-${config##*/}"
+          libname="${libname%.conf}.a"
           cp build_tmp/zephyr/libopenthread.a \
-             build_telink_ot_lib_artifacts/lib/libopenthread-andes-"${build_config%.conf}.a"
+             "build_telink_ot_lib_artifacts/lib/$libname"
         done
         unset ZEPHYR_TOOLCHAIN_VARIANT
         unset ANDES_GCC_PATH
