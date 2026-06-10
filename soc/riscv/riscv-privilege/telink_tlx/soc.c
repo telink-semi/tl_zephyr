@@ -325,6 +325,7 @@ static int soc_tlx_init(void)
 #else
 #define N22_FW_DOWNLOAD_FLASH_ADDR          0x20080000+0x13040
 #endif
+    pm_set_dig_module_power_switch(FLD_PD_ZB_EN, PM_POWER_UP);
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
     #if !defined(TLK_ONLY_BLE_HOST)
         rf_n22_dig_init();

@@ -47,7 +47,7 @@ int z_impl_hwinfo_get_reset_cause(uint32_t *cause)
 	uint32_t flags = 0;
 	uint32_t reason = pm_get_mcu_status();
 
-	if (reason & MCU_STATUS_POWER_ON) {
+	if (reason & MCU_POWER_ON_ERR) {
 		flags |= RESET_PIN;
 	} else {
 		flags |= RESET_SOFTWARE;

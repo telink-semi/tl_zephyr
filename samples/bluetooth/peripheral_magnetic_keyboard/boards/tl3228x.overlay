@@ -1,0 +1,249 @@
+&cpu0 {
+	// clock-frequency = <192000000>;		/* USB0 digital voltage must be 1.1V and HCLK min's 48M */
+	clock-frequency = <96000000>;
+};
+
+&uart0 {
+	status = "okay";
+	/*alg keyboard*/
+	/*pinctrl-0 = <&uart0_tx_pd4_default &uart0_rx_pd5_default>;*/
+	/*digital keyboard*/
+	pinctrl-0 = <&uart0_tx_pe5_default &uart0_rx_pd7_default>;
+	current-speed = <1000000>;			/* Baud rate for serial port logging */
+};
+
+&gpioa {
+       status = "okay";
+};
+
+
+/ {
+
+	aliases {
+
+		/delete-property/ led0;
+		/delete-property/ led1;
+		/delete-property/ led2;
+		/delete-property/ led3;
+
+		/delete-property/ mcuboot-button0;
+		/delete-property/ mcuboot-led0;
+
+		/delete-property/ sw0;
+		/delete-property/ sw1;
+		/delete-property/ sw2;
+		/delete-property/ sw3;
+
+		/delete-property/ pwm-led0;
+		/delete-property/ pwm0;
+
+		toggle4 = &toggle_b4_pin;
+		toggle5 = &toggle_b5_pin;
+
+		vbuscheck0 = &vbus_pin;
+		mode2p4 = &mode_2p4_pin;
+		modeble = &mode_ble_pin;
+
+	};
+
+	/delete-node/ leds;
+	/delete-node/ pwm_leds;
+
+	leds {
+		compatible = "gpio-leds";
+
+		toggle_b4_pin: toggle_io_4 {
+			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
+			label = "TOGGLE";
+		};
+
+		toggle_b5_pin: toggle_io_5 {
+			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+			label = "TOGGLE";
+		};
+
+		vbus_pin: vbus_io {
+			gpios = <&gpioc 1 (GPIO_ACTIVE_LOW)>;
+			label = "VBUS CHECK";
+		};
+
+		mode_2p4_pin: mode_2p4_io {
+			gpios = <&gpioe 3 (GPIO_ACTIVE_LOW)>;
+			label = "MODE 2P4 SLECT";
+		};
+		mode_ble_pin: mode_ble_io {
+			gpios = <&gpioe 4 (GPIO_ACTIVE_LOW)>;
+			label = "MODE BLE SLECT";
+		};
+	};
+
+	/delete-node/ keys;
+	/delete-node/ key_pool;
+	/delete-node/ led_pool;
+	/delete-node/ pwm_pool;
+
+	key_matrix {
+		compatible = "gpio-keys";
+
+		col {
+			gpios = <&gpioe 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioe 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioa 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioa 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioa 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioc 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioc 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiog 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiof 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiof 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiof 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiof 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiob 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiob 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioc 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioc 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiod 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiog 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpiog 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+					<&gpioh 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+		};
+
+		row {
+			gpios = <&gpioe 2 GPIO_ACTIVE_HIGH>,
+					<&gpioe 1 GPIO_ACTIVE_HIGH>,
+					<&gpioe 0 GPIO_ACTIVE_HIGH>,
+					<&gpiod 6 GPIO_ACTIVE_HIGH>,
+					<&gpiod 4 GPIO_ACTIVE_HIGH>,
+					<&gpiod 5 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	zephyr,user {
+		/* adjust channel number according to pinmux in board.dts */
+		io-channels = <&adc 0>;
+	};
+};
+
+&adc {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+		zephyr,input-positive = <DT_ADC_GPIO_PC0>;
+	};
+};
+
+&adc {
+	status = "okay";
+	vref-internal-mv = <1200>;
+	sample-freq = <DT_FREQ_K(96)>;
+	pinctrl-0 = <&adc_pc0_default>;
+	pinctrl-names = "default";
+};
+
+&flash {
+	reg = <0x20000000 0x100000>;
+	/delete-node/ partitions;
+
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/*boot_partition: 32k*/
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x00000000 0x8000>;
+		};
+		/*D25F APP 1 partition: 256k*/
+		slot0_partition: partition@8000 {
+			label = "image-0";
+			reg = <0x8000 0x40000>;
+		};
+		/*N22 APP 1 partition: 128k*/
+		n22_1_partition: partition@48000 {
+			label = "image-1";
+			reg = <0x48000 0x20000>;
+		};
+		/*D25F APP 2 partition: 256k*/
+		slot1_partition: partition@68000 {
+			label = "image-2";
+			reg = <0x68000 0x40000>;
+		};
+		/*N22 APP 2 partition: 128k*/
+		n22_2_partition: partition@A8000 {
+			label = "image-3";
+			reg = <0xA8000 0x20000>;
+		};
+
+		user_app_partition: partition@C8000 {
+			label = "app-storage";
+			reg = <0xC8000 0x00002000>;
+		};
+
+		/*BLE SMP storage partition*/
+		storage_partition: partition@CA000 {
+			label = "storage";
+			reg = <0xCA000 0x00002000>;
+		};
+
+		/* region <0xfe000 0x2000> is used for Telink TLx RF parameters */
+		/* For 1M MCU - the partition address is 0xfe000 */
+		/* For 2M MCU - the partition address is 0x1fe000 */
+		/* For 4M MCU - the partition address is 0x3fe000 */
+		/* For 16M MCU - the partition address is 0xffe000 */
+		vendor_partition: partition@fe000 {
+			label = "vendor-data";
+			reg = <0xfe000 0x2000>;
+		};
+	};
+};
+
+&pinctrl {
+	/* Set pad-mul-sel register value.
+	 * Note: Pins functions below (pinmux = <...>) depend on this value.
+	 */
+	pad-mul-sel = <1>;
+
+	/* UART0: TX(PA0), RX(PA1), RTS(PB4), CTS(PB6) */
+
+	/delete-node/ uart0_tx_pa0_default;
+	/delete-node/ uart0_rx_pa1_default;
+
+	uart0_tx_pe5_default: uart0_tx_pe5_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_5,
+			(TL322X_FUNC_UART0_TX))>;
+	};
+	uart0_rx_pd7_default: uart0_rx_pd7_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_7,
+			(TL322X_FUNC_UART0_RTX_IO))>;
+	};
+};
+
+&pwm0 {
+	status = "disabled";
+};
+
+&gspi {
+	status = "disabled";
+};
+
+&i2c {
+	status = "disabled";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c_scl_pe0_default &i2c_sda_pe1_default>;
+	pinctrl-names = "default";
+};
+
+&adc {
+	status = "okay";
+	vref-internal-mv = <1200>;
+	sample-freq = <DT_FREQ_K(96)>;
+	pinctrl-0 = <&adc_pc0_default>;
+	pinctrl-names = "default";
+};

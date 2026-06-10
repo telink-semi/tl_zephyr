@@ -1,0 +1,20 @@
+# Copyright 2023 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Bluetooth: Peripheral kmd"
+
+config SAMPLE_BT_USE_AUTHENTICATION
+	bool "Enable passkey authentication"
+	default y
+	help
+	  Enable the passkey authentication callback and register the GATT
+	  read and and write attributes as authentication required.
+
+config BT_ID_FOR_KMD
+    bool "Only used for KMD project"
+    default n
+    help
+      This option enables the use of a specific Bluetooth identity for the Keyboard
+	  Mouse Device (KMD) sample application.
+
+source "Kconfig.zephyr"
