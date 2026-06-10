@@ -216,6 +216,9 @@ int32_t z_get_next_timeout_expiry(void)
 	return ret;
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void sys_clock_announce(int32_t ticks)
 {
 	k_spinlock_key_t key = k_spin_lock(&timeout_lock);

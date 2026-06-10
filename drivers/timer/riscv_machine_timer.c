@@ -102,6 +102,9 @@ static uint64_t mtime(void)
 #endif
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 static void timer_isr(const void *arg)
 {
 	ARG_UNUSED(arg);
