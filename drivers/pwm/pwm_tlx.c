@@ -149,6 +149,8 @@ static int pwm_tlx_pm_action(const struct device *dev, enum pm_device_action act
 
 	extern bool pm_has_resumed_from_deep_sleep_retention(void);
 	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		if (pm_has_resumed_from_deep_sleep_retention()) {
 			pwm_tlx_init(dev);
 		}
@@ -161,6 +163,7 @@ static int pwm_tlx_pm_action(const struct device *dev, enum pm_device_action act
 			}
 		}
 	}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	break;
 
 	case PM_DEVICE_ACTION_SUSPEND:
