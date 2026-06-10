@@ -253,6 +253,8 @@ void gen_fsk_close_unused_clock(void)
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
 #include "pm.h"
+#elif CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+#include "pm_internal.h"
 #endif
 
 /**
@@ -293,7 +295,9 @@ void soc_early_init_hook(void)
 	if (cclk == CLK_240MHZ) {
 		pm_set_dvdd(CORE_0P9V_SRAM_0P9V_BB_0P9V, DMA1, 1000);
 	}
+#if CONFIG_PM
 	pm_set_ret_ldo_voltage(RET_LDO_TRIM_0P65V);
+#endif
 #endif
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore. */
