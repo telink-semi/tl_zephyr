@@ -1,0 +1,12 @@
+/ {
+	chosen {
+		zephyr,shell-uart = &uart1;
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart1_tx_pc6_default &uart1_rx_pc7_default>;
+	pinctrl-names = "default";
+};
