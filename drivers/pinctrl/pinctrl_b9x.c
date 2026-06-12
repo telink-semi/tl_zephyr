@@ -5,6 +5,7 @@
  */
 
 #include "analog.h"
+#include "gpio.h"
 #include <zephyr/drivers/pinctrl.h>
 #if CONFIG_SOC_RISCV_TELINK_B91
 #include <zephyr/dt-bindings/pinctrl/b91-pinctrl.h>
@@ -221,6 +222,9 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 
 	/* disable GPIO function (can be enabled back by GPIO init using GPIO driver) */
 	pinctrl_b9x_gpio_function_disable(pin);
+
+	/* set input enable */
+	gpio_input_en(pin);
 
 	/* set pull value */
 	pull = pull << offset;
