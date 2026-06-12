@@ -14,7 +14,6 @@
 #include "gpio.h"
 #include <zephyr/dt-bindings/pinctrl/tl323x-pinctrl.h>
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-#include "efuse.h"
 #include "gpio.h"
 #include <zephyr/dt-bindings/pinctrl/tl521x-pinctrl.h>
 #endif
@@ -44,7 +43,7 @@ static bool telink_tlx_mcu_boot_startup(void)
 {
 	bool result = true; /* run MCUBoot main */
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL323X
 	bool show_chip_id = false;
 
 	/* Check if Console UART RX line is at low level - shorted to ground */
@@ -94,6 +93,6 @@ static bool telink_tlx_mcu_boot_startup(void)
 			BOOT_LOG_ERR("chip id read error");
 		}
 	}
-#endif /* CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X */
+#endif /* CONFIG_SOC_RISCV_TELINK_TL323X*/
 	return result;
 }

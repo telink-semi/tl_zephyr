@@ -67,6 +67,11 @@ jobs:
         cd ..
         west build -b tl5218x     -d build_button_tl521x                      zephyr/samples/basic/button                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL521X basic/blinky_pwm
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_blinky_pwm_tl521x                      zephyr/samples/basic/blinky_pwm                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Build TL521x samples/sensor/sht3xd
       run: |
         cd ..
@@ -81,6 +86,11 @@ jobs:
       run: |
         cd ..
         west build -b tl5218x     -d build_watchdog_tl521x                    zephyr/samples/drivers/watchdog               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x tests/drivers/hwinfo/api
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_hwinfo_tl521x                    zephyr/tests/drivers/hwinfo/api               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL521x tests/drivers/flash/common
       run: |

@@ -365,7 +365,8 @@ static inline void gpio_tlx_irq_en_set(const struct device *dev, gpio_pin_t pin)
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-	BM_SET(reg_gpio_irq_en((GET_PORT_NUM(gpio) << 8) | pin, irq), BIT(pin));
+	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
+	BM_SET(reg_gpio_irq_en(gpio_pin_elem, irq - IRQ_GPIO0), BIT(pin));
 #endif
 }
 
@@ -424,7 +425,8 @@ static inline void gpio_tlx_irq_en_clr(const struct device *dev, gpio_pin_t pin)
 		__ASSERT(false, "Not supported GPIO IRQ number.");
 	}
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-	BM_CLR(reg_gpio_irq_en((GET_PORT_NUM(gpio) << 8) | pin, irq), BIT(pin));
+	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8) | pin;
+	BM_CLR(reg_gpio_irq_en(gpio_pin_elem, irq - IRQ_GPIO0), BIT(pin));
 #endif
 
 #if CONFIG_PM_DEVICE
@@ -486,7 +488,8 @@ static inline uint8_t gpio_tlx_irq_en_get(const struct device *dev)
 		status = reg_gpio_irq7_en(gpio_pin_elem);
 	}
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-	status = reg_gpio_irq_en(GET_PORT_NUM(gpio) << 8, irq);
+	uint16_t gpio_pin_elem = (GET_PORT_NUM(gpio) << 8);
+	status = reg_gpio_irq_en(gpio_pin_elem, irq - IRQ_GPIO0);
 #endif
 	return status;
 }

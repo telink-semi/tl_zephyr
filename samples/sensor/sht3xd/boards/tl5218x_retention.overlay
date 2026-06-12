@@ -8,18 +8,18 @@
 &pinctrl {
 	/* Define I2C pins: SCL(PE0), SDA(PE1) */
 
-	i2c_scl_pe0_default: i2c_scl_pe0_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_0, TL521X_FUNC_I2C_SCL_IO)>;
+	i2c_scl_pd3_default: i2c_scl_pd3_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_3, TL521X_FUNC_I2C_SCL_IO)>;
 		bias-pull-up;
 	};
-	i2c_sda_pe1_default: i2c_sda_pe1_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_1, TL521X_FUNC_I2C_SDA_IO)>;
+	i2c_sda_pd2_default: i2c_sda_pd2_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_2, TL521X_FUNC_I2C_SDA_IO)>;
 		bias-pull-up;
 	};
 };
 
 &i2c {
-	pinctrl-0 = <&i2c_scl_pe0_default &i2c_sda_pe1_default>;
+	pinctrl-0 = <&i2c_scl_pd3_default &i2c_sda_pd2_default>;
 
 	sht3xd@44 {
 		compatible = "sensirion,sht3xd";

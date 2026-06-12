@@ -12,10 +12,10 @@
 	 */
 	pad-mul-sel = <1>;
 
-	/* UART0: TX(PE0), RX(PE1), RTS(PE2), CTS(PE3) */
+	/* UART0: TX(PB5), RX(PE1), RTS(PE2), CTS(PE3) */
 
-	uart0_tx_pb2_default: uart0_tx_pb2_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_B, TLX_PIN_2, TL521X_FUNC_UART0_TX)>;
+	uart0_tx_pb5_default: uart0_tx_pb5_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_B, TLX_PIN_5, TL521X_FUNC_UART0_TX)>;
 	};
 	uart0_rx_pb0_default: uart0_rx_pb0_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_B, TLX_PIN_0, TL521X_FUNC_UART0_RTX_IO)>;
@@ -42,10 +42,10 @@
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_4, TL521X_FUNC_UART1_CTS_I)>;
 	};
 
-	/* PWM Channel 0 (PE4) */
+	/* PWM Channel 0 (PA2) */
 
-	pwm_ch0_pc1_default: pwm_ch0_pc1_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_1, TL521X_FUNC_PWM0)>;
+	pwm_ch0_pa2_default: pwm_ch0_pa2_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_A, TLX_PIN_2, TL521X_FUNC_PWM0)>;
 	};
 
 	/* Note:TL521X only supports gspi!!!*/

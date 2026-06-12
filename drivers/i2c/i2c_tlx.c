@@ -68,7 +68,7 @@ static int i2c_tlx_configure(const struct device *dev, uint32_t dev_config)
 	}
 
 	/* init i2c */
-#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 	i2c_master_init(I2C0);
 	i2c_set_master_clk(I2C0, (unsigned char)(sys_clk.pclk * 1000 * 1000 / (4 * i2c_speed)));
 #else
@@ -103,7 +103,7 @@ static int i2c_tlx_transfer(const struct device *dev,
 
 		/* config stop bit */
 		send_stop = msgs[i].flags & I2C_MSG_STOP ? 1 : 0;
-#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 		i2c_master_send_stop(I2C0, send_stop);
 #else
 		i2c_master_send_stop(send_stop);
@@ -111,14 +111,14 @@ static int i2c_tlx_transfer(const struct device *dev,
 #endif
 		/* transfer data */
 		if (msgs[i].flags & I2C_MSG_READ) {
-#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			status = i2c_master_read(I2C0, addr << 1, msgs[i].buf, msgs[i].len);
 #else
 			status = i2c_master_read(addr << 1, msgs[i].buf, msgs[i].len);
 
 #endif
 		} else {
-#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 			status = i2c_master_write(I2C0, addr << 1, msgs[i].buf, msgs[i].len);
 #else
 			status = i2c_master_write(addr << 1, msgs[i].buf, msgs[i].len);
