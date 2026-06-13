@@ -637,11 +637,16 @@ static inline void usb_irq_wakeup(void)
 	submit_usbd_event(USBD_EVT_WAKEUP, 0);
 	usb0hw_clear_gintsts(FLD_USB_GINTSTS_WKUPINT);
 }
+static inline void usb_irq_resetdet(void)
+{
+	usb0hw_clear_gintsts(FLD_USB_GINTSTS_RESETDET);
+}
 
 static inline void usb_irq_reset(void)
 {
 	submit_usbd_event(USBD_EVT_RESET, 0);
 	usb0hw_clear_gintsts(FLD_USB_GINTSTS_USBRST);
+    usb0hw_set_pwronprgdone();
 }
 
 static inline void usb_irq_enumdone(void)
@@ -679,6 +684,10 @@ __attribute__((section(".ram_code"))) static void usb_irq_handler(void)
 
 	if (status & FLD_USB_GINTSTS_WKUPINT) {
 		usb_irq_wakeup();
+	}
+
+	if (status & FLD_USB_GINTSTS_RESETDET) {
+		usb_irq_resetdet();
 	}
 
 	if (status & FLD_USB_GINTSTS_USBRST) {

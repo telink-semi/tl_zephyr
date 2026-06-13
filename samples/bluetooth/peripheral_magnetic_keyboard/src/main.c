@@ -33,9 +33,15 @@ int main(void)
 {
 	keyboard_comm_init();
 
-	// gpio_function_en(GPIO_PG4 | GPIO_PG5 | GPIO_PG6 | GPIO_PG7);
-	// gpio_output_en(GPIO_PG4 | GPIO_PG5 | GPIO_PG6 | GPIO_PG7);
-	// gpio_input_dis(GPIO_PG4 | GPIO_PG5 | GPIO_PG6 | GPIO_PG7);
+	gpio_function_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
+	gpio_output_en(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
+	gpio_input_dis(GPIO_PD5 | GPIO_PD6 | GPIO_PD7);
+
+
+    // gpio_function_en(GPIO_PA2);
+    // gpio_output_dis(GPIO_PA2);
+    // gpio_input_en(GPIO_PA2);
+
 
 	while(1) {
 		public_loop();

@@ -27,14 +27,14 @@
 #define TLK_ERR_BUFFER_FULL                                 (TLK_ERR_BASE_NUM + 12)   /**< Buffer/FIFO is full */
 
 
-/////////////////////////////////////////////////////////////////////////
-#define TLKAPI_DEBUG_ENABLE         0
+#define SPP_TX_FIFO_SIZE            32
+#define SPP_TX_FIFO_SIZE_KB         24 //In 8K mode, the spp buffer size cannot exceed 24 on kb side.
 
 
 typedef enum {
-    KB_MODE_2P4G                        =   0,
-    KB_MODE_BLE                         =   1,
-    KB_MODE_USB                         =   2,
+    APP_D24G_MODE                        =   0,
+    APP_BLE_MODE                         =   1,
+    APP_WIRED_USB_MODE                   =   2,
 } kb_mode_t;
 
 
@@ -74,8 +74,8 @@ typedef enum {
     P24G_KB_MODE_USB                    =   0x00,
     P24G_KB_MODE_2P4G                   =   0x01,
 
-    DEVICE_TYPE_KB                      =   BIT(0),
-    DEVICE_TYPE_MS                      =   BIT(1),
+    // DEVICE_TYPE_KB                      =   BIT(0),
+    // DEVICE_TYPE_MS                      =   BIT(1),
 
 } p24G_enum_Type;
 

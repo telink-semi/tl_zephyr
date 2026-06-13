@@ -14,6 +14,24 @@ extern "C" {
 #include "app_config.h"
 #include "compiler.h"
 #include "app_d24g.h"
+#include "app_usb.h"
+#include "tl_fifo.h"
+#include "tl_string.h"
+#include "driver.h"
+
+///////////////////////////////////////////////////////////////////////////////////////////
+#define PRESS_T_FN_FLAG      0X01
+#define PRESS_KB_M_FLAG      0X02
+#define PRESS_KB_P_FLAG      0X04
+#define PRESS_KB_R_FLAG      0X08
+#define PRESS_KB_1_FLAG      0X10
+#define PRESS_KB_2_FLAG      0X20
+#define PRESS_KB_3_FLAG      0X40
+#define PRESS_KB_4_FLAG      0X80
+#define PRESS_KB_5_FLAG      0X0100
+#define PRESS_KB_6_FLAG      0X0200
+#define PRESS_KB_7_FLAG      0X0400
+
 
 #define BIT_SET(x, n)               ((x) |= BIT(n))
 #define BIT_CLR(x, n)               ((x) &= ~BIT(n))
@@ -58,8 +76,23 @@ enum {
     BLE_START_PAIR = 16,
 };
 
+typedef fifo_cb_t kb_cb_t;
+extern pl_fifo_t tx_fifo;
+extern pl_fifo_t   d25fKbTxFifo;
+extern pl_fifo_t   d25fSppTxFifo;
 
+extern volatile unsigned char fun_mode;
 
+static inline kb_mode_t  app_get_mode(void)
+{
+    #if (DBG_WITH_EVK_EN)
+    return APP_D24G_MODE;
+    #else
+    return fun_mode;
+    #endif
+}
+
+void check_vbus(void);
 
 void user_timer_init(void);
 
@@ -69,6 +102,8 @@ void keyboard_comm_init(void);
 
 void public_loop(void);
 
+void special_key_event_handle(void);
+unsigned char special_key_press_flag_set(unsigned char key_code);
 
 
 #ifdef __cplusplus

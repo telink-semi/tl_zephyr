@@ -5,10 +5,7 @@
 
 &uart0 {
 	status = "okay";
-	/*alg keyboard*/
-	/*pinctrl-0 = <&uart0_tx_pd4_default &uart0_rx_pd5_default>;*/
-	/*digital keyboard*/
-	pinctrl-0 = <&uart0_tx_pe5_default &uart0_rx_pd7_default>;
+	pinctrl-0 = <&uart0_tx_pd4_default &uart0_rx_pd5_default>;
 	current-speed = <1000000>;			/* Baud rate for serial port logging */
 };
 
@@ -37,8 +34,6 @@
 		/delete-property/ pwm-led0;
 		/delete-property/ pwm0;
 
-		toggle4 = &toggle_b4_pin;
-		toggle5 = &toggle_b5_pin;
 
 		vbuscheck0 = &vbus_pin;
 		mode2p4 = &mode_2p4_pin;
@@ -48,75 +43,29 @@
 
 	/delete-node/ leds;
 	/delete-node/ pwm_leds;
+	/delete-node/ keys;
 
-	leds {
-		compatible = "gpio-leds";
-
-		toggle_b4_pin: toggle_io_4 {
-			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
-			label = "TOGGLE";
-		};
-
-		toggle_b5_pin: toggle_io_5 {
-			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
-			label = "TOGGLE";
-		};
+	keys {
+		compatible = "gpio-keys";
 
 		vbus_pin: vbus_io {
-			gpios = <&gpioc 1 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioa 2 (GPIO_ACTIVE_LOW)>;
 			label = "VBUS CHECK";
 		};
 
 		mode_2p4_pin: mode_2p4_io {
-			gpios = <&gpioe 3 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioa 1 (GPIO_ACTIVE_LOW)>;
 			label = "MODE 2P4 SLECT";
 		};
 		mode_ble_pin: mode_ble_io {
-			gpios = <&gpioe 4 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioc 7 (GPIO_ACTIVE_LOW)>;
 			label = "MODE BLE SLECT";
 		};
 	};
 
-	/delete-node/ keys;
 	/delete-node/ key_pool;
 	/delete-node/ led_pool;
 	/delete-node/ pwm_pool;
-
-	key_matrix {
-		compatible = "gpio-keys";
-
-		col {
-			gpios = <&gpioe 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioe 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioa 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioa 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioa 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioc 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioc 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiog 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiof 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiof 6 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiof 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiof 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiob 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiob 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioc 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioc 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiod 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiog 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpiog 2 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
-					<&gpioh 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
-		};
-
-		row {
-			gpios = <&gpioe 2 GPIO_ACTIVE_HIGH>,
-					<&gpioe 1 GPIO_ACTIVE_HIGH>,
-					<&gpioe 0 GPIO_ACTIVE_HIGH>,
-					<&gpiod 6 GPIO_ACTIVE_HIGH>,
-					<&gpiod 4 GPIO_ACTIVE_HIGH>,
-					<&gpiod 5 GPIO_ACTIVE_HIGH>;
-		};
-	};
 
 	zephyr,user {
 		/* adjust channel number according to pinmux in board.dts */
@@ -215,12 +164,12 @@
 	/delete-node/ uart0_tx_pa0_default;
 	/delete-node/ uart0_rx_pa1_default;
 
-	uart0_tx_pe5_default: uart0_tx_pe5_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_5,
+	uart0_tx_pd4_default: uart0_tx_pd4_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_4,
 			(TL322X_FUNC_UART0_TX))>;
 	};
-	uart0_rx_pd7_default: uart0_rx_pd7_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_7,
+	uart0_rx_pd5_default: uart0_rx_pd5_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_5,
 			(TL322X_FUNC_UART0_RTX_IO))>;
 	};
 };

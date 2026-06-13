@@ -272,7 +272,7 @@ static int soc_tlx_init(void)
 
 	case CLK_96MHZ:
 		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
+		PLL_192M_D25F_96M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
 		break;
 #endif
 
