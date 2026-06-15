@@ -207,7 +207,8 @@ __attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((o
 void gen_fsk_close_unused_clock(void)
 {
 	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
-    RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
+	/* dirty workaround has been applied, in the sample you are using uart1 */
+    /* RST_BIT_CLR(reg_rst0, FLD_RST0_UART1); */
     
     RST_BIT_CLR(reg_rst1, FLD_RST1_UART3);
     RST_BIT_CLR(reg_rst1, FLD_RST1_GSPI);
@@ -232,7 +233,8 @@ void gen_fsk_close_unused_clock(void)
 
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_LSPI_EN);
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C0_EN);
-	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN);
+	/* dirty workaround has been applied, in the sample you are using uart1 */
+	/* CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN); */
 
 	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK0_UART3_EN);
 	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_DMA_EN);
