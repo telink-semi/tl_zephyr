@@ -1122,6 +1122,8 @@ RAM_CODE_SECTION_IEEE802154
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
+	//need to wait driver update 
+	return 0;
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isFirstCcaBeforeTx && isThreadCommissioned) {
 		isFirstCcaBeforeTx = false;
