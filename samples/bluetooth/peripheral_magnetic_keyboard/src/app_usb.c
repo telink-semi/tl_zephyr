@@ -369,7 +369,6 @@ _attribute_ram_code_sec_ void app_usb_main_loop(void)
 {
     if (usb_connected_ok == 1)
     {
-        gpio_toggle(GPIO_PD5);
 	    app_usb_report_to_pc();
     }
 }
@@ -402,7 +401,6 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
             printk("mode is usb mode\r\n");
             // TODO:gpio_set_level(MODE_LED_PIN, LED_IS_ON);
             // TODO: gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
-        gpio_toggle(GPIO_PD6);
             usb_connected_ok = 1;
             if(fun_mode == APP_D24G_MODE)
             {

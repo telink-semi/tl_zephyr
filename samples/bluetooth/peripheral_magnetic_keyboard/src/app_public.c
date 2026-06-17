@@ -24,10 +24,10 @@
 #include <zephyr/storage/flash_map.h>
 #include <zephyr/sys/reboot.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/bluetooth/conn.h>
 
 #include "timer.c"
 #include "app_public.h"
-#include <zephyr/bluetooth/conn.h>
 #include "drivers.h"
 #include "app_kb_matrix.h"
 
@@ -39,9 +39,14 @@ LOG_MODULE_REGISTER(app_public);
  * Devicetree node identifiers for the buttons and LED this sample
  * supports.
  */
-#define VBUS_NODE DT_ALIAS(vbuscheck0)
-#define D24G_NODE DT_ALIAS(mode2p4)
-#define BLE_NODE DT_ALIAS(modeble)
+#define MODE_NODE   DT_ALIAS(ledmode)
+#define DEVICE_NODE DT_ALIAS(leddevicestatus)
+#define CAP_NODE    DT_ALIAS(ledcap)
+#define NUM_NODE    DT_ALIAS(lednum)
+
+#define VBUS_NODE   DT_ALIAS(vbuscheck0)
+#define D24G_NODE   DT_ALIAS(mode2p4)
+#define BLE_NODE    DT_ALIAS(modeble)
 /*
  * Helper macro for initializing a gpio_dt_spec from the devicetree
  * with fallback values when the nodes are missing.
@@ -51,14 +56,17 @@ LOG_MODULE_REGISTER(app_public);
 /*
  * Create gpio_dt_spec structures from the devicetree.
  */
-static const struct gpio_dt_spec vbus_check_pin = GPIO_SPEC(VBUS_NODE),
+static const struct gpio_dt_spec mode_led_pin = GPIO_SPEC(MODE_NODE),
+                                 device_status_led_pin = GPIO_SPEC(DEVICE_NODE),
+                                 cap_led_pin = GPIO_SPEC(CAP_NODE),
+                                 num_led_pin = GPIO_SPEC(NUM_NODE),
+                                 vbus_check_pin = GPIO_SPEC(VBUS_NODE),
                                  mode_2p4_pin = GPIO_SPEC(D24G_NODE),
                                  mode_ble_pin = GPIO_SPEC(BLE_NODE);
 
 
 volatile unsigned char fun_mode = 0;
 static unsigned char last_fun_mode = 1;
-unsigned char  mode_pin_level = 0;
 
 _attribute_aligned_(4)  unsigned char buf_txfifo[40*8];
 
@@ -119,25 +127,18 @@ _attribute_ram_code_sec_ void check_mode(void)
     uint8_t mode_2p4_pin_level = gpio_pin_get_dt(&mode_2p4_pin);
     uint8_t mode_ble_pin_level = gpio_pin_get_dt(&mode_ble_pin);
 
-    // if(mode_2p4_pin_level == 1 && mode_ble_pin_level == 1)
+    if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 0)
     {
         fun_mode = APP_WIRED_USB_MODE;
-        // gpio_toggle(GPIO_PD4);
     }
-    // else if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 1)
-    // {
-    //     fun_mode = APP_D24G_MODE;
-    //     gpio_toggle(GPIO_PD5);
-    // }
-    // else if(mode_2p4_pin_level == 1 && mode_ble_pin_level == 0)
-    // {
-    //     fun_mode = APP_BLE_MODE;
-    //     gpio_toggle(GPIO_PD6);
-    // }
-    // else
-    // {
-    //     gpio_toggle(GPIO_PD7);
-    // }
+    else if(mode_2p4_pin_level == 1 && mode_ble_pin_level == 0)
+    {
+        fun_mode = APP_D24G_MODE;
+    }
+    else if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 1)
+    {
+        fun_mode = APP_BLE_MODE;
+    }
 }
 
 /* Timer0 interrupt handler */
@@ -170,27 +171,77 @@ static int peripheral_comm_init(void)
 {
     int ret;
 
+    if (!gpio_is_ready_dt(&mode_led_pin)) {
+        LOG_ERR("mode_led_pin gpio not ready");
+        return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&mode_led_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_ERR("Error: failed to configure mode_led_pin io \n");
+    }
+    LOG_INF("configure mode_led_pin io ok\n");
+
+
+    if (!gpio_is_ready_dt(&device_status_led_pin)) {
+        LOG_ERR("device_status_led_pin gpio not ready");
+        return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&device_status_led_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_ERR("Error: failed to configure device_status_led_pin io \n");
+    }
+    LOG_INF("configure device_status_led_pin io ok\n");
+
+
+    if (!gpio_is_ready_dt(&cap_led_pin)) {
+        LOG_ERR("cap_led_pin gpio not ready");
+        return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&cap_led_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_ERR("Error: failed to configure cap_led_pin io \n");
+    }
+    LOG_INF("configure cap_led_pin io ok\n");
+
+
+    if (!gpio_is_ready_dt(&num_led_pin)) {
+        LOG_ERR("num_led_pin gpio not ready");
+        return -ENODEV;
+    }
+    ret = gpio_pin_configure_dt(&num_led_pin, GPIO_OUTPUT);
+    if (ret != 0) {
+        LOG_ERR("Error: failed to configure num_led_pin io \n");
+    }
+    LOG_INF("configure num_led_pin io ok\n");
+
+
+    gpio_pin_set_dt(&mode_led_pin, 0);
+    gpio_pin_set_dt(&device_status_led_pin, 0);
+    gpio_pin_set_dt(&cap_led_pin, 0);
+    gpio_pin_set_dt(&num_led_pin, 0);
+
+
     if (!gpio_is_ready_dt(&mode_2p4_pin)) {
         LOG_ERR("mode_2p4_pin gpio not ready");
         return -ENODEV;
     }
-
     ret = gpio_pin_configure_dt(&mode_2p4_pin, GPIO_INPUT);
     if (ret != 0) {
-        printk("Error: failed to configure mode_2p4_pin io \n");
+        LOG_ERR("Error: failed to configure mode_2p4_pin io \n");
     }
-    printk("configure mode_2p4_pin io ok\n");    
+    LOG_INF("configure mode_2p4_pin io ok\n");    
+
 
     if (!gpio_is_ready_dt(&mode_ble_pin)) {
         LOG_ERR("mode_ble_pin gpio not ready");
         return -ENODEV;
     }
-
     ret = gpio_pin_configure_dt(&mode_ble_pin, GPIO_INPUT);
     if (ret != 0) {
-        printk("Error: failed to configure mode_ble_pin io \n");
+        LOG_ERR("Error: failed to configure mode_ble_pin io \n");
     }
-    printk("configure mode_ble_pin io ok\n");    
+    LOG_INF("configure mode_ble_pin io ok\n");    
+
 
     if (!gpio_is_ready_dt(&vbus_check_pin)) {
         LOG_ERR("Vbus check gpio not ready");
@@ -198,7 +249,7 @@ static int peripheral_comm_init(void)
     }
     ret = gpio_pin_configure_dt(&vbus_check_pin, GPIO_INPUT);
     if (ret != 0) {
-        LOG_INF("Error: failed to configure vbus check io \n");
+        LOG_ERR("Error: failed to configure vbus check io \n");
     }
     LOG_INF("configure vbus_check_pin io ok\n");
 }

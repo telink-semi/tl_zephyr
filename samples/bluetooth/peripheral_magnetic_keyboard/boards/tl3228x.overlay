@@ -34,6 +34,10 @@
 		/delete-property/ pwm-led0;
 		/delete-property/ pwm0;
 
+		ledmode = &led_mode;
+		leddevicestatus = &led_device_status;
+		ledcap = &led_cap;
+		lednum = &led_num;
 
 		vbuscheck0 = &vbus_pin;
 		mode2p4 = &mode_2p4_pin;
@@ -43,6 +47,31 @@
 
 	/delete-node/ leds;
 	/delete-node/ pwm_leds;
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_mode: mode_io {
+			gpios = <&gpiof 4 GPIO_ACTIVE_LOW>;
+			label = "LED Mode";
+		};
+
+		led_device_status: device_status_io {
+			gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+			label = "LED Device_Status";
+		};
+
+		led_cap: cap_io {
+			gpios = <&gpiof 6 GPIO_ACTIVE_LOW>;
+			label = "LED CAP";
+		};
+
+		led_num: num_io {
+			gpios = <&gpiof 7 GPIO_ACTIVE_LOW>;
+			label = "LED NUM";
+		};
+	};
+
 	/delete-node/ keys;
 
 	keys {

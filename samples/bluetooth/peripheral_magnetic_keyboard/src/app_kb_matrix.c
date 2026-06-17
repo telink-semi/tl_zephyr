@@ -256,12 +256,6 @@ _attribute_ram_code_sec_ void key_data_handle(void)
                 // tlkapi_send_string_data(APP_LOG_EN, "n-kb", (unsigned char *)&app_key_buf.nk[0], 8);
             }
             core_restore_interrupt(r);
-            //print_app_public("nk=%d\r\n",app_key_buf.nk[2]);
-            #if (HW_BOARD_TYPE==HW_EVK_KEYBOARD)
-            #if APP_STACK_DEBUG_IO_EN
-                 gpio_toggle(TEST_LATENCY_PIN);
-            #endif
-            #endif  
             break;  
         }
     }
@@ -442,10 +436,10 @@ _attribute_ram_code_sec_ unsigned char key_scan(void)
             // debug_print_keyscan("col=%d,hw_now_bits=%02x\r\n",col,app_key_buf.hw_last_bits[col]);
         }
      }
-    printk("RALT=%d space=%d LALT=%d  WIN=%d 2=%d 1=%d ESC=%d F1=%d /=%d *=%d\r\n", \
-        adc_buffer[90],adc_buffer[94],adc_buffer[98], \
-        adc_buffer[102],adc_buffer[42],adc_buffer[38], \
-        adc_buffer[32],adc_buffer[36],adc_buffer[97],adc_buffer[101]);
+    // printk("RALT=%d space=%d LALT=%d  WIN=%d 2=%d 1=%d ESC=%d F1=%d /=%d *=%d\r\n", \
+    //     adc_buffer[90],adc_buffer[94],adc_buffer[98], \
+    //     adc_buffer[102],adc_buffer[42],adc_buffer[38], \
+    //     adc_buffer[32],adc_buffer[36],adc_buffer[97],adc_buffer[101]);
 
      if(has_new_key_event)
      {
