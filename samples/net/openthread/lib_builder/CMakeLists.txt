@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20.0)
@@ -64,4 +65,23 @@ add_compile_options(-frandom-seed=0)
 
 add_link_options(
 	-Wl,--build-id=none
+)
+
+# create target to install headers (west build -t ot-headers)
+add_custom_target(ot-headers
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/zephyr/ot-include
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/zephyr/ot-include/utils
+	COMMAND ${CMAKE_COMMAND}
+		-D SRC_DIR="${ZEPHYR_OPENTHREAD_MODULE_DIR}/include"
+		-D DEST_DIR="${CMAKE_BINARY_DIR}/zephyr/ot-include"
+		-D FILE_MASK="*.h"
+		-P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/copy_directory_mask.cmake"
+	COMMAND ${CMAKE_COMMAND} -E copy
+		${ZEPHYR_OPENTHREAD_MODULE_DIR}/examples/platforms/openthread-system.h
+		${CMAKE_BINARY_DIR}/zephyr/ot-include
+	COMMAND ${CMAKE_COMMAND} -E copy
+		${ZEPHYR_OPENTHREAD_MODULE_DIR}/examples/platforms/utils/uart.h
+		${CMAKE_BINARY_DIR}/zephyr/ot-include/utils
+	COMMAND ${CMAKE_COMMAND} -E echo "Headers path: ${CMAKE_BINARY_DIR}/zephyr/ot-include"
+	COMMENT "Install openthread headers"
 )

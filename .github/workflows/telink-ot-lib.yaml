@@ -98,6 +98,13 @@ jobs:
         unset ZEPHYR_TOOLCHAIN_VARIANT
         unset ANDES_GCC_PATH
 
+    - name: Install headers
+      run: |
+        rm -rf build_tmp
+        west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -t ot-headers
+        cp -r build_tmp/zephyr/ot-include/* \
+             "build_telink_ot_lib_artifacts/include"
+
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
       with:
