@@ -38,10 +38,10 @@ short adc_buffer[KEYSCAN_ADC_BUFFER_SIZE] = {0};
 
 /* update threshold according to the real hall value */
 ks_ana_threshold_t ks_ana_threshold = {
-    // .release_threshold = 1200,       //1F2
-    // .press_threshold = 1000
-    .release_threshold = 850,       //1F2
-    .press_threshold = 780
+    .release_threshold = 1200,       //1F2
+    .press_threshold = 1000
+    // .release_threshold = 850,       //1F2
+    // .press_threshold = 780
 };
 
 /* update gpio pin according to the hardware design */

@@ -56,13 +56,13 @@ LOG_MODULE_REGISTER(app_public);
 /*
  * Create gpio_dt_spec structures from the devicetree.
  */
-static const struct gpio_dt_spec mode_led_pin = GPIO_SPEC(MODE_NODE),
-                                 device_status_led_pin = GPIO_SPEC(DEVICE_NODE),
-                                 cap_led_pin = GPIO_SPEC(CAP_NODE),
-                                 num_led_pin = GPIO_SPEC(NUM_NODE),
-                                 vbus_check_pin = GPIO_SPEC(VBUS_NODE),
-                                 mode_2p4_pin = GPIO_SPEC(D24G_NODE),
-                                 mode_ble_pin = GPIO_SPEC(BLE_NODE);
+const struct gpio_dt_spec   mode_led_pin = GPIO_SPEC(MODE_NODE),
+                            device_status_led_pin = GPIO_SPEC(DEVICE_NODE),
+                            cap_led_pin = GPIO_SPEC(CAP_NODE),
+                            num_led_pin = GPIO_SPEC(NUM_NODE),
+                            vbus_check_pin = GPIO_SPEC(VBUS_NODE),
+                            mode_2p4_pin = GPIO_SPEC(D24G_NODE),
+                            mode_ble_pin = GPIO_SPEC(BLE_NODE);
 
 
 volatile unsigned char fun_mode = 0;
@@ -273,9 +273,6 @@ void keyboard_comm_init(void)
     }
     else
     {
-        // app_clock_init(CLOCK_CONFIG_1V1_48_48);
-        // pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-        // PLL_144M_D25F_48M_HCLK_N22_48M_PCLK_48M_MSPI_48M; // 48M 48M
         #if USB_APP_FUN_ENABLE
 	    /*usb init*/
 	    usb_hw_init();

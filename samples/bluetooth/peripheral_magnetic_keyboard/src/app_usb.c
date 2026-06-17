@@ -37,133 +37,14 @@ volatile unsigned int  vbus_status = 0;
 static unsigned char last_vbus_status = 0;
 volatile unsigned int usb_connected_ok = 0;
 
-#if 1
  static const uint8_t hid_report_kb_desc[] = HID_KEYBOARD_REPORT_DESC();
-#else
-__aligned(4) static const unsigned char  hid_report_kb_desc[] = {
- //keyboard report in
-     0x05, 0x01,     // Usage Pg (Generic Desktop)
-     0x09, 0x06,     // Usage (Keyboard)
-     0xA1, 0x01,     // Collection: (Application)
-     //0x85, REPORT_ID_KEYBOARD_INPUT_AAA,   // Report Id (keyboard)
-                   //
-     0x05, 0x07,     // Usage Pg (Key Codes)
-     0x19, 0xE0,     // Usage Min (224)  VK_CTRL:0xe0
-     0x29, 0xE7,     // Usage Max (231)  VK_RWIN:0xe7
-     0x15, 0x00,     // Log Min (0)
-     0x25, 0x01,     // Log Max (1)
-                   //
-                   // Modifier byte
-     0x75, 0x01,     // Report Size (1)   1 bit * 8
-     0x95, 0x08,     // Report Count (8)
-     0x81, 0x02,     // Input: (Data, Variable, Absolute)
-                   //
-                   // Reserved byte
-     0x95, 0x01,     // Report Count (1)
-     0x75, 0x08,     // Report Size (8)
-     0x81, 0x01,     // Input: (Constant)
- 
-     //keyboard output
-     //5 bit led ctrl: NumLock CapsLock ScrollLock Compose kana
-     0x95, 0x05,    //Report Count (5)
-     0x75, 0x01,    //Report Size (1)
-     0x05, 0x08,    //Usage Pg (LEDs )
-     0x19, 0x01,    //Usage Min
-     0x29, 0x05,    //Usage Max
-     0x91, 0x02,    //Output (Data, Variable, Absolute)
-     //3 bit reserved
-     0x95, 0x01,    //Report Count (1)
-     0x75, 0x03,    //Report Size (3)
-     0x91, 0x01,    //Output (Constant)
- 
-     // Key arrays (6 bytes)
-     0x95, 0x06,     // Report Count (6)
-     0x75, 0x08,     // Report Size (8)
-     0x15, 0x00,     // Log Min (0)
-     0x26, 0xF1,0x00,    // Log Max (241)
-     0x05, 0x07,     // Usage Pg (Key Codes)
-     0x19, 0x00,     // Usage Min (0)
-     0x2a, 0xf1,0x00,    // Usage Max (241)
-     0x81, 0x00,     // Input: (Data, Array)
- 
-     0xC0,            // End Collection
-};
-#endif
+
 
 //static const uint8_t hid_report_ms_desc[] = HID_MOUSE_REPORT_DESC(5);
 static const uint8_t hid_report_n_keys_desc[] = HID_N_KEY_REPORT_DESC();
-#if 0
-static const uint8_t hid_report_ms_desc[] = {
-	//mouse report in
-	0x05, 0x01,  // Usage Page (Generic Desktop)
-	0x09, 0x02,  // Usage (Mouse)
-	0xA1, 0x01,  // Collection (Application)
-	0x85, 0x01,  // Report Id
-	0x09, 0x01,  //   Usage (Pointer)
-	0xA1, 0x00,  //   Collection (Physical)
-	0x05, 0x09,  //  Usage Page (Buttons)
-	0x19, 0x01,  //  Usage Minimum (01) - Button 1
-	0x29, 0x05,  //  Usage Maximum (03) - Button 3
-	0x15, 0x00,  //  Logical Minimum (0)
-	0x25, 0x01,  //  Logical Maximum (1)
-	0x75, 0x01,  //  Report Size (1)
-	0x95, 0x05,  //  Report Count (3)
-	0x81, 0x02,  //  Input (Data, Variable, Absolute) - Button states
-	0x75, 0x03,  //  Report Size (5)
-	0x95, 0x01,  //  Report Count (1)
-	0x81, 0x01,  //  Input (Constant) - Padding or Reserved bits
 
-	0x05, 0x01, 	 //  Usage Page (Generic Desktop Control)
-	0x09, 0x30,  // Usage (X)
-	0x09, 0x31,  // Usage (Y)
-
-	0x16, 0x01, 0x80, //  LOGICAL_MINIMUM(0)
-	0x26, 0xff, 0x7f,
-	0x75, 0x10, //	Report Size (16)
-	0x95, 0x02, //	Report Count (2)
-	0x81, 0x06, //	Input (Data, Variable, Relative)
-
-	//0x05,0x01,			 //  Usage Page (Generic Desktop Control)
-	0x09, 0x38, 		 //  Usage (Wheel)
-	0x15, 0x81, 		 //  Logical Minimum (-4)
-	0x25, 0x7F, 		 //  Logical Maximum (3)
-	0x75, 0x08, 		 //  Report Size (3)
-	0x95, 0x01, 		 //  Report Count (1)
-	0x81, 0x06, 		 //  Input (Data, Variable, Relative)
-
-	0x05,0x0c,			// Usage Page(Consumer)
-	0x0a,0x38,0x02, 	// Usage (AC Pan) tilt
-	0x15,0x81,			//	Logical Minimum (-128)
-	0x25,0x7F,			//	Logical Maximum (127)
-	0x75,0x08,			//	Report Size (8)
-	0x95,0x01,			//	Report Count (3)
-	0x81,0x06,			// Input (Data, Variable, Relative)
-
-	0xC0,		  //   End Collection
-	0xC0,		  // End Collection
-};
-#endif
 static const uint8_t hid_report_vendor_defined[] = HID_MOUSE_REPORT_DESC(5);
-#if 0
-static const uint8_t hid_report_vendor_defined[] = {
-    0x06, 0xEF, 0xff,  //global usage page
-    0x09, 0x00,  //usage undefined
-    0xa1, 0x01,  //main collection
-    0x85, 0x06, //global report ID 0x6
-    0x15, 0x00,  //LOGICAL_MINIMUM (0)
-    0x26, 0xff, 0x00, //LOGICAL_MAXIMUM (255)
-    0x95, 63,   //Report Count (32) //MTU_SIZE=23
-    0x75, 0x08,  //Report Size (8)
-    0x09, 0x01,
-    0x81, 0x02,  //INPUT (Data,Var,Abs)
-    0x09, 0x02,
-    0x91, 0x02,  //Output (Data, Variable, Absolute)
-    0x09, 0x03,
-    0xB1, 0x02,  //feature (Data, Variable, Absolute)
-    0xc0,    //main, end collection
 
-};
-#endif
 
 static enum usb_dc_status_code usb_status;
 
@@ -178,10 +59,13 @@ static void in_ready_cb(const struct device *dev)
 int kbd_set_report(const struct device *dev, struct usb_setup_packet *setup, int32_t *len,
 			uint8_t **data)
 {
-	printk("kb_out: %x, len %d", **data, *len);
-	
-	//gpio_pin_set(led1.port, led1.pin, (**data & HID_KBD_LED_NUM_LOCK));
-	//gpio_pin_set(led2.port, led2.pin, (**data & HID_KBD_LED_CAPS_LOCK));
+	LOG_INF("kb_out: %x, len %d", **data, *len);
+
+    extern struct gpio_dt_spec cap_led_pin;
+    extern struct gpio_dt_spec num_led_pin;
+
+    gpio_pin_set_dt(&cap_led_pin, (**data & HID_KBD_LED_CAPS_LOCK));
+    gpio_pin_set_dt(&num_led_pin, (**data & HID_KBD_LED_NUM_LOCK));
 
 	return 0;
 }
@@ -262,7 +146,7 @@ void app_usb_mode_exit(void)
 {
     usb_disable();
     usb_connected_ok = 0;
-    printk("usb mode exit\r\n");
+    LOG_ERR("usb mode exit\r\n");
 }
 
 _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
@@ -382,7 +266,7 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
 
     if(last_vbus_status != vbus_status)
     {
-        printk("vbus_status = %d\r\n",vbus_status);
+        LOG_INF("vbus_status = %d\r\n",vbus_status);
         if(last_vbus_status == 0)
         {
             // TODO:app_usb_bus_reset_init();
@@ -398,7 +282,7 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
     {
         if(usb_status == USB_DC_CONFIGURED)
         {
-            printk("mode is usb mode\r\n");
+            LOG_INF("mode is usb mode\r\n");
             // TODO:gpio_set_level(MODE_LED_PIN, LED_IS_ON);
             // TODO: gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
             usb_connected_ok = 1;
@@ -408,7 +292,7 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
             }
             else
             {
-                printk("ble enter idle mode\r\n");
+                LOG_INF("ble enter idle mode\r\n");
                 // TODO:ble_mode_enter_idle();
             }
         }
@@ -419,7 +303,7 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
 
             if(fun_mode == APP_D24G_MODE)
             {
-                printk("mode is 2.4g\r\n");
+                LOG_INF("mode is 2.4g\r\n");
                 // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
             }
         }
