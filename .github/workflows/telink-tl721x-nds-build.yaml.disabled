@@ -42,6 +42,12 @@ jobs:
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git fdb4b582928016a13138d245b8a1d6943215ef90
+
     - name: Build TL721X basic/blinky
       run: |
         cd ..

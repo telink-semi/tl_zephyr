@@ -310,6 +310,9 @@ static int uart_tlx_config_get(const struct device *dev, struct uart_config *cfg
 #endif
 
 /* API implementation: driver initialization */
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 static int uart_tlx_driver_init(const struct device *dev)
 {
 	int status = 0;

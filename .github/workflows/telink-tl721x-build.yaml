@@ -39,12 +39,16 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
-        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_tl721x.a$' && exit 1
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 
-    - name: Build TL721X basic/blinky
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git c4fdeaa0f3387543b9ec5f351ed74b3047988d00
+
+    - name: Build TL721X samples/basic/blinky
       run: |
         cd ..
         west build -b tl7218x                  -d build_blinky_tl721x                    zephyr/samples/basic/blinky                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
@@ -54,17 +58,17 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_button_tl721x                    zephyr/samples/basic/button                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X basic/blinky_pwm
+    - name: Build TL721X samples/basic/blinky_pwm
       run: |
         cd ..
         west build -b tl7218x                  -d build_blinky_pwm_tl721x                zephyr/samples/basic/blinky_pwm                          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X hello_world
+    - name: Build TL721X samples/hello_world
       run: |
         cd ..
         west build -b tl7218x                  -d build_hello_tl721x                     zephyr/samples/hello_world                               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X drivers/watchdog
+    - name: Build TL721X samples/drivers/watchdog
       run: |
         cd ..
         west build -b tl7218x                  -d build_watchdog_tl721x                  zephyr/samples/drivers/watchdog                          -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
@@ -79,7 +83,7 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_sht3xd_tl721x                    zephyr/samples/sensor/sht3xd                             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X bluetooth/peripheral_ht
+    - name: Build TL721X sample/bluetooth/peripheral_ht
       run: |
         cd ..
         west build -b tl7218x                  -d build_peripheral_ht_tl721x             zephyr/samples/bluetooth/peripheral_ht                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
@@ -94,32 +98,32 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_spi_flash_tl721x                 zephyr/samples/drivers/spi_flash                         -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X net/openthread/cli
+    - name: Build TL721X samples/net/openthread/cli
       run: |
         cd ..
         west build -b tl7218x                  -d build_ot_cli_tl721x                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X net/sockets/echo_server for OpenThread
+    - name: Build TL721X samples/net/sockets/echo_server for OpenThread
       run: |
         cd ..
         west build -b tl7218x                  -d build_ot_echo_server_tl721x            zephyr/samples/net/sockets/echo_server                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"
 
-    - name: Build TL721X net/sockets/echo_client for OpenThread
+    - name: Build TL721X samples/net/sockets/echo_client for OpenThread
       run: |
         cd ..
         west build -b tl7218x                  -d build_ot_echo_client_tl721x            zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"
 
-    - name: Build TL721X net/sockets/echo_client for OpenThread with PM deep-sleep
+    - name: Build TL721X samples/net/sockets/echo_client for OpenThread with PM deep-sleep
       run: |
         cd ..
         west build -b tl7218x_retention        -d build_ot_echo_client_pm_deep_tl721x    zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y -DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y
 
-    - name: Build TL721X subsys/usb/console for USB driver
+    - name: Build TL721X samples/subsys/usb/console for USB driver
       run: |
         cd ..
         west build -b tl7218x                  -d build_usb_console_tl721x              zephyr/samples/subsys/usb/console                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL721X crypto/mbedtls
+    - name: Build TL721X tests/crypto/mbedtls
       run: |
         cd ..
         west build -b tl7218x                  -d build_crypto_mbedtls_tl721x           zephyr/tests/crypto/mbedtls                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
@@ -133,21 +137,6 @@ jobs:
       run: |
         cd ..
         west build -b tl7218x                  -d build_mcuboot_chip_id_tl721x          bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3
-
-    - name: Build TL721x_ml7g samples/basic/button
-      run: |
-        cd ..
-        west build -b tl7218x_ml7g             -d build_button_tl721x_ml7g              zephyr/samples/basic/button                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-
-    - name: Build TL721x_ml7m samples/basic/button
-      run: |
-        cd ..
-        west build -b tl7218x_ml7m             -d build_button_tl721x_ml7m              zephyr/samples/basic/button                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-
-    - name: Build TL721X boards/tlsr9x/gpio-kbd-matrix
-      run: |
-        cd ..
-        west build -b tl7218x                  -d build_gpio-kbd-matrix_tl721x          zephyr/samples/boards/tlsr9x/gpio-kbd-matrix             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
 
     - name: Collect artifacts
@@ -170,9 +159,6 @@ jobs:
         cp ../build_crypto_mbedtls_tl721x/zephyr/zephyr.bin            telink_build_artifacts/tl721x_mbedtls.bin
         cp ../build_spi_flash_tl721x/zephyr/zephyr.bin                 telink_build_artifacts/tl721x_spi_flash.bin
         cp ../build_mcuboot_chip_id_tl721x/zephyr/zephyr.bin           telink_build_artifacts/tl721x_mcuboot_chip_id.bin
-        cp ../build_button_tl721x_ml7g/zephyr/zephyr.bin               telink_build_artifacts/tl7218x_ml7g_button.bin
-        cp ../build_button_tl721x_ml7m/zephyr/zephyr.bin               telink_build_artifacts/tl7218x_ml7m_button.bin
-        cp ../build_gpio-kbd-matrix_tl721x/zephyr/zephyr.bin           telink_build_artifacts/tl7218x_gpio-kbd-matrix.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

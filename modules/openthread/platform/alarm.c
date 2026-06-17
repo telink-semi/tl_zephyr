@@ -24,6 +24,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 #include "platform-zephyr.h"
 #include "openthread-core-zephyr-config.h"
+#include "openthread_ram_code.h"
 
 static bool timer_ms_fired, timer_us_fired;
 static int32_t time_offset_us;
@@ -57,6 +58,7 @@ void platformAlarmInit(void)
 #endif
 }
 
+OT_SED_RAM
 void platformAlarmProcess(otInstance *aInstance)
 {
 #if OPENTHREAD_CONFIG_PLATFORM_USEC_TIMER_ENABLE
@@ -78,11 +80,13 @@ void platformAlarmProcess(otInstance *aInstance)
 	}
 }
 
+OT_SED_RAM
 uint32_t otPlatAlarmMilliGetNow(void)
 {
 	return k_uptime_get_32() - time_offset_ms;
 }
 
+OT_SED_RAM
 void otPlatAlarmMilliStartAt(otInstance *aInstance, uint32_t aT0, uint32_t aDt)
 {
 	ARG_UNUSED(aInstance);
@@ -96,6 +100,7 @@ void otPlatAlarmMilliStartAt(otInstance *aInstance, uint32_t aT0, uint32_t aDt)
 	}
 }
 
+OT_SED_RAM
 void otPlatAlarmMilliStop(otInstance *aInstance)
 {
 	ARG_UNUSED(aInstance);

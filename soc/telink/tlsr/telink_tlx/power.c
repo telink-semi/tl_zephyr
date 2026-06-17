@@ -24,7 +24,7 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 	(((uint64_t)(sticks)*CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / SYSTEM_TIMER_TICK_1S)
 
 #if CONFIG_BT
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
 #define SYSTICKS_MAX_SLEEP 0x20000000
 #else
 #define SYSTICKS_MAX_SLEEP 0x40000000
@@ -97,6 +97,10 @@ static volatile bool tlx_deep_sleep_retention_occurred;
 /**
  * @brief PM state set API implementation.
  */
+
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void pm_state_set(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(substate_id);
@@ -158,6 +162,9 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 /**
  * @brief PM state exit post operations API implementation.
  */
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(state);

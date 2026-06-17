@@ -17,7 +17,7 @@ manifest:
 
     - name: openthread
       url: https://github.com/telink-semi/openthread
-      revision: 3ae741f95e7dfb391dec35c48742862049eb62e8
+      revision: 542aaab44e1308e1a8a24573dfbd413fade342ee
       path: modules/lib/openthread
 
     - name: openthread_telink_lib

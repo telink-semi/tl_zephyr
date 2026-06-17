@@ -33,6 +33,9 @@ struct pwm_tlx_data {
 };
 
 /* API implementation: init */
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 static int pwm_tlx_init(const struct device *dev)
 {
 	const struct pwm_tlx_config *config = dev->config;

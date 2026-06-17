@@ -38,6 +38,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME, CONFIG_OPENTHREAD_L2_LOG_LEVEL);
 #include <openthread/message.h>
 
 #include "platform-zephyr.h"
+#include "openthread_ram_code.h"
 
 #if defined(CONFIG_OPENTHREAD_NAT64_TRANSLATOR)
 #include <openthread/nat64.h>
@@ -147,12 +148,14 @@ static inline bool is_pending_event_set(enum pending_events event)
 	return atomic_test_bit(pending_events, event);
 }
 
+OT_SED_RAM
 static void set_pending_event(enum pending_events event)
 {
 	atomic_set_bit(pending_events, event);
 	otSysEventSignalPending();
 }
 
+OT_SED_RAM
 static void reset_pending_event(enum pending_events event)
 {
 	atomic_clear_bit(pending_events, event);
@@ -171,6 +174,7 @@ void energy_detected(const struct device *dev, int16_t max_ed)
 	}
 }
 
+OT_SED_RAM
 enum net_verdict ieee802154_handle_ack(struct net_if *iface, struct net_pkt *pkt)
 {
 	ARG_UNUSED(iface);
@@ -206,6 +210,7 @@ enum net_verdict ieee802154_handle_ack(struct net_if *iface, struct net_pkt *pkt
 	return NET_OK;
 }
 
+OT_SED_RAM
 void handle_radio_event(const struct device *dev, enum ieee802154_event evt,
 			void *event_params)
 {
@@ -378,12 +383,14 @@ void platformRadioInit(void)
 	radio_api->configure(radio_dev, IEEE802154_CONFIG_EVENT_HANDLER, &cfg);
 }
 
+OT_SED_RAM
 static void radio_set_channel(uint16_t ch)
 {
 	channel = ch;
 	radio_api->set_channel(radio_dev, ch);
 }
 
+OT_SED_RAM
 void transmit_message(struct k_work *tx_job)
 {
 	int tx_err;
@@ -483,6 +490,7 @@ void transmit_message(struct k_work *tx_job)
 	set_pending_event(PENDING_EVENT_TX_DONE);
 }
 
+OT_SED_RAM
 static inline void handle_tx_done(otInstance *aInstance)
 {
 	sTransmitFrame.mInfo.mTxInfo.mIsSecurityProcessed =
@@ -498,6 +506,7 @@ static inline void handle_tx_done(otInstance *aInstance)
 	}
 }
 
+OT_SED_RAM
 static void openthread_handle_received_frame(otInstance *instance,
 					     struct net_pkt *pkt)
 {
@@ -555,6 +564,7 @@ static otError openthread_nat64_send(otInstance *instance, otMessage *message)
 
 #endif /* CONFIG_OPENTHREAD_NAT64_TRANSLATOR */
 
+OT_SED_RAM
 static void openthread_handle_frame_to_send(otInstance *instance, struct net_pkt *pkt)
 {
 	otError error;
@@ -601,6 +611,7 @@ exit:
 	net_pkt_unref(pkt);
 }
 
+OT_SED_RAM
 int notify_new_rx_frame(struct net_pkt *pkt)
 {
 	k_fifo_put(&rx_pkt_fifo, pkt);
@@ -609,6 +620,7 @@ int notify_new_rx_frame(struct net_pkt *pkt)
 	return 0;
 }
 
+OT_SED_RAM
 int notify_new_tx_frame(struct net_pkt *pkt)
 {
 	k_fifo_put(&tx_pkt_fifo, pkt);
@@ -617,6 +629,7 @@ int notify_new_tx_frame(struct net_pkt *pkt)
 	return 0;
 }
 
+OT_SED_RAM
 static int run_tx_task(otInstance *aInstance)
 {
 	static K_WORK_DEFINE(tx_job, transmit_message);
@@ -633,6 +646,7 @@ static int run_tx_task(otInstance *aInstance)
 	}
 }
 
+OT_SED_RAM
 void platformRadioProcess(otInstance *aInstance)
 {
 	bool event_pending = false;
@@ -785,6 +799,7 @@ otError otPlatRadioDisable(otInstance *aInstance)
 	return OT_ERROR_NONE;
 }
 
+OT_SED_RAM
 otError otPlatRadioSleep(otInstance *aInstance)
 {
 	ARG_UNUSED(aInstance);
@@ -799,6 +814,7 @@ otError otPlatRadioSleep(otInstance *aInstance)
 	return OT_ERROR_NONE;
 }
 
+OT_SED_RAM
 otError otPlatRadioReceive(otInstance *aInstance, uint8_t aChannel)
 {
 	ARG_UNUSED(aInstance);
@@ -898,6 +914,7 @@ otRadioState otPlatRadioGetState(otInstance *aInstance)
 	return sState;
 }
 
+OT_SED_RAM
 otError otPlatRadioTransmit(otInstance *aInstance, otRadioFrame *aPacket)
 {
 	otError error = OT_ERROR_INVALID_STATE;

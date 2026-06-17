@@ -102,6 +102,9 @@ static uint64_t mtime(void)
 #endif
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 static void timer_isr(const void *arg)
 {
 	ARG_UNUSED(arg);
@@ -126,6 +129,9 @@ static void timer_isr(const void *arg)
 	sys_clock_announce(dticks);
 }
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void sys_clock_set_timeout(int32_t ticks, bool idle)
 {
 	ARG_UNUSED(idle);
