@@ -199,6 +199,7 @@ void soc_load_rf_parameters_deep_retention(void)
 #endif
 
 #if CONFIG_PM
+#define RST_BIT_SET(x, n)    ((x) |=~(n))
 #define RST_BIT_CLR(x, n)    ((x) &=~(n))
 #define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
 #if CONFIG_SOC_RISCV_TELINK_TL323X
@@ -257,21 +258,21 @@ void gen_fsk_close_unused_clock(void)
 __attribute__((noinline)) __attribute__((section(".ram_code")))
 __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 {
-	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C);
-	RST_BIT_CLR(reg_rst0, FLD_RST0_USB);
-	RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
-	RST_BIT_CLR(reg_rst1, FLD_RST1_SPISLV);
-	RST_BIT_CLR(reg_rst2, FLD_RST2_AUD);
-	RST_BIT_CLR(reg_rst2, FLD_RST2_I2C1);
-	RST_BIT_CLR(reg_rst2, FLD_RST2_LM);
-	RST_BIT_CLR(reg_rst2, FLD_RST2_TRNG);
-	RST_BIT_CLR(reg_rst2, FLD_RST2_DPR);
-	RST_BIT_CLR(reg_rst3, FLD_RST3_QDEC);
-	RST_BIT_CLR(reg_rst5, FLD_RST5_UART2);
-	RST_BIT_CLR(reg_rst5, FLD_RST5_KEY_SCAN);
-	RST_BIT_CLR(reg_rst5, FLD_RST5_PEM);
-	RST_BIT_CLR(reg_rst5, FLD_RST5_CHACHA20);
-	RST_BIT_CLR(reg_rst6, FLD_RST6_RZ);
+	RST_BIT_SET(reg_rst0, FLD_RST0_I2C);
+	RST_BIT_SET(reg_rst0, FLD_RST0_USB);
+	RST_BIT_SET(reg_rst0, FLD_RST0_UART1);
+	RST_BIT_SET(reg_rst1, FLD_RST1_SPISLV);
+	RST_BIT_SET(reg_rst2, FLD_RST2_AUD);
+	RST_BIT_SET(reg_rst2, FLD_RST2_I2C1);
+	RST_BIT_SET(reg_rst2, FLD_RST2_LM);
+	RST_BIT_SET(reg_rst2, FLD_RST2_TRNG);
+	RST_BIT_SET(reg_rst2, FLD_RST2_DPR);
+	RST_BIT_SET(reg_rst3, FLD_RST3_QDEC);
+	RST_BIT_SET(reg_rst5, FLD_RST5_UART2);
+	RST_BIT_SET(reg_rst5, FLD_RST5_KEY_SCAN);
+	RST_BIT_SET(reg_rst5, FLD_RST5_PEM);
+	RST_BIT_SET(reg_rst5, FLD_RST5_CHACHA20);
+	RST_BIT_SET(reg_rst6, FLD_RST6_RZ);
 
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C_EN);
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_USB_EN);
@@ -291,10 +292,9 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 #endif /* CONFIG_SOC_RISCV_TELINK_TL323X */
 #endif /* CONFIG_PM  */
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_PM
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X) && \
+	CONFIG_PM
 #include "pm.h"
-#elif CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
-#include "pm_internal.h"
 #endif
 
 /**

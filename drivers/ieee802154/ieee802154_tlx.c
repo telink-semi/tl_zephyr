@@ -930,14 +930,14 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 			ske_dig_en();
 #endif
 			if (tlx->rf_mode_154 == false) {
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
+	CONFIG_SOC_RISCV_TELINK_TL721X)
 				if (tl_rf_is_inited()) {
 #endif
 					rf_baseband_reset();
 					rf_reset_dma();
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
+	CONFIG_SOC_RISCV_TELINK_TL721X)
 				} else {
 					tl_rf_change_to_inited();
 				}
@@ -1235,7 +1235,7 @@ static int tlx_stop(const struct device *dev)
 
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 RAM_CODE_SECTION_IEEE802154
-static int tlx_wfi_direct(uint32_t time_ms)
+static void tlx_wfi_direct(uint32_t time_ms)
 {
 	irq_connect_dynamic(IRQ_SYSTIMER + CONFIG_2ND_LVL_ISR_TBL_OFFSET, 2,
 			    stimer_rf_handler, 0, 0);
@@ -1245,9 +1245,7 @@ static int tlx_wfi_direct(uint32_t time_ms)
 	stimer_clr_irq_status(FLD_SYSTEM_IRQ);
 	stimer_set_irq_mask(FLD_SYSTEM_IRQ_MASK);
 	plic_interrupt_enable(IRQ_SYSTIMER);
-	pf0_set();
 	core_entry_wfi_mode();
-	pf0_clr();
 }
 
 #endif
