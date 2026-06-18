@@ -28,11 +28,6 @@
 LOG_MODULE_REGISTER(app_usb);
 
 
-//static struct gpio_dt_spec led_caps = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-caps), gpios, {0});
-//static struct gpio_dt_spec led_num = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-num), gpios, {0});
-//static struct gpio_dt_spec led_scrol = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-scrol), gpios, {0});
-//static struct gpio_dt_spec led_pair = GPIO_DT_SPEC_GET_OR(DT_ALIAS(led-pair), gpios, {0});
-
 volatile unsigned int  vbus_status = 0;
 static unsigned char last_vbus_status = 0;
 volatile unsigned int usb_connected_ok = 0;

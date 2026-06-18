@@ -261,7 +261,7 @@ void keyboard_comm_init(void)
 
     check_mode();
 
-    tlk_d25f_to_n22_mode_info(APP_WIRED_USB_MODE);
+    tlk_d25f_to_n22_mode_info(fun_mode);
 
     if (fun_mode == APP_D24G_MODE)
     {
@@ -378,7 +378,6 @@ _attribute_ram_code_sec_ unsigned char special_key_press_flag_set(unsigned char 
                 app_key_buf.special_key_press_f|=PRESS_KB_7_FLAG;
                 break;
             default:
-                
                 break;
             
         }
@@ -389,116 +388,112 @@ _attribute_ram_code_sec_ unsigned char special_key_press_flag_set(unsigned char 
 
 _attribute_ram_code_sec_ void special_key_event_handle(void)
 {
-    //  if(app_key_buf.special_key_press_f==0)
-    //  {
-    //     fn_flag=0;
-    //     return;
-    //  }
+     if(app_key_buf.special_key_press_f==0)
+     {
+        fn_flag=0;
+        return;
+     }
 
-    // switch (app_key_buf.special_key_press_f)
-    // {
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_M_FLAG):
-    //         // printf("mouse auto test\n");
-    //         auto_test_mouse^=0x01;
-    //         if(usb_connected_ok==0)
-    //         {
-    //             if(fun_mode==APP_D24G_MODE)
-    //             {
-    //                 if(auto_test_mouse)
-    //                 {
-    //                     app_rf_set_rx_wait(1);// rx wait
-    //                 }
-    //                 else
-    //                 {
-    //                     app_rf_set_rx_wait(14);// rx wait
-    //                 }
-    //             }
-    //         }
-    //      // tlkapi_printf(APP_LOG_EN,"auto_mouse=%d\r\n",auto_test_mouse);
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_P_FLAG):
-    //         //ll_inf.dev_now_status=STATE_PAIRING;
-    //         // printf("pairing mode\n");
-    //         if(usb_connected_ok==0)
-    //         {
-    //             if(fun_mode==APP_D24G_MODE)
-    //             {
-    //                 tlkapi_printf(APP_LOG_EN,"pairing\n");
-    //                 tpsll_enable_pairing(true);
-    //             }
-    //             else
-    //             {
-    //                 app_ble_enable_pairing(1);
-    //             }
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_R_FLAG):
-    //         if(usb_connected_ok)
-    //         {
-    //             app_usb_report_change();
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_1_FLAG):
-    //         if(fun_mode==APP_BLE_MODE)
-    //         {
-    //             app_ble_change_pipe(0);
-    //         }
-    //         else if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_8K);
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_2_FLAG):
-    //         if(fun_mode==APP_BLE_MODE)
-    //         {
-    //             app_ble_change_pipe(1);
-    //         }
-    //         else if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_4K);
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_3_FLAG):
-    //         if(fun_mode==APP_BLE_MODE)
-    //         {
-    //             app_ble_change_pipe(2);
-    //         }
-    //         else if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_2K);
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_4_FLAG):
-    //         if(fun_mode==APP_BLE_MODE)
-    //         {
-    //             app_ble_change_pipe(3);
-    //         }
-    //         else if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_1K);
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_5_FLAG):
-    //         if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_500);
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_6_FLAG):
-    //         if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_250);
-    //         }
-    //         break;
-    //     case (PRESS_T_FN_FLAG|PRESS_KB_7_FLAG):
-    //         if (fun_mode==APP_D24G_MODE)
-    //         {
-    //             tpsll_change_report_rate(REPORT_RATE_125);
-    //         }
-    //         break;
-    //     default:
-    //         break;
-        
-        
-    // }
+    switch (app_key_buf.special_key_press_f)
+    {
+        case (PRESS_T_FN_FLAG|PRESS_KB_M_FLAG):
+            // printf("mouse auto test\n");
+            // auto_test_mouse^=0x01;
+            // if(usb_connected_ok==0)
+            // {
+            //     if(fun_mode==APP_D24G_MODE)
+            //     {
+            //         if(auto_test_mouse)
+            //         {
+            //             app_rf_set_rx_wait(1);// rx wait
+            //         }
+            //         else
+            //         {
+            //             app_rf_set_rx_wait(14);// rx wait
+            //         }
+            //     }
+            // }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_P_FLAG):
+            // printk("pairing mode\n");
+            if(usb_connected_ok==0)
+            {
+                if(fun_mode==APP_D24G_MODE)
+                {
+                    LOG_INF("pairing\n");
+                    // tpsll_enable_pairing(true);
+                }
+                else
+                {
+                    // app_ble_enable_pairing(1);
+                }
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_R_FLAG):
+            if(usb_connected_ok)
+            {
+                // app_usb_report_change();
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_1_FLAG):
+            if(fun_mode==APP_BLE_MODE)
+            {
+                // app_ble_change_pipe(0);
+            }
+            else if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_8K);
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_2_FLAG):
+            if(fun_mode==APP_BLE_MODE)
+            {
+                // app_ble_change_pipe(1);
+            }
+            else if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_4K);
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_3_FLAG):
+            if(fun_mode==APP_BLE_MODE)
+            {
+                // app_ble_change_pipe(2);
+            }
+            else if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_2K);
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_4_FLAG):
+            if(fun_mode==APP_BLE_MODE)
+            {
+                // app_ble_change_pipe(3);
+            }
+            else if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_1K);
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_5_FLAG):
+            if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_500);
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_6_FLAG):
+            if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_250);
+            }
+            break;
+        case (PRESS_T_FN_FLAG|PRESS_KB_7_FLAG):
+            if (fun_mode==APP_D24G_MODE)
+            {
+                // tpsll_change_report_rate(REPORT_RATE_125);
+            }
+            break;
+        default:
+            break;
+    }
 }
