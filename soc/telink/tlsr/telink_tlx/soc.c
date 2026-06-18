@@ -563,7 +563,7 @@ void soc_tlx_restore(void)
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 #if CONFIG_PM
 		pm_set_calib_0p925V_dig_ldo_voltage();
-		gen_fsk_close_unused_clock();
+		/* gen_fsk_close_unused_clock(); */
 #endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if CONFIG_PM
