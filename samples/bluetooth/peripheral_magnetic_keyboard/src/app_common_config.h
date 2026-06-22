@@ -70,35 +70,57 @@
 #define MAC_ADDR_LEN                6 //MAC address length
 
 typedef enum {
-    APP_D24G_MODE                        =   0,
-    APP_BLE_MODE                         =   1,
-    APP_WIRED_USB_MODE                   =   2,
+    KB_MODE_2P4G                        =   0,
+    KB_MODE_BLE                         =   1,
+    KB_MODE_USB                         =   2,
 } kb_mode_t;
 
+#define APP_PC_STATUS_TYPE                  0x00U
+#define APP_LED_STATUS_TYPE                 0x01U
 
 typedef enum
 {
-    STATE_POWERON                       =   0,
+    CMD_PAIR_REQ                        = 0X10,
+    CMD_PAIR_RSP                        = 0X11,
+    CMD_CONN_REQ                        = 0X12,
+    CMD_CONN_RSP                        = 0X13,
+    CMD_CONN_DAT                        = 0X14,
+    CMD_DETACH                          = 0X15,
+    CMD_REJOIN                          = 0X16,
+    CMD_POLL                            = 0X17,
+
+    CMD_RECONN_REQ                      = 0X18,
+    CMD_RECONN_RSP                      = 0X19,
+
+    TPSLL_MS_DATA                       = 0x50,
+    TPSLL_LL_CMD                        = 0x51,
+    TPSLL_SPP_DATA                      = 0x52,
+    TPSLL_LL_NULL                       = 0x53,
+
+} tpsll_cmd_e;
+
+typedef enum
+{
+    STATE_POWERON                       = 0,
     STATE_PAIRING,
     STATE_RECONNECT,
     STATE_NORMAL,
     STATE_CONNECTED,
     STATE_DISCONNECTED,
-    STATE_RF_IDLE,
-    STATE_PAIRING_TIMEOUT,
-    STATE_NONE,
-    STATE_BUSY,
-    STATE_TO_IDLE,
     STATE_IDLE,
-    STATE_TO_SLEEP,
-    STATE_SLEEP,
+    STATE_NONE,
 
-    STATE_PAIR_NONE                     =   0,
+} tpsll_dev_status_e;
+
+
+typedef enum
+{
+    STATE_PAIR_NONE                     = 0,
     STATE_PAIR_INIT,
     STATE_PAIR_RSP,
     STATE_PAIR_CFM,
     STATE_REJOIN,
-} p24g_device_status_e;
+} tpsll_pair_status_e;
 
 typedef enum {
 
@@ -131,49 +153,56 @@ typedef enum {
     P24G_SM_OP_MISC_LONG_SUSP_RET       =   0x5B,
 } p24g_sm_op_e;
 
+typedef enum
+{
+    TPSLL_SPP_NONE                       =   0x60,
+    TPSLL_SPP_LED_STATUS                 =   0x61,
+    TPSLL_SPP_REPORT_RATE                =   0x62,
+    TPSLL_SPP_BATT_CAP                   =   0x63,
+    TPSLL_SPP_CHG_STATUS                 =   0x64,
+    TPSLL_SPP_TEST_DATA                  =   0x65,
+    TPSLL_SPP_ALL_KEY_DATA               =   0x66,
+    TPSLL_SPP_CONSUME_KEY_DATA           =   0x67,
+    TPSLL_SPP_PC_SUSPEND                 =   0x68,
+} tpsll_spp_cmd_e;
 
 typedef enum
 {
-    P24G_SPP_NONE                       =   0x60,
-    P24G_SPP_LED_STATUS                 =   0x61,
-    P24G_SPP_REPORT_RATE                =   0x62,
-    P24G_SPP_BATT_CAP                   =   0x63,
-    P24G_SPP_CHG_STATUS                 =   0x64,
-    P24G_SPP_TEST_DATA                  =   0x65,
-    P24G_SPP_ALL_KEY_DATA               =   0x66,
-    P24G_SPP_CONSUME_KEY_DATA           =   0x67,
-} p24g_spp_cmd_e;
-
+    TPSLL_LL_CMD_NONE                    =   0x70,
+    TPSLL_LL_CMD_TERMINATE_CONN_REQ      =   0x71,
+    TPSLL_LL_CMD_TERMINATE_CONN_RSP      =   0x72,
+    TPSLL_LL_CMD_8K_RR_ADAPT_REQ         =   0x73,
+    TPSLL_LL_CMD_8K_RR_ADAPT_RSP         =   0x74,
+    TPSLL_LL_CMD_RR_CHG_REQ              =   0x75,
+    TPSLL_LL_CMD_RR_CHG_RSP              =   0x76,
+    TPSLL_LL_CMD_SLOT_CHG_REQ            =   0x77,
+    TPSLL_LL_CMD_SLOT_CHG_RSP            =   0x78,
+    TPSLL_LL_CMD_RR_CHG_RCNN_REQ         =   0x79,
+    TPSLL_LL_CMD_RR_CHG_RCNN_RSP         =   0x7A,
+    TPSLL_LL_CMD_UL_DATA_SEND_REQ        =   0x7B,
+    TPSLL_LL_CMD_MAX,
+} tpsll_ll_cmd_e;
 
 typedef enum
 {
-    P24G_LL_CMD_NONE                    =   0x70,
-    P24G_LL_CMD_TERMINATE_CONN          =   0x71,
-    P24G_LL_CMD_TERMINATE_CONN_RSP      =   0x72,
-    P24G_LL_CMD_8K_RR_ADAPT             =   0x73,
-    P24G_LL_CMD_8K_RR_ADAPT_RSP         =   0x74,
-} p24g_ll_cmd_e;
-
-
-typedef enum {
-    P24G_KB_MODE_USB                    =   0x00,
-    P24G_KB_MODE_2P4G                   =   0x01,
-
-    P24G_FLOW_SN                        =   0x01,
-    P24G_FLOW_NESN                      =   0x02,
-
-    P24G_LL_CONN_TIMEOUT                =   0x01,
-    P24G_LL_CONN_TERMINATION_BY_PEER    =   0x02,
-    P24G_LL_CONN_TERMINATION_BY_LOCAL   =   0x03,
-
-    P24G_8K_KM_SLOT                     =   0x00,
-    P24G_8K_SPP_SLOT                    =   0x01,
-    P24G_8K_SLOT_POS                    =   0x03,
-
-    DEVICE_TYPE_KB                      =   BIT(0),
-    DEVICE_TYPE_MS                      =   BIT(1),
-
-};
+    TPSLL_EVT_STACK_START = 0,
+    TPSLL_EVT_DEV_CONNECTED,
+    TPSLL_EVT_DEV_DISCONNECTED,
+    TPSLL_EVT_PAIRING_ENTER,
+    TPSLL_EVT_DEV_PAIRED,
+    TPSLL_EVT_REPORT_RATE_CHANGED,
+    TPSLL_EVT_ENTER_SUSPEND,
+    TPSLL_EVT_EXIT_SUSPEND,
+    TPSLL_EVT_SPP_DATA_RECV,
+    TPSLL_EVT_PAIR_TIMEOUT,
+    TPSLL_EVT_RECONNECT_TIMEOUT,
+    TPSLL_EVT_NO_ACTIVE_TIMEOUT,
+    TPSLL_EVT_USR_SPEC_DATA_RECV,
+    TPSLL_EVT_USR_SPEC_ACK_RECV,
+    TPSLL_EVT_SLEEP_ENTER_REQ,
+    TPSLL_EVT_SAVE_REPORT_RATE,
+    TPSLL_EVT_MAX
+} tpsll_evt_t;
 
 typedef enum
 {
@@ -184,11 +213,50 @@ typedef enum
     REPORT_RATE_500                     = BIT(3),
     REPORT_RATE_250                     = BIT(4),
     REPORT_RATE_125                     = BIT(5),
+    REPORT_RATE_NONE                     = 0,
 
     RR_8K_HIGH                          = 0,
     RR_8K_LOW                           = 1,
     REPORT_RATE_8K_MODE_LOW             = REPORT_RATE_500,
     REPORT_RATE_8K_MODE_HIGH            = REPORT_RATE_8K,
 } report_rate_t;
+
+typedef enum
+{
+    DPI_12800 = 0xFF,
+    DPI_7000 = 0x8B,
+    DPI_3600 = 0x48,
+    DPI_1600 = 0x20,
+    DPI_400 = 0x08,
+} dpi_t;
+
+typedef enum
+{
+    P24G_TIMEOUT_TYPE_PAIR      = 0,
+    P24G_TIMEOUT_TYPE_RECONN    = 1,
+    P24G_TIMEOUT_TYPE_DISCONN   = 2,
+    P24G_TIMEOUT_TYPE_NOACTIVE  = 3,
+
+}tpsll_timeout_type_e;
+
+typedef enum
+{
+    MOUSE_DATA=3,
+    SPP_DATA = 4,
+    SPP_DATA_ACK = 5,
+    NORMAL_KB_DATA_CMD = 6,
+    CONSUME_KB_DATA_CMD = 7,
+    SYSTEM_KB_DATA_CMD = 8,
+    ALL_KB_DATA_CMD = 9,
+
+    PAIRING_CMD = 0XA1,
+    PAIRING_RSP = 0XA2,
+
+    DEVICE_TYPE_KB = BIT(0),
+    DEVICE_TYPE_MS = BIT(1),
+
+    ERROR_DATA = 0X55,
+
+} tpsll_stack_cmd_e;
 
 

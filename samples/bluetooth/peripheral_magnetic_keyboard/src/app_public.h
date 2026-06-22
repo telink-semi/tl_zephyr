@@ -45,20 +45,6 @@ extern "C" {
 
 
 enum {
-    EMPTY_DATA_CMD=0,
-    PAIR_DATA_CMD=1,
-    RECONNECT_DATA_CMD=2,
-    MOUSE_DATA=3,
-    SPP_DATA=4,
-    SPP_DATA_ACK=5,
-    NORMAL_KB_DATA_CMD=6,
-    CONSUME_KB_DATA_CMD=7,
-    SYSTEM_KB_DATA_CMD=8,
-    ALL_KB_DATA_CMD=9,
-};
-
-
-enum {
     MULTI_DEVICE_CMD = 0,
     MULTI_DEVICE_CHANGE_PIPE_1,
     MULTI_DEVICE_CHANGE_PIPE_2,
@@ -122,7 +108,7 @@ extern volatile unsigned char fun_mode;
 static inline kb_mode_t  app_get_mode(void)
 {
     #if (DBG_WITH_EVK_EN)
-    return APP_D24G_MODE;
+    return KB_MODE_2P4G;
     #else
     return fun_mode;
     #endif

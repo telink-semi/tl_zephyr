@@ -36,7 +36,7 @@ LOG_MODULE_REGISTER(app_2p4g);
 static volatile uint32_t spp_tick = 0;
 
 
-volatile p24g_device_status_e g_state = STATE_POWERON;
+volatile tpsll_dev_status_e g_state = STATE_POWERON;
 
 /**
  * @brief share memory message handler table
@@ -221,71 +221,71 @@ _attribute_ram_code_sec_ uint8_t p24g_rf_enter_idle(void)
 _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
-    if (p_evt->type == P24G_SM_CMD_SET_STATE)
-    {
-        if (p_evt->opcode <= STATE_PAIRING_TIMEOUT) {
-            // app_d24p_set_state(p_evt->opcode);
-        }
+    // if (p_evt->type == P24G_SM_CMD_SET_STATE)
+    // {
+    //     if (p_evt->opcode <= STATE_PAIRING_TIMEOUT) {
+    //         // app_d24p_set_state(p_evt->opcode);
+    //     }
 
-        if (p_evt->opcode == STATE_CONNECTED)
-        {
-            tlkapi_send_string_data(APP_LOG_EN, "connected", data, len);
+    //     if (p_evt->opcode == STATE_CONNECTED)
+    //     {
+    //         tlkapi_send_string_data(APP_LOG_EN, "connected", data, len);
 
-            spp_tick = stimer_get_tick() | 1;
-        }
-        else if (p_evt->opcode == STATE_DISCONNECTED)
-        {
-             if(p_evt->data[0] == P24G_LL_CONN_TIMEOUT)
-            {
-                p24g_enable_reconn(true);
-            }
-        }
-        else if (p_evt->opcode == STATE_PAIRING)
-        {
+    //         spp_tick = stimer_get_tick() | 1;
+    //     }
+    //     else if (p_evt->opcode == STATE_DISCONNECTED)
+    //     {
+    //          if(p_evt->data[0] == P24G_LL_CONN_TIMEOUT)
+    //         {
+    //             p24g_enable_reconn(true);
+    //         }
+    //     }
+    //     else if (p_evt->opcode == STATE_PAIRING)
+    //     {
 
-        }else if (p_evt->opcode == STATE_RF_IDLE)
-        {
+    //     }else if (p_evt->opcode == STATE_RF_IDLE)
+    //     {
 
-        }else if (p_evt->opcode == STATE_PAIRING_TIMEOUT)
-        {
-            p24g_enable_pairing(true);
-        }
-        else if (p_evt->opcode == STATE_IDLE)
-        {
-            uint32_t wakeup_stick = 0;
+    //     }else if (p_evt->opcode == STATE_PAIRING_TIMEOUT)
+    //     {
+    //         p24g_enable_pairing(true);
+    //     }
+    //     else if (p_evt->opcode == STATE_IDLE)
+    //     {
+    //         uint32_t wakeup_stick = 0;
 
-            wakeup_stick = p_evt->data[3];
-            wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
-            wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
-            wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
+    //         wakeup_stick = p_evt->data[3];
+    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
+    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
+    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
 
-            // app_2p4g_set_power_state(STATE_TO_IDLE, wakeup_stick);
-        }
-        else if (p_evt->opcode == STATE_SLEEP)
-        {
-            uint32_t wakeup_stick = 0;
+    //         // app_2p4g_set_power_state(STATE_TO_IDLE, wakeup_stick);
+    //     }
+    //     else if (p_evt->opcode == STATE_SLEEP)
+    //     {
+    //         uint32_t wakeup_stick = 0;
 
-            wakeup_stick = p_evt->data[3];
-            wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
-            wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
-            wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
+    //         wakeup_stick = p_evt->data[3];
+    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
+    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
+    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
 
-            // DBG_GPIO_TOGGLE(STACK_IO_EN, GPIO_PD7);
-            // app_2p4g_set_power_state(STATE_TO_SLEEP, wakeup_stick);
-        }
-    }
+    //         // DBG_GPIO_TOGGLE(STACK_IO_EN, GPIO_PD7);
+    //         // app_2p4g_set_power_state(STATE_TO_SLEEP, wakeup_stick);
+    //     }
+    // }
 }
 
 
 _attribute_ram_code_sec_ static void app_2p4g_handle_spp_data(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
-    if (p_evt->opcode == P24G_SPP_LED_STATUS)
+    if (p_evt->opcode == TPSLL_SPP_LED_STATUS)
     {
         // app_pc_kb_led_status(p_evt->data[0]);
 
     }
-    else if (p_evt->opcode == P24G_SPP_TEST_DATA)
+    else if (p_evt->opcode == TPSLL_SPP_TEST_DATA)
     {
         tlkapi_send_string_data(APP_LOG_EN, "rx spp data", data, len);
 
@@ -343,6 +343,21 @@ _attribute_ram_code_sec_ uint8_t p24g_send_spp_data(uint8_t cmd, unsigned char *
     return ret;
 }
 
+void mcc_d25f_to_n22_set_clk_info(void)
+{
+    uint8_t cmd[8] = {0};
+    uint32_t address = (uint32_t)(&sys_clk);
+
+    cmd[0] = address;
+    cmd[1] = address >> 8;
+    cmd[2] = address >> 16;
+    cmd[3] = address >> 24;
+
+    mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_SET_CLK_INFO, cmd);
+
+    // delay_us(20);
+}
+
 /**
  * @brief       user initialization when MCU power on or wake_up from deepSleep mode
  * @param[in]   none
@@ -356,7 +371,7 @@ void p24g_user_init_normal(void)
 
     app_p24g_sm_cmd_hanlder_init();
 
-    p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
+    p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, KB_MODE_2P4G, 0, 0);
  
     LOG_INF("d25f kb_p24g_init end\n");
 }

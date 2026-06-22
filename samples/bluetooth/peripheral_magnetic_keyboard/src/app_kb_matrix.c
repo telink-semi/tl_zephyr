@@ -245,7 +245,7 @@ _attribute_ram_code_sec_ void key_data_handle(void)
             tmemcpy(nk_last,app_key_buf.nk,8);
             unsigned int r = core_interrupt_disable();
 
-            if ((app_get_mode()==APP_D24G_MODE)&&(usb_connected_ok==0))
+            if ((app_get_mode()==KB_MODE_2P4G)&&(usb_connected_ok==0))
             {
                 pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], nk_cnt + 2);
                 // tlkapi_send_string_data(APP_LOG_EN, "nkb", (unsigned char *)&app_key_buf.nk[0], nk_cnt + 2);

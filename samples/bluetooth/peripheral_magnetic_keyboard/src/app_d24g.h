@@ -29,7 +29,7 @@ typedef struct p24g_evt
 } __attribute__((packed)) p24g_evt_t;
 
 
-extern volatile p24g_device_status_e g_state;
+extern volatile tpsll_dev_status_e g_state;
 
 /**
  * @brief   Register a shared memory (SM) command handler for the 2.4GHz protocol
@@ -155,12 +155,12 @@ void app_2p4g_mb_km_data_cb(uint8_t* data);
  * which indicates the RF or connection status such as idle, connected,
  * or disconnected.
  *
- * @return    Current device state of type @ref p24g_device_status_e
+ * @return    Current device state of type @ref tpsll_dev_status_e
  *
  * @note      Typically used to check the current communication or RF state
  *            in higher-level application logic.
  */
-static inline p24g_device_status_e app_d24p_get_state(void)
+static inline tpsll_dev_status_e app_d24p_get_state(void)
 {
     return g_state;
 }

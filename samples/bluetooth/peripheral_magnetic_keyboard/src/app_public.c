@@ -90,7 +90,7 @@ _attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FL
 
 
 volatile unsigned char fun_mode = 0;
-static unsigned char last_mode_status=APP_WIRED_USB_MODE;
+static unsigned char last_mode_status=KB_MODE_USB;
 
 _attribute_aligned_(4)  unsigned char buf_txfifo[40*8];
 
@@ -181,7 +181,7 @@ _attribute_ram_code_sec_ uint8_t app_2p4g_set_stack_report_rate(uint8_t report_r
 
     if (app_d24p_get_state() == STATE_CONNECTED) 
     {
-        ret = p24g_send_spp_data(P24G_SPP_REPORT_RATE, &report_rate, 1);
+        ret = p24g_send_spp_data(TPSLL_SPP_REPORT_RATE, &report_rate, 1);
         if (TLK_SUCCESS == ret) {
             ret = p24g_send_sm_msg(P24G_SM_CMD_REPORT_RATE_CHANGE, report_rate, 0, 0);
             // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
@@ -235,15 +235,15 @@ _attribute_ram_code_sec_ void check_mode(u8 power_on)
 
     if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 0)
     {
-        fun_mode = APP_WIRED_USB_MODE;
+        fun_mode = KB_MODE_USB;
     }
     else if(mode_2p4_pin_level == 1 && mode_ble_pin_level == 0)
     {
-        fun_mode = APP_D24G_MODE;
+        fun_mode = KB_MODE_2P4G;
     }
     else if(mode_2p4_pin_level == 0 && mode_ble_pin_level == 1)
     {
-        fun_mode = APP_BLE_MODE;
+        fun_mode = KB_MODE_BLE;
     }
     if(last_mode_status!=fun_mode)
     {
@@ -257,9 +257,9 @@ _attribute_ram_code_sec_ void check_mode(u8 power_on)
         }
     }
 #else
-    fun_mode=APP_D24G_MODE;
-    //fun_mode=APP_BLE_MODE;
-    //fun_mode=APP_WIRED_USB_MODE;
+    fun_mode=KB_MODE_2P4G;
+    //fun_mode=KB_MODE_BLE;
+    //fun_mode=KB_MODE_USB;
 #endif
 }
 
@@ -385,11 +385,11 @@ void keyboard_comm_init(void)
 
     tlk_d25f_to_n22_mode_info(fun_mode);
 
-    if (fun_mode == APP_D24G_MODE)
+    if (fun_mode == KB_MODE_2P4G)
     {
 	    p24g_user_init_normal();
     } 
-    else if (fun_mode == APP_BLE_MODE)
+    else if (fun_mode == KB_MODE_BLE)
     {
         // ble_init();
     }
@@ -441,15 +441,15 @@ void keyboard_comm_init(void)
     app_usb_status_check();
 #endif
 
-    if (fun_mode == APP_D24G_MODE)
+    if (fun_mode == KB_MODE_2P4G)
     {
         app_2p4g_main_loop();
     }
-    else if (fun_mode == APP_BLE_MODE)
+    else if (fun_mode == KB_MODE_BLE)
     {
         //TODO
     }
-    else if (fun_mode == APP_WIRED_USB_MODE)
+    else if (fun_mode == KB_MODE_USB)
     {
 #if USB_APP_FUN_ENABLE
         app_usb_main_loop();
@@ -528,7 +528,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             // auto_test_mouse^=0x01;
             // if(usb_connected_ok==0)
             // {
-            //     if(fun_mode==APP_D24G_MODE)
+            //     if(fun_mode==KB_MODE_2P4G)
             //     {
             //         if(auto_test_mouse)
             //         {
@@ -545,7 +545,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             // printk("pairing mode\n");
             if(usb_connected_ok==0)
             {
-                if(fun_mode==APP_D24G_MODE)
+                if(fun_mode==KB_MODE_2P4G)
                 {
                     LOG_INF("pairing\n");
                     // tpsll_enable_pairing(true);
@@ -563,59 +563,59 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_1_FLAG):
-            if(fun_mode==APP_BLE_MODE)
+            if(fun_mode==KB_MODE_BLE)
             {
                 // app_ble_change_pipe(0);
             }
-            else if (fun_mode==APP_D24G_MODE)
+            else if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_8K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_2_FLAG):
-            if(fun_mode==APP_BLE_MODE)
+            if(fun_mode==KB_MODE_BLE)
             {
                 // app_ble_change_pipe(1);
             }
-            else if (fun_mode==APP_D24G_MODE)
+            else if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_4K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_3_FLAG):
-            if(fun_mode==APP_BLE_MODE)
+            if(fun_mode==KB_MODE_BLE)
             {
                 // app_ble_change_pipe(2);
             }
-            else if (fun_mode==APP_D24G_MODE)
+            else if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_2K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_4_FLAG):
-            if(fun_mode==APP_BLE_MODE)
+            if(fun_mode==KB_MODE_BLE)
             {
                 // app_ble_change_pipe(3);
             }
-            else if (fun_mode==APP_D24G_MODE)
+            else if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_1K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_5_FLAG):
-            if (fun_mode==APP_D24G_MODE)
+            if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_500);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_6_FLAG):
-            if (fun_mode==APP_D24G_MODE)
+            if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_250);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_7_FLAG):
-            if (fun_mode==APP_D24G_MODE)
+            if (fun_mode==KB_MODE_2P4G)
             {
                 // tpsll_change_report_rate(REPORT_RATE_125);
             }

@@ -281,9 +281,9 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
             // TODO:gpio_set_level(MODE_LED_PIN, LED_IS_ON);
             // TODO: gpio_set_level(PAIR_LED_PIN,LED_IS_OFF);
             usb_connected_ok = 1;
-            if(fun_mode == APP_D24G_MODE)
+            if(fun_mode == KB_MODE_2P4G)
             {
-                // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_USB, 0, 0);
+                // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, KB_MODE_USB, 0, 0);
             }
             else
             {
@@ -296,10 +296,10 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
             // TODO:gpio_set_level(MODE_LED_PIN, LED_IS_OFF);
             usb_connected_ok = 0;
 
-            if(fun_mode == APP_D24G_MODE)
+            if(fun_mode == KB_MODE_2P4G)
             {
                 LOG_INF("mode is 2.4g\r\n");
-                // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, P24G_KB_MODE_2P4G, 0, 0);
+                // TODO:p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, KB_MODE_2P4G, 0, 0);
             }
         }
         last_usb_status = usb_status;
