@@ -36,6 +36,8 @@ LOG_MODULE_REGISTER(app_2p4g);
 static volatile uint32_t spp_tick = 0;
 
 
+volatile p24g_device_status_e g_state = STATE_POWERON;
+
 /**
  * @brief share memory message handler table
  */

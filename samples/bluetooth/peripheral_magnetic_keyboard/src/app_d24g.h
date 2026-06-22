@@ -29,6 +29,8 @@ typedef struct p24g_evt
 } __attribute__((packed)) p24g_evt_t;
 
 
+extern volatile p24g_device_status_e g_state;
+
 /**
  * @brief   Register a shared memory (SM) command handler for the 2.4GHz protocol
  *
@@ -144,6 +146,25 @@ void app_2p4g_main_loop(void);
  *             for keyboard/mouse data reception in the 2.4GHz stack.
  */
 void app_2p4g_mb_km_data_cb(uint8_t* data);
+
+
+/**
+ * @brief     Get the current 2.4GHz device state
+ *
+ * This function returns the current operating state of the 2.4GHz device,
+ * which indicates the RF or connection status such as idle, connected,
+ * or disconnected.
+ *
+ * @return    Current device state of type @ref p24g_device_status_e
+ *
+ * @note      Typically used to check the current communication or RF state
+ *            in higher-level application logic.
+ */
+static inline p24g_device_status_e app_d24p_get_state(void)
+{
+    return g_state;
+}
+
 
 
 void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag);

@@ -65,8 +65,32 @@ const struct gpio_dt_spec   mode_led_pin = GPIO_SPEC(MODE_NODE),
                             mode_ble_pin = GPIO_SPEC(BLE_NODE);
 
 
+
+/* 定义NVS使用的Flash存储分区 */
+#define NVS_USER_PARTITION user_app_partition
+#define NVS_PARTITION_DEVICE FIXED_PARTITION_DEVICE(NVS_USER_PARTITION)
+#define NVS_PARTITION_OFFSET FIXED_PARTITION_OFFSET(NVS_USER_PARTITION)
+/* NVS扇区大小，需与Flash的擦除页大小匹配 */
+#define NVS_SECTOR_SIZE (4096)
+/* NVS扇区数量 */
+#define NVS_SECTOR_COUNT (2)
+/* 定义NVS实例 */
+struct nvs_fs user_fs;
+
+
+ST_FLASH_DEV_INFO flash_dev_info  __attribute__ ((aligned (4)));
+int dev_info_idx;
+
+ST_FLASH_DEV_OTHER_INFO flash_dev_other_info  __attribute__ ((aligned (4)));
+int dev_other_info_idx;
+
+_attribute_data_retention_ uint32_t flash_sector_2p4_inf=P24G_PAIR_INF_FLASH_ADDR_2M;
+_attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FLASH_ADDR_2M;
+
+
+
 volatile unsigned char fun_mode = 0;
-static unsigned char last_fun_mode = 1;
+static unsigned char last_mode_status=APP_WIRED_USB_MODE;
 
 _attribute_aligned_(4)  unsigned char buf_txfifo[40*8];
 
@@ -102,6 +126,87 @@ pl_fifo_t d25fSppTxFifo = {
     .p = spp_buf_txfifo,
 };
 
+
+ /**
+ * @brief FNV-1a 32-bit hash function
+ * @param data   
+ * @param len    
+ * @return 16-bit hash value
+ */
+ _attribute_ram_code_sec_ uint32_t fnv1a_hash(uint8_t *data, size_t len) 
+{
+    uint32_t hash = 0x811C9DC5;
+    
+    for (size_t i = 0; i < len; i++) {
+        hash ^= data[i];
+        hash = hash + (hash << 24) + (hash << 8) + (hash << 5);
+        hash ^= (hash >> 16);//Avalanche Effect
+    }
+
+    return hash;
+}
+
+
+
+
+
+static void p24g_pairing_info_check(void)
+{
+    //dev_info_idx = flash_info_load(flash_sector_2p4_inf, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
+
+    int ret = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
+    if (ret == -ENOENT) {
+        printk("NVS APP_2P4G_PAIR_INFO_ID naver saved\n");
+        LOG_INF("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+    } else {
+        LOG_INF("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+    }
+
+
+    //dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+
+    ret = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+    if (ret == -ENOENT) {
+        printk("NVS APP_2P4G_APP_INFO_ID naver saved\n");
+
+    } else {
+        LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
+    }
+}
+
+
+_attribute_ram_code_sec_ uint8_t app_2p4g_set_stack_report_rate(uint8_t report_rate)
+{
+    uint8_t ret = TLK_SUCCESS;
+
+    if (app_d24p_get_state() == STATE_CONNECTED) 
+    {
+        ret = p24g_send_spp_data(P24G_SPP_REPORT_RATE, &report_rate, 1);
+        if (TLK_SUCCESS == ret) {
+            ret = p24g_send_sm_msg(P24G_SM_CMD_REPORT_RATE_CHANGE, report_rate, 0, 0);
+            // DBG_GPIO_TOGGLE(APP_IO_EN, GPIO_PH0);
+        }
+    } else {
+        ret = TLK_ERR_INVALID_STATE;
+    }
+
+    return ret;
+}
+
+
+
+void app_pc_kb_led_status(unsigned char status)
+{
+    static unsigned char last_status = 0xff;
+    if(last_status!=status)
+    {
+        last_status=status;
+        //gpio_set_level(NUM_LED_PIN, !(status&0x01));
+        //gpio_set_level(CAP_LED_PIN, !(status&0x02));
+    }
+}
+
+
 _attribute_ram_code_sec_ void check_vbus(void)
 {
     static int8_t vbus_cnt = 0;
@@ -122,8 +227,9 @@ _attribute_ram_code_sec_ void check_vbus(void)
 }
 
 
-_attribute_ram_code_sec_ void check_mode(void)
+_attribute_ram_code_sec_ void check_mode(u8 power_on)
 {
+#if (ALLOW_SWITCH_BLE_2P4G_MODE)
     uint8_t mode_2p4_pin_level = gpio_pin_get_dt(&mode_2p4_pin);
     uint8_t mode_ble_pin_level = gpio_pin_get_dt(&mode_ble_pin);
 
@@ -139,6 +245,22 @@ _attribute_ram_code_sec_ void check_mode(void)
     {
         fun_mode = APP_BLE_MODE;
     }
+    if(last_mode_status!=fun_mode)
+    {
+        pp_fifo_reset(&tx_fifo);
+        pp_fifo_reset(&d25fKbTxFifo);
+        last_mode_status=fun_mode;
+        LOG_INF("switch=%d", last_mode_status);
+        if(power_on==0)
+        {
+            sys_reboot(SYS_REBOOT_COLD);
+        }
+    }
+#else
+    fun_mode=APP_D24G_MODE;
+    //fun_mode=APP_BLE_MODE;
+    //fun_mode=APP_WIRED_USB_MODE;
+#endif
 }
 
 /* Timer0 interrupt handler */
@@ -259,7 +381,7 @@ void keyboard_comm_init(void)
 {
     peripheral_comm_init();
 
-    check_mode();
+    check_mode(1);
 
     tlk_d25f_to_n22_mode_info(fun_mode);
 
@@ -295,11 +417,13 @@ void keyboard_comm_init(void)
 
  _attribute_ram_code_sec_ void public_loop(void)
 {
-#if USB_APP_FUN_ENABLE
-    app_usb_status_check();
-#endif
+    static uint32_t last_time = 0;
 
-    check_mode();
+    if(k_uptime_get_32() - last_time > 50)//50ms
+    {
+        last_time = k_uptime_get_32();
+        check_mode(0);
+    }
 
     // static unsigned char flag = 0;
 
@@ -313,6 +437,9 @@ void keyboard_comm_init(void)
     //     tpsll_send_keyboard_data(&zero_buffer[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
     // }
 
+#if USB_APP_FUN_ENABLE
+    app_usb_status_check();
+#endif
 
     if (fun_mode == APP_D24G_MODE)
     {
@@ -322,12 +449,12 @@ void keyboard_comm_init(void)
     {
         //TODO
     }
-#if USB_APP_FUN_ENABLE
     else if (fun_mode == APP_WIRED_USB_MODE)
     {
+#if USB_APP_FUN_ENABLE
         app_usb_main_loop();
-    }
 #endif
+    }
 }
 
 _attribute_ram_code_sec_ unsigned char special_key_press_flag_set(unsigned char key_code)

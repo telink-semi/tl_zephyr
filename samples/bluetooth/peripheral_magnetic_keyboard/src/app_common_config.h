@@ -67,6 +67,7 @@
 #define SPP_TX_FIFO_SIZE            32
 #define SPP_TX_FIFO_SIZE_KB         24 //In 8K mode, the spp buffer size cannot exceed 24 on kb side.
 
+#define MAC_ADDR_LEN                6 //MAC address length
 
 typedef enum {
     APP_D24G_MODE                        =   0,

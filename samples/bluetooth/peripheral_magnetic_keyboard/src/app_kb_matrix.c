@@ -247,7 +247,7 @@ _attribute_ram_code_sec_ void key_data_handle(void)
 
             if ((app_get_mode()==APP_D24G_MODE)&&(usb_connected_ok==0))
             {
-                tpsll_send_keyboard_data(&app_key_buf.nk[0], nk_cnt + 2, NORMAL_KB_DATA_CMD, NULL, NULL);
+                pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], nk_cnt + 2);
                 // tlkapi_send_string_data(APP_LOG_EN, "nkb", (unsigned char *)&app_key_buf.nk[0], nk_cnt + 2);
             }
             else
