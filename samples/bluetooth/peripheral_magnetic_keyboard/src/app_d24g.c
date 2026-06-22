@@ -32,6 +32,7 @@ LOG_MODULE_REGISTER(app_2p4g);
 
 #define WDT_INTV_MS     (300)
 
+app_ctx_t app_ctx;
 
 static volatile uint32_t spp_tick = 0;
 

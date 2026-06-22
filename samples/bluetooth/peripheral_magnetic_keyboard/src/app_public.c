@@ -167,7 +167,7 @@ static void p24g_pairing_info_check(void)
 
     ret = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
     if (ret == -ENOENT) {
-        printk("NVS APP_2P4G_APP_INFO_ID naver saved\n");
+        LOG_INF("NVS APP_2P4G_APP_INFO_ID naver saved\n");
 
     } else {
         LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
@@ -293,6 +293,20 @@ static int peripheral_comm_init(void)
 {
     int ret;
 
+    /* Initialize the NVS file system */
+    user_fs.flash_device = NVS_PARTITION_DEVICE;
+    user_fs.offset = NVS_PARTITION_OFFSET;
+    user_fs.sector_size = NVS_SECTOR_SIZE;
+    user_fs.sector_count = NVS_SECTOR_COUNT;
+
+    ret = nvs_mount(&user_fs);
+    if (ret) {
+        LOG_INF("Error: NVS init failed: %d\n", ret);
+        return -ENODEV;
+    }
+    LOG_INF("NVS initialized successfully.\n");
+
+
     if (!gpio_is_ready_dt(&mode_led_pin)) {
         LOG_ERR("mode_led_pin gpio not ready");
         return -ENODEV;
@@ -382,6 +396,17 @@ void keyboard_comm_init(void)
     peripheral_comm_init();
 
     check_mode(1);
+
+    if (fun_mode == KB_MODE_2P4G)
+    {
+        uint8_t mac_public[6];
+        uint8_t mac_random_static[6];
+        extern unsigned int flash_sector_mac_address;
+        random_generator_init();
+        blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
+        memcpy(app_ctx.mac, mac_public, MAC_ADDR_LEN);
+        p24g_pairing_info_check();
+    }
 
     tlk_d25f_to_n22_mode_info(fun_mode);
 

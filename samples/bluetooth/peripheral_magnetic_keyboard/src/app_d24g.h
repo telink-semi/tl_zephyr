@@ -29,6 +29,13 @@ typedef struct p24g_evt
 } __attribute__((packed)) p24g_evt_t;
 
 
+typedef struct {
+    uint8_t rf_mode;
+    uint8_t mac[MAC_ADDR_LEN];
+} app_ctx_t;
+extern app_ctx_t app_ctx;
+
+
 extern volatile tpsll_dev_status_e g_state;
 
 /**
