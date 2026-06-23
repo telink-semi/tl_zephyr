@@ -158,44 +158,44 @@ void app_2p4g_dual_core_comm_init(void)
 }
 
 
-// _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *data, uint16_t len)
-// {
-//     p24g_evt_t *p_evt = (p24g_evt_t *)data;
+_attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *data, uint16_t len)
+{
+    p24g_evt_t *p_evt = (p24g_evt_t *)data;
 
-//     if (p_evt->type == P24G_SM_CMD_SAVE_PAIR_INFO)
-//     {
-//         memcpy(flash_dev_info.peer_addr, p_evt->data, MAC_ADDR_LEN);
-//         uint32_t side_id = fnv1a_hash(flash_dev_info.peer_addr, MAC_ADDR_LEN);
+    if (p_evt->type == P24G_SM_CMD_SAVE_PAIR_INFO)
+    {
+        memcpy(flash_dev_info.peer_addr, p_evt->data, MAC_ADDR_LEN);
+        uint32_t side_id = fnv1a_hash(flash_dev_info.peer_addr, MAC_ADDR_LEN);
         
-//         if (flash_dev_info.side_id != side_id)
-//         {
-//             flash_dev_info.side_id = side_id;
-//             save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
+        if (flash_dev_info.side_id != side_id)
+        {
+            flash_dev_info.side_id = side_id;
+            // save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
 
-//             // int ret = nvs_write(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-//             // printk("NVS APP_2P4G_PAIR_INFO_ID Write result: %d\n", ret);
-//         }
+            int ret = nvs_write(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
+            LOG_INF("NVS APP_2P4G_PAIR_INFO_ID Write result: %d\n", ret);
+        }
         
-//     }
-// }
+    }
+}
 
-// _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
-// {
-//     if ((rr == REPORT_RATE_8K) || (rr == REPORT_RATE_125)) {
-//         flash_dev_other_info.report_rate = rr;
-//         uint32_t side_id = fnv1a_hash(flash_dev_other_info.report_rate, 1);
+_attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
+{
+    if ((rr == REPORT_RATE_8K) || (rr == REPORT_RATE_125)) {
+        flash_dev_other_info.report_rate = rr;
+        uint32_t side_id = fnv1a_hash(flash_dev_other_info.report_rate, 1);
 
-//         if (flash_dev_other_info.side_id != side_id)
-//         {
-//             flash_dev_other_info.side_id = side_id;
-//             tlkapi_send_string_data(APP_LOG_EN, "saving other info", &flash_dev_other_info.side_id, 5);
+        if (flash_dev_other_info.side_id != side_id)
+        {
+            flash_dev_other_info.side_id = side_id;
+            tlkapi_send_string_data(APP_LOG_EN, "saving other info", &flash_dev_other_info.side_id, 5);
 
-//             save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
-//             // int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-//             // printk("NVS APP_2P4G_APP_INFO_ID Write result: %d\n", ret);
-//         }
-//     }
-// }
+            // save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
+            int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+            LOG_INF("NVS APP_2P4G_APP_INFO_ID Write result: %d\n", ret);
+        }
+    }
+}
 
 
 _attribute_ram_code_sec_ uint8_t p24g_enable_pairing(bool enable)
@@ -288,7 +288,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_spp_data(uint8_t *data, uin
     }
     else if (p_evt->opcode == TPSLL_SPP_TEST_DATA)
     {
-        tlkapi_send_string_data(APP_LOG_EN, "rx spp data", data, len);
+        LOG_INF("rx spp data %d", p_evt->data[0]);
 
     }
 }
@@ -299,24 +299,56 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
     switch (p_evt->opcode) {
-        case P24G_SM_OP_MISC_REPORT_RATE:
-            LOG_INF("report rate changed\n");
+        case P24G_SM_OP_MISC_REPORT_RATE: //report rate changed
+            LOG_INF("report rate changed %d", data[3]);
+            // app_2p4g_clock_reinit(data[3]);
             break;
 
+        case P24G_SM_OP_MISC_SAVE_REPORT_RATE:
+            app_2p4g_save_report_rate_info(data[3]);
+
+            LOG_INF("report rate info saved %d", data[3]);
+            // app_2p4g_clock_reinit(data[3]);
+            break;
+
+        case P24G_SM_OP_MISC_RF_MODE:
+            LOG_INF("rf mode:%x\n", p_evt->data[0]);
+            app_ctx.rf_mode = p_evt->data[0];
+            break;
     default:
         break;
     }
 }
 
+
 static void app_p24g_sm_cmd_hanlder_init(void)
 {
-    // p24g_register_sm_cmd_handler(P24G_SM_CMD_SAVE_PAIR_INFO,           app_2p4g_handle_save_pairing_info);
+    p24g_register_sm_cmd_handler(P24G_SM_CMD_SAVE_PAIR_INFO,           app_2p4g_handle_save_pairing_info);
     p24g_register_sm_cmd_handler(P24G_SM_CMD_SET_STATE,                app_2p4g_handle_set_state);
     p24g_register_sm_cmd_handler(P24G_SM_CMD_DATA_TYPE_SPP,            app_2p4g_handle_spp_data);
     p24g_register_sm_cmd_handler(P24G_SM_CMD_MISC,                     app_2p4g_handle_misc);
 }
 
+static void app_p24g_send_info_2_n22(void)
+{
+    p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_TRANS_MAC, app_ctx.mac, MAC_ADDR_LEN);
 
+    if (dev_info_idx >= 0)
+    {
+        p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_PEER_INFO, flash_dev_info.peer_addr, MAC_ADDR_LEN);
+        p24g_enable_reconn(true); 
+    }
+
+    #if (HW_BOARD_TYPE == HW_EVK_KEYBOARD)
+    else{
+        tlkapi_send_string_data(APP_LOG_EN, "enter pairing mode ", 0, 0);
+        p24g_enable_pairing(true);
+    }
+    #endif
+    if (dev_other_info_idx >= 0) {
+        p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_REPORT_RATE, &flash_dev_other_info.report_rate, 1);
+    }
+}
 
 
 _attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag)
@@ -371,6 +403,8 @@ void p24g_user_init_normal(void)
     app_2p4g_dual_core_comm_init();
 
     app_p24g_sm_cmd_hanlder_init();
+
+    app_p24g_send_info_2_n22();
 
     p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, KB_MODE_2P4G, 0, 0);
  

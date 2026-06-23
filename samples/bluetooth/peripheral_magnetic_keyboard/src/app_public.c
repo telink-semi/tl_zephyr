@@ -573,7 +573,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
                 if(fun_mode==KB_MODE_2P4G)
                 {
                     LOG_INF("pairing\n");
-                    // tpsll_enable_pairing(true);
+                    p24g_enable_pairing(true);
                 }
                 else
                 {
