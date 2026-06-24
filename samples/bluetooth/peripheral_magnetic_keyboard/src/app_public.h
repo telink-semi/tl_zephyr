@@ -15,8 +15,7 @@ extern "C" {
 #include "compiler.h"
 #include "app_d24g.h"
 #include "app_usb.h"
-#include "tl_fifo.h"
-#include "tl_string.h"
+#include "app_fifo.h"
 #include "driver.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////
