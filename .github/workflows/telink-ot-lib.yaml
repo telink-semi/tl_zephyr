@@ -105,6 +105,18 @@ jobs:
         cp -r build_tmp/zephyr/ot-include/* \
              "build_telink_ot_lib_artifacts/include"
 
+    - name: Make Zephyr module
+      run: |
+        cat << EOF > build_telink_ot_lib_artifacts/zephyr/module.yml
+        # Copyright (c) 2026 Telink Semiconductor
+        # SPDX-License-Identifier: Apache-2.0"
+
+        name: openthread_telink_lib
+        build:
+          cmake: .
+          kconfig: Kconfig
+        EOF
+
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
       with:
