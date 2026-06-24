@@ -350,9 +350,7 @@ void soc_early_init_hook(void)
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
-#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
-#endif /* CONFIG_PM */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
 	g_adc_calib_flag = efuse_calib_sd_adc_vref();
@@ -526,9 +524,7 @@ void soc_tlx_restore(void)
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
-#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
-#endif /* CONFIG_PM */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
 	if (g_adc_calib_flag == DRV_API_SUCCESS) {
