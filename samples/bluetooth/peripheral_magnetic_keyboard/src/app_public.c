@@ -148,14 +148,38 @@ pl_fifo_t d25fSppTxFifo = {
 
 
 
+_attribute_ram_code_sec_ uint16_t tpsll_fnv1a_16(uint8_t *data, size_t len)
+{
+    uint16_t hash = 0x55AA;
+    
+    for (size_t i = 0; i < len; i++) {
 
+        hash ^= data[i];
+        hash = (hash << 5) | (hash >> 11);
+        
+        hash ^= (hash >> 8);
+    }
+
+    return hash;
+}
 
 static void p24g_pairing_info_check(void)
 {
+    uint8_t mac_public[6];
+    uint8_t mac_random_static[6];
+    extern unsigned int flash_sector_mac_address;
+    random_generator_init();
+    blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
+
+    tmemcpy(app_ctx.mac, mac_public, MAC_ADDR_LEN);
+
+    uint16_t tag = tpsll_fnv1a_16(app_ctx.mac, MAC_ADDR_LEN);
+    tag = (tag & 0x3fff) | (DEVICE_TYPE_KB << 14);
+
     //dev_info_idx = flash_info_load(flash_sector_2p4_inf, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
 
-    int ret = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-    if (ret == -ENOENT) {
+    dev_info_idx = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
+    if (dev_info_idx == -ENOENT) {
         printk("NVS APP_2P4G_PAIR_INFO_ID naver saved\n");
         LOG_INF("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
     } else {
@@ -165,10 +189,9 @@ static void p24g_pairing_info_check(void)
 
     //dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
 
-    ret = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-    if (ret == -ENOENT) {
+    dev_other_info_idx = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+    if (dev_other_info_idx == -ENOENT) {
         LOG_INF("NVS APP_2P4G_APP_INFO_ID naver saved\n");
-
     } else {
         LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
     }
@@ -192,7 +215,6 @@ _attribute_ram_code_sec_ uint8_t app_2p4g_set_stack_report_rate(uint8_t report_r
 
     return ret;
 }
-
 
 
 void app_pc_kb_led_status(unsigned char status)
@@ -399,12 +421,6 @@ void keyboard_comm_init(void)
 
     if (fun_mode == KB_MODE_2P4G)
     {
-        uint8_t mac_public[6];
-        uint8_t mac_random_static[6];
-        extern unsigned int flash_sector_mac_address;
-        random_generator_init();
-        blc_initMacAddress(flash_sector_mac_address, mac_public, mac_random_static);
-        memcpy(app_ctx.mac, mac_public, MAC_ADDR_LEN);
         p24g_pairing_info_check();
     }
 

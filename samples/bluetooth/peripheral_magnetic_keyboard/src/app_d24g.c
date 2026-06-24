@@ -71,7 +71,7 @@ _attribute_ram_code_sec_ uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint
     uint8_t data_len = len > (sizeof(TxBuf) - 2) ? sizeof(TxBuf) - 2 : len;
 
     if (data && data_len) {
-        memcpy(p_evt->data, data, data_len);
+        tmemcpy(p_evt->data, data, data_len);
         p_evt->len = data_len;
     }
 
@@ -164,7 +164,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
 
     if (p_evt->type == P24G_SM_CMD_SAVE_PAIR_INFO)
     {
-        memcpy(flash_dev_info.peer_addr, p_evt->data, MAC_ADDR_LEN);
+        tmemcpy(flash_dev_info.peer_addr, p_evt->data, MAC_ADDR_LEN);
         uint32_t side_id = fnv1a_hash(flash_dev_info.peer_addr, MAC_ADDR_LEN);
         
         if (flash_dev_info.side_id != side_id)
@@ -173,7 +173,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
             // save_data_to_flash(flash_sector_2p4_inf, sizeof(ST_FLASH_DEV_INFO), (unsigned char *)&flash_dev_info.side_id, (int *)&dev_info_idx);
 
             int ret = nvs_write(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-            LOG_INF("NVS APP_2P4G_PAIR_INFO_ID Write result: %d\n", ret);
+            LOG_INF("NVS peer_address Write result: %d\n", ret);
         }
         
     }
@@ -188,11 +188,10 @@ _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
         if (flash_dev_other_info.side_id != side_id)
         {
             flash_dev_other_info.side_id = side_id;
-            tlkapi_send_string_data(APP_LOG_EN, "saving other info", &flash_dev_other_info.side_id, 5);
 
             // save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
             int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-            LOG_INF("NVS APP_2P4G_APP_INFO_ID Write result: %d\n", ret);
+            LOG_INF("NVS saving other info result: %d\n", ret);
         }
     }
 }
@@ -338,13 +337,10 @@ static void app_p24g_send_info_2_n22(void)
         p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_PEER_INFO, flash_dev_info.peer_addr, MAC_ADDR_LEN);
         p24g_enable_reconn(true); 
     }
-
-    #if (HW_BOARD_TYPE == HW_EVK_KEYBOARD)
     else{
-        tlkapi_send_string_data(APP_LOG_EN, "enter pairing mode ", 0, 0);
         p24g_enable_pairing(true);
     }
-    #endif
+
     if (dev_other_info_idx >= 0) {
         p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_REPORT_RATE, &flash_dev_other_info.report_rate, 1);
     }

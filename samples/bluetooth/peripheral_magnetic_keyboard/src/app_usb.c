@@ -155,7 +155,7 @@ _attribute_ram_code_sec_ int app_normal_key_report_to_usb(unsigned char *buf)
         return status;
     }
 	#endif
-    memcpy(&kb[0], &buf[0], 8);
+    tmemcpy(&kb[0], &buf[0], 8);
     //return app_usb_epin_send(HID_KEYBOARD_IN_ENDPOINT_ADDRESS, tmp, 8);
 	return hid_int_ep_write(hid_dev_kb, kb, sizeof(kb), NULL);
 }
@@ -172,7 +172,7 @@ _attribute_ram_code_sec_ int app_all_key_report_to_usb(unsigned char *buf)
         return status;
     }
 	#endif
-    memcpy(&kb[1], &buf[0], 16);
+    tmemcpy(&kb[1], &buf[0], 16);
     //return app_usb_epin_send(HID_KEYBOARD_IN_ENDPOINT_ADDRESS, tmp, 8);
 	return hid_int_ep_write(hid_dev_n_key, kb, sizeof(kb), NULL);
 }
@@ -188,7 +188,7 @@ _attribute_ram_code_sec_ int app_consume_key_report_to_usb(unsigned char *buf)
         return status;
     }
 	#endif
-    memcpy(&kb[1],&buf[0],2);
+    tmemcpy(&kb[1],&buf[0],2);
     //return app_usb_epin_send(HID_KEYBOARD_IN_ENDPOINT_ADDRESS, tmp, 8);
 	return hid_int_ep_write(hid_dev_n_key, kb, sizeof(kb), NULL);
 }
@@ -204,7 +204,7 @@ _attribute_ram_code_sec_ unsigned char app_system_key_report_to_usb(unsigned cha
         return status;
     }
 	#endif
-    memcpy(&kb[1],&buf[0],1);
+    tmemcpy(&kb[1],&buf[0],1);
     //return app_usb_epin_send(HID_KEYBOARD_IN_ENDPOINT_ADDRESS, tmp, 8);
 	return hid_int_ep_write(hid_dev_n_key, kb, sizeof(kb), NULL);
 }
