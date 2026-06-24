@@ -76,7 +76,7 @@ _attribute_ram_code_sec_ uint8_t p24g_send_sm_msg(uint8_t type, uint8_t op, uint
     }
 
     if (!mcc_d25f_shm_send_msg(TxBuf, sizeof(p24g_evt_t) + p_evt->len, TLK_SHM_MSG_2P4G)) {
-        LOG_INF("d25f send sm message success\n");
+        // LOG_INF("d25f send sm message success\n");
     } else {
         LOG_ERR("d25f send sm message fail\n");
         return 1;
@@ -175,7 +175,10 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
             int ret = nvs_write(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
             LOG_INF("NVS peer_address Write result: %d\n", ret);
         }
-        
+        else
+        {
+            LOG_INF("NVS peer_address is same.");
+        }
     }
 }
 
