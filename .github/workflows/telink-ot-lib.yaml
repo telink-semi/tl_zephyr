@@ -117,6 +117,51 @@ jobs:
           kconfig: Kconfig
         EOF
 
+    - name: Create CMakeLists
+      run: |
+        cat << EOF > build_telink_ot_lib_artifacts/CMakeLists.txt
+        #
+        # Copyright (c) 2026, Telink
+        #
+        # SPDX-License-Identifier: Apache-2.0
+        #
+
+        if (CONFIG_OPENTHREAD_TELINK_LIBRARY)
+
+        if(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "zephyr")
+          set(TELINK_COMPILER "zephyr")
+        elseif(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "andes-gcc")
+          set(TELINK_COMPILER "andes")
+        else()
+          message(FATAL_ERROR "Unknown openthread Telink library compiler")
+        endif()
+
+        zephyr_include_directories(
+          \${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+
+        if(FALSE)
+        EOF
+        for build_config in "$SAMPLE_SRC_PATH"/overlays/*.conf
+        do
+          config_name=$(basename "$build_config" .conf)
+          cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
+        elif(CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^})
+          zephyr_link_libraries(
+            \${CMAKE_CURRENT_SOURCE_DIR}/lib/libopenthread-\${TELINK_COMPILER}-${config_name}.a
+          )
+        EOF
+        done
+        cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
+        else()
+          message(FATAL_ERROR "Unknown openthread Telink library version")
+        endif()
+
+        add_library(ot-config INTERFACE)
+
+        endif() # CONFIG_OPENTHREAD_TELINK_LIBRARY
+        EOF
+
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
       with:
