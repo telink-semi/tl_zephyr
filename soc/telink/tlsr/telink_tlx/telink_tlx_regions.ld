@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,6 +16,12 @@
 		#define TELINK_RAM_DATA_REGION         RAM_ILM_N
 		#define TELINK_RAM_CODE_BLE_REGION     RAM_ILM_N
 	#elif CONFIG_SOC_RISCV_TELINK_TL323X
+		#define TELINK_RAM_REGION              RAMABLE_REGION
+		#define TELINK_RAM_CODE_REGION         RAM_ILM_N
+		#define TELINK_RAM_CODE_RET_REGION     RAMABLE_REGION
+		#define TELINK_RAM_DATA_REGION         RAM_ILM_N
+		#define TELINK_RAM_CODE_BLE_REGION     RAM_ILM_N
+	#elif CONFIG_SOC_RISCV_TELINK_TL521X
 		#define TELINK_RAM_REGION              RAMABLE_REGION
 		#define TELINK_RAM_CODE_REGION         RAM_ILM_N
 		#define TELINK_RAM_CODE_RET_REGION     RAMABLE_REGION
@@ -57,6 +63,19 @@
 			#define TELINK_RAM_CODE_REGION     RAMABLE_REGION
 		#endif
 	#elif CONFIG_SOC_RISCV_TELINK_TL323X
+		#if CONFIG_PM
+			#define TELINK_RAM_DATA_REGION         RAM_ILM_N
+			#define TELINK_RAM_CODE_BLE_REGION     RAM_ILM_N
+		#else
+			#define TELINK_RAM_DATA_REGION         RAM_ILM_N
+			#define TELINK_RAM_CODE_BLE_REGION     RAM_ILM_N
+		#endif
+		#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE
+			#define TELINK_RAM_CODE_REGION     RAM_ILM_N
+		#else
+			#define TELINK_RAM_CODE_REGION     RAM_ILM_N
+		#endif
+	#elif CONFIG_SOC_RISCV_TELINK_TL521X
 		#if CONFIG_PM
 			#define TELINK_RAM_DATA_REGION         RAM_ILM_N
 			#define TELINK_RAM_CODE_BLE_REGION     RAM_ILM_N

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,7 +24,8 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 	(((uint64_t)(sticks)*CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / SYSTEM_TIMER_TICK_1S)
 
 #if CONFIG_BT
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X || \
+	CONFIG_SOC_RISCV_TELINK_TL521X
 #define SYSTICKS_MAX_SLEEP 0x20000000
 #else
 #define SYSTICKS_MAX_SLEEP 0x40000000
@@ -109,7 +110,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 	uint64_t current_time = get_mtime();
 	uint64_t wakeup_time = get_mtime_compare();
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	/* before go into deep , should feed 32k watchdog */
 	wd_32k_feed();
 #endif
@@ -130,7 +131,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
 		}
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 		/*after exit from suspend or deep-retention ,should feed 32k watdog quickly*/
 		wd_32k_feed();
 		wd_32k_start();

@@ -86,6 +86,8 @@ void idle(void *unused1, void *unused2, void *unused3)
 #define TELINK_BT_IDLE_HOOK
 #elif defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL323X)
 #define TELINK_BT_IDLE_HOOK
+#elif defined(CONFIG_BT_TLX) && defined(CONFIG_SOC_RISCV_TELINK_TL521X)
+#define TELINK_BT_IDLE_HOOK
 #endif
 
 #ifdef TELINK_BT_IDLE_HOOK
