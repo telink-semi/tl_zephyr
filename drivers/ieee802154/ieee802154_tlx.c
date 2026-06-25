@@ -40,8 +40,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include "tlx_bt.h"
 #include "drivers.h"
 
-#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X) && \
-	CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X || \
+	CONFIG_SOC_RISCV_TELINK_TL521X) && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 #define RAM_CODE_SECTION_IEEE802154 __GENERIC_SECTION(.ram_code)
 #else
 #define RAM_CODE_SECTION_IEEE802154
@@ -679,7 +679,7 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL323X
+	CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
 			      SYSTEM_TIMER_TICK_1US;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -915,7 +915,7 @@ volatile bool tlx_rf_zigbee_250K_mode;
 
 ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 {
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	wd_32k_feed();
 #endif
 	tlx_disable_pm(tlx);
@@ -931,13 +931,13 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 #endif
 			if (tlx->rf_mode_154 == false) {
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X)
+	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
 				if (tl_rf_is_inited()) {
 #endif
 					rf_baseband_reset();
 					rf_reset_dma();
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X)
+	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
 				} else {
 					tl_rf_change_to_inited();
 				}
@@ -994,7 +994,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 		/* Reset Radio */
 		rf_radio_reset();
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL323X
+	CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 		rf_reset_dma();
 		rf_baseband_reset();
 #endif
@@ -1125,6 +1125,8 @@ RAM_CODE_SECTION_IEEE802154
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
+	//need to wait driver update 
+	return 0;
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isFirstCcaBeforeTx && isThreadCommissioned) {
 		isFirstCcaBeforeTx = false;
@@ -1500,7 +1502,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	}
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isThreadCommissioned == true) {
-#if CONFIG_SOC_RISCV_TELINK_TL323X
+#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 		tlx_wfi_direct(800);
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 		tlx_wfi_direct(880);

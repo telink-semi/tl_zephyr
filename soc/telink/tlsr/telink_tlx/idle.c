@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -20,7 +20,7 @@ static ALWAYS_INLINE void riscv_idle(unsigned int key)
 
 	/* Wait for interrupt */
 #if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X \
-	|| CONFIG_SOC_RISCV_TELINK_TL721X
+	|| CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X
 	__asm__ volatile("wfi");
 #else
 	while (__irq_pending) {
