@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define DT_DRV_COMPAT sifive_plic_1_0_0
+#define DT_DRV_COMPAT telink_plic
 
 /**
  * @brief Platform Level Interrupt Controller (PLIC) driver
@@ -28,17 +28,17 @@
 #include <zephyr/drivers/interrupt_controller/riscv_plic.h>
 #include <zephyr/irq.h>
 
-#define PLIC_BASE_ADDR(n)    DT_INST_REG_ADDR(n)
+#define PLIC_BASE_ADDR(n) DT_INST_REG_ADDR(n)
 /*
  * These registers' offset are defined in the RISCV PLIC specs, see:
  * https://github.com/riscv/riscv-plic-spec
  */
-#define CONTEXT_BASE         0x200000
-#define CONTEXT_SIZE         0x1000
-#define CONTEXT_THRESHOLD    0x00
-#define CONTEXT_CLAIM        0x04
-#define CONTEXT_ENABLE_BASE  0x2000
-#define CONTEXT_ENABLE_SIZE  0x80
+#define CONTEXT_BASE 0x200000
+#define CONTEXT_SIZE 0x1000
+#define CONTEXT_THRESHOLD 0x00
+#define CONTEXT_CLAIM 0x04
+#define CONTEXT_ENABLE_BASE 0x2000
+#define CONTEXT_ENABLE_SIZE 0x80
 #define CONTEXT_PENDING_BASE 0x1000
 
 /*
@@ -59,7 +59,7 @@
 #define INTC_PLIC_STATIC
 #define INTC_PLIC_STATIC_INLINE
 #else
-#define INTC_PLIC_STATIC        static
+#define INTC_PLIC_STATIC static
 #define INTC_PLIC_STATIC_INLINE static inline
 #endif /* CONFIG_TEST_INTC_PLIC */
 
@@ -112,6 +112,7 @@ struct plic_data {
 #ifdef CONFIG_PLIC_IRQ_AFFINITY
 	plic_cpumask_t *irq_cpumask;
 #endif /* CONFIG_PLIC_IRQ_AFFINITY */
+
 };
 
 static uint32_t save_irq[CONFIG_MP_MAX_NUM_CPUS];
@@ -131,7 +132,7 @@ static inline uint32_t get_plic_enabled_size(const struct device *dev)
 {
 	const struct plic_config *config = dev->config;
 
-	return local_irq_to_reg_index(config->nr_irqs) + 1;
+	return local_irq_to_reg_index(config->nr_irqs + PLIC_REG_SIZE - 1);
 }
 
 static ALWAYS_INLINE uint32_t get_hart_context(const struct device *dev, uint32_t hartid)
@@ -500,13 +501,6 @@ static void plic_irq_handler(const struct device *dev)
 	uint32_t cpu_id = arch_curr_cpu()->id;
 	/* Get the IRQ number generating the interrupt */
 	const uint32_t local_irq = sys_read32(claim_complete_addr);
-#if (CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION || CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION)
-	if (!local_irq) {
-		extern void telink_zero_isr(void);
-		telink_zero_isr();
-		return;
-	}
-#endif
 
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
 	uint16_t *cpu_count = get_irq_hit_count_cpu(dev, cpu_id, local_irq);
@@ -543,10 +537,19 @@ static void plic_irq_handler(const struct device *dev)
 	save_dev[cpu_id] = dev;
 
 	/*
+	 * On Telink retention targets, the CPU can occasionally take a machine
+	 * external interrupt while PLIC claim/complete returns 0. In this case
+	 * there is no pending PLIC source to service or complete, so ignore it.
+	 */
+	if (local_irq == 0U) {
+		return;
+	}
+
+	/*
 	 * If the IRQ is out of range, call z_irq_spurious.
 	 * A call to z_irq_spurious will not return.
 	 */
-	if ((local_irq == 0U) || (local_irq >= config->nr_irqs)) {
+	if (local_irq >= config->nr_irqs) {
 		z_irq_spurious(NULL);
 	}
 
@@ -608,7 +611,7 @@ static int plic_init(const struct device *dev)
 	}
 
 	/* Set priority of each interrupt line to 0 initially */
-	for (uint32_t i = 0; i < config->nr_irqs; i++) {
+	for (uint32_t i = 1; i < config->nr_irqs; i++) {
 		sys_write32(0U, prio_addr + (i * sizeof(uint32_t)));
 	}
 
@@ -715,7 +718,7 @@ static int cmd_stats_clear(const struct shell *sh, size_t argc, char *argv[])
 	       config->nr_irqs *
 		       COND_CODE_1(CONFIG_MP_MAX_NUM_CPUS, (1),
 				   (UTIL_INC(CONFIG_MP_MAX_NUM_CPUS))) *
-							   sizeof(uint16_t));
+		       sizeof(uint16_t));
 
 	shell_print(sh, "Cleared stats of %s.\n", dev->name);
 
@@ -824,20 +827,20 @@ SHELL_DYNAMIC_CMD_CREATE(dsub_device_name, device_name_get);
 
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
 SHELL_STATIC_SUBCMD_SET_CREATE(plic_stats_cmds,
-			       SHELL_CMD_ARG(get, &dsub_device_name,
-					     "Read PLIC's stats.\n"
-					     "Usage: plic stats get <device> [minimum hits]",
-					     cmd_stats_get, 2, 1),
-			       SHELL_CMD_ARG(clear, &dsub_device_name,
-					     "Reset PLIC's stats.\n"
-					     "Usage: plic stats clear <device>",
-					     cmd_stats_clear, 2, 0),
-			       SHELL_SUBCMD_SET_END);
+	SHELL_CMD_ARG(get, &dsub_device_name,
+		"Read PLIC's stats.\n"
+		"Usage: plic stats get <device> [minimum hits]",
+		cmd_stats_get, 2, 1),
+	SHELL_CMD_ARG(clear, &dsub_device_name,
+		"Reset PLIC's stats.\n"
+		"Usage: plic stats clear <device>",
+		cmd_stats_clear, 2, 0),
+	SHELL_SUBCMD_SET_END
+);
 #endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
 
 #ifdef CONFIG_PLIC_SHELL_IRQ_AFFINITY
-SHELL_STATIC_SUBCMD_SET_CREATE(
-	plic_affinity_cmds,
+SHELL_STATIC_SUBCMD_SET_CREATE(plic_affinity_cmds,
 	SHELL_CMD_ARG(set, &dsub_device_name,
 		      "Set IRQ affinity.\n"
 		      "Usage: plic affinity set <device> <local_irq> <cpumask>",
@@ -851,12 +854,13 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 
 SHELL_STATIC_SUBCMD_SET_CREATE(plic_cmds,
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
-			       SHELL_CMD(stats, &plic_stats_cmds, "IRQ stats", NULL),
+	SHELL_CMD(stats, &plic_stats_cmds, "IRQ stats", NULL),
 #endif /* CONFIG_PLIC_SHELL_IRQ_COUNT */
 #ifdef CONFIG_PLIC_SHELL_IRQ_AFFINITY
-			       SHELL_CMD(affinity, &plic_affinity_cmds, "IRQ affinity", NULL),
+	SHELL_CMD(affinity, &plic_affinity_cmds, "IRQ affinity", NULL),
 #endif /* CONFIG_PLIC_SHELL_IRQ_AFFINITY */
-			       SHELL_SUBCMD_SET_END);
+	SHELL_SUBCMD_SET_END
+);
 
 SHELL_CMD_REGISTER(plic, &plic_cmds, "PLIC shell commands", NULL);
 #endif /* CONFIG_PLIC_SHELL */
@@ -866,8 +870,8 @@ SHELL_CMD_REGISTER(plic, &plic_cmds, "PLIC shell commands", NULL);
 #ifdef CONFIG_PLIC_SHELL_IRQ_COUNT
 #define PLIC_INTC_IRQ_COUNT_BUF_DEFINE(n)                                                          \
 	static uint16_t local_irq_count_##n[COND_CODE_1(CONFIG_MP_MAX_NUM_CPUS, (1),               \
-							(UTIL_INC(CONFIG_MP_MAX_NUM_CPUS)))]   \
-								[PLIC_MIN_IRQ_NUM(n)];
+							(UTIL_INC(CONFIG_MP_MAX_NUM_CPUS)))]       \
+					   [PLIC_MIN_IRQ_NUM(n)];
 #define PLIC_INTC_IRQ_COUNT_INIT(n)                                                                \
 	.stats = {                                                                                 \
 		.irq_count = &local_irq_count_##n[0][0],                                           \
@@ -892,8 +896,10 @@ SHELL_CMD_REGISTER(plic, &plic_cmds, "PLIC shell commands", NULL);
 #define PLIC_INTC_DATA_INIT(n)                                                                     \
 	PLIC_INTC_IRQ_COUNT_BUF_DEFINE(n);                                                         \
 	PLIC_IRQ_CPUMASK_BUF_DECLARE(n);                                                           \
-	static struct plic_data plic_data_##n = {PLIC_INTC_IRQ_COUNT_INIT(n)                       \
-							 PLIC_IRQ_CPUMASK_BUF_INIT(n)};
+	static struct plic_data plic_data_##n = {                                                  \
+		PLIC_INTC_IRQ_COUNT_INIT(n)                                                        \
+		PLIC_IRQ_CPUMASK_BUF_INIT(n)                                                       \
+	};
 
 #define PLIC_INTC_IRQ_FUNC_DECLARE(n) static void plic_irq_config_func_##n(void)
 
@@ -931,12 +937,15 @@ SHELL_CMD_REGISTER(plic, &plic_cmds, "PLIC shell commands", NULL);
 	PLIC_INTC_IRQ_FUNC_DEFINE(n)
 
 #define PLIC_INTC_DEVICE_INIT(n)                                                                   \
-	IRQ_PARENT_ENTRY_DEFINE(plic##n, DEVICE_DT_INST_GET(n), DT_INST_IRQN(n),                   \
-				INTC_INST_ISR_TBL_OFFSET(n),                                       \
-				DT_INST_INTC_GET_AGGREGATOR_LEVEL(n));                             \
+	IRQ_PARENT_ENTRY_DEFINE(                                                                   \
+		plic##n, DEVICE_DT_INST_GET(n), DT_INST_IRQN(n),                                   \
+		INTC_INST_ISR_TBL_OFFSET(n),                                                       \
+		DT_INST_INTC_GET_AGGREGATOR_LEVEL(n));                                             \
 	PLIC_INTC_CONFIG_INIT(n)                                                                   \
 	PLIC_INTC_DATA_INIT(n)                                                                     \
-	DEVICE_DT_INST_DEFINE(n, &plic_init, NULL, &plic_data_##n, &plic_config_##n, PRE_KERNEL_1, \
-			      CONFIG_INTC_INIT_PRIORITY, NULL);
+	DEVICE_DT_INST_DEFINE(n, &plic_init, NULL,                                                 \
+			      &plic_data_##n, &plic_config_##n,                                    \
+			      PRE_KERNEL_1, CONFIG_INTC_INIT_PRIORITY,                             \
+			      NULL);
 
 DT_INST_FOREACH_STATUS_OKAY(PLIC_INTC_DEVICE_INIT)

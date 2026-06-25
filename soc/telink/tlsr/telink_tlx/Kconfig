@@ -184,7 +184,7 @@ endif
 
 config MCUBOOT_START_OFFSET
 	hex "Leave space during building MCUBoot"
-	default 0x5000 if SOC_RISCV_TELINK_TL323X && MCUBOOT
+	default 0x5000 if SOC_RISCV_TELINK_TL323X && BOOTLOADER_MCUBOOT
 	default 0x0
 	help
 		The MCUboot offset value.

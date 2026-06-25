@@ -40,6 +40,9 @@ static bool telink_tlx_mcu_boot_startup(void)
 {
 	bool result = true; /* run MCUBoot main */
 
+	/* please enable log for debug purpose */
+	/* BOOT_LOG_INF("telink TLX MCUBoot on early boot"); */
+
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 	bool show_chip_id = false;
 

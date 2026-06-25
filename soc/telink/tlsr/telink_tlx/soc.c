@@ -207,7 +207,8 @@ __attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((o
 void gen_fsk_close_unused_clock(void)
 {
 	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
-	RST_BIT_CLR(reg_rst0, FLD_RST0_UART1);
+	/* comment because some user cases need UART1*/
+	/* RST_BIT_CLR(reg_rst0, FLD_RST0_UART1); */
 
 	RST_BIT_CLR(reg_rst1, FLD_RST1_UART3);
 	RST_BIT_CLR(reg_rst1, FLD_RST1_GSPI);
@@ -232,7 +233,8 @@ void gen_fsk_close_unused_clock(void)
 
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_LSPI_EN);
 	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C0_EN);
-	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN);
+	/* comment because some user cases need UART1*/
+	/* CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN); */
 
 	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK0_UART3_EN);
 	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_DMA_EN);
@@ -348,9 +350,7 @@ void soc_early_init_hook(void)
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
-#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
-#endif /* CONFIG_PM */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
 	g_adc_calib_flag = efuse_calib_sd_adc_vref();
@@ -524,9 +524,7 @@ void soc_tlx_restore(void)
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
-#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
-#endif /* CONFIG_PM */
 
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_ADC_TELINK_TL323X
 	if (g_adc_calib_flag == DRV_API_SUCCESS) {
@@ -563,7 +561,7 @@ void soc_tlx_restore(void)
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_12M_MSPI_48M;
 #if CONFIG_PM
 		pm_set_calib_0p925V_dig_ldo_voltage();
-		gen_fsk_close_unused_clock();
+		/* gen_fsk_close_unused_clock(); */
 #endif /* CONFIG_PM  */
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if CONFIG_PM
