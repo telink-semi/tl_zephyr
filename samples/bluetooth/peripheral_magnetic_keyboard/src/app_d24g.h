@@ -55,7 +55,6 @@ typedef struct
 extern app_dc_flag_ctx_t app_dc_flag_ctx;
 
 
-extern volatile tpsll_dev_status_e g_state;
 
 /**
  * @brief   Register a shared memory (SM) command handler for the 2.4GHz protocol
@@ -188,7 +187,7 @@ void app_2p4g_mb_km_data_cb(uint8_t* data);
  */
 static inline tpsll_dev_status_e app_d24p_get_state(void)
 {
-    return g_state;
+    return app_ctx.dev_status;
 }
 
 

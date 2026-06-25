@@ -92,16 +92,6 @@ _attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FL
 volatile unsigned char fun_mode = 0;
 static unsigned char last_mode_status=KB_MODE_USB;
 
-_attribute_aligned_(4)  unsigned char buf_txfifo[40*8];
-
-pl_fifo_t tx_fifo={  
-     .size=40,
-     .num=8,
-     .wptr=0,
-     .rptr=0,
-     .p=buf_txfifo,
- };
-
 
 #define KB_TX_FIFO_SIZE 24
 #define KB_TX_FIFO_NUM 16
@@ -176,24 +166,19 @@ static void p24g_pairing_info_check(void)
     uint16_t tag = tpsll_fnv1a_16(app_ctx.mac, MAC_ADDR_LEN);
     tag = (tag & 0x3fff) | (DEVICE_TYPE_KB << 14);
 
-    //dev_info_idx = flash_info_load(flash_sector_2p4_inf, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
-
     dev_info_idx = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
     if (dev_info_idx == -ENOENT) {
-        printk("NVS APP_2P4G_PAIR_INFO_ID naver saved\n");
-        LOG_INF("not paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+        LOG_INF("not paired: %x %x", flash_dev_info.side_id, flash_sector_2p4_inf);
     } else {
-        LOG_INF("paired: %x %x\n", flash_dev_info.side_id, flash_sector_2p4_inf);
+        LOG_INF("paired: %x %x", flash_dev_info.side_id, flash_sector_2p4_inf);
     }
 
-
-    //dev_other_info_idx = flash_info_load(flash_sector_2p4_other_inf, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-
-    dev_other_info_idx = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
+    dev_other_info_idx = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.report_rate, sizeof(ST_FLASH_DEV_OTHER_INFO));
     if (dev_other_info_idx == -ENOENT) {
-        LOG_INF("NVS APP_2P4G_APP_INFO_ID naver saved\n");
+        flash_dev_other_info.report_rate = REPORT_RATE_NONE;
+        LOG_INF("NVS report rate naver saved\n");
     } else {
-        LOG_INF("read flash get report rate: %x\n", flash_dev_other_info.side_id);
+        LOG_INF("NVS get report rate: %x %x", flash_dev_other_info.report_rate, flash_sector_2p4_other_inf);
     }
 }
 
@@ -269,7 +254,6 @@ _attribute_ram_code_sec_ void check_mode(u8 power_on)
     }
     if(last_mode_status!=fun_mode)
     {
-        pp_fifo_reset(&tx_fifo);
         pp_fifo_reset(&d25fKbTxFifo);
         last_mode_status=fun_mode;
         LOG_INF("switch=%d", last_mode_status);
@@ -447,7 +431,6 @@ void keyboard_comm_init(void)
     user_timer_init();
 #endif
 
-    pp_fifo_reset(&tx_fifo);
     pp_fifo_reset(&d25fKbTxFifo);
 
     return 0;

@@ -38,8 +38,6 @@ _attribute_aligned_(4) app_dc_flag_ctx_t app_dc_flag_ctx;
 static volatile uint32_t spp_tick = 0;
 
 
-volatile tpsll_dev_status_e g_state = STATE_POWERON;
-
 /**
  * @brief share memory message handler table
  */
@@ -191,17 +189,18 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_save_pairing_info(uint8_t *
 
 _attribute_ram_code_sec_ static void app_2p4g_save_report_rate_info(uint8_t rr)
 {
-    if ((rr == REPORT_RATE_8K) || (rr == REPORT_RATE_125)) {
+    if (flash_dev_other_info.report_rate != rr)
+    {
         flash_dev_other_info.report_rate = rr;
-        uint32_t side_id = fnv1a_hash(flash_dev_other_info.report_rate, 1);
 
-        if (flash_dev_other_info.side_id != side_id)
+        int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.report_rate, sizeof(ST_FLASH_DEV_OTHER_INFO));
+        if(ret)
         {
-            flash_dev_other_info.side_id = side_id;
-
-            // save_data_to_flash(flash_sector_2p4_other_inf, sizeof(ST_FLASH_DEV_OTHER_INFO), (unsigned char *)&flash_dev_other_info.side_id, (int *)&dev_other_info_idx);
-            int ret = nvs_write(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.side_id, sizeof(ST_FLASH_DEV_OTHER_INFO));
-            LOG_INF("NVS saving other info result: %d\n", ret);
+            LOG_INF("NVS saving report rate success.");
+        }
+        else
+        {
+            LOG_INF("NVS saving report rate fail.");
         }
     }
 }
@@ -236,18 +235,23 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
     {
         if (p_evt->opcode == TPSLL_EVT_DEV_CONNECTED)
         {
+            app_ctx.dev_status = STATE_CONNECTED;
             LOG_INF("connected");
         }
         else if (p_evt->opcode == TPSLL_EVT_DEV_DISCONNECTED)
         {
+            app_ctx.dev_status = STATE_DISCONNECTED;
+            app_ctx.report_rate = ((uint8_t* )p_evt->data)[0];
             LOG_INF("disconnected");
         }
         else if (p_evt->opcode == TPSLL_EVT_SAVE_REPORT_RATE)
         {
+            app_2p4g_save_report_rate_info(((uint8_t* )p_evt->data)[0]);
             LOG_INF("saving RR(0x%02X) ...", ((uint8_t* )p_evt->data)[0]);
         }
         else if (p_evt->opcode == TPSLL_EVT_REPORT_RATE_CHANGED)
         {
+            app_ctx.report_rate = ((uint8_t* )p_evt->data)[0];
             LOG_INF("report rate changed to 0x%02X\n", ((uint8_t *)p_evt->data)[0]);
         }
         else if (p_evt->opcode == TPSLL_EVT_SPP_DATA_RECV)
@@ -301,7 +305,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_
             break;
 
         case P24G_SM_OP_MISC_SAVE_REPORT_RATE:
-            app_2p4g_save_report_rate_info(data[3]);
+            // app_2p4g_save_report_rate_info(data[3]);
 
             LOG_INF("report rate info saved %d", data[3]);
             // app_2p4g_clock_reinit(data[3]);
@@ -338,9 +342,9 @@ static void app_p24g_send_info_2_n22(void)
         p24g_enable_pairing(true);
     }
 
-    if (dev_other_info_idx >= 0) {
+    // if (dev_other_info_idx >= 0) {
         p24g_send_sm_msg(P24G_SM_CMD_MISC, P24G_SM_OP_MISC_REPORT_RATE, &flash_dev_other_info.report_rate, 1);
-    }
+    // }
 }
 
 

@@ -87,7 +87,7 @@ extern uint32_t  flash_sector_2p4_inf;
 
 typedef struct
 {
-    uint32_t side_id; //4
+    // uint32_t side_id; //4
     uint8_t report_rate; //1
 
 } ST_FLASH_DEV_OTHER_INFO;
@@ -98,7 +98,6 @@ extern uint32_t  flash_sector_2p4_other_inf;
 
 
 typedef fifo_cb_t kb_cb_t;
-extern pl_fifo_t tx_fifo;
 extern pl_fifo_t   d25fKbTxFifo;
 extern pl_fifo_t   d25fSppTxFifo;
 

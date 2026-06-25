@@ -211,7 +211,7 @@ _attribute_ram_code_sec_ unsigned char app_system_key_report_to_usb(unsigned cha
 
 _attribute_ram_code_sec_ void app_usb_report_to_pc(void)
 {
-    unsigned char  *p= pp_fifo_get_ptr(&tx_fifo);
+    unsigned char  *p= pp_fifo_get_ptr(&d25fKbTxFifo);
     if(p!=0)
     {
         unsigned char cmd = p[1];
@@ -239,7 +239,7 @@ _attribute_ram_code_sec_ void app_usb_report_to_pc(void)
         }
         if(ret == 0)
         {
-            pp_fifo_pop(&tx_fifo);
+            pp_fifo_pop(&d25fKbTxFifo);
         }
     }
 }

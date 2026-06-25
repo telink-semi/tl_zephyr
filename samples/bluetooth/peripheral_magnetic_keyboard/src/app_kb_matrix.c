@@ -131,19 +131,19 @@ _attribute_ram_code_sec_ uint8_t tpsll_send_keyboard_data(uint8_t *data, uint8_t
 
     if (cmd == NORMAL_KB_DATA_CMD)
     {
-        return  pp_fifo_push(&tx_fifo, NORMAL_KB_DATA_CMD, data, len);
+        return  pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, data, len);
     }
     else if (cmd == CONSUME_KB_DATA_CMD)
     {
-        return  pp_fifo_push(&tx_fifo, CONSUME_KB_DATA_CMD, data, len);
+        return  pp_fifo_push(&d25fKbTxFifo, CONSUME_KB_DATA_CMD, data, len);
     }
     else if (cmd == SYSTEM_KB_DATA_CMD)
     {
-        return  pp_fifo_push(&tx_fifo, SYSTEM_KB_DATA_CMD, data, len);
+        return  pp_fifo_push(&d25fKbTxFifo, SYSTEM_KB_DATA_CMD, data, len);
     }
     else if (cmd == ALL_KB_DATA_CMD)
     {
-        return  pp_fifo_push(&tx_fifo, ALL_KB_DATA_CMD, data, len);
+        return  pp_fifo_push(&d25fKbTxFifo, ALL_KB_DATA_CMD, data, len);
     }
     return TLK_SUCCESS;
 }
@@ -244,17 +244,8 @@ _attribute_ram_code_sec_ void key_data_handle(void)
             }
             tmemcpy(nk_last,app_key_buf.nk,8);
             unsigned int r = core_interrupt_disable();
-
-            if ((app_get_mode()==KB_MODE_2P4G)&&(usb_connected_ok==0))
-            {
-                pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, &app_key_buf.nk[0], nk_cnt + 2);
-                // tlkapi_send_string_data(APP_LOG_EN, "nkb", (unsigned char *)&app_key_buf.nk[0], nk_cnt + 2);
-            }
-            else
-            {
-                tpsll_send_keyboard_data(&app_key_buf.nk[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
-                // tlkapi_send_string_data(APP_LOG_EN, "n-kb", (unsigned char *)&app_key_buf.nk[0], 8);
-            }
+            tpsll_send_keyboard_data(&app_key_buf.nk[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
+            // tlkapi_send_string_data(APP_LOG_EN, "n-kb", (unsigned char *)&app_key_buf.nk[0], 8);
             core_restore_interrupt(r);
             break;  
         }
@@ -308,20 +299,20 @@ _attribute_ram_code_sec_ void key_data_handle(void)
         core_restore_interrupt(r);
     }
 
-    // if(app_ctx.report_rate & REPORT_RATE_8K)
-    // {
-    //     //Only one piece of data is retained in the FIFO.
-    //     unsigned int r = core_interrupt_disable();
-    //     while(tpsll_get_num_kmfifo() > 1)
-    //     {
-    //         if ((nk_flg == false) || (ak_flg == false))
-    //         {
-    //             break;
-    //         }
-    //         tpsll_pop_kmfifo();
-    //     }
-    //     core_restore_interrupt(r);
-    // }
+    if(app_ctx.report_rate & REPORT_RATE_8K)
+    {
+        //Only one piece of data is retained in the FIFO.
+        unsigned int r = core_interrupt_disable();
+        while(pp_fifo_get_num(&d25fKbTxFifo) > 1)
+        {
+            if ((nk_flg == false) || (ak_flg == false))
+            {
+                break;
+            }
+            pp_fifo_pop(&d25fKbTxFifo);
+        }
+        core_restore_interrupt(r);
+    }
 
 }
 #if ALG_KEYSCAN_APP_FUN_ENABLE
