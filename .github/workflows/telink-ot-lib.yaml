@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-name: Telink OpenThread libraries builder
+name: Telink openthread libraries builder
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 jobs:
   telink_ot_lib_build:
     runs-on: ubuntu-latest
-    name: Telink OpenThread libraries builder
+    name: Telink openthread libraries builder
     env:
       ZEPHYR_COMPILER_VERSION: 0.17.0
       ANDES_COMPILER_VERSION: 14.2.0
@@ -64,37 +64,41 @@ jobs:
 
     - name: Build libraries with Zephyr compiler
       run: |
-        for build_config in "$SAMPLE_SRC_PATH"/overlays/*.conf
-        do
-          config="${build_config#"$SAMPLE_SRC_PATH"/}"
-          echo "build configuration: $config"
-          rm -rf build_tmp
-          west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
-                     -DOVERLAY_CONFIG="$config" \
-                     -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-          libname="libopenthread-zephyr-${config##*/}"
-          libname="${libname%.conf}.a"
-          cp build_tmp/zephyr/libopenthread.a \
-             "build_telink_ot_lib_artifacts/lib/$libname"
-        done
+        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config="${build_config#"$SAMPLE_SRC_PATH"/}"
+            echo "build configuration: $config"
+            rm -rf build_tmp
+            west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
+                       -DOVERLAY_CONFIG="$config" \
+                       -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+            libname="libopenthread-zephyr-${config##*/}"
+            libname="${libname%.conf}.a"
+            cp build_tmp/zephyr/libopenthread.a \
+               "build_telink_ot_lib_artifacts/lib/$libname"
+          done
+        fi
 
     - name: Build libraries with Andes compiler
       run: |
         export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
         export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
-        for build_config in "$SAMPLE_SRC_PATH"/overlays/*.conf
-        do
-          config="${build_config#"$SAMPLE_SRC_PATH"/}"
-          echo "build configuration: $config"
-          rm -rf build_tmp
-          west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
-                     -DOVERLAY_CONFIG="$config" \
-                     -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-          libname="libopenthread-andes-${config##*/}"
-          libname="${libname%.conf}.a"
-          cp build_tmp/zephyr/libopenthread.a \
-             "build_telink_ot_lib_artifacts/lib/$libname"
-        done
+        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config="${build_config#"$SAMPLE_SRC_PATH"/}"
+            echo "build configuration: $config"
+            rm -rf build_tmp
+            west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
+                       -DOVERLAY_CONFIG="$config" \
+                       -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+            libname="libopenthread-andes-${config##*/}"
+            libname="${libname%.conf}.a"
+            cp build_tmp/zephyr/libopenthread.a \
+               "build_telink_ot_lib_artifacts/lib/$libname"
+          done
+        fi
         unset ZEPHYR_TOOLCHAIN_VARIANT
         unset ANDES_GCC_PATH
 
@@ -117,7 +121,7 @@ jobs:
           kconfig: Kconfig
         EOF
 
-    - name: Create CMakeLists
+    - name: Create CMakeList
       run: |
         cat << EOF > build_telink_ot_lib_artifacts/CMakeLists.txt
         #
@@ -142,16 +146,18 @@ jobs:
 
         if(FALSE)
         EOF
-        for build_config in "$SAMPLE_SRC_PATH"/overlays/*.conf
-        do
-          config_name=$(basename "$build_config" .conf)
-          cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
+        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config_name=$(basename "${build_config}" .conf)
+            cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
         elif(CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^})
           zephyr_link_libraries(
             \${CMAKE_CURRENT_SOURCE_DIR}/lib/libopenthread-\${TELINK_COMPILER}-${config_name}.a
           )
         EOF
-        done
+          done
+        fi
         cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
         else()
           message(FATAL_ERROR "Unknown openthread Telink library version")
@@ -160,6 +166,52 @@ jobs:
         add_library(ot-config INTERFACE)
 
         endif() # CONFIG_OPENTHREAD_TELINK_LIBRARY
+        EOF
+
+    - name: Create Kconfig
+      run: |
+        cat << EOF > build_telink_ot_lib_artifacts/Kconfig
+        # Copyright (c) 2026 Telink Semiconductor
+        # SPDX-License-Identifier: Apache-2.0
+
+        if SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
+
+        choice OPENTHREAD_IMPLEMENTATION
+          default OPENTHREAD_SOURCES
+
+        config OPENTHREAD_TELINK_LIBRARY
+          bool "openthread from Telink library"
+          help
+            Use Zephyr's openthread port from Telink library.
+
+        endchoice # OPENTHREAD_IMPLEMENTATION
+
+        choice OPENTHREAD_TELINK_LIBRARY_VERSION
+          prompt "openthread Telink library version"
+        EOF
+        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          config_name=$(basename "${conf_files[0]}" .conf)
+          cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+          default OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^}
+
+        EOF
+          for build_config in "${conf_files[@]}"; do
+            config_name=$(basename "${build_config}" .conf)
+          cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+        config OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^}
+          bool "openthread Telink ${config_name} library"
+
+        EOF
+          done
+        fi
+        cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+        endchoice # OPENTHREAD_TELINK_LIBRARY_VERSION
+        EOF
+
+        cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
+
+        endif # SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
         EOF
 
     - name: Publish artifacts
