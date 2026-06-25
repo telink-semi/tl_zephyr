@@ -32,7 +32,8 @@ LOG_MODULE_REGISTER(app_2p4g);
 
 #define WDT_INTV_MS     (300)
 
-app_ctx_t app_ctx;
+_attribute_aligned_(4) app_ctx_t app_ctx;
+_attribute_aligned_(4) app_dc_flag_ctx_t app_dc_flag_ctx;
 
 static volatile uint32_t spp_tick = 0;
 
@@ -154,7 +155,13 @@ void app_2p4g_dual_core_comm_init(void)
 
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_SPP_TX_ADDRESS, cmd);
 
-    pp_fifo_reset(&d25fSppTxFifo);
+    address = (u32)&app_dc_flag_ctx;
+    cmd[3] = (uint8_t)(address & 0xff);
+    cmd[4] = (uint8_t)(address >> 8 & 0xff);
+    cmd[5] = (uint8_t)(address >> 16 & 0xff);
+    cmd[6] = (uint8_t)(address >> 24 & 0xff);
+
+    mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_APP_CTX_ADDRESS, cmd);
 }
 
 
@@ -302,7 +309,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_
 
         case P24G_SM_OP_MISC_RF_MODE:
             LOG_INF("rf mode:%x\n", p_evt->data[0]);
-            app_ctx.rf_mode = p_evt->data[0];
+            // app_ctx.rf_mode = p_evt->data[0];
             break;
     default:
         break;

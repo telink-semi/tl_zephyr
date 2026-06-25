@@ -29,11 +29,30 @@ typedef struct p24g_evt
 } __attribute__((packed)) p24g_evt_t;
 
 
-typedef struct {
-    uint8_t rf_mode;
+typedef struct
+{
+    uint16_t peer_tag;
+    uint8_t paired_dev_type;
+    uint8_t rr_idx;
+    
+    bool save_rr_flag;
+    bool rr_chg_flag;
+    bool report_rate_set_flag;
+    uint8_t dev_status;             /* tpsll_dev_status_e */
+    uint8_t report_rate;            /* report_rate_t */
+
     uint8_t mac[MAC_ADDR_LEN];
+    uint8_t peer_mac[MAC_ADDR_LEN];
 } app_ctx_t;
+
 extern app_ctx_t app_ctx;
+
+typedef struct
+{
+    bool busy_flag;
+} app_dc_flag_ctx_t;
+
+extern app_dc_flag_ctx_t app_dc_flag_ctx;
 
 
 extern volatile tpsll_dev_status_e g_state;
