@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -15,13 +15,16 @@
 #include <zephyr/dt-bindings/pinctrl/tl322x-pinctrl.h>
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 #include <zephyr/dt-bindings/pinctrl/tl323x-pinctrl.h>
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+#include <zephyr/dt-bindings/pinctrl/tl521x-pinctrl.h>
 #endif
 #include <zephyr/pm/device.h>
 
 #define DT_DRV_COMPAT telink_tlx_pinctrl
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X ||                        \
+	CONFIG_SOC_RISCV_TELINK_TL521X
 /**
  *      GPIO Function Enable Register
  *      ADDR                 PINS
@@ -38,7 +41,8 @@
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X ||                        \
+	CONFIG_SOC_RISCV_TELINK_TL521X
 /**
  *      Function Multiplexer Register
  *         ADDR              PINS
@@ -219,6 +223,9 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 	reg_pin_mux(pin) =
 		(reg_pin_mux(pin) & (~TL323X_PIN_FUNC_POS)) | (func & TL323X_PIN_FUNC_POS);
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+	reg_pin_mux(pin) =
+		(reg_pin_mux(pin) & (~TL521X_PIN_FUNC_POS)) | (func & TL521X_PIN_FUNC_POS);
 #endif
 
 	/* disable GPIO function (can be enabled back by GPIO driver) */

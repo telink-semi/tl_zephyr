@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -32,6 +32,12 @@
 
 	.global     __D25F_IRAM_SIZE
     .global     __D25F_DRAM_SIZE
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+    .equ _DRAM_SIZE,     4 // 128KB (4*32KB)
+    .equ _IRAM_SIZE,     4 // 128KB (4*32KB)
+
+	.global     _DRAM_SIZE
+    .global     _IRAM_SIZE
 #endif
 
 #include <zephyr/toolchain.h>
@@ -71,6 +77,11 @@ start:
     /*Initialize D25 ILM DLM Size */
     lui    t0 , 0x80141
     li     t1 , __D25F_DRAM_SIZE
+    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+    /*Initialize D25 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , _DRAM_SIZE
     sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
 #endif
 
@@ -228,6 +239,11 @@ retention_start:
     lui    t0 , 0x80141
     li     t1 , __D25F_DRAM_SIZE
     sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
+#elif CONFIG_SOC_RISCV_TELINK_TL521X
+/*Initialize D25 ILM DLM Size */
+    lui    t0 , 0x80141
+    li     t1 , _DRAM_SIZE
+    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
 #endif
 
 	/* Select PLIC mode */
@@ -276,7 +292,8 @@ _CORE_FEATURES_SETUP:
 
 	/* flash wakeup */
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X \
-	|| CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
+	|| CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X \
+	|| CONFIG_SOC_RISCV_TELINK_TL521X
 	/* we are not in ISR so use ISR stack to restore registers */
 	la     sp, z_interrupt_stacks
 	li     t0, CONFIG_ISR_STACK_SIZE

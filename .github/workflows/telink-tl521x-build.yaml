@@ -1,0 +1,162 @@
+name: Telink TL521x build examples
+
+on: pull_request
+
+jobs:
+  telink_build_examples:
+    runs-on: ubuntu-latest
+    name: Telink build examples
+    env:
+      ZEPHYR_SDK_VERSION: 0.17.0
+    steps:
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends libdigest-sha-perl cmake python3 ninja-build
+
+    - name: Setup Zephyr toolchain
+      run: |
+        mkdir ~/zephyr_sdk
+        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
+        (cd ~/zephyr_sdk && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/sha256.sum | shasum --check --ignore-missing)
+        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_sdk
+        (cd ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
+        rm -rf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
+
+    - name: Checkout Zephyr
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
+    - name: West setup
+      run: |
+        pip install west
+        cd ..
+        west init -l zephyr
+        west update
+        west zephyr-export
+        pip install -r zephyr/scripts/requirements.txt
+
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git bad4a2139701bdd18b32f43dbda88cf7f74901e7
+
+    # - name: Download and extract TL521X firmware binaries
+    #   run: |
+    #     wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl521x_fw/TL521X_FW.zip -O /tmp/TL521X_FW.zip
+    #     unzip -q /tmp/TL521X_FW.zip -d ${{ github.workspace }}
+    #     ls -la ${{ github.workspace }}/TL521X_FW/
+    #     rm -f /tmp/TL521X_FW.zip
+
+    - name: Build TL521x samples/basic/blinky
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_blinky_tl521x                      zephyr/samples/basic/blinky                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x samples/hello_world
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_hello_tl521x                       zephyr/samples/hello_world                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x samples/basic/button
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_button_tl521x                      zephyr/samples/basic/button                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521X basic/blinky_pwm
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_blinky_pwm_tl521x                      zephyr/samples/basic/blinky_pwm                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x samples/sensor/sht3xd
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_sht3xd_tl521x                      zephyr/samples/sensor/sht3xd                  -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    # - name: Build TL521x samples/drivers/adc
+    #   run: |
+    #     cd ..
+    #     west build -b tl5218x     -d build_adc_tl521x                         zephyr/samples/drivers/adc/adc_dt                    -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x samples/drivers/watchdog
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_watchdog_tl521x                    zephyr/samples/drivers/watchdog               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x tests/drivers/hwinfo/api
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_hwinfo_tl521x                    zephyr/tests/drivers/hwinfo/api               -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x tests/drivers/flash/common
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_tests_flash_tl521x                 zephyr/tests/drivers/flash/common             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    # - name: Build TL521x samples/drivers/spi_flash
+    #   run: |
+    #     cd ..
+    #     west build -b tl5218x     -d build_spi_flash_tl521x                    zephyr/samples/drivers/spi_flash             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x samples/basic/fade_led/
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_fade_tl521x                        zephyr/samples/basic/fade_led/                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x bluetooth/peripheral_ht
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_peripheral_ht_tl521x               zephyr/samples/bluetooth/peripheral_ht        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x net/openthread/cli
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_ot_cli_tl521x                      zephyr/samples/net/openthread/cli              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build TL521x net/openthread/coprocessor in RCP configuration with UART interface
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_ot_coprocessor_rcp_uart_tl521x     zephyr/samples/net/openthread/coprocessor     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-rcp.conf
+
+    - name: Build TL521X crypto/mbedtls
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_crypto_mbedtls_tl521x              zephyr/tests/crypto/mbedtls                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
+
+    - name: Build TL521X bootloader/mcuboot/boot for compressed LZMA image
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_mcuboot_tl521x_lzma                bootloader/mcuboot/boot/zephyr                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_COMPRESS_LZMA=y -DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000 -DCONFIG_BOOT_UPGRADE_ONLY=y -DCONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE=y
+
+    - name: Build TL521X net/sockets/echo_client for OpenThread with PM deep-sleep
+      run: |
+        cd ..
+        west build -b tl5218x_retention        -d build_ot_echo_client_pm_deep_tl5218x    zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y -DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y -DCONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE=y
+
+    - name: Collect artifacts
+      run: |
+        mkdir telink_build_artifacts
+        cp ../build_blinky_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_blinky.bin
+        cp ../build_hello_tl521x/zephyr/zephyr.bin                      telink_build_artifacts/tl521x_hello_world.bin
+        cp ../build_button_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_button.bin
+        cp ../build_sht3xd_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_sht3xd.bin
+        # cp ../build_adc_tl521x/zephyr/zephyr.bin                        telink_build_artifacts/tl521x_adc.bin
+        cp ../build_watchdog_tl521x/zephyr/zephyr.bin                   telink_build_artifacts/tl521x_watchdog.bin
+        cp ../build_tests_flash_tl521x/zephyr/zephyr.bin                telink_build_artifacts/tl521x_tests_flash.bin
+        # cp ../build_spi_flash_tl521x/zephyr/zephyr.bin                  telink_build_artifacts/tl521x_spi_flash.bin
+        cp ../build_fade_tl521x/zephyr/zephyr.bin                       telink_build_artifacts/tl521x_tests_pwm.bin
+        cp ../build_peripheral_ht_tl521x/zephyr/zephyr.bin              telink_build_artifacts/tl521x_peripheral_ht.bin
+        cp ../build_ot_cli_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_ot_cli.bin
+        cp ../build_ot_coprocessor_rcp_uart_tl521x/zephyr/zephyr.bin    telink_build_artifacts/tl521x_ot_coprocessor_rcp_uart.bin
+        cp ../build_crypto_mbedtls_tl521x/zephyr/zephyr.bin             telink_build_artifacts/tl521x_mbedtls.bin
+        cp ../build_ot_echo_client_pm_deep_tl5218x/zephyr/zephyr.bin    telink_build_artifacts/tl521x_ot_echo_client_pm_retention.bin
+
+    - name: Publish artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          telink_build_artifacts/*

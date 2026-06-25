@@ -20,8 +20,8 @@ Thread, Matter, and 2.4GHz proprietary standard.
 Hardware
 ********
 
-The TL3238X SoC integrates a powerful 32-bit RISC-V MCU, DSP, 2.4 GHz ISM Radio, 128 KB SRAM
-including 96 KB retention feature SRAM, external Flash memory, 12-bit AUX ADC, PWM, flexible
+The TL3238X SoC integrates a powerful 32-bit RISC-V MCU, DSP, 2.4 GHz ISM Radio, 160 KB SRAM
+including 160 KB retention feature SRAM, external Flash memory, 12-bit AUX ADC, PWM, flexible
 IO interfaces, and other peripheral blocks required for advanced IoTapplications.
 
 .. figure:: img/tl3238_block_diagram.png
