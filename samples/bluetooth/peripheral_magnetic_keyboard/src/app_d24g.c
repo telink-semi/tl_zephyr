@@ -224,59 +224,46 @@ _attribute_ram_code_sec_ uint8_t p24g_rf_enter_idle(void)
 _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
-    // if (p_evt->type == P24G_SM_CMD_SET_STATE)
-    // {
-    //     if (p_evt->opcode <= STATE_PAIRING_TIMEOUT) {
-    //         // app_d24p_set_state(p_evt->opcode);
-    //     }
 
-    //     if (p_evt->opcode == STATE_CONNECTED)
-    //     {
-    //         tlkapi_send_string_data(APP_LOG_EN, "connected", data, len);
-
-    //         spp_tick = stimer_get_tick() | 1;
-    //     }
-    //     else if (p_evt->opcode == STATE_DISCONNECTED)
-    //     {
-    //          if(p_evt->data[0] == P24G_LL_CONN_TIMEOUT)
-    //         {
-    //             p24g_enable_reconn(true);
-    //         }
-    //     }
-    //     else if (p_evt->opcode == STATE_PAIRING)
-    //     {
-
-    //     }else if (p_evt->opcode == STATE_RF_IDLE)
-    //     {
-
-    //     }else if (p_evt->opcode == STATE_PAIRING_TIMEOUT)
-    //     {
-    //         p24g_enable_pairing(true);
-    //     }
-    //     else if (p_evt->opcode == STATE_IDLE)
-    //     {
-    //         uint32_t wakeup_stick = 0;
-
-    //         wakeup_stick = p_evt->data[3];
-    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
-    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
-    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
-
-    //         // app_2p4g_set_power_state(STATE_TO_IDLE, wakeup_stick);
-    //     }
-    //     else if (p_evt->opcode == STATE_SLEEP)
-    //     {
-    //         uint32_t wakeup_stick = 0;
-
-    //         wakeup_stick = p_evt->data[3];
-    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[2];
-    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[1];
-    //         wakeup_stick = (wakeup_stick << 8) + p_evt->data[0];
-
-    //         // DBG_GPIO_TOGGLE(STACK_IO_EN, GPIO_PD7);
-    //         // app_2p4g_set_power_state(STATE_TO_SLEEP, wakeup_stick);
-    //     }
-    // }
+    if (p_evt->type == P24G_SM_CMD_SET_STATE)
+    {
+        if (p_evt->opcode == TPSLL_EVT_DEV_CONNECTED)
+        {
+            LOG_INF("connected");
+        }
+        else if (p_evt->opcode == TPSLL_EVT_DEV_DISCONNECTED)
+        {
+            LOG_INF("disconnected");
+        }
+        else if (p_evt->opcode == TPSLL_EVT_SAVE_REPORT_RATE)
+        {
+            LOG_INF("saving RR(0x%02X) ...", ((uint8_t* )p_evt->data)[0]);
+        }
+        else if (p_evt->opcode == TPSLL_EVT_REPORT_RATE_CHANGED)
+        {
+            LOG_INF("report rate changed to 0x%02X\n", ((uint8_t *)p_evt->data)[0]);
+        }
+        else if (p_evt->opcode == TPSLL_EVT_SPP_DATA_RECV)
+        {
+            uint8_t *spp_data = (uint8_t *)p_evt->data;
+        }
+        else if (p_evt->opcode == TPSLL_EVT_PAIR_TIMEOUT)
+        {
+            LOG_INF("pair timeout");
+        }
+        else if (p_evt->opcode == TPSLL_EVT_RECONNECT_TIMEOUT)
+        {
+            LOG_INF("reconnect timeout");
+        }
+        else if (p_evt->opcode == TPSLL_EVT_SLEEP_ENTER_REQ)
+        {
+            LOG_INF("sleep enter req");
+        }
+        else if (p_evt->opcode == TPSLL_EVT_USR_SPEC_DATA_RECV)
+        {
+            LOG_INF("recv user data: %d", ((uint8_t *)p_evt->data)[0]);
+        }
+    }
 }
 
 
