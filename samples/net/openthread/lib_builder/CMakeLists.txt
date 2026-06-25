@@ -23,6 +23,12 @@ else()
 	endif()
 endif()
 
+# split project configuration
+set(CONF_FILE
+    ${CMAKE_CURRENT_SOURCE_DIR}/prj.conf
+    ${CMAKE_CURRENT_SOURCE_DIR}/openthread.conf
+)
+
 # use compilation wrapper
 set(CMAKE_C_COMPILER_LAUNCHER ${CMAKE_BINARY_DIR}/scripts/exec-wrap CACHE STRING "" FORCE)
 set(CMAKE_CXX_COMPILER_LAUNCHER ${CMAKE_BINARY_DIR}/scripts/exec-wrap CACHE STRING "" FORCE)
