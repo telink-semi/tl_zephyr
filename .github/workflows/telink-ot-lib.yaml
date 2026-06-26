@@ -61,16 +61,17 @@ jobs:
         mkdir -p build_telink_ot_lib_artifacts/include
         mkdir -p build_telink_ot_lib_artifacts/lib
         mkdir -p build_telink_ot_lib_artifacts/zephyr
+        mkdir -p build_telink_ot_lib_artifacts/configs
 
     - name: Build libraries with Zephyr compiler
       run: |
-        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
         if [[ -e "${conf_files[0]}" ]]; then
           for build_config in "${conf_files[@]}"; do
-            config="${build_config#"$SAMPLE_SRC_PATH"/}"
+            config="${build_config#"${SAMPLE_SRC_PATH}"/}"
             echo "build configuration: $config"
             rm -rf build_tmp
-            west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
+            west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -- \
                        -DOVERLAY_CONFIG="$config" \
                        -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
             libname="libopenthread-zephyr-${config##*/}"
@@ -84,13 +85,13 @@ jobs:
       run: |
         export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
         export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
-        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
         if [[ -e "${conf_files[0]}" ]]; then
           for build_config in "${conf_files[@]}"; do
-            config="${build_config#"$SAMPLE_SRC_PATH"/}"
+            config="${build_config#"${SAMPLE_SRC_PATH}"/}"
             echo "build configuration: $config"
             rm -rf build_tmp
-            west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -- \
+            west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -- \
                        -DOVERLAY_CONFIG="$config" \
                        -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
             libname="libopenthread-andes-${config##*/}"
@@ -105,7 +106,7 @@ jobs:
     - name: Install headers
       run: |
         rm -rf build_tmp
-        west build -b "$BUILD_SOC" -d build_tmp "$SAMPLE_SRC_PATH" -t ot-headers
+        west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -t ot-headers
         cp -r build_tmp/zephyr/ot-include/* \
              "build_telink_ot_lib_artifacts/include"
 
@@ -146,7 +147,7 @@ jobs:
 
         if(FALSE)
         EOF
-        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
         if [[ -e "${conf_files[0]}" ]]; then
           for build_config in "${conf_files[@]}"; do
             config_name=$(basename "${build_config}" .conf)
@@ -189,7 +190,7 @@ jobs:
         choice OPENTHREAD_TELINK_LIBRARY_VERSION
           prompt "openthread Telink library version"
         EOF
-        conf_files=("$SAMPLE_SRC_PATH"/overlays/*.conf)
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
         if [[ -e "${conf_files[0]}" ]]; then
           config_name=$(basename "${conf_files[0]}" .conf)
           cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
@@ -213,6 +214,37 @@ jobs:
 
         endif # SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
         EOF
+
+    - name: Export configurations
+      run: |
+        rm -rf build_tmp
+        west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -t ot-headers
+        build_timestamp="$(sed -n 's/^CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP=//p' build_tmp/zephyr/.config)"
+        build_year=$(date -d @"${build_timestamp}" +%Y)
+        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+        if [[ -e "${conf_files[0]}" ]]; then
+          for build_config in "${conf_files[@]}"; do
+            config_name=$(basename "${build_config}" .conf)
+            cat << EOF > build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
+        # Copyright (c) ${build_year} Telink Semiconductor
+        # SPDX-License-Identifier: Apache-2.0
+
+        CONFIG_OPENTHREAD_TELINK_LIBRARY=y
+        CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^}=y
+
+        EOF
+            while IFS= read -r line; do
+              [[ -z "${line}" || "${line}" =~ ^[[:space:]]*# ]] && continue
+              echo "${line}" >> \
+                    build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
+            done < "${SAMPLE_SRC_PATH}"/openthread.conf
+            while IFS= read -r line; do
+              [[ -z "${line}" || "${line}" =~ ^[[:space:]]*# ]] && continue
+              echo "${line}" >> \
+                    build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
+            done < "${build_config}"
+          done
+        fi
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
