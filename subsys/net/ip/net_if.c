@@ -6329,3 +6329,22 @@ void net_if_post_init(void)
 		}
 	}
 }
+
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+
+/* net interface suspend/resume API */
+void net_if_thread_suspend(void)
+{
+	#if defined(CONFIG_NET_PKT_TIMESTAMP_THREAD)
+		k_thread_suspend(tx_thread_ts);
+	#endif /* CONFIG_NET_PKT_TIMESTAMP_THREAD */
+}
+
+void net_if_thread_resume(void)
+{
+	#if defined(CONFIG_NET_PKT_TIMESTAMP_THREAD)
+		k_thread_resume(tx_thread_ts);
+	#endif /* CONFIG_NET_PKT_TIMESTAMP_THREAD */
+}
+
+#endif

@@ -479,3 +479,39 @@ void net_tc_rx_init(void)
 	}
 #endif
 }
+
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+
+void net_tc_threads_suspend(void)
+{
+	int i;
+#if NET_TC_TX_COUNT > 0
+	for (i = 0; i < NET_TC_TX_COUNT; i++) {
+		k_thread_suspend(&tx_classes[i].handler);
+	}
+#endif
+
+#if NET_TC_RX_COUNT > 0
+	for (i = 0; i < NET_TC_RX_COUNT; i++) {
+		k_thread_suspend(&rx_classes[i].handler);
+	}
+#endif
+}
+
+void net_tc_threads_resume(void)
+{
+	int i;
+#if NET_TC_TX_COUNT > 0
+	for (i = 0; i < NET_TC_TX_COUNT; i++) {
+		k_thread_resume(&tx_classes[i].handler);
+	}
+#endif
+
+#if NET_TC_RX_COUNT > 0
+	for (i = 0; i < NET_TC_RX_COUNT; i++) {
+		k_thread_resume(&rx_classes[i].handler);
+	}
+#endif
+}
+
+#endif
