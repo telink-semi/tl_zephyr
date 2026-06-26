@@ -96,6 +96,9 @@ zephyr_link_libraries(
 	-Wl,--wrap,sys_heap_alloc
 	-Wl,--wrap,sys_heap_aligned_alloc
 	-Wl,--wrap,sys_heap_aligned_realloc
+	-Wl,--undefined=sys_heap_alloc
+	-Wl,--undefined=sys_heap_aligned_alloc
+	-Wl,--undefined=sys_heap_aligned_realloc
 )
 
 # Make MCUBoot early boot code injection
