@@ -190,7 +190,7 @@ static inline tpsll_dev_status_e app_d24p_get_state(void)
     return app_ctx.dev_status;
 }
 
-
+uint8_t p24g_change_report_rate(report_rate_t report_rate);
 
 void tlk_d25f_to_n22_mode_info(kb_mode_t mode_flag);
 

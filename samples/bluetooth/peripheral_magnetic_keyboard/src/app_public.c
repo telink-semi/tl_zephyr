@@ -547,26 +547,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
 
     switch (app_key_buf.special_key_press_f)
     {
-        case (PRESS_T_FN_FLAG|PRESS_KB_M_FLAG):
-            // printf("mouse auto test\n");
-            // auto_test_mouse^=0x01;
-            // if(usb_connected_ok==0)
-            // {
-            //     if(fun_mode==KB_MODE_2P4G)
-            //     {
-            //         if(auto_test_mouse)
-            //         {
-            //             app_rf_set_rx_wait(1);// rx wait
-            //         }
-            //         else
-            //         {
-            //             app_rf_set_rx_wait(14);// rx wait
-            //         }
-            //     }
-            // }
-            break;
         case (PRESS_T_FN_FLAG|PRESS_KB_P_FLAG):
-            // printk("pairing mode\n");
             if(usb_connected_ok==0)
             {
                 if(fun_mode==KB_MODE_2P4G)
@@ -593,7 +574,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             }
             else if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_8K);
+                p24g_change_report_rate(REPORT_RATE_8K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_2_FLAG):
@@ -603,7 +584,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             }
             else if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_4K);
+                p24g_change_report_rate(REPORT_RATE_4K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_3_FLAG):
@@ -613,7 +594,7 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             }
             else if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_2K);
+                p24g_change_report_rate(REPORT_RATE_2K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_4_FLAG):
@@ -623,25 +604,25 @@ _attribute_ram_code_sec_ void special_key_event_handle(void)
             }
             else if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_1K);
+                p24g_change_report_rate(REPORT_RATE_1K);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_5_FLAG):
             if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_500);
+                p24g_change_report_rate(REPORT_RATE_500);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_6_FLAG):
             if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_250);
+                p24g_change_report_rate(REPORT_RATE_250);
             }
             break;
         case (PRESS_T_FN_FLAG|PRESS_KB_7_FLAG):
             if (fun_mode==KB_MODE_2P4G)
             {
-                // tpsll_change_report_rate(REPORT_RATE_125);
+                p24g_change_report_rate(REPORT_RATE_125);
             }
             break;
         default:

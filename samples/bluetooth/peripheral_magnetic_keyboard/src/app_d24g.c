@@ -216,9 +216,9 @@ _attribute_ram_code_sec_ uint8_t p24g_enable_reconn(bool enable)
     return p24g_send_sm_msg(P24G_SM_CMD_SET_STATE, P24G_SM_OP_ENABLE_RECONN, &enable, 1);
 }
 
-_attribute_ram_code_sec_ uint8_t p24g_terminate_connect(void)
+_attribute_ram_code_sec_ uint8_t p24g_change_report_rate(report_rate_t report_rate)
 {
-    return p24g_send_sm_msg(P24G_SM_CMD_LL_CONTROL, P24G_SM_OP_TERMINATE_CONN, 0, 0);
+    return p24g_send_sm_msg(P24G_SM_CMD_REPORT_RATE_CHANGE, P24G_SM_OP_NONE, &report_rate, 1);
 }
 
 _attribute_ram_code_sec_ uint8_t p24g_rf_enter_idle(void)
