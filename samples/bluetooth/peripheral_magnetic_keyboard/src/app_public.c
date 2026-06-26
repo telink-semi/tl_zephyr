@@ -436,7 +436,58 @@ void keyboard_comm_init(void)
     return 0;
 }
 
-// static unsigned char nk_buffer[8]={23, 0}; 
+#if SPP_TEST_EN
+void app_spp_cb(unsigned char *data, unsigned char len, bool success, void *user_arg)
+{
+    uint32_t *data_id = (uint32_t *)user_arg;
+
+    if(success)
+    {
+        // LOG_INF("spp send success(len %d)", len);
+        printk("spp send success(len %d)\n", len);
+    }else{
+        LOG_ERR("spp send fail(len %d)\n", len);
+    }
+}
+
+extern uint8_t app_send_spp_data(uint8_t *data, uint8_t len, uint8_t retry_num, spp_cb_t cb, void *user_arg);
+static void app_spp_test(void)
+{
+    int ret = 0;
+
+    #define RETRY_NUM   5
+    static uint8_t spp_b[64] = {TPSLL_SPP_TEST_DATA, 0};
+    static uint32_t data_id = 0x1234;
+    static uint8_t len = sizeof(spp_b);
+    void *user_arg = &data_id;
+
+    ret = app_send_spp_data(spp_b, len, RETRY_NUM, app_spp_cb, user_arg);
+
+    if (ret == 0) {
+        spp_b[1]++;
+
+        #if 1
+        if (len < sizeof(spp_b)) {
+            len++;
+        } else {
+            len = 2;
+        }
+
+        for (uint32_t i = 2; i < len; i++)
+        {
+            spp_b[i] = spp_b[1] + (i - 1);
+        }
+        #endif
+        // LOG_INF("push spp(%d) success\n", len);
+        // printk("push spp(%d) success cb:%X\n", len, &app_spp_cb);
+    } else {
+        // LOG_INF("push spp(%d) fail(%d)\n", len, ret);
+        printk("push spp(%d) fail(%d)\n", len, ret);
+    }
+}
+#endif
+
+// static unsigned char nk_buffer[8]={7, 0}; 
 // static unsigned char zero_buffer[8]={0}; 
 
  _attribute_ram_code_sec_ void public_loop(void)
@@ -447,19 +498,26 @@ void keyboard_comm_init(void)
     {
         last_time = k_uptime_get_32();
         check_mode(0);
+
+        // static unsigned char flag = 0;
+
+        // flag = 1 - flag;
+        // if (flag)
+        // {
+        //     // tpsll_send_keyboard_data(&nk_buffer[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
+        //     pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, &nk_buffer[0], 8);
+        // }
+        // else
+        // {
+        //     // tpsll_send_keyboard_data(&zero_buffer[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
+        //     pp_fifo_push(&d25fKbTxFifo, NORMAL_KB_DATA_CMD, &zero_buffer[0], 8);
+        // }
+
+        #if SPP_TEST_EN
+        app_spp_test();
+        #endif
     }
 
-    // static unsigned char flag = 0;
-
-    // flag = 1 - flag;
-    // if (flag)
-    // {
-    //     tpsll_send_keyboard_data(&nk_buffer[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
-    // }
-    // else
-    // {
-    //     tpsll_send_keyboard_data(&zero_buffer[0], 8, NORMAL_KB_DATA_CMD, NULL, NULL);
-    // }
 
 #if USB_APP_FUN_ENABLE
     app_usb_status_check();

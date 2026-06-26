@@ -64,8 +64,7 @@
 
 /////////////////////////////////////////////////////////////////////////
 
-#define SPP_TX_FIFO_SIZE            32
-#define SPP_TX_FIFO_SIZE_KB         24 //In 8K mode, the spp buffer size cannot exceed 24 on kb side.
+#define SPP_TX_FIFO_SIZE_KB         (64 + 12)
 
 #define MAC_ADDR_LEN                6 //MAC address length
 
@@ -131,6 +130,7 @@ typedef enum {
     P24G_SM_CMD_SAVE_PAIR_INFO,
     P24G_SM_CMD_SET_KB_MODE,
     P24G_SM_CMD_DATA_TYPE_SPP,
+    P24G_SM_CMD_SPP_SEND_COMP,
     P24G_SM_CMD_MISC,
     P24G_SM_CMD_REPORT_RATE_CHANGE,
     P24G_SM_CMD_MAX,

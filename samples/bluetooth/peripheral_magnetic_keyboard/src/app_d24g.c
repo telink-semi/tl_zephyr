@@ -33,7 +33,7 @@ LOG_MODULE_REGISTER(app_2p4g);
 #define WDT_INTV_MS     (300)
 
 _attribute_aligned_(4) app_ctx_t app_ctx;
-_attribute_aligned_(4) app_dc_flag_ctx_t app_dc_flag_ctx;
+_attribute_aligned_(4) app_dual_core_flag_ctx_t app_dual_core_flag_ctx;
 
 static volatile uint32_t spp_tick = 0;
 
@@ -142,7 +142,6 @@ void app_2p4g_dual_core_comm_init(void)
     cmd[5] = (uint8_t)(address >> 16 & 0xff);
     cmd[6] = (uint8_t)(address >> 24 & 0xff);
 
-    printk("d25fKbTxFifo %x\n",&d25fKbTxFifo);
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_KB_TX_ADDRESS, cmd);
 
     address = (u32)&d25fSppTxFifo;
@@ -153,13 +152,15 @@ void app_2p4g_dual_core_comm_init(void)
 
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_SPP_TX_ADDRESS, cmd);
 
-    address = (u32)&app_dc_flag_ctx;
+    address = (u32)&app_dual_core_flag_ctx;
     cmd[3] = (uint8_t)(address & 0xff);
     cmd[4] = (uint8_t)(address >> 8 & 0xff);
     cmd[5] = (uint8_t)(address >> 16 & 0xff);
     cmd[6] = (uint8_t)(address >> 24 & 0xff);
 
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_APP_CTX_ADDRESS, cmd);
+
+    printk("d25fKbTxFifo: %x\nd25fSppTxFifo: %x\napp_dual_core_flag_ctx: %x\n",&d25fKbTxFifo, &d25fSppTxFifo, &app_dual_core_flag_ctx);
 }
 
 
@@ -281,16 +282,60 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
 _attribute_ram_code_sec_ static void app_2p4g_handle_spp_data(uint8_t *data, uint16_t len)
 {
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
-    if (p_evt->opcode == TPSLL_SPP_LED_STATUS)
-    {
-        // app_pc_kb_led_status(p_evt->data[0]);
+    // LOG_INF("spp type(%d)op(0x%02x)len(%d)d(%d)", p_evt->type, p_evt->opcode, p_evt->len, p_evt->data[0]);
+    // printk("spp type(%d)op(0x%02x)len(%d)d(%d)\n", p_evt->type, p_evt->opcode, p_evt->len, p_evt->data[0]);
 
-    }
-    else if (p_evt->opcode == TPSLL_SPP_TEST_DATA)
+    if (p_evt->type == P24G_SM_CMD_DATA_TYPE_SPP)
     {
-        LOG_INF("rx spp data %d", p_evt->data[0]);
+        if (p_evt->opcode == TPSLL_SPP_LED_STATUS)
+        {
+            // app_pc_kb_led_status(p_evt->data[0]);
+        }
+        else if (p_evt->opcode == TPSLL_SPP_TEST_DATA)
+        {
+            static uint16_t last_id = 0xffff;
+            uint8_t cur_id = p_evt->data[0];
 
+            if (last_id == 0xffff) {
+                last_id = cur_id;
+            } else {
+                uint8_t expected_id = (uint8_t)(last_id + 1);
+
+                if (cur_id != expected_id) {
+                    // printf("expected %u, got %u\n", 
+                    // expected_id, cur_id);
+                }
+                last_id = cur_id;
+            }
+            #if 0
+            for (int i = 1; i < p_evt->len; i++) {
+                if (p_evt->data[i] != ((p_evt->data[0] + i) & 0xff)) {
+
+                    printf("err spp_rx(%d)", p_evt->len);
+                    for(int j = 0; j < p_evt->len; j++) {
+                        printf("%d>", p_evt->data[j]);
+                    }
+                    printf("\n");
+                    break;
+                }
+            }
+            #endif
+        }
     }
+    else if (p_evt->type == P24G_SM_CMD_SPP_SEND_COMP)
+    {
+        uint16 pdu_len = p_evt->len - 9;
+        fifo_cb_t spp_cb = *(fifo_cb_t *)(&p_evt->data[pdu_len]);
+        void *user_arg = *(void **)(&p_evt->data[pdu_len + 4]);
+
+        // printk("spp len(%d)spp_cb:%X\nspp send success:\n", p_evt->len, spp_cb);
+
+        if (spp_cb)
+        {
+            spp_cb(p_evt->data, pdu_len, true, user_arg);
+        }
+    }
+
 }
 
 
@@ -326,6 +371,7 @@ static void app_p24g_sm_cmd_hanlder_init(void)
     p24g_register_sm_cmd_handler(P24G_SM_CMD_SAVE_PAIR_INFO,           app_2p4g_handle_save_pairing_info);
     p24g_register_sm_cmd_handler(P24G_SM_CMD_SET_STATE,                app_2p4g_handle_set_state);
     p24g_register_sm_cmd_handler(P24G_SM_CMD_DATA_TYPE_SPP,            app_2p4g_handle_spp_data);
+    p24g_register_sm_cmd_handler(P24G_SM_CMD_SPP_SEND_COMP,            app_2p4g_handle_spp_data);
     p24g_register_sm_cmd_handler(P24G_SM_CMD_MISC,                     app_2p4g_handle_misc);
 }
 
@@ -373,6 +419,28 @@ _attribute_ram_code_sec_ uint8_t p24g_send_spp_data(uint8_t cmd, unsigned char *
     return ret;
 }
 
+_attribute_ram_code_sec_ uint8_t app_send_spp_data(uint8_t *data, uint8_t len, uint8_t retry_num, spp_cb_t cb, void *user_arg)
+{
+    uint8_t ret = 0;
+
+    if((app_ctx.dev_status != STATE_CONNECTED) || app_dual_core_flag_ctx.is_stk_busy)
+    {
+        return TLK_ERR_INVALID_STATE;
+    }
+    if (!data)
+    {
+        return TLK_ERR_NULL;
+    }
+    if (len > KM_SPP_MAX_LEN)
+    {
+        return TLK_ERR_INVALID_LENGTH;
+    }
+
+    ret = pp_fifo_push_extra(&d25fSppTxFifo, TPSLL_SPP_DATA, data, len, retry_num, cb, user_arg);
+
+    return ret;
+}
+
 void mcc_d25f_to_n22_set_clk_info(void)
 {
     uint8_t cmd[8] = {0};
@@ -404,7 +472,7 @@ void p24g_user_init_normal(void)
     app_p24g_send_info_2_n22();
 
     p24g_send_sm_msg(P24G_SM_CMD_SET_KB_MODE, KB_MODE_2P4G, 0, 0);
- 
+
     LOG_INF("d25f kb_p24g_init end\n");
 }
 

@@ -17,6 +17,8 @@ extern "C" {
 
 #include "app_common_config.h"
 
+#define KM_SPP_MAX_LEN                                  (64)
+
 typedef void (*p24g_sm_cmd_handler_t)(uint8_t *data, uint16_t len);
 
 /* Generic event header */
@@ -49,11 +51,10 @@ extern app_ctx_t app_ctx;
 
 typedef struct
 {
-    bool busy_flag;
-} app_dc_flag_ctx_t;
+    bool is_stk_busy;
+} app_dual_core_flag_ctx_t;
 
-extern app_dc_flag_ctx_t app_dc_flag_ctx;
-
+extern app_dual_core_flag_ctx_t app_dual_core_flag_ctx;
 
 
 /**

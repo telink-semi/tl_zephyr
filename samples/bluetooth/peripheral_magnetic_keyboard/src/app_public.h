@@ -97,6 +97,7 @@ extern int dev_other_info_idx;
 extern uint32_t  flash_sector_2p4_other_inf;
 
 
+typedef fifo_cb_t spp_cb_t;
 typedef fifo_cb_t kb_cb_t;
 extern pl_fifo_t   d25fKbTxFifo;
 extern pl_fifo_t   d25fSppTxFifo;

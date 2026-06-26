@@ -20,10 +20,11 @@ extern "C" {
 
 #define NEW_HW_KEYBOARD_EN          0
 
-#if (HW_BOARD_TYPE == HW_ALG_KEYBOARD )
-    #define  ALLOW_SWITCH_BLE_2P4G_MODE     1
-    #define  ALG_KEYSCAN_APP_FUN_ENABLE     1
-    #define  USB_APP_FUN_ENABLE             1
+/////////////////////////////////////////////////////////////////////////////
+#if (HW_BOARD_TYPE == HW_ALG_KEYBOARD)
+    #define ALLOW_SWITCH_BLE_2P4G_MODE      1
+    #define ALG_KEYSCAN_APP_FUN_ENABLE      1
+    #define USB_APP_FUN_ENABLE              1
 
     #define CAP_LED_PIN   GPIO_NONE_PIN//GPIO_PB4
     #define NUM_LED_PIN   GPIO_NONE_PIN//GPIO_PB5
@@ -32,6 +33,8 @@ extern "C" {
 
     #define APP_VBUS_CHECK_DE_JT_CNT        2
 #endif
+
+#define SPP_TEST_EN                 0
 
 #ifdef __cplusplus
 }
