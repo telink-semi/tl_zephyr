@@ -120,6 +120,7 @@ jobs:
         build:
           cmake: .
           kconfig: Kconfig
+
         EOF
 
     - name: Create CMakeList
@@ -167,6 +168,7 @@ jobs:
         add_library(ot-config INTERFACE)
 
         endif() # CONFIG_OPENTHREAD_TELINK_LIBRARY
+
         EOF
 
     - name: Create Kconfig
@@ -213,6 +215,7 @@ jobs:
         cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
 
         endif # SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
+
         EOF
 
     - name: Export configurations
@@ -243,8 +246,54 @@ jobs:
               echo "${line}" >> \
                     build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
             done < "${build_config}"
+            echo >> build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
           done
         fi
+
+    - name: Generate readme
+      run: |
+        rm -rf build_tmp
+        west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -t ot-headers
+        build_timestamp="$(sed -n 's/^CONFIG_TELINK_OT_LIB_BUILD_TIMESTAMP=//p' build_tmp/zephyr/.config)"
+        build_timezone="$(date +%::z) ($(date +%Z))"
+        build_datetime="$(date -d @${build_timestamp})"
+        zephyr_hash=$(git rev-parse HEAD)
+        [[ -n "$(git status --porcelain)" ]] && zephyr_hash+="-dirty"
+        ot_submodule_path="$(sed -n 's/^# openthread (\(.*\))$/\1/p' build_tmp/zephyr/.config)"
+        ot_hash=$(cd "${ot_submodule_path}" && git rev-parse HEAD)
+        [[ -n "$(cd "${ot_submodule_path}" && git status --porcelain)" ]] && ot_hash+="-dirty"
+        zephyr_gcc_ver="$(~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-gcc --version)"
+        andes_gcc_ver="$(~/nds-gcc/nds32le-elf-newlib-v5f/bin/riscv32-elf-gcc --version)"
+        cat << EOF > build_telink_ot_lib_artifacts/README.md
+        # openthread Telink prebuilt libraries
+
+        ## Zephyr revision
+        *${zephyr_hash}*
+
+        ## openthread revision
+        *${ot_hash}*
+
+        ## zephyr compiler version
+        \`\`\`text
+        ${zephyr_gcc_ver}
+        \`\`\`
+
+        ## andes compiler version
+        \`\`\`text
+        ${andes_gcc_ver}
+        \`\`\`
+
+        ## build time
+        time zone: *${build_timezone}*
+
+        timestamp: *${build_timestamp}*
+
+        date/time: *${build_datetime}*
+
+        ## prebuilt configurations
+        See *configs/* directory.
+
+        EOF
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
