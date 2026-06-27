@@ -25,6 +25,8 @@
 #include <zephyr/sys/reboot.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/bluetooth/conn.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/usb/usb_dc.h>
 
 #include "timer.c"
 #include "app_public.h"
@@ -77,6 +79,15 @@ const struct gpio_dt_spec   mode_led_pin = GPIO_SPEC(MODE_NODE),
 /* 定义NVS实例 */
 struct nvs_fs user_fs;
 
+const struct uart_config uart_cfg = {
+		.baudrate = 1000000,
+		.parity = UART_CFG_PARITY_NONE,
+		.stop_bits = UART_CFG_STOP_BITS_1,
+		.data_bits = UART_CFG_DATA_BITS_8,
+		.flow_ctrl = UART_CFG_FLOW_CTRL_NONE
+	};
+
+const struct device *const uart_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 
 ST_FLASH_DEV_INFO flash_dev_info  __attribute__ ((aligned (4)));
 int dev_info_idx;
@@ -84,13 +95,14 @@ int dev_info_idx;
 ST_FLASH_DEV_OTHER_INFO flash_dev_other_info  __attribute__ ((aligned (4)));
 int dev_other_info_idx;
 
-_attribute_data_retention_ uint32_t flash_sector_2p4_inf=P24G_PAIR_INF_FLASH_ADDR_2M;
-_attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FLASH_ADDR_2M;
+// _attribute_data_retention_ uint32_t flash_sector_2p4_inf=P24G_PAIR_INF_FLASH_ADDR_2M;
+// _attribute_data_retention_ uint32_t flash_sector_2p4_other_inf=P24G_OTHER_INF_FLASH_ADDR_2M;
 
 
 
 volatile unsigned char fun_mode = 0;
 static unsigned char last_mode_status=KB_MODE_USB;
+static unsigned char last_vbus_status=0xff;
 
 
 #define KB_TX_FIFO_SIZE 24
@@ -168,9 +180,9 @@ static void p24g_pairing_info_check(void)
 
     dev_info_idx = nvs_read(&user_fs, APP_2P4G_PAIR_INFO_ID, (unsigned char *)&flash_dev_info.side_id, sizeof(ST_FLASH_DEV_INFO));
     if (dev_info_idx == -ENOENT) {
-        LOG_INF("not paired: %x %x", flash_dev_info.side_id, flash_sector_2p4_inf);
+        LOG_INF("not paired");
     } else {
-        LOG_INF("paired: %x %x", flash_dev_info.side_id, flash_sector_2p4_inf);
+        LOG_INF("paired: %x", flash_dev_info.side_id);
     }
 
     dev_other_info_idx = nvs_read(&user_fs, APP_2P4G_APP_INFO_ID, (unsigned char *)&flash_dev_other_info.report_rate, sizeof(ST_FLASH_DEV_OTHER_INFO));
@@ -178,7 +190,7 @@ static void p24g_pairing_info_check(void)
         flash_dev_other_info.report_rate = REPORT_RATE_NONE;
         LOG_INF("NVS report rate naver saved\n");
     } else {
-        LOG_INF("NVS get report rate: %x %x", flash_dev_other_info.report_rate, flash_sector_2p4_other_inf);
+        LOG_INF("NVS get report rate: %x", flash_dev_other_info.report_rate);
     }
 }
 
@@ -231,6 +243,27 @@ _attribute_ram_code_sec_ void check_vbus(void)
             vbus_status=0;
         }
     }
+    if(last_vbus_status!=vbus_status)
+    {
+#if ALG_KEYSCAN_APP_FUN_ENABLE
+        ks_pwm_mode_disable();
+#endif
+        if(last_vbus_status == 0)
+        {
+            // TODO:app_usb_bus_reset_init();
+        }
+        else
+        {
+            usb_status = 0;
+        }
+        last_vbus_status = vbus_status;
+        LOG_INF("vbus_status = %d\r\n",vbus_status);
+        pp_fifo_reset(&d25fKbTxFifo);
+        // k_busy_wait(1000);
+#if ALG_KEYSCAN_APP_FUN_ENABLE
+        ks_pwm_mode_enable();
+#endif
+    }
 }
 
 
@@ -269,6 +302,18 @@ _attribute_ram_code_sec_ void check_mode(u8 power_on)
 #endif
 }
 
+_attribute_ram_code_sec_ static void app_mode_pin_close_check(void)
+{
+    #if ALG_KEYSCAN_APP_FUN_ENABLE
+    if (((last_mode_status == KB_MODE_2P4G) || (last_mode_status == KB_MODE_BLE)) \
+        && ((gpio_pin_get_dt(&mode_2p4_pin)==0)&&(gpio_pin_get_dt(&mode_ble_pin)==0)) \
+        && (gpio_pin_get_dt(&vbus_check_pin) == 0))
+    {
+        ks_pwm_mode_disable();
+    }
+    #endif
+}
+
 /* Timer0 interrupt handler */
 _attribute_ram_code_sec_ void timer0_isr(void)
 {
@@ -277,6 +322,7 @@ _attribute_ram_code_sec_ void timer0_isr(void)
     #if  ALG_KEYSCAN_APP_FUN_ENABLE
         key_scan();
     #endif
+        app_mode_pin_close_check();
 	}
 }
 
@@ -394,6 +440,19 @@ static int peripheral_comm_init(void)
         LOG_ERR("Error: failed to configure vbus check io \n");
     }
     LOG_INF("configure vbus_check_pin io ok\n");
+
+
+	if (!device_is_ready(uart_dev)) {
+		LOG_ERR("UART device not ready\n");
+		return -ENODEV;
+	}
+
+	/* Verify configure() - set device configuration using data in cfg */
+	ret = uart_configure(uart_dev, &uart_cfg);
+    if (ret != 0) {
+        LOG_ERR("Error: failed to configure uart \n");
+    }
+    LOG_INF("configure uart ok\n");
 }
 
 
@@ -490,6 +549,42 @@ static void app_spp_test(void)
 // static unsigned char nk_buffer[8]={7, 0}; 
 // static unsigned char zero_buffer[8]={0}; 
 
+#if REPORT_RATE_TEST_EN
+static void report_rate_test_loop(void)
+{
+    static uint32_t last_switch_time = 0;
+    static uint8_t rr_index = 0;
+
+    static const report_rate_t rr_table[] = {
+        REPORT_RATE_8K,
+        REPORT_RATE_4K,
+        REPORT_RATE_2K,
+        REPORT_RATE_1K,
+        REPORT_RATE_500,
+        REPORT_RATE_250,
+        REPORT_RATE_125,
+    };
+    static const uint8_t rr_count = sizeof(rr_table) / sizeof(rr_table[0]);
+
+    if (app_ctx.dev_status != STATE_CONNECTED || fun_mode != KB_MODE_2P4G) {
+        return;
+    }
+
+    if (k_uptime_get_32() - last_switch_time > 1000) {
+        last_switch_time = k_uptime_get_32();
+
+        report_rate_t rr = rr_table[rr_index];
+        LOG_INF("report rate test: switching to 0x%02X", rr);
+        p24g_change_report_rate(rr);
+
+        rr_index++;
+        if (rr_index >= rr_count) {
+            rr_index = 0;
+        }
+    }
+}
+#endif
+
  _attribute_ram_code_sec_ void public_loop(void)
 {
     static uint32_t last_time = 0;
@@ -515,6 +610,10 @@ static void app_spp_test(void)
 
         #if SPP_TEST_EN
         app_spp_test();
+        #endif
+
+        #if REPORT_RATE_TEST_EN
+        report_rate_test_loop();
         #endif
     }
 

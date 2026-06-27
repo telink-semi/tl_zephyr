@@ -18,6 +18,11 @@ extern "C" {
 #include "app_fifo.h"
 #include "driver.h"
 
+
+extern struct nvs_fs user_fs;
+extern const struct uart_config uart_cfg;
+extern const struct device *const uart_dev;
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 #define PRESS_T_FN_FLAG      0X01
 #define PRESS_KB_M_FLAG      0X02
@@ -61,7 +66,6 @@ enum {
     BLE_START_PAIR = 16,
 };
 
-extern struct nvs_fs user_fs;
 #define USER_STORAGE_APP_INFO_ID                1
 #define APP_2P4G_PAIR_INFO_ID                   2
 #define APP_2P4G_APP_INFO_ID                    3
@@ -83,7 +87,7 @@ typedef struct
 } ST_FLASH_DEV_INFO;
 extern ST_FLASH_DEV_INFO flash_dev_info;
 extern int dev_info_idx;
-extern uint32_t  flash_sector_2p4_inf;
+// extern uint32_t  flash_sector_2p4_inf;
 
 typedef struct
 {
@@ -94,7 +98,7 @@ typedef struct
 
 extern ST_FLASH_DEV_OTHER_INFO flash_dev_other_info;
 extern int dev_other_info_idx;
-extern uint32_t  flash_sector_2p4_other_inf;
+// extern uint32_t  flash_sector_2p4_other_inf;
 
 
 typedef fifo_cb_t spp_cb_t;

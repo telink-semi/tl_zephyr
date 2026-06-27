@@ -29,7 +29,6 @@ LOG_MODULE_REGISTER(app_usb);
 
 
 volatile unsigned int  vbus_status = 0;
-static unsigned char last_vbus_status = 0;
 volatile unsigned int usb_connected_ok = 0;
 
  static const uint8_t hid_report_kb_desc[] = HID_KEYBOARD_REPORT_DESC();
@@ -41,7 +40,7 @@ static const uint8_t hid_report_n_keys_desc[] = HID_N_KEY_REPORT_DESC();
 static const uint8_t hid_report_vendor_defined[] = HID_MOUSE_REPORT_DESC(5);
 
 
-static enum usb_dc_status_code usb_status;
+enum usb_dc_status_code usb_status;
 
 static K_SEM_DEFINE(usb_sem, 1, 1); /* starts off "available" */
 static void in_ready_cb(const struct device *dev)
@@ -258,20 +257,6 @@ _attribute_ram_code_sec_ void app_usb_status_check(void)
     static unsigned int last_usb_status = 0xff;
 
     check_vbus();
-
-    if(last_vbus_status != vbus_status)
-    {
-        LOG_INF("vbus_status = %d\r\n",vbus_status);
-        if(last_vbus_status == 0)
-        {
-            // TODO:app_usb_bus_reset_init();
-        }
-        else
-        {
-            usb_status = 0;
-        }
-        last_vbus_status = vbus_status;
-    }
 
     if(last_usb_status != usb_status)
     {

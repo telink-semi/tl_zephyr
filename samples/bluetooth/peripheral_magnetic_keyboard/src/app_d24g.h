@@ -17,6 +17,8 @@ extern "C" {
 
 #include "app_common_config.h"
 
+#define PLL_192M_D25F_32M_HCLK_N22_32M_PCLK_32M_MSPI_48M clock_init(CLK_BASEBAND_PLL_192M, CLK_DIV6, CCLK_DIV1_TO_HCLK_DIV1_TO_PCLK, CLK_DIV4)
+
 #define KM_SPP_MAX_LEN                                  (64)
 
 typedef void (*p24g_sm_cmd_handler_t)(uint8_t *data, uint16_t len);
@@ -55,6 +57,12 @@ typedef struct
 } app_dual_core_flag_ctx_t;
 
 extern app_dual_core_flag_ctx_t app_dual_core_flag_ctx;
+
+typedef enum
+{
+    CLOCK_CONFIG_1V1_192_96  = 0,
+    CLOCK_CONFIG_1V_192_32,
+} app_clock_config_e;
 
 
 /**

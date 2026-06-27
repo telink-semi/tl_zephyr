@@ -36,6 +36,10 @@ extern "C" {
 
 #define SPP_TEST_EN                 0
 
+#define REPORT_RATE_TEST_EN         0
+
+#define APP_WDT_ENABLE              0
+
 #ifdef __cplusplus
 }
 #endif

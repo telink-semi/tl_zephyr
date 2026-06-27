@@ -49,6 +49,7 @@ extern "C" {
 
 extern volatile unsigned int vbus_status;
 extern volatile  unsigned int usb_connected_ok;
+extern enum usb_dc_status_code usb_status;
 
 int usb_hw_init(void);
 void usb_test_loop(void);

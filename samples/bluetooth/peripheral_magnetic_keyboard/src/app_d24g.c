@@ -15,6 +15,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/uart.h>
 
 #include <zephyr/settings/settings.h>
 
@@ -35,6 +36,7 @@ LOG_MODULE_REGISTER(app_2p4g);
 _attribute_aligned_(4) app_ctx_t app_ctx;
 _attribute_aligned_(4) app_dual_core_flag_ctx_t app_dual_core_flag_ctx;
 
+uint8_t last_clock_select = 0xFF;
 static volatile uint32_t spp_tick = 0;
 
 
@@ -43,6 +45,7 @@ static volatile uint32_t spp_tick = 0;
  */
 static p24g_sm_cmd_handler_t p24g_cmd_table[P24G_SM_CMD_MAX] = {0};
 
+void mcc_d25f_to_n22_set_clk_info(void);
 
 static inline void app_wdt_init()
 {
@@ -56,6 +59,83 @@ static inline void app_wdt_init()
      */
     wd_clear();
     wd_start();
+}
+
+ _attribute_ram_code_sec_ void app_clock_init(app_clock_config_e select)
+{
+    if (last_clock_select == select) {
+        return;
+    }
+#if ALG_KEYSCAN_APP_FUN_ENABLE
+    ks_pwm_mode_disable();
+#endif
+    last_clock_select = select;
+    switch (select) 
+    {
+        case CLOCK_CONFIG_1V1_192_96:
+            pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+            PLL_192M_D25F_96M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+            // k_busy_wait(100);
+            mcc_d25f_to_n22_set_clk_info();
+
+            #if ALG_KEYSCAN_APP_FUN_ENABLE
+            alg_keyscan_init(KEYSCAN_PWM_CLOCK_96M);
+            ks_pwm_mode_disable();
+            ks_pwm_mode_enable();
+            #endif
+
+            LOG_INF("clock changed to 96M");
+            break;
+
+        case CLOCK_CONFIG_1V_192_32:
+            PLL_192M_D25F_32M_HCLK_N22_32M_PCLK_32M_MSPI_48M;
+            pm_set_dig_ldo(DIG_VOL_1V_MODE, 1000); //1.0
+            // k_busy_wait(100);
+            mcc_d25f_to_n22_set_clk_info();
+
+            #if ALG_KEYSCAN_APP_FUN_ENABLE
+            alg_keyscan_init(KEYSCAN_PWM_CLOCK_32M);
+            ks_pwm_mode_disable();
+            ks_pwm_mode_enable();
+            #endif
+
+            LOG_INF("clock changed to 32M");
+            break;
+
+        default:
+            break;
+    }
+
+	/* Verify configure() - set device configuration using data in cfg */
+	int ret = uart_configure(uart_dev, &uart_cfg);
+    if (ret != 0) {
+        LOG_ERR("Error: failed to configure uart \n");
+    }
+    LOG_INF("configure uart ok\n");
+}
+
+_attribute_ram_code_sec_ void app_2p4g_clock_reinit(report_rate_t report_rate)
+{
+    if (report_rate == REPORT_RATE_8K || report_rate == REPORT_RATE_4K)
+    {
+        app_clock_init(CLOCK_CONFIG_1V1_192_96);
+        #if APP_WDT_ENABLE
+        if (app_get_mode() == KB_MODE_2P4G)
+        {
+            app_wdt_init();
+        }
+        #endif
+    }
+    else
+    {
+        app_clock_init(CLOCK_CONFIG_1V_192_32);
+        #if APP_WDT_ENABLE
+        if (app_get_mode() == KB_MODE_2P4G)
+        {
+            app_wdt_init();
+        }
+        #endif
+    }
 }
 
 
@@ -345,23 +425,11 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_misc(uint8_t *data, uint16_
     p24g_evt_t *p_evt = (p24g_evt_t *)data;
     switch (p_evt->opcode) {
         case P24G_SM_OP_MISC_REPORT_RATE: //report rate changed
-            LOG_INF("report rate changed %d", data[3]);
-            // app_2p4g_clock_reinit(data[3]);
+            // app_2p4g_clock_reinit((report_rate_t)p_evt->data[0]);
+            LOG_INF("report rate changed %d", p_evt->data[0]);
             break;
-
-        case P24G_SM_OP_MISC_SAVE_REPORT_RATE:
-            // app_2p4g_save_report_rate_info(data[3]);
-
-            LOG_INF("report rate info saved %d", data[3]);
-            // app_2p4g_clock_reinit(data[3]);
+        default:
             break;
-
-        case P24G_SM_OP_MISC_RF_MODE:
-            LOG_INF("rf mode:%x\n", p_evt->data[0]);
-            // app_ctx.rf_mode = p_evt->data[0];
-            break;
-    default:
-        break;
     }
 }
 
@@ -452,8 +520,6 @@ void mcc_d25f_to_n22_set_clk_info(void)
     cmd[3] = address >> 24;
 
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_SET_CLK_INFO, cmd);
-
-    // delay_us(20);
 }
 
 /**
