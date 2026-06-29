@@ -99,10 +99,45 @@ config SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE
 		Place Telink Tlx SoCs ram code in non-retention area
 		and restore this are after each retention.
 
+if BOOTLOADER_MCUBOOT || MCUBOOT
+
+config TELINK_TLX_MCUBOOT_STARTUP
+	bool "Telink TLx MCUBoot startup handler"
+	depends on MCUBOOT
+	select CRC
+	select UART_DRV_CMD
+	default n
+	help
+		Run Telink specific vendor code before MCUBoot
+		main process
+
+config LZMA
+	bool "LZMA data compression and decompression"
+	help
+	  This option enables lzma compression & decompression library
+	  support.
+
+config COMPRESS_LZMA
+	bool "Support LZMA compression"
+	default n
+	select LZMA
+	select BOOT_IMAGE_ACCESS_HOOKS
+	help
+		This option enables LZMA compression with MCUBoot
+
+config COMPRESS_LZMA_DICTIONARY_SIZE
+	int "Set LZMA compression dictionary size"
+	default 32768
+	depends on COMPRESS_LZMA
+	help
+		This option sets LZMA compression dictionary size
+
 config TELINK_TLX_MATTER_RETENTION_LAYOUT
 	bool "Support Matter retention layout"
 	depends on SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	help
 		This option enables support Matter retention layout
+
+endif # BOOTLOADER_MCUBOOT || MCUBOOT
 
 endif # SOC_RISCV_TELINK_TL5X
