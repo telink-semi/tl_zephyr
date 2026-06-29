@@ -115,6 +115,7 @@ zephyr_sources(
 
 zephyr_include_directories(
 	${ZEPHYR_MCUBOOT_MODULE_DIR}/boot/bootutil/src
+	${ZEPHYR_LZMA_MODULE_DIR}/src/liblzma/api
 )
 
 zephyr_link_libraries(
