@@ -100,7 +100,7 @@ int dev_other_info_idx;
 
 
 
-volatile unsigned char fun_mode = 0;
+volatile unsigned char fun_mode = 0xff;
 static unsigned char last_mode_status=KB_MODE_USB;
 static unsigned char last_vbus_status=0xff;
 
@@ -319,7 +319,8 @@ _attribute_ram_code_sec_ void timer0_isr(void)
 {
     if (timer_get_irq_status(FLD_TMR0_MODE_IRQ)){
 		timer_clr_irq_status(FLD_TMR0_MODE_IRQ); //Clear IRQ status
-    #if  ALG_KEYSCAN_APP_FUN_ENABLE
+        timer_set_cap_tick(TIMER0, 125 * sys_clk.pclk * 1);	//125us
+    #if ALG_KEYSCAN_APP_FUN_ENABLE
         key_scan();
     #endif
         app_mode_pin_close_check();
@@ -330,7 +331,7 @@ void user_timer_init(void)
 {
      /* Timer0 configuration */
     timer_set_init_tick(TIMER0, 0);
-    timer_set_cap_tick(TIMER0, 125 * sys_clk.pclk * 1);	//125us
+    timer_set_cap_tick(TIMER0, 200000 * sys_clk.pclk * 1);	//200ms
     timer_set_mode(TIMER0, TIMER_MODE_SYSCLK);
     timer_set_irq_mask(FLD_TMR0_MODE_IRQ);
     IRQ_CONNECT(CONFIG_2ND_LVL_ISR_TBL_OFFSET + IRQ_TIMER0, 2, timer0_isr, 0, 0);
