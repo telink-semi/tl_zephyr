@@ -220,6 +220,8 @@ void app_pc_kb_led_status(unsigned char status)
     if(last_status!=status)
     {
         last_status=status;
+        gpio_pin_set_dt(&num_led_pin, status&0x01);
+        gpio_pin_set_dt(&cap_led_pin, status&0x02);
         //gpio_set_level(NUM_LED_PIN, !(status&0x01));
         //gpio_set_level(CAP_LED_PIN, !(status&0x02));
     }
@@ -589,6 +591,7 @@ static void report_rate_test_loop(void)
  _attribute_ram_code_sec_ void public_loop(void)
 {
     static uint32_t last_time = 0;
+    static uint32_t led_time = 0;
 
     if(k_uptime_get_32() - last_time > 50)//50ms
     {
@@ -616,6 +619,14 @@ static void report_rate_test_loop(void)
         #if REPORT_RATE_TEST_EN
         report_rate_test_loop();
         #endif
+        if(app_d24p_get_state() == STATE_PAIRING)
+        {
+            if(last_time - led_time > 100)
+            {
+                gpio_pin_toggle_dt(&device_status_led_pin);
+                led_time = k_uptime_get_32();
+            }
+        }
     }
 
 

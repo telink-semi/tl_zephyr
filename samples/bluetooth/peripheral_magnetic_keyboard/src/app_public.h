@@ -22,6 +22,7 @@ extern "C" {
 extern struct nvs_fs user_fs;
 extern const struct uart_config uart_cfg;
 extern const struct device *const uart_dev;
+extern const struct gpio_dt_spec device_status_led_pin;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 #define PRESS_T_FN_FLAG      0X01

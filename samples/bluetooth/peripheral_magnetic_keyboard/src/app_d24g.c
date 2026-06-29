@@ -16,7 +16,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
-
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/settings/settings.h>
 
 #include "app_d24g.h"
@@ -317,6 +317,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         if (p_evt->opcode == TPSLL_EVT_DEV_CONNECTED)
         {
             app_ctx.dev_status = STATE_CONNECTED;
+            gpio_pin_set_dt(&device_status_led_pin, 0);
             LOG_INF("connected");
         }
         else if (p_evt->opcode == TPSLL_EVT_DEV_DISCONNECTED)
@@ -341,7 +342,14 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         }
         else if (p_evt->opcode == TPSLL_EVT_PAIR_TIMEOUT)
         {
+            app_ctx.dev_status = STATE_IDLE;
+            gpio_pin_set_dt(&device_status_led_pin, 0);
             LOG_INF("pair timeout");
+        }
+        else if(p_evt->opcode == TPSLL_EVT_PAIRING_ENTER)
+        {
+            app_ctx.dev_status = STATE_PAIRING;
+            LOG_INF("stack pairing\n");
         }
         else if (p_evt->opcode == TPSLL_EVT_RECONNECT_TIMEOUT)
         {
@@ -369,7 +377,8 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_spp_data(uint8_t *data, uin
     {
         if (p_evt->opcode == TPSLL_SPP_LED_STATUS)
         {
-            // app_pc_kb_led_status(p_evt->data[0]);
+            LOG_INF("kb status=%x\n", p_evt->data[0]);
+            app_pc_kb_led_status(p_evt->data[0]);
         }
         else if (p_evt->opcode == TPSLL_SPP_TEST_DATA)
         {
