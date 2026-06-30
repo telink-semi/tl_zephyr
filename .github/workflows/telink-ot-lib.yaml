@@ -120,7 +120,6 @@ jobs:
         build:
           cmake: .
           kconfig: Kconfig
-
         EOF
 
     - name: Create CMakeList
@@ -168,7 +167,6 @@ jobs:
         add_library(ot-config INTERFACE)
 
         endif() # CONFIG_OPENTHREAD_TELINK_LIBRARY
-
         EOF
 
     - name: Create Kconfig
@@ -215,7 +213,6 @@ jobs:
         cat << EOF >> build_telink_ot_lib_artifacts/Kconfig
 
         endif # SOC_FAMILY_TELINK_TLSR && NET_L2_OPENTHREAD
-
         EOF
 
     - name: Export configurations
@@ -246,7 +243,6 @@ jobs:
               echo "${line}" >> \
                     build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
             done < "${build_config}"
-            echo >> build_telink_ot_lib_artifacts/configs/libopenthread-"${config_name}".conf
           done
         fi
 
@@ -292,7 +288,6 @@ jobs:
 
         ## prebuilt configurations
         See *configs/* directory.
-
         EOF
 
     - name: Publish artifacts
