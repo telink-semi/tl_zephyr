@@ -18,7 +18,7 @@ extern "C" {
 
 #define DBG_WITH_EVK_EN             0
 
-#define NEW_HW_KEYBOARD_EN          0
+#define NEW_HW_KEYBOARD_EN          1
 
 /////////////////////////////////////////////////////////////////////////////
 #if (HW_BOARD_TYPE == HW_ALG_KEYBOARD)

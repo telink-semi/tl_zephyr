@@ -78,16 +78,16 @@
 		compatible = "gpio-keys";
 
 		vbus_pin: vbus_io {
-			gpios = <&gpioa 2 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioc 6 (GPIO_ACTIVE_HIGH)>;
 			label = "VBUS CHECK";
 		};
 
 		mode_2p4_pin: mode_2p4_io {
-			gpios = <&gpioa 1 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiob 7 (GPIO_ACTIVE_LOW)>;
 			label = "MODE 2P4 SLECT";
 		};
 		mode_ble_pin: mode_ble_io {
-			gpios = <&gpioc 7 (GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiob 4 (GPIO_ACTIVE_LOW)>;
 			label = "MODE BLE SLECT";
 		};
 	};
