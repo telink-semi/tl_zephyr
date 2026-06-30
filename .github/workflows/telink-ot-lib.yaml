@@ -132,7 +132,7 @@ jobs:
         # SPDX-License-Identifier: Apache-2.0
         #
 
-        if (CONFIG_OPENTHREAD_TELINK_LIBRARY)
+        if(CONFIG_OPENTHREAD_TELINK_LIBRARY)
 
         if(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "zephyr")
           set(TELINK_COMPILER "zephyr")
@@ -153,7 +153,7 @@ jobs:
           for build_config in "${conf_files[@]}"; do
             config_name=$(basename "${build_config}" .conf)
             cat << EOF >> build_telink_ot_lib_artifacts/CMakeLists.txt
-        elif(CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^})
+        elseif(CONFIG_OPENTHREAD_TELINK_LIBRARY_VERSION_${config_name^^})
           zephyr_link_libraries(
             \${CMAKE_CURRENT_SOURCE_DIR}/lib/libopenthread-\${TELINK_COMPILER}-${config_name}.a
           )
