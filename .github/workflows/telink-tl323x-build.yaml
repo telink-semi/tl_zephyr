@@ -43,7 +43,7 @@ jobs:
       run: |
         cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 6a922387a99de678cfb35d17d0742a3040603686
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 46322e5b570e2a68373b18d4f08811acadd1266c
 
     - name: Download and extract TL323X firmware binaries
       run: |

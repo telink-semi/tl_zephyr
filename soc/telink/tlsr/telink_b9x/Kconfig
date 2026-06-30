@@ -117,9 +117,16 @@ config TELINK_B9X_MCUBOOT_STARTUP
 		Run Telink specific vendor code before MCUBoot
 		main process
 
+config LZMA
+	bool "LZMA data compression and decompression"
+	help
+	  This option enables lzma compression & decompression library
+	  support.
+
 config COMPRESS_LZMA
 	bool "Support LZMA compression"
 	default n
+	select LZMA
 	select BOOT_IMAGE_ACCESS_HOOKS
 	help
 		This option enables LZMA compression with MCUBoot
