@@ -89,19 +89,19 @@ int usb_hw_init(void)
 	hid_dev_kb = device_get_binding("HID_0");
 	if (hid_dev_kb == NULL) {
 		LOG_ERR("Cannot get USB HID Device");
-		return 0;
+        return -ENODEV;
 	}
 
 	hid_dev_n_key = device_get_binding("HID_1");
 	if (hid_dev_n_key == NULL) {
 		LOG_ERR("Cannot get USB HID 1 Device");
-		return 0;
+        return -ENODEV;
 	}
 
     hid_vendor = device_get_binding("HID_2");
 	if (hid_vendor == NULL) {
 		LOG_ERR("Cannot get USB HID 2 Device");
-		return 0;
+        return -ENODEV;
 	}
 
 	usb_hid_register_device(hid_dev_kb, hid_report_kb_desc, sizeof(hid_report_kb_desc), &kbd_ops);
@@ -130,10 +130,11 @@ int usb_hw_init(void)
 	ret = usb_enable(status_cb);
 	if (ret != 0) {
 		LOG_ERR("Failed to enable USB");
-		return 0;
+		return ret;
 	}
 
 	LOG_INF("Enable USB, usb hw init");
+    return 0;
 }
 
 void app_usb_mode_exit(void)

@@ -427,11 +427,12 @@ _attribute_ram_code_sec_ unsigned char key_scan(void)
             // debug_print_keyscan("col=%d,hw_now_bits=%02x\r\n",col,app_key_buf.hw_last_bits[col]);
         }
      }
-    // printk("RALT=%d space=%d LALT=%d  WIN=%d 2=%d 1=%d ESC=%d F1=%d /=%d *=%d\r\n", \
-    //     adc_buffer[90],adc_buffer[94],adc_buffer[98], \
-    //     adc_buffer[102],adc_buffer[42],adc_buffer[38], \
-    //     adc_buffer[32],adc_buffer[36],adc_buffer[97],adc_buffer[101]);
-
+     /*
+    printk("RALT=%d space=%d LALT=%d  WIN=%d 2=%d 1=%d ESC=%d F1=%d /=%d *=%d\r\n", \
+        adc_buffer[90],adc_buffer[94],adc_buffer[98], \
+        adc_buffer[102],adc_buffer[42],adc_buffer[38], \
+        adc_buffer[32],adc_buffer[36],adc_buffer[97],adc_buffer[101]);
+    */
      if(has_new_key_event)
      {
         key_data_handle();

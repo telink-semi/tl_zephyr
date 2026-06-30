@@ -39,6 +39,26 @@ _attribute_aligned_(4) app_dual_core_flag_ctx_t app_dual_core_flag_ctx;
 uint8_t last_clock_select = 0xFF;
 static volatile uint32_t spp_tick = 0;
 
+extern ssize_t nvs_write(struct nvs_fs *fs, uint16_t id, const void *data, size_t len);
+
+/**
+ * @brief FNV-1a 32-bit hash function
+ * @param data   
+ * @param len    
+ * @return 16-bit hash value
+ */
+_attribute_ram_code_sec_ uint32_t fnv1a_hash(uint8_t *data, size_t len) 
+{
+    uint32_t hash = 0x811C9DC5;
+    
+    for (size_t i = 0; i < len; i++) {
+        hash ^= data[i];
+        hash = hash + (hash << 24) + (hash << 8) + (hash << 5);
+        hash ^= (hash >> 16);//Avalanche Effect
+    }
+
+    return hash;
+}
 
 /**
  * @brief share memory message handler table
@@ -240,7 +260,8 @@ void app_2p4g_dual_core_comm_init(void)
 
     mcc_d25f_mb_send_data(TLK_MB_D25F_TO_N22_2P4G_APP_CTX_ADDRESS, cmd);
 
-    printk("d25fKbTxFifo: %x\nd25fSppTxFifo: %x\napp_dual_core_flag_ctx: %x\n",&d25fKbTxFifo, &d25fSppTxFifo, &app_dual_core_flag_ctx);
+    printk("d25fKbTxFifo: %p\nd25fSppTxFifo: %p\napp_dual_core_flag_ctx: %p\n",
+       &d25fKbTxFifo, &d25fSppTxFifo, &app_dual_core_flag_ctx);
 }
 
 
@@ -294,12 +315,12 @@ _attribute_ram_code_sec_ uint8_t p24g_enable_pairing(bool enable)
 
 _attribute_ram_code_sec_ uint8_t p24g_enable_reconn(bool enable)
 {
-    return p24g_send_sm_msg(P24G_SM_CMD_SET_STATE, P24G_SM_OP_ENABLE_RECONN, &enable, 1);
+    return p24g_send_sm_msg(P24G_SM_CMD_SET_STATE, P24G_SM_OP_ENABLE_RECONN, (uint8_t *)&enable, 1);
 }
 
 _attribute_ram_code_sec_ uint8_t p24g_change_report_rate(report_rate_t report_rate)
 {
-    return p24g_send_sm_msg(P24G_SM_CMD_REPORT_RATE_CHANGE, P24G_SM_OP_NONE, &report_rate, 1);
+    return p24g_send_sm_msg(P24G_SM_CMD_REPORT_RATE_CHANGE, P24G_SM_OP_NONE, (uint8_t *)&report_rate, 1);
 }
 
 _attribute_ram_code_sec_ uint8_t p24g_rf_enter_idle(void)
@@ -338,7 +359,7 @@ _attribute_ram_code_sec_ static void app_2p4g_handle_set_state(uint8_t *data, ui
         }
         else if (p_evt->opcode == TPSLL_EVT_SPP_DATA_RECV)
         {
-            uint8_t *spp_data = (uint8_t *)p_evt->data;
+            // uint8_t *spp_data = (uint8_t *)p_evt->data;
         }
         else if (p_evt->opcode == TPSLL_EVT_PAIR_TIMEOUT)
         {

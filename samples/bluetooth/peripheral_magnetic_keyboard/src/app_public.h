@@ -16,6 +16,7 @@ extern "C" {
 #include "app_d24g.h"
 #include "app_usb.h"
 #include "app_fifo.h"
+#include "app_alg_keyscan.h"
 #include "driver.h"
 
 
@@ -125,6 +126,7 @@ void user_timer_init(void);
 
 void keyboard_comm_init(void);
 
+void app_pc_kb_led_status(unsigned char status);
 
 void public_loop(void);
 

@@ -29,6 +29,7 @@
 #include <zephyr/drivers/usb/usb_dc.h>
 
 #include "timer.c"
+#include "ble_flash.h"
 #include "app_public.h"
 #include "drivers.h"
 #include "app_kb_matrix.h"
@@ -127,27 +128,6 @@ pl_fifo_t d25fSppTxFifo = {
     .rptr = 0,
     .p = spp_buf_txfifo,
 };
-
-
- /**
- * @brief FNV-1a 32-bit hash function
- * @param data   
- * @param len    
- * @return 16-bit hash value
- */
- _attribute_ram_code_sec_ uint32_t fnv1a_hash(uint8_t *data, size_t len) 
-{
-    uint32_t hash = 0x811C9DC5;
-    
-    for (size_t i = 0; i < len; i++) {
-        hash ^= data[i];
-        hash = hash + (hash << 24) + (hash << 8) + (hash << 5);
-        hash ^= (hash >> 16);//Avalanche Effect
-    }
-
-    return hash;
-}
-
 
 
 _attribute_ram_code_sec_ uint16_t tpsll_fnv1a_16(uint8_t *data, size_t len)
@@ -454,8 +434,11 @@ static int peripheral_comm_init(void)
 	ret = uart_configure(uart_dev, &uart_cfg);
     if (ret != 0) {
         LOG_ERR("Error: failed to configure uart \n");
+		return -ENODEV;
     }
     LOG_INF("configure uart ok\n");
+
+    return 0;
 }
 
 
@@ -494,8 +477,6 @@ void keyboard_comm_init(void)
 #endif
 
     pp_fifo_reset(&d25fKbTxFifo);
-
-    return 0;
 }
 
 #if SPP_TEST_EN
