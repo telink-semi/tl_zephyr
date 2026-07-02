@@ -62,8 +62,8 @@ K_SEM_DEFINE(ieee802154_task_ready_sem, 0, 1);
 #define TLX_RF_ZIGBEE_TX_IS_STOPPED	2
 /* FIX 802.15.4 TX sending issue */
 static volatile uint8_t tlx_rf_zigbee_tx_is_sending;
-extern uint32_t blc_ll_checkBleTaskIsIdle(void);    //todo: need to be changed
-extern uint32_t blc_ll_get802p15p4ScanPostTick(void);
+extern bool tlksdk_thd_checkIsInsertTask1(void);    //todo: need to be changed
+extern uint32_t tlksdk_thd_getInsertTask1PostTick(void);
 #endif /*CONFIG_IEEE802154_TLX_BLE_COEXIST*/
 
 #ifdef CONFIG_OPENTHREAD_FTD
@@ -1030,7 +1030,7 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 	if (!tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
 		/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
-		if(blc_ll_checkBleTaskIsIdle()){
+		if(tlksdk_thd_checkIsInsertTask1()){
 			LOG_ERR("tlx ble busy");
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			LOG_ERR("tlx ieee802154 task ready sem");
@@ -1052,7 +1052,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 	/* check if RF is already stopped */
 	if (tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
-		if (blc_ll_checkBleTaskIsIdle()) {
+		if (tlksdk_thd_checkIsInsertTask1()) {
 			LOG_ERR("tlx ble busy");
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			LOG_ERR("tlx ieee802154 task ready sem");
@@ -1585,7 +1585,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	/* lock interrupts */
 	key = irq_lock();
 	bool rf_zigbee_tx_is_stopped = tlx_rf_zigbee_tx_is_sending == TLX_RF_ZIGBEE_TX_IS_STOPPED;
-	uint32_t ScanPostTick = blc_ll_checkBleTaskIsIdle() ? blc_ll_get802p15p4ScanPostTick()|1 : 0;    //todo: api should be updated
+	uint32_t ScanPostTick = tlksdk_thd_checkIsInsertTask1() ? tlksdk_thd_getInsertTask1PostTick()|1 : 0;    //todo: api should be updated
 	/* unlock interrupts */
 	irq_unlock(key);
 

@@ -1,4 +1,4 @@
-/* main.c - OpenThread */
+/* main.c - OpenThread + BLE Peripheral coexistence demo */
 
 /*
  * Copyright (c) 2023-2024 Telink
@@ -7,7 +7,11 @@
  */
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(ot_main, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(ot_ble_main, LOG_LEVEL_INF);
+
+#include <zephyr/kernel.h>
+#include <zephyr/types.h>
+#include <string.h>
 
 #include <zephyr/net/openthread.h>
 #include <openthread/thread.h>
@@ -15,6 +19,10 @@ LOG_MODULE_REGISTER(ot_main, LOG_LEVEL_DBG);
 #ifdef CONFIG_USB_DEVICE_STACK
 #include <zephyr/usb/usb_device.h>
 #endif /* CONFIG_USB_DEVICE_STACK */
+
+/* ============================================================
+ * OpenThread section
+ * ============================================================ */
 
 static void ot_satate_changed(otChangedFlags flags,
 	struct openthread_context *ot_context, void *user_data)
@@ -55,26 +63,42 @@ static void ot_satate_changed(otChangedFlags flags,
 	}
 }
 
+
+
+/* ============================================================
+ * Main
+ * ============================================================ */
+
 int main(void)
 {
 #ifdef CONFIG_USB_DEVICE_STACK
 	usb_enable(NULL);
 #endif /* CONFIG_USB_DEVICE_STACK */
-	LOG_INF("***** OpenThread CLI on Zephyr *****");
+
+	LOG_INF("***** OpenThread + BLE Peripheral *****");
 #ifndef CONFIG_OPENTHREAD_MANUAL_START
 	LOG_INF("OT channel     %u",     CONFIG_OPENTHREAD_CHANNEL);
 	LOG_INF("OT pan id      %04x",   CONFIG_OPENTHREAD_PANID);
 	LOG_INF("OT pan ext id  %s",     CONFIG_OPENTHREAD_XPANID);
 	LOG_INF("OT network key %s",     CONFIG_OPENTHREAD_NETWORKKEY);
 #endif /* CONFIG_OPENTHREAD_MANUAL_START */
+
 	static struct openthread_state_changed_cb ot_state_cahnge = {
 		.state_changed_cb = ot_satate_changed
 	};
 
-	openthread_state_changed_cb_register(openthread_get_default_context(), &ot_state_cahnge);
+	openthread_state_changed_cb_register(openthread_get_default_context(),
+					     &ot_state_cahnge);
 
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
-	bt_enable();    //fake ble enable API.
+	extern void bt_le_task_init(void);
+	bt_le_task_init();
 #endif
+
+	/* Main loop: simulate sensor data and send BLE notifications */
+	while (1) {
+		k_sleep(K_SECONDS(1));
+	}
+
 	return 0;
 }
