@@ -4,45 +4,96 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <stdio.h>
 #include <zephyr/kernel.h>
-#include <zephyr/drivers/gpio.h>
+#include <string.h>
 
-/* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   1000
-
-/* The devicetree node identifier for the "led0" alias. */
-#define LED0_NODE DT_ALIAS(led0)
-
-/*
- * A build error on this line means your board is unsupported.
- * See the sample documentation for information on how to fix this.
- */
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+#if !CONFIG_MBEDTLS
+#include <hash/hash.h>
+#include <hash/hash_portable.h>
+#else
+#include "mbedtls/sha256.h"
+#endif
 
 int main(void)
 {
-	int ret;
-	bool led_state = true;
+	const uint8_t inp[] = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+	};
 
-	if (!gpio_is_ready_dt(&led)) {
-		return 0;
+	uint8_t ref[] = {
+		0xbe, 0x45, 0xcb, 0x26, 0x05, 0xbf, 0x36, 0xbe,
+		0xbd, 0xe6, 0x84, 0x84, 0x1a, 0x28, 0xf0, 0xfd,
+		0x43, 0xc6, 0x98, 0x50, 0xa3, 0xdc, 0xe5, 0xfe,
+		0xdb, 0xa6, 0x99, 0x28, 0xee, 0x3a, 0x89, 0x91
+	};
+
+	uint8_t out[32];
+
+
+#if !CONFIG_MBEDTLS
+	HASH_CTX ctx;
+
+	printk("hash_dig_en\n");
+	hash_dig_en();
+
+
+	if (hash_init(&ctx, HASH_SHA256)) {
+		printk("hash_init failed\n");
 	}
 
-	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
-		return 0;
+	if (hash_update(&ctx, inp, sizeof(inp) / 2)) {
+		printk("hash_update failed\n");
 	}
 
-	while (1) {
-		ret = gpio_pin_toggle_dt(&led);
-		if (ret < 0) {
-			return 0;
-		}
+	printk("sleep+\n");
+	k_msleep(1000);
+	printk("sleep-\n");
 
-		led_state = !led_state;
-		printf("LED state: %s\n", led_state ? "ON" : "OFF");
-		k_msleep(SLEEP_TIME_MS);
+	hash_dig_en();
+
+	if (hash_update(&ctx, &inp[sizeof(inp) / 2], sizeof(inp) - sizeof(inp) / 2)) {
+		printk("hash_update failed\n");
 	}
+
+	if (hash_final(&ctx, out)) {
+		printk("hash_final failed\n");
+	}
+
+#else
+	mbedtls_sha256_context ctx;
+
+	mbedtls_sha256_init(&ctx);
+
+	if (mbedtls_sha256_starts(&ctx, false)) {
+		printk("mbedtls_sha256_starts failed\n");
+	}
+
+	if (mbedtls_sha256_update(&ctx, inp, sizeof(inp) / 2)) {
+		printk("mbedtls_sha256_update failed\n");
+	}
+
+	printk("sleep+\n");
+	k_msleep(1000);
+	printk("sleep-\n");
+
+	if (mbedtls_sha256_update(&ctx, &inp[sizeof(inp) / 2], sizeof(inp) - sizeof(inp) / 2)) {
+		printk("mbedtls_sha256_update failed\n");
+	}
+
+	if (mbedtls_sha256_finish(&ctx, out)) {
+		printk("mbedtls_sha256_finish failed\n");
+	}
+
+	mbedtls_sha256_free(&ctx);
+#endif
+
+	if (!memcmp(ref, out, 32)) {
+		printk("hash ok\n");
+	} else {
+		printk("hash digest failed\n");
+	}
+
+	for(;;) {}
 	return 0;
 }
