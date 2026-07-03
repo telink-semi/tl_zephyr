@@ -28,7 +28,7 @@ zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS
 	mcuboot_status_change.c
 )
 
-zephyr_sources_ifdef(CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+zephyr_sources(
 	soc_irq0.c
 )
 
