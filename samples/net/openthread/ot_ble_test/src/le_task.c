@@ -84,5 +84,12 @@ void bt_le_task_init(void)
 
 	while (1) {
 		k_sleep(K_SECONDS(1));
+		static int i = 0;
+		
+		if(i == 0){
+			i = 1;
+			// tlksdk_thd_enableFlexibleTask(THD_TASK_ENABLE);
+			tlksdk_thd_enableInsertTask1(0x01);
+		}
 	}
 }

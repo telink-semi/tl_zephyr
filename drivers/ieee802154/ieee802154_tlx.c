@@ -1030,7 +1030,7 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 	if (!tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
 		/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
-		if(tlksdk_thd_checkIsInsertTask1()){
+		if(!tlksdk_thd_checkIsInsertTask1()){
 			LOG_ERR("tlx ble busy");
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			LOG_ERR("tlx ieee802154 task ready sem");
@@ -1052,7 +1052,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 	/* check if RF is already stopped */
 	if (tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
-		if (tlksdk_thd_checkIsInsertTask1()) {
+		if (!tlksdk_thd_checkIsInsertTask1()) {
 			LOG_ERR("tlx ble busy");
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			LOG_ERR("tlx ieee802154 task ready sem");
