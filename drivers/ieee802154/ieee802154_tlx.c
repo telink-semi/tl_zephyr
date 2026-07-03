@@ -55,6 +55,7 @@ static const struct device *flash_device = DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_
 #endif /* CONFIG_IEEE802154_TLX_MAC_FLASH */
 
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+#include "debug_gpio.h"
 K_SEM_DEFINE(ieee802154_task_ready_sem, 0, 1);
 /* define 802.15.4 TX sending status type */
 #define TLX_RF_ZIGBEE_TX_IS_IDLE	0
@@ -887,16 +888,15 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	}
 #endif
 }
-
+uint32_t thd_insertTask_posttick_record_2;
 /* TX IRQ handler */
 ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 {
 	struct tlx_data *tlx = dev->data;
-
-	plic_interrupt_disable(IRQ_SYSTIMER);
+	// plic_interrupt_disable(IRQ_SYSTIMER);
 	/* clear irq status */
 	rf_clr_irq_status(FLD_RF_IRQ_TX);
-
+	
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
 	/* clear 802.15.4 tx sending flag */
 	tlx_rf_zigbee_tx_is_sending = TLX_RF_ZIGBEE_TX_IS_IDLE;
@@ -910,7 +910,6 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 
 	/* release tx semaphore */
 	k_sem_give(&tlx->tx_wait);
-
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	isFirstCcaBeforeTx = true;
 #endif
@@ -921,13 +920,16 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 __GENERIC_SECTION(.ram_code) void tlx_rf_isr(const void *parameter)
 {
 	(void)parameter;
-
 	const struct device *dev = DEVICE_DT_INST_GET(0);
-
 	if (rf_get_irq_status(FLD_RF_IRQ_RX)) {
+		DBG_OT_BLE_CHN3_HIGH;
 		tlx_rf_rx_isr(dev);
+		DBG_OT_BLE_CHN3_LOW;
 	} else if (rf_get_irq_status(FLD_RF_IRQ_TX)) {
+		DBG_OT_BLE_CHN1_HIGH;
 		tlx_rf_tx_isr(dev);
+		thd_insertTask_posttick_record_2 = systimer_get_irq_capture();
+		DBG_OT_BLE_CHN1_LOW;
 	} else {
 		rf_clr_irq_status(FLD_RF_IRQ_ALL);
 	}
@@ -972,7 +974,7 @@ __attribute__((noinline)) void tlx_init_802154_rf_hw(void)
 
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
 	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
-				if (tl_rf_is_inited()) {
+			// if (tl_rf_is_inited()) {
 #endif
 			// rf_set_tx_rx_off_auto_mode(); //same as: STOP_RF_STATE_MACHINE
 			// rf_set_tx_rx_off();
@@ -980,9 +982,9 @@ __attribute__((noinline)) void tlx_init_802154_rf_hw(void)
 			rf_reset_dma();
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
 	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
-				} else {
-					tl_rf_change_to_inited();
-				}
+				// } else {
+				// 	tl_rf_change_to_inited();
+				// }
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
@@ -1040,7 +1042,6 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 
 
 #endif
-
 		tlx_init_802154_rf_hw();
 		tlx->is_started = true;
 	}
