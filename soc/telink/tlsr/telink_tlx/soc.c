@@ -59,6 +59,8 @@ pm_retention_register_recover(void)
 #define CLK_72MHZ  72000000u
 #define CLK_96MHZ  96000000u
 #define CLK_192MHZ 192000000u
+#define PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M \
+	clock_init(CLK_BASEBAND_PLL_192M, CLK_DIV1, CCLK_DIV2_TO_HCLK_DIV2_TO_PCLK, CLK_DIV4)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 #define CLK_24MHZ 24000000u
 #define CLK_48MHZ 48000000u
@@ -156,8 +158,8 @@ pm_retention_register_recover(void)
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 #if ((CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_64MHZ) && (CCLK_FREQ != CLK_72MHZ) &&           \
-	 (CCLK_FREQ != CLK_96MHZ))
-#error "Invalid clock-frequency. Supported values: 48,64,72,96 MHz"
+	 (CCLK_FREQ != CLK_96MHZ) && (CCLK_FREQ != CLK_192MHZ))
+#error "Invalid clock-frequency. Supported values: 48,64,72,96,192 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 #if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
@@ -472,11 +474,10 @@ void soc_early_init_hook(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-		/* case CLK_192MHZ:
-		 *  pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		 *  PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		 *  break;
-		 */
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -512,7 +513,7 @@ void soc_early_init_hook(void)
 	wd_32k_stop();
 
 #endif
-
+    pm_set_dig_module_power_switch(FLD_PD_ZB_EN, PM_POWER_UP);
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 #undef N22_FW_DOWNLOAD_FLASH_ADDR
 #define N22_FW_DOWNLOAD_FLASH_ADDR CONFIG_FLASH_BASE_ADDRESS + 0x80000 + 0x13040
@@ -678,11 +679,10 @@ void soc_tlx_restore(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-		/* case CLK_192MHZ:
-		 *  pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		 *  PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		 *  break;
-		 */
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X

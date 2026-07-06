@@ -10,7 +10,7 @@ config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32000
 
 config RISCV_VECTORED_MODE
-	default n
+	default y
 
 config RISCV_SOC_INTERRUPT_INIT
 	default y

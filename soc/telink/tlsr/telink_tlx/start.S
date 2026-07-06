@@ -10,10 +10,10 @@
 #define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
 #define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-    .equ __D25F_IRAM_SIZE,   2 //64KB
-    .equ __D25F_DRAM_SIZE,   3 //96KB
-    .equ __N22_IRAM_SIZE,    5 //160KB
-    .equ __N22_DRAM_SIZE,    2 //64KB
+        .equ __D25F_IRAM_SIZE,   7 //224KB
+        .equ __D25F_DRAM_SIZE,   5 //160KB
+        .equ __N22_IRAM_SIZE,    0
+        .equ __N22_DRAM_SIZE,    0
 
     .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12) | \
                                  (__N22_DRAM_SIZE<<8) | \
