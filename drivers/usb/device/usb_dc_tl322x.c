@@ -649,9 +649,15 @@ static inline void usb_irq_enumdone(void)
 	usb0hw_clear_gintsts(FLD_USB_GINTSTS_ENUMDONE);
 }
 
+void __attribute__((weak)) usb_sof_callback(void)
+{
+    /* Default empty implementation */
+}
+
 static inline void usb_irq_sof(void)
 {
 	usb0hw_clear_gintsts(FLD_USB_GINTSTS_SOF);
+	usb_sof_callback();
 }
 
 __attribute__((section(".ram_code"))) static void usb_irq_handler(void)

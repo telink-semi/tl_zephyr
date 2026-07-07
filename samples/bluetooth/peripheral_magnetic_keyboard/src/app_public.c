@@ -296,6 +296,22 @@ _attribute_ram_code_sec_ static void app_mode_pin_close_check(void)
     #endif
 }
 
+#if USB_APP_FUN_ENABLE
+_attribute_ram_code_sec_ void usb_sof_callback(void)
+{
+    if (fun_mode == KB_MODE_USB)
+    {
+        if (usb_connected_ok)
+        {
+            #if ALG_KEYSCAN_APP_FUN_ENABLE
+            key_scan();
+            #endif
+            app_usb_main_loop();
+        }
+    }
+}
+#endif
+
 /* Timer0 interrupt handler */
 _attribute_ram_code_sec_ void timer0_isr(void)
 {
@@ -458,6 +474,7 @@ void keyboard_comm_init(void)
     if (fun_mode == KB_MODE_2P4G)
     {
 	    p24g_user_init_normal();
+        user_timer_init();
     } 
     else if (fun_mode == KB_MODE_BLE)
     {
@@ -473,7 +490,6 @@ void keyboard_comm_init(void)
 
 #if ALG_KEYSCAN_APP_FUN_ENABLE
     alg_keyscan_init(KEYSCAN_PWM_CLOCK_96M);
-    user_timer_init();
 #endif
 
     pp_fifo_reset(&d25fKbTxFifo);
@@ -622,12 +638,6 @@ static void report_rate_test_loop(void)
     else if (fun_mode == KB_MODE_BLE)
     {
         //TODO
-    }
-    else if (fun_mode == KB_MODE_USB)
-    {
-#if USB_APP_FUN_ENABLE
-        app_usb_main_loop();
-#endif
     }
 }
 
