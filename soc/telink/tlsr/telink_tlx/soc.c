@@ -783,6 +783,8 @@ static int soc_tlx_check_flash(void)
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 	hw_flash_cap = (flash_capacity_e)((mid & FLASH_MID_SIZE_MASK) >> FLASH_MID_SIZE_OFFSET);
 
+#if defined(CONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE) && CONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE
+#else
 	/* Enable Quad SPI (4x) read and write mode */
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL323X ||                            \
 	CONFIG_SOC_RISCV_TELINK_TL521X
@@ -794,6 +796,7 @@ static int soc_tlx_check_flash(void)
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		printk("!!! Error: Failed to switch flash model 0x%X to quad mode\n", mid);
 	}
+#endif
 
 	switch (hw_flash_cap) {
 	case FLASH_SIZE_1M:
