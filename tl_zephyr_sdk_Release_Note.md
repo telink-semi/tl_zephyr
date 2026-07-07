@@ -1,0 +1,290 @@
+# Telink Zephyr SDK Release Note
+
+[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--beta--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/zephyr/releases/tag/tl_v1.0.1-beta-v4.1.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](LICENSE)
+[![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
+
+---
+
+- **Release Type:** Pre-Release (Beta)
+- **Branch:** dev-tlk_v4.1
+
+---
+
+## 📖 Introduction
+
+This release is based on the latest commit of `dev-tlk_v4.1` branch, incorporating multiple bug fixes, driver updates, and BLE SDK improvements for Telink TL323x series chips and other platforms.
+
+---
+
+## ✨ Highlights
+
+| Category | Details |
+|----------|---------|
+| **New Chips** | Full support for tl323x series |
+| **New Features** | LZMA configuration support, TL523X skeleton board |
+| **CI/CD** | Dedicated pipelines for tl323x platform |
+| **Driver Updates** | PLIC, pinctrl, SHA HW cryptography |
+
+---
+
+## 🆕 New Features
+
+- ✅ Added full support for tl323x series chips
+- ✅ New CI build pipelines specifically for the tl323x platform
+- ✅ Added device tree and pin configuration support for the tl3238x development board
+- ✅ Added PLIC interrupt controller support
+- ✅ Added LZMA module configuration support for Telink SoCs
+- ✅ Added tl523x skeleton board support
+
+---
+
+## 🐛 Bug Fixes
+
+| Issue | Description |
+|-------|-------------|
+| **TL323x RF TX** | Resolves 1M PHY DEVM transmission performance issue on TL323x series |
+| **WFI Function** | Adjusted macro definitions and removed `ARCH_HAS_CUSTOM_CPU_IDLE` |
+| **Amazon Issues** | Reset RF related registers in `soc_early_init_hook` to fix jump/reconnect failures |
+| **PM/Clock** | Updated reset and clock clear on TL323x PM |
+| **AES Reentrancy** | Resolved AES reentrancy issue |
+| **Pinctrl** | Fixed peripherals input pins; fixed pinctrl Kconfig to always disable GPIOs |
+| **PWM Driver** | Reverted incorrect PWM driver changes for Telink platform |
+| **SHA HW Crypto** | Reworked Telink SHA calculation using HW unit on TLX platforms |
+| **Kconfig** | Fixed dependency for bootloader HW cryptography on Telink B9X &amp; TLX platforms |
+| **32K Watchdog** | Changed logic - open 32k wd in idle/standby mode |
+| **Tercel V2** | Updated hal_v1 to hal_v2, optimized power consumption |
+
+---
+
+## 📦 Updates
+
+- Updated Telink BLE SDK ([commit:46322e5b570e2a68373b18d4f08811acadd1266c](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c))
+- Updated Telink HAL Zephyr ([commit:14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5](https://github.com/telink-semi/hal_telink/commit/14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5))
+- Updated MCUBoot ([commit:ce0da85c39c749df49b0ec62b33d2ecdea24c927](https://github.com/telink-semi/mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927))
+- Updated OpenThread Telink source code ([commit:542aaab44e1308e1a8a24573dfbd413fade342ee](https://github.com/telink-semi/openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee))
+- Updated OpenThread Telink Library ([commit:308dae2f80084f87073cfd4fbd30f1be0799be7b](https://github.com/telink-semi/openthread_telink_lib/commit/308dae2f80084f87073cfd4fbd30f1be0799be7b))
+
+---
+
+## ⚠️ Important Notes
+
+**This is a BETA pre-release version for demonstration and testing purposes. Not recommended for production use.**
+
+- WEST tool will not update `tl_ble_sdk` automatically because Zephyr CI does NOT allow modules with binary files.
+- Please go to `modules/hal/telink` and manually perform `./hal_v2/fetch_sdk.sh` to pull or update `tl_ble_sdk` to the specific version.
+- For more details, refer to the [Developer guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) for environment setup.
+
+---
+
+## 📋 Version Information
+
+### Zephyr SDK &amp; Toolchain
+
+| Component | Version |
+|-----------|---------|
+| **Zephyr SDK Version** | Telink Zephyr v4.1.0 |
+| **Zephyr SDK** | 0.17.0 |
+| **Toolchain** | riscv64-zephyr-elf |
+
+### Telink SDK
+
+| Property | Value |
+|----------|-------|
+| **Branch** | dev-tlk_v4.1 |
+| **Target Commit** | e08fc42546e58d808bfd39f35c8df296f5617a44 |
+| **Tag Name** | tl_v1.0.1-beta-v4.1.0 |
+| **Release Type** | Pre-Release (Beta) |
+
+### Chip &amp; Hardware Versions
+
+📦 **Chip Versions**
+
+| Chip Family | Versions |
+|-------------|----------|
+| TLSR921X/TLSR951X(B91) | A2 |
+| TLSR922X/TLSR952X(B92) | A3/A4 |
+| TL721X | A2/A3 |
+| TL321X | A1/A2/A3 |
+| TL322X | A1 |
+| TL323X | A0 |
+
+🔧 **Hardware EVK Versions**
+
+| Chip | EVK Version |
+|------|-------------|
+| TLSR921X | C1T213A20_V1.3 |
+| TLSR952X | C1T266A20_V1.3 |
+| TL721X | C1T315A20_V1.2/AIOT_DK1:ML7218D1/ML7218A |
+| TL321X | C1T331A20_V1.0/C1T335A20_V1.3 |
+| TL322X | C1T382A20_V1.2 |
+| TL323X | C1T388A20_V1.1 |
+
+---
+
+## 📊 Resource Usage (Code Size)
+
+This section shows the RAM and ROM usage for various Zephyr samples on Telink platforms, based on Zephyr SDK 0.17.0 with riscv64-zephyr-elf toolchain.
+
+### Supported Boards
+
+| Board | Chip Family |
+|-------|-------------|
+| tlsr9518adk80d | TLSR951X/B91 |
+| tlsr9528a | TLSR952X/B92 |
+| tl3218x | TL321X |
+| tl3228x | TL322X |
+| tl3238x | TL323X |
+| tl7218x | TL721X |
+| tlsr9118bdk40d | TLSR9118BDK40D |
+
+---
+
+### TLSR951X (tlsr9518adk80d)
+
+📈 **Resource Usage Details**
+
+| Sample | RAMILM | ROM | RAM |
+|--------|--------|-----|-----|
+| **samples/basic/blinky** | 21248 B (16.21% of 128 KB) | 23848 B (2.27% of 1 MB) | 868 B (0.66% of 128 KB) |
+| **samples/bluetooth/peripheral_ht** | 65856 B (50.24% of 128 KB) | 210412 B (20.07% of 1 MB) | 12556 B (9.58% of 128 KB) |
+| **samples/boards/tlsr9x/gpio-kbd-matrix** | 24512 B (18.70% of 128 KB) | 32388 B (3.09% of 1 MB) | 2736 B (2.09% of 128 KB) |
+| **samples/net/openthread/cli** | 53472 B (40.80% of 128 KB) | 552436 B (52.68% of 1 MB) | 88912 B (67.83% of 128 KB) |
+
+---
+
+### TLSR952X (tlsr9528a)
+
+📈 **Resource Usage Details**
+
+| Sample | RAMILM | ROM | RAM |
+|--------|--------|-----|-----|
+| **samples/basic/blinky** | 24016 B (9.16% of 256 KB) | 29626 B (2.83% of 1 MB) | 972 B (0.37% of 256 KB) |
+| **samples/bluetooth/peripheral_ht** | 76720 B (29.27% of 256 KB) | 231488 B (22.08% of 1 MB) | 25592 B (9.76% of 256 KB) |
+| **samples/boards/tlsr9x/gpio-kbd-matrix** | 27280 B (10.41% of 256 KB) | 38166 B (3.64% of 1 MB) | 2840 B (1.08% of 256 KB) |
+| **samples/net/openthread/cli** | 57712 B (22.02% of 256 KB) | 561762 B (53.57% of 1 MB) | 89048 B (33.97% of 256 KB) |
+
+---
+
+### TL321X (tl3218x)
+
+📈 **Resource Usage Details**
+
+| Sample | RAM_ILM_N | ROM | RAM |
+|--------|-----------|-----|-----|
+| **samples/basic/blinky** | 5144 B (15.70% of 32 KB) | 27820 B (2.65% of 1 MB) | 18960 B (19.29% of 96 KB) |
+| **samples/basic/button** | 5144 B (15.70% of 32 KB) | 28456 B (2.71% of 1 MB) | 18984 B (19.31% of 96 KB) |
+| **samples/basic/fade_led** | 5144 B (15.70% of 32 KB) | 41676 B (3.97% of 1 MB) | 22432 B (22.82% of 96 KB) |
+| **samples/bluetooth/peripheral_ht** | 14676 B (44.79% of 32 KB) | 191862 B (18.30% of 1 MB) | 42024 B (42.75% of 96 KB) |
+| **samples/boards/tlsr9x/gpio-kbd-matrix** | 5144 B (15.70% of 32 KB) | 36352 B (3.47% of 1 MB) | 24084 B (24.50% of 96 KB) |
+| **samples/drivers/adc/adc_dt** | 5592 B (17.07% of 32 KB) | 36756 B (3.51% of 1 MB) | 20168 B (20.52% of 96 KB) |
+| **samples/drivers/spi_flash** | 5442 B (16.61% of 32 KB) | 35050 B (3.34% of 1 MB) | 19116 B (19.45% of 96 KB) |
+| **samples/drivers/watchdog** | 5144 B (15.70% of 32 KB) | 35696 B (3.40% of 1 MB) | 19040 B (19.37% of 96 KB) |
+| **samples/hello_world** | 5144 B (15.70% of 32 KB) | 27288 B (2.60% of 1 MB) | 18960 B (19.29% of 96 KB) |
+| **samples/net/openthread/cli** | 9812 B (29.94% of 32 KB) | 439018 B (41.87% of 1 MB) | 85108 B (86.58% of 96 KB) |
+| **samples/sensor/sht3xd** | 5144 B (15.70% of 32 KB) | 40996 B (3.91% of 1 MB) | 18996 B (19.32% of 96 KB) |
+
+---
+
+### TL322X (tl3228x)
+
+📈 **Resource Usage Details**
+
+| Sample | RAMILM | ROM | RAM |
+|--------|--------|-----|-----|
+| **samples/basic/blinky** | 26512 B (5.06% of 512 KB) | 34778 B (3.32% of 1 MB) | 1160 B (0.89% of 128 KB) |
+| **samples/basic/button** | 26512 B (5.06% of 512 KB) | 35406 B (3.38% of 1 MB) | 1176 B (0.90% of 128 KB) |
+| **samples/drivers/adc/adc_dt** | 26528 B (5.06% of 512 KB) | 40838 B (3.89% of 1 MB) | 2044 B (1.56% of 128 KB) |
+| **samples/drivers/watchdog** | 26512 B (5.06% of 512 KB) | 42650 B (4.07% of 1 MB) | 1236 B (0.94% of 128 KB) |
+| **samples/hello_world** | 26512 B (5.06% of 512 KB) | 34246 B (3.27% of 1 MB) | 1160 B (0.89% of 128 KB) |
+| **samples/sensor/sht3xd** | 26512 B (5.06% of 512 KB) | 48322 B (4.61% of 1 MB) | 1224 B (0.93% of 128 KB) |
+
+---
+
+### TL323X (tl3238x)
+
+📈 **Resource Usage Details**
+
+| Sample | RAM_ILM_N | ROM | RAM |
+|--------|-----------|-----|-----|
+| **samples/basic/blinky** | 11346 B (17.31% of 64 KB) | 37790 B (3.60% of 1 MB) | 19528 B (19.86% of 96 KB) |
+| **samples/basic/button** | 11346 B (17.31% of 64 KB) | 38426 B (3.66% of 1 MB) | 19544 B (19.88% of 96 KB) |
+| **samples/basic/fade_led** | 11346 B (17.31% of 64 KB) | 51254 B (4.89% of 1 MB) | 23004 B (23.40% of 96 KB) |
+| **samples/bluetooth/peripheral_ht** | 22034 B (33.62% of 64 KB) | 211242 B (20.15% of 1 MB) | 42464 B (43.20% of 96 KB) |
+| **samples/crypto/mbedtls** | 11346 B (17.31% of 64 KB) | 137558 B (13.12% of 1 MB) | 26244 B (26.70% of 96 KB) |
+| **samples/drivers/adc/adc_dt** | 11346 B (17.31% of 64 KB) | 52126 B (4.97% of 1 MB) | 20520 B (20.87% of 96 KB) |
+| **samples/drivers/spi_flash** | 11514 B (17.57% of 64 KB) | 45002 B (4.29% of 1 MB) | 19676 B (20.02% of 96 KB) |
+| **samples/drivers/watchdog** | 11346 B (17.31% of 64 KB) | 45666 B (4.36% of 1 MB) | 19604 B (19.94% of 96 KB) |
+| **samples/hello_world** | 11346 B (17.31% of 64 KB) | 37314 B (3.56% of 1 MB) | 19528 B (19.86% of 96 KB) |
+| **samples/net/openthread/cli** | 16014 B (24.44% of 64 KB) | 436138 B (41.59% of 1 MB) | 80752 B (82.15% of 96 KB) |
+| **samples/net/sockets/echo_client** | 23562 B (35.95% of 64 KB) | 268760 B (25.63% of 1 MB) | 59352 B (60.38% of 96 KB) |
+| **samples/sensor/sht3xd** | 11346 B (17.31% of 64 KB) | 51202 B (4.88% of 1 MB) | 19592 B (19.93% of 96 KB) |
+
+---
+
+### TL721X (tl7218x)
+
+📈 **Resource Usage Details**
+
+| Sample | RAMILM | ROM | RAM |
+|--------|--------|-----|-----|
+| **samples/basic/blinky** | 26608 B (10.15% of 256 KB) | 33626 B (3.21% of 1 MB) | 1012 B (0.39% of 256 KB) |
+| **samples/basic/button** | 26608 B (10.15% of 256 KB) | 34254 B (3.27% of 1 MB) | 1028 B (0.39% of 256 KB) |
+| **samples/basic/fade_led** | 28656 B (10.93% of 256 KB) | 47554 B (4.54% of 1 MB) | 2440 B (0.93% of 256 KB) |
+| **samples/bluetooth/peripheral_ht** | 57232 B (21.83% of 256 KB) | 211324 B (20.15% of 1 MB) | 8548 B (3.26% of 256 KB) |
+| **samples/crypto/mbedtls** | 31728 B (12.10% of 256 KB) | 133070 B (12.69% of 1 MB) | 2608 B (0.99% of 256 KB) |
+| **samples/drivers/adc/adc_dt** | 28384 B (10.83% of 256 KB) | 43928 B (4.19% of 1 MB) | 1648 B (0.63% of 256 KB) |
+| **samples/drivers/spi_flash** | 26784 B (10.22% of 256 KB) | 41754 B (3.98% of 1 MB) | 1284 B (0.49% of 256 KB) |
+| **samples/drivers/watchdog** | 26608 B (10.15% of 256 KB) | 41498 B (3.96% of 1 MB) | 1088 B (0.42% of 256 KB) |
+| **samples/hello_world** | 26608 B (10.15% of 256 KB) | 33094 B (3.16% of 1 MB) | 1012 B (0.39% of 256 KB) |
+| **samples/net/openthread/cli** | 60768 B (23.18% of 256 KB) | 570260 B (54.38% of 1 MB) | 89184 B (34.02% of 256 KB) |
+| **samples/net/sockets/echo_client** | 38828 B (14.81% of 256 KB) | 259978 B (24.79% of 1 MB) | 34640 B (13.21% of 256 KB) |
+| **samples/net/sockets/echo_server** | 77564 B (29.59% of 256 KB) | 416206 B (39.69% of 1 MB) | 50940 B (19.43% of 256 KB) |
+| **samples/sensor/sht3xd** | 26608 B (10.15% of 256 KB) | 46754 B (4.46% of 1 MB) | 1056 B (0.40% of 256 KB) |
+| **samples/usb/console** | 33520 B (12.79% of 256 KB) | 49424 B (4.71% of 1 MB) | 4688 B (1.79% of 256 KB) |
+
+---
+
+### TLSR9118BDK40D
+
+📈 **Resource Usage Details**
+
+| Sample | RAM_ILM | ROM | RAM |
+|--------|---------|-----|-----|
+| **samples/basic/blinky** | 60 B (0.18% of 32 KB) | 23728 B (0.57% of 4 MB) | 24776 B (12.60% of 192 KB) |
+| **samples/basic/button** | 60 B (0.18% of 32 KB) | 24332 B (0.58% of 4 MB) | 24784 B (12.61% of 192 KB) |
+| **samples/bluetooth/peripheral_ht** | 60 B (0.18% of 32 KB) | 137380 B (3.28% of 4 MB) | 39572 B (20.13% of 192 KB) |
+| **samples/boards/tlsr9x/gpio-kbd-matrix** | 60 B (0.18% of 32 KB) | 30956 B (0.74% of 4 MB) | 27620 B (14.05% of 192 KB) |
+| **samples/boards/tlsr9x/key_matrix** | 60 B (0.18% of 32 KB) | 24468 B (0.58% of 4 MB) | 24856 B (12.64% of 192 KB) |
+| **samples/boards/tlsr9x/key_pool** | 60 B (0.18% of 32 KB) | 24416 B (0.58% of 4 MB) | 24848 B (12.64% of 192 KB) |
+| **samples/boards/tlsr9x/led_pool** | 60 B (0.18% of 32 KB) | 25016 B (0.60% of 4 MB) | 24840 B (12.63% of 192 KB) |
+| **samples/boards/tlsr9x/pwm_pool** | 60 B (0.18% of 32 KB) | 25384 B (0.61% of 4 MB) | 24840 B (12.63% of 192 KB) |
+| **samples/boards/tlsr9x/sock_simple** | 60 B (0.18% of 32 KB) | 154140 B (3.67% of 4 MB) | 73096 B (37.18% of 192 KB) |
+| **samples/crypto/mbedtls** | 108 B (0.33% of 32 KB) | 125924 B (3.00% of 4 MB) | 30188 B (15.35% of 192 KB) |
+| **samples/drivers/spi_flash_at45** | 60 B (0.18% of 32 KB) | 38520 B (0.92% of 4 MB) | 27064 B (13.77% of 192 KB) |
+| **samples/drivers/uart/echo_bot** | 60 B (0.18% of 32 KB) | 26084 B (0.62% of 4 MB) | 26520 B (13.49% of 192 KB) |
+| **samples/net/openthread/cli** | 60 B (0.18% of 32 KB) | 549632 B (13.10% of 4 MB) | 143248 B (72.86% of 192 KB) |
+| **samples/sensor/mpu6050** | 60 B (0.18% of 32 KB) | 38048 B (0.91% of 4 MB) | 24876 B (12.65% of 192 KB) |
+| **samples/subsys/nvs** | 60 B (0.18% of 32 KB) | 38108 B (0.91% of 4 MB) | 24860 B (12.64% of 192 KB) |
+| **samples/subsys/shell/devmem_load/** | 60 B (0.18% of 32 KB) | 52400 B (1.25% of 4 MB) | 28888 B (14.69% of 192 KB) |
+| **tests/drivers/adc/adc_api** | 60 B (0.18% of 32 KB) | 55972 B (1.33% of 4 MB) | 24548 B (12.49% of 192 KB) |
+
+---
+
+### 📝 Additional Notes
+
+- **Memory Regions:** May vary between chip variants; check individual board configurations
+- **Full CI Data:** For complete resource usage information across all samples (including Bluetooth, OpenThread, and MCUBoot), refer to CI build artifacts from [PR #774](https://github.com/telink-semi/zephyr/pull/774)
+- **Production Optimizations:** For production builds, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage
+- **Bluetooth &amp; OpenThread:** For Bluetooth LE and OpenThread-specific resource usage, see the respective CI workflow files in `.github/workflows/`
+- **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` as in the CI pipelines
+
+---
+
+---
+
+Made by Telink Semiconductor
+
+- [Website](https://www.telink-semi.com/)
+- [Forum](https://forum.telink-semi.cn/)
+- [Documentation](https://doc.telink-semi.cn/)
