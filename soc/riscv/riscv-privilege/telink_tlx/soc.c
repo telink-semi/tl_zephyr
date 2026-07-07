@@ -274,6 +274,13 @@ static int soc_tlx_init(void)
 		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_96M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
 		break;
+		
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		/* Configure PEM flash protection with adjustable pin, PEM channel and DMA channel per hardware design */
+		lpc_pem_flash_prot_config(LPC_INPUT_PB5, PEM0, DMA7);
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X
@@ -418,6 +425,13 @@ void soc_tlx_restore(void)
 	case CLK_96MHZ:
 		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
 		PLL_192M_D25F_96M_HCLK_N22_48M_PCLK_48M_MSPI_48M;
+		break;
+
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		/* Configure PEM flash protection with adjustable pin, PEM channel and DMA channel per hardware design */
+		lpc_pem_flash_prot_config(LPC_INPUT_PB5, PEM0, DMA7);
 		break;
 #endif
 
