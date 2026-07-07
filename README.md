@@ -6,9 +6,19 @@
 
 ---
 
-## 1. SDK Introduction
+**A software development platform for Telink RISC-V SoC platforms based on Zephyr Project**
 
-Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms and is based on Zephyr Project. It is designed for developing a wide range of wireless IoT products including smart home,wearable electronics,lightning products, etc.
+- For development environment setup, SDK acquisition, and quick-start instructions, refer to SDK [Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
+- Specifically, check Chapter **Install Zephyr Project Environment** as the initial version of Getting Started in the [Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/#experience-the-implementation-and-function-of-matter).
+- For a detailed list of supported devices, refer to the [Release Note](tl_zephyr_sdk_Release_Note.md)
+- For community resources and support, refer to [Zephyr RTOS Community README](README.rst)
+
+---
+
+## 📖 SDK Introduction
+
+Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms and is based on Zephyr Project.
+It is designed for developing a wide range of wireless IoT products including smart home, wearables, lighting products, etc.
 
 ### What's Included
 
@@ -18,7 +28,6 @@ Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platf
 - ✅ MCUboot bootloader
 - ✅ Power management framework
 - ✅ Sample applications and board configurations
-
 
 ### Supported Products
 
@@ -30,42 +39,37 @@ Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platf
 
 ---
 
-## 🚀 Quick Reference for Development
+## 🚀 Quick Reference
 
-For a detailed list of supported devices, please refer to the [Release Note](tl_zephyr_sdk_Release_Note.md).
-
-For development environment setup, SDK acquisition, and quick-start instructions, please refer to the [SDK Get Started](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/#experience-the-implementation-and-function-of-matter).
-
-For detailed software architecture, repository structure, and functional module descriptions, please refer to the [SDK Handbook](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
-
-For more sample projects, please refer to the [Standard Zephyr Examples](/zephyr/samples).
+| Resource | Description | Link |
+|----------|-------------|------|
+| **Release Note** | Telink SDK Changelog & New Features | [Telink Zephyr SDK Release Note](tl_zephyr_sdk_Release_Note.md) |
+| **Get Started Guide/Handbook** | SDK Quick Start Guide & Developer Handbook | Check Chapter **Install Zephyr Project Environment** in the [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/#experience-the-implementation-and-function-of-matter) |
+| **Examples** | Sample Project Walkthroughs | See [Standard Zephyr Samples](samples) |
+| **API Reference** | Zephyr API Documentation & Lookup  | See [Zephyr API Docs](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html) |
 
 ---
 
-## 📚 Additional Reference Documents
+## 📚 Additional Resources
 
-| Document | Description | Link |
-|----------|-------------|------|
-| Get Started | SDK Quick Start Guide | [Get Started](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/#experience-the-implementation-and-function-of-matter) |
-| Handbook | SDK & Usage Details | [Handbook](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
-| Examples | Sample Project Walkthroughs | [Example](/zephyr/samples/basic/blinky) |
-| API Reference | API Documentation & Lookup | [API Reference](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html)(No custom APIs are added in this module; all functions are implemented by directly calling the platform's public APIs.) |
-| Release Note | SDK Changelog & New Features | [Release Note](tl_zephyr_sdk_Release_Note.md) |
-| Telink Official Forum | Technical Support & Discussion | [Forum - Telink](https://forum.telink-semi.cn/) |
-| Telink Official Website | Product Page & Documentation | [Telink - Chips for a Smarter IoT](https://www.telink-semi.com/) |
-| Original Zephyr | ZephyrRTOS community README | [ZephyrRTOS community README](README.rst) |
+| Type | Resource |
+|------|----------|
+| 🌐 **Official Website** | [Telink - Chips for a Smarter IoT](https://www.telink-semi.com/) |
+| 💬 **Forum** | [Telink Technical Support](https://forum.telink-semi.cn/) |
+| 📖 **Documentation** | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
+| 📦 **Original Zephyr** | [Zephyr RTOS Community README](README.rst) |
 
 ---
 
 ## 📝 Release Information
 
-For version history and details changelog,please refer to the [Release Note](tl_zephyr_sdk_Release_Note.md).
+For version history and detailed changelog, refer to the [Release Note](tl_zephyr_sdk_Release_Note.md).
 
 ---
 
 ## Contribution Guide
 
-For contribution guidelines, please refer to the [Contribution Guide](CONTRIBUTING.rst).
+For contribution guidelines, refer to the [Contribution Guide](CONTRIBUTING.md).
 
 ---
 
