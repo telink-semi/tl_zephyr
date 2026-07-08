@@ -54,6 +54,19 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 static const struct device *flash_device = DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
 #endif /* CONFIG_IEEE802154_TLX_MAC_FLASH */
 
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+#include "debug_gpio.h"
+K_SEM_DEFINE(ieee802154_task_ready_sem, 0, 1);
+/* define 802.15.4 TX sending status type */
+#define TLX_RF_ZIGBEE_TX_IS_IDLE	0
+#define TLX_RF_ZIGBEE_TX_IS_SENDING	1
+#define TLX_RF_ZIGBEE_TX_IS_STOPPED	2
+/* FIX 802.15.4 TX sending issue */
+static volatile uint8_t tlx_rf_zigbee_tx_is_sending;
+extern bool tlksdk_thd_checkIsInsertTask1(void);    //todo: need to be changed
+extern uint32_t tlksdk_thd_getInsertTask1PostTick(void);
+#endif /*CONFIG_IEEE802154_TLX_BLE_COEXIST*/
+
 #ifdef CONFIG_OPENTHREAD_FTD
 /* TLX radio source match table structure */
 static struct tlx_src_match_table src_match_table;
@@ -875,15 +888,19 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 	}
 #endif
 }
-
+uint32_t thd_insertTask_posttick_record_2;
 /* TX IRQ handler */
 ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 {
 	struct tlx_data *tlx = dev->data;
-
-	plic_interrupt_disable(IRQ_SYSTIMER);
+	// plic_interrupt_disable(IRQ_SYSTIMER);
 	/* clear irq status */
 	rf_clr_irq_status(FLD_RF_IRQ_TX);
+	
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+	/* clear 802.15.4 tx sending flag */
+	tlx_rf_zigbee_tx_is_sending = TLX_RF_ZIGBEE_TX_IS_IDLE;
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
 
 	/* set to rx mode */
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
@@ -893,13 +910,31 @@ ALWAYS_INLINE static void tlx_rf_tx_isr(const struct device *dev)
 
 	/* release tx semaphore */
 	k_sem_give(&tlx->tx_wait);
-
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	isFirstCcaBeforeTx = true;
 #endif
 }
 
 /* IRQ handler */
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+__GENERIC_SECTION(.ram_code) void tlx_rf_isr(const void *parameter)
+{
+	(void)parameter;
+	const struct device *dev = DEVICE_DT_INST_GET(0);
+	if (rf_get_irq_status(FLD_RF_IRQ_RX)) {
+		DBG_OT_BLE_CHN3_HIGH;
+		tlx_rf_rx_isr(dev);
+		DBG_OT_BLE_CHN3_LOW;
+	} else if (rf_get_irq_status(FLD_RF_IRQ_TX)) {
+		DBG_OT_BLE_CHN1_HIGH;
+		tlx_rf_tx_isr(dev);
+		thd_insertTask_posttick_record_2 = systimer_get_irq_capture();
+		DBG_OT_BLE_CHN1_LOW;
+	} else {
+		rf_clr_irq_status(FLD_RF_IRQ_ALL);
+	}
+}
+#else
 __GENERIC_SECTION(.ram_code) static void tlx_rf_isr(const struct device *dev)
 {
 	if (rf_get_irq_status(FLD_RF_IRQ_RX)) {
@@ -910,8 +945,82 @@ __GENERIC_SECTION(.ram_code) static void tlx_rf_isr(const struct device *dev)
 		rf_clr_irq_status(FLD_RF_IRQ_ALL);
 	}
 }
+#endif
 
 volatile bool tlx_rf_zigbee_250K_mode;
+
+#ifndef CONFIG_IEEE802154_TLX_BLE_COEXIST
+static
+#endif
+__attribute__((noinline)) void tlx_init_802154_rf_hw(void)
+{
+	/* Disable 802.15.4 RF interrupt (IRQ_ZB_RT) */
+	riscv_plic_irq_disable(DT_INST_IRQN(0));
+
+	const struct device *dev = DEVICE_DT_INST_GET(0);
+	struct tlx_data *tlx = dev->data;
+
+#ifndef CONFIG_IEEE802154_TLX_BLE_COEXIST
+#ifdef CONFIG_DYNAMIC_INTERRUPTS
+	irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
+				(void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
+#endif /* CONFIG_DYNAMIC_INTERRUPTS */
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
+
+	// if (!tlx_rf_zigbee_250K_mode) {
+#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+		ske_dig_en();
+#endif
+
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
+	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
+			// if (tl_rf_is_inited()) {
+#endif
+			// rf_set_tx_rx_off_auto_mode(); //same as: STOP_RF_STATE_MACHINE
+			// rf_set_tx_rx_off();
+			rf_baseband_reset();
+			rf_reset_dma();
+#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
+	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
+				// } else {
+				// 	tl_rf_change_to_inited();
+				// }
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+		sys_n22_init(CONFIG_FLASH_BASE_ADDRESS + 0x80000);
+		rf_n22_dig_init();
+		rf_clr_irq_mask(FLD_RF_IRQ_ALL);
+#endif
+		rf_mode_init();
+		rf_set_zigbee_250K_mode();
+		// tlx_rf_zigbee_250K_mode = true;
+	// }
+	rf_set_rx_maxlen(144);
+	rf_set_tx_dma(1, TLX_TRX_LENGTH);
+	rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
+	if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
+		rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(tlx->current_channel));
+	}
+	if (tlx->current_dbm != TLX_TX_PWR_NOT_SET) {
+		rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
+	}
+	rf_clr_irq_mask(FLD_RF_IRQ_ALL);
+	rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
+	riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
+	riscv_plic_irq_enable(DT_INST_IRQN(0));
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	if (!isThreadCommissioned) {
+#endif
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		rf_rx_performance_mode(RF_RX_LOW_POWER);
+#endif
+		rf_set_rxmode();
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+	}
+#endif
+	return 0;
+}
 
 ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 {
@@ -921,61 +1030,19 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 	tlx_disable_pm(tlx);
 	/* check if RF is already started */
 	if (!tlx->is_started) {
-#ifdef CONFIG_DYNAMIC_INTERRUPTS
-		irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
-				    (void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
-#endif /* CONFIG_DYNAMIC_INTERRUPTS */
-		if (!tlx_rf_zigbee_250K_mode) {
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-			ske_dig_en();
-#endif
-			if (tlx->rf_mode_154 == false) {
-#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
-				if (tl_rf_is_inited()) {
-#endif
-					rf_baseband_reset();
-					rf_reset_dma();
-#if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL322X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X)
-				} else {
-					tl_rf_change_to_inited();
-				}
-#endif
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
+		if(!tlksdk_thd_checkIsInsertTask1()){
+			LOG_ERR("tlx ble busy");
+			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
+			LOG_ERR("tlx ieee802154 task ready sem");
+		} else {
+			LOG_ERR("tlx ble idle");
+		}
 
-				tlx->rf_mode_154 = true;
-			}
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-			sys_n22_init(CONFIG_FLASH_BASE_ADDRESS + 0x80000);
-			rf_n22_dig_init();
-			rf_clr_irq_mask(FLD_RF_IRQ_ALL);
+
 #endif
-			rf_mode_init();
-			rf_set_zigbee_250K_mode();
-			tlx_rf_zigbee_250K_mode = true;
-		}
-		rf_set_rx_maxlen(144);
-		rf_set_tx_dma(1, TLX_TRX_LENGTH);
-		rf_set_rx_dma(tlx->rx_buffer, 0, TLX_TRX_LENGTH);
-		if (tlx->current_channel != TLX_TX_CH_NOT_SET) {
-			rf_set_chn(TLX_LOGIC_CHANNEL_TO_PHYSICAL(tlx->current_channel));
-		}
-		if (tlx->current_dbm != TLX_TX_PWR_NOT_SET) {
-			rf_set_power_level(tl_tx_pwr_lt[tlx->current_dbm - TL_TX_POWER_MIN]);
-		}
-		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
-		riscv_plic_set_priority(DT_INST_IRQN(0), DT_INST_IRQ(0, priority));
-		riscv_plic_irq_enable(DT_INST_IRQN(0));
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-		if (!isThreadCommissioned) {
-#endif
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-			rf_rx_performance_mode(RF_RX_LOW_POWER);
-#endif
-			rf_set_rxmode();
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-		}
-#endif
+		tlx_init_802154_rf_hw();
 		tlx->is_started = true;
 	}
 	return 0;
@@ -985,6 +1052,16 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 {
 	/* check if RF is already stopped */
 	if (tlx->is_started) {
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		if (!tlksdk_thd_checkIsInsertTask1()) {
+			LOG_ERR("tlx ble busy");
+			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
+			LOG_ERR("tlx ieee802154 task ready sem");
+		} else {
+			LOG_ERR("tlx ble idle");
+		}
+#endif
+
 		riscv_plic_irq_disable(DT_INST_IRQN(0));
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		rf_rx_performance_mode(RF_RX_LOW_POWER);
@@ -1057,11 +1134,16 @@ static int tlx_init(const struct device *dev)
 	k_sem_init(&tlx->tx_wait, 0, 1);
 	k_sem_init(&tlx->ack_wait, 0, 1);
 
+#ifndef CONFIG_IEEE802154_TLX_BLE_COEXIST
 	/* init IRQs */
 #ifndef CONFIG_DYNAMIC_INTERRUPTS
 	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), tlx_rf_isr, DEVICE_DT_INST_GET(0),
-		    0);
+			0);
+#else 
+	irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
+				(void (*)(const void *))tlx_rf_isr, DEVICE_DT_INST_GET(0), 0);
 #endif /* not CONFIG_DYNAMIC_INTERRUPTS */
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
 
 	/* init data variables */
 	tlx->is_started = false;
@@ -1125,11 +1207,8 @@ RAM_CODE_SECTION_IEEE802154
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-#if CONFIG_SOC_RISCV_TELINK_TL521X
-	/* need to wait driver update */
+	//need to wait driver update 
 	return 0;
-#endif
-
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isFirstCcaBeforeTx && isThreadCommissioned) {
 		isFirstCcaBeforeTx = false;
@@ -1224,6 +1303,23 @@ __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 }
 #endif
 
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+_attribute_ram_code_
+void tlx_rf_tx_is_sending(void)
+{
+	const struct device *dev = DEVICE_DT_INST_GET(0);
+	struct tlx_data *tlx = dev->data;
+	if (tlx_rf_zigbee_tx_is_sending == TLX_RF_ZIGBEE_TX_IS_SENDING)
+	{
+		tlx_rf_zigbee_tx_is_sending = TLX_RF_ZIGBEE_TX_IS_STOPPED;
+		/* release tx semaphore */
+		k_sem_give(&tlx->tx_wait);
+		/* release ack semaphore */
+		k_sem_give(&tlx->ack_wait);
+	}
+}
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
+
 /* API implementation: start */
 RAM_CODE_SECTION_IEEE802154
 static int tlx_start(const struct device *dev)
@@ -1274,6 +1370,14 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		LOG_WRN("TX mode %d not supported", mode);
 		return -ENOTSUP;
 	}
+
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+	/* lock interrupts */
+	unsigned int key = irq_lock();
+	tlx_rf_zigbee_tx_is_sending = TLX_RF_ZIGBEE_TX_IS_SENDING;
+	/* unlock interrupts */
+	irq_unlock(key);
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
 
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 
@@ -1478,28 +1582,50 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 
 #endif
 
-	/* prepare tx buffer */
-	tlx_set_tx_payload(dev, frag->data, frag->len);
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+	/* lock interrupts */
+	key = irq_lock();
+	bool rf_zigbee_tx_is_stopped = tlx_rf_zigbee_tx_is_sending == TLX_RF_ZIGBEE_TX_IS_STOPPED;
+	uint32_t ScanPostTick = tlksdk_thd_checkIsInsertTask1() ? tlksdk_thd_getInsertTask1PostTick()|1 : 0;    //todo: api should be updated
+	/* unlock interrupts */
+	irq_unlock(key);
 
-	/* reset semaphores */
-	k_sem_reset(&tlx->tx_wait);
-	k_sem_reset(&tlx->ack_wait);
+	/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
+	if (ScanPostTick && (unsigned int)(ScanPostTick - stimer_get_tick()) < 5 * SYSTEM_TIMER_TICK_1MS) {
+		k_sleep(K_MSEC(1+(unsigned int)(ScanPostTick - stimer_get_tick())/SYSTEM_TIMER_TICK_1MS));
+	}
 
-	/* start transmission */
-#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
-	rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
+	if(status || rf_zigbee_tx_is_stopped) {
+		/* skip 802.15.4 RF TX operation */
+		status = -EIO;
+	}
+	else
 #endif
-	rf_set_txmode();
+	{
+		/* prepare tx buffer */
+		tlx_set_tx_payload(dev, frag->data, frag->len);
+
+		/* reset semaphores */
+		k_sem_reset(&tlx->tx_wait);
+		k_sem_reset(&tlx->ack_wait);
+
+		/* start transmission */
+#if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+		rf_rx_performance_mode(RF_RX_HIGH_PERFORMANCE);
+#endif
+		rf_set_txmode();
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
-	if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
-		k_sleep(K_TIMEOUT_ABS_TICKS(k_ns_to_ticks_near64(net_pkt_timestamp_ns(pkt))));
-	} else
+		if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
+			k_sleep(K_TIMEOUT_ABS_TICKS(k_ns_to_ticks_near64(net_pkt_timestamp_ns(pkt))));
+		} else
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
-	{
-		delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
+		{
+			delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
+		}
+		rf_tx_pkt(tlx->tx_buffer);
 	}
-	rf_tx_pkt(tlx->tx_buffer);
+
 	if (tlx->event_handler) {
 		tlx->event_handler(dev, IEEE802154_EVENT_TX_STARTED, (void *)frag);
 	}
@@ -1518,10 +1644,32 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 #endif
 		rf_set_rxmode();
 		status = -EIO;
-	} else if ((frag->data[0] & IEEE802154_FRAME_FCF_ACK_REQ_MASK) ==
-		   IEEE802154_FRAME_FCF_ACK_REQ_ON) {
-		tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
-		tlx->ack_handler_en = true;
+	} else {
+		if ((frag->data[0] & IEEE802154_FRAME_FCF_ACK_REQ_MASK) ==
+        IEEE802154_FRAME_FCF_ACK_REQ_ON) {
+			tlx->ack_sn = frag->data[IEEE802154_FRAME_LENGTH_FCF];
+			tlx->ack_handler_en = true;
+		}
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		{
+			/* lock interrupts */
+			key = irq_lock();
+			bool rf_zigbee_tx_is_stopped = tlx_rf_zigbee_tx_is_sending == TLX_RF_ZIGBEE_TX_IS_STOPPED;
+			/* unlock interrupts */
+			irq_unlock(key);
+
+			if (rf_zigbee_tx_is_stopped) {
+				rf_set_rxmode();
+				status = -EIO;
+			}
+		}
+
+		/* lock interrupts */
+		key = irq_lock();
+		tlx_rf_zigbee_tx_is_sending = TLX_RF_ZIGBEE_TX_IS_IDLE;
+		/* unlock interrupts */
+		irq_unlock(key);
+#endif
 	}
 
 	/* wait for ACK if requested */

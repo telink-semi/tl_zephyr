@@ -245,8 +245,7 @@ _attribute_ram_code_sec_ static void spi_tlx_txrx(const struct device *dev, uint
 
 		/* clear TX and RX fifo */
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X ||                        \
-	CONFIG_SOC_RISCV_TELINK_TL521X
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_TXF_CLR_LEVEL);
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_RXF_CLR_LEVEL);
 #endif
@@ -319,8 +318,7 @@ static int spi_tlx_config(const struct device *dev, const struct spi_config *con
 	struct spi_tlx_data *tlx_data = SPI_DATA(dev);
 	const pinctrl_soc_pin_t *pins = tlx_config->pcfg->states->pins;
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X ||                        \
-	CONFIG_SOC_RISCV_TELINK_TL521X
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	uint8_t clk_src = sys_clk.pll_clk;
 #endif
 
@@ -351,8 +349,7 @@ static int spi_tlx_config(const struct device *dev, const struct spi_config *con
 
 	/* init SPI master */
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X ||                        \
-	CONFIG_SOC_RISCV_TELINK_TL521X
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 	spi_master_init(tlx_config->peripheral_id, clk_src * 1000000 / config->frequency, mode);
 #endif
 	spi_master_config(tlx_config->peripheral_id, SPI_NORMAL);
@@ -367,8 +364,7 @@ static int spi_tlx_config(const struct device *dev, const struct spi_config *con
 			spi_set_io_mode(tlx_config->peripheral_id, SPI_DUAL_MODE);
 		} else if (lines == SPI_LINES_QUAD) {
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X ||                        \
-	CONFIG_SOC_RISCV_TELINK_TL521X
+	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
 			spi_set_io_mode(tlx_config->peripheral_id, SPI_QUAD_MODE);
 #endif
 		}

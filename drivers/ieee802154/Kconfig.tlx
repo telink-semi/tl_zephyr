@@ -48,6 +48,15 @@ config IEEE802154_TLX_DELAY_TRX_ACC
 	  Accuracy of the clock used for scheduling radio delayed operations (delayed transmission
 	  or delayed reception), in ppm.
 
+config IEEE802154_TLX_BLE_COEXIST
+	bool "Coexist with BLE (OT-BLE dual mode)"
+	default n
+	help
+	  Enable this option to support OpenThread and BLE (Low Energy)
+	  dual-mode coexistence on TLX SoCs. When enabled, the IEEE 802.15.4
+	  radio driver will coordinate with the BLE controller to share the
+	  RF resource.
+
 config IEEE802154_TLX_OPTIMIZATION
 	bool "Optimize 802.15.4 RF performance for TLX SoCs"
 	default n

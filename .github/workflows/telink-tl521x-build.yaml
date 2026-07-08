@@ -97,10 +97,10 @@ jobs:
         cd ..
         west build -b tl5218x     -d build_tests_flash_tl521x                 zephyr/tests/drivers/flash/common             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    # - name: Build TL521x samples/drivers/spi_flash
-    #   run: |
-    #     cd ..
-    #     west build -b tl5218x     -d build_spi_flash_tl521x                    zephyr/samples/drivers/spi_flash             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+    - name: Build TL521x samples/drivers/spi_flash
+      run: |
+        cd ..
+        west build -b tl5218x     -d build_spi_flash_tl521x                    zephyr/samples/drivers/spi_flash             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Build TL521x samples/basic/fade_led/
       run: |
@@ -144,10 +144,10 @@ jobs:
         cp ../build_hello_tl521x/zephyr/zephyr.bin                      telink_build_artifacts/tl521x_hello_world.bin
         cp ../build_button_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_button.bin
         cp ../build_sht3xd_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_sht3xd.bin
-        # cp ../build_adc_tl521x/zephyr/zephyr.bin                        telink_build_artifacts/tl521x_adc.bin
+        cp ../build_adc_tl521x/zephyr/zephyr.bin                        telink_build_artifacts/tl521x_adc.bin
         cp ../build_watchdog_tl521x/zephyr/zephyr.bin                   telink_build_artifacts/tl521x_watchdog.bin
         cp ../build_tests_flash_tl521x/zephyr/zephyr.bin                telink_build_artifacts/tl521x_tests_flash.bin
-        # cp ../build_spi_flash_tl521x/zephyr/zephyr.bin                  telink_build_artifacts/tl521x_spi_flash.bin
+        cp ../build_spi_flash_tl521x/zephyr/zephyr.bin                  telink_build_artifacts/tl521x_spi_flash.bin
         cp ../build_fade_tl521x/zephyr/zephyr.bin                       telink_build_artifacts/tl521x_tests_pwm.bin
         cp ../build_peripheral_ht_tl521x/zephyr/zephyr.bin              telink_build_artifacts/tl521x_peripheral_ht.bin
         cp ../build_ot_cli_tl521x/zephyr/zephyr.bin                     telink_build_artifacts/tl521x_ot_cli.bin

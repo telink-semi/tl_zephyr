@@ -7,6 +7,9 @@
 /dts-v1/;
 
 #include <zephyr/dt-bindings/adc/adc.h>
+/*
+#include <zephyr/dt-bindings/adc/tl521x-adc.h>
+ */
 #include <zephyr/dt-bindings/adc/tlx-adc.h>
 #include <zephyr/dt-bindings/gpio/gpio.h>
 #include <zephyr/dt-bindings/i2c/i2c.h>

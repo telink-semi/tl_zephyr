@@ -147,8 +147,8 @@ static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 					       ADC_SAMPLE_FREQ_96K, ADC_SAMPLE_FREQ_192K}),
 			sample_freq);
 #if CONFIG_SOC_RISCV_TELINK_TL521X
-		const adc_ref_vol_e *hw_ref_vol = ARRAY_REMAP(((uint16_t[]){1200}),
-			((adc_ref_vol_e[]){ADC_VREF_VBAT_1P2V}), ref_internal);
+		const adc_ref_vol_e *hw_ref_vol = ARRAY_REMAP(
+			((uint16_t[]){1200}), ((adc_ref_vol_e[]){ADC_VREF_VBAT_1P2V}), ref_internal);
 #else
 		const adc_ref_vol_e *hw_ref_vol = ARRAY_REMAP(
 			((uint16_t[]){1200}), ((adc_ref_vol_e[]){ADC_VREF_1P2V}), ref_internal);
