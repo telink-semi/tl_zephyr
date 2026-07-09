@@ -22,8 +22,8 @@ LOG_MODULE_REGISTER(bt_cs);
 static struct bt_le_cs_test_cb cs_test_callbacks;
 #endif
 
-#define CS_REASSEMBLY_BUF_COUNT 4
-#define CS_REASSEMBLY_BUF_SIZE 2000
+#define CS_REASSEMBLY_BUF_COUNT 1
+#define CS_REASSEMBLY_BUF_SIZE 1500
 
 struct cs_reassembly_buf {
 	uint8_t data[CS_REASSEMBLY_BUF_SIZE];

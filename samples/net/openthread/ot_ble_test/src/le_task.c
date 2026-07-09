@@ -4,9 +4,17 @@
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
+#include <zephyr/settings/settings.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ot_ble_le_task, LOG_LEVEL_INF);
+
+/* Channel Sounding RAS Reflector integration */
+#define BT_UUID_RAS_SERVICE_VAL 0x185B
+
+extern void cs_reflector_init(void);
+extern void cs_reflector_on_connected(struct bt_conn *conn, uint8_t err);
+extern void cs_reflector_on_disconnected(struct bt_conn *conn);
 
 
 /* ============================================================
@@ -15,6 +23,9 @@ LOG_MODULE_REGISTER(ot_ble_le_task, LOG_LEVEL_INF);
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA_BYTES(BT_DATA_UUID16_SOME,
+		      BT_UUID_RAS_SERVICE_VAL & 0xFF,
+		      (BT_UUID_RAS_SERVICE_VAL >> 8) & 0xFF),
 };
 
 static const struct bt_data sd[] = {
@@ -28,11 +39,13 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	} else {
 		printk("Connected\n");
 	}
+	cs_reflector_on_connected(conn, err);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	printk("Disconnected, reason 0x%02x %s\n", reason, bt_hci_err_to_str(reason));
+	cs_reflector_on_disconnected(conn);
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
@@ -77,6 +90,14 @@ void bt_le_task_init(void)
 		printk("Bluetooth init failed (err %d)\n", err);
 		return;
 	}
+
+	/* Load bonded keys from flash so reconnects skip re-pairing. */
+	if (IS_ENABLED(CONFIG_SETTINGS)) {
+		settings_load();
+	}
+
+	/* Initialize Channel Sounding RAS Reflector */
+	cs_reflector_init();
 
     bt_ready();
 

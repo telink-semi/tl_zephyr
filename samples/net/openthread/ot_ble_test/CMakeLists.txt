@@ -7,3 +7,4 @@ project(ot_cli)
 
 target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/le_task.c)
+target_sources(app PRIVATE src/cs_reflector.c)
