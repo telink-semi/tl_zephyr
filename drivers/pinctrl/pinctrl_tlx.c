@@ -5,7 +5,9 @@
  */
 
 #include "analog.h"
+#if CONFIG_PM
 #include "gpio.h"
+#endif
 #include <zephyr/drivers/pinctrl.h>
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 #include <zephyr/dt-bindings/pinctrl/tl321x-pinctrl.h>
@@ -207,7 +209,9 @@ static int pinctrl_configure_pin(const pinctrl_soc_pin_t *pinctrl)
 
 	/* disable GPIO function (can be enabled back by GPIO init using GPIO driver) */
 	pinctrl_tlx_gpio_function_disable(pin);
+#if CONFIG_PM
 	gpio_input_en(pin);
+#endif
 	/* set pull value */
 	pull = pull << offset;
 	analog_write_reg8(pull_up_en_addr, (analog_read_reg8(pull_up_en_addr) & mask) | pull);
