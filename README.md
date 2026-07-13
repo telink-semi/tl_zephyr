@@ -17,17 +17,20 @@
 
 ## 📖 SDK Introduction
 
-Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms and is based on Zephyr Project.
+Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL321x, TL322x, TLSR921x, TLSR922x, TLSR952x series) and is based on Zephyr Project.
 It is designed for developing a wide range of wireless IoT products including smart home, wearables, lighting products, etc.
 
-### What's Included
+### Core Capabilities
 
-- ✅ Zephyr RTOS kernel
-- ✅ Telink Hardware Abstraction Layer
-- ✅ Telink wireless connectivity stack
-- ✅ MCUboot bootloader
-- ✅ Power management framework
-- ✅ Sample applications and board configurations
+| Category | Capability |
+|----------|------------|
+| **Wireless connectivity** | BLE stack |
+| **Drivers** | GPIO, UART, SPI, I²C, Flash, Timer, etc. |
+| **Development framework** | Zephyr framework |
+| **System services** | Power management, storage management, clock management, Zephyr system initialization |
+| **Security** | SMP, secure connection |
+
+---
 
 ### Supported Products
 

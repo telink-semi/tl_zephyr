@@ -35,6 +35,17 @@ sudo apt upgrade
 
 ---
 
+## Hardware Requirements
+
+Hardware to prepare before running the SDK.
+|Hardware|Description|
+|-|-|
+|PC|Windows 10/11 / Linux|
+|Development board|Select a suitable development board according to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md)
+|Programmer|Programmer (V1~ V3) is recommended|
+|USB cable|Connects the PC and the programmer|
+|Dupont wires|Connect the development board and the programmer|
+
 ## Install Dependencies
 
 Next, install the host tools Zephyr needs to configure and build applications.
@@ -435,10 +446,10 @@ and a USB hub with enough ports.
 > | Board target      | BDT GUI chip selection | Linux `bdt` chip name | Notes                              |
 > | ----------------- | ---------------------- | --------------------- | ---------------------------------- |
 > | `tlsr9518adk80d`  | `B91`                  | `B91`                 |                                    |
-> | `tlsr9528a`       | `B92_3V3` ²            | `B92`                 |                                    |
+> | `tlsr9528a`       | `B92_3V3`              | `B92`                 |                                    |
 > | `tl3218x`         | `TL321X`               | `tl321x`              |                                    |
-> | `tl3228x`         | `TL322X`               | — ¹                   | Windows: BDT V5.8.4+ (EVK mode)    |
-> | `tl3238x`         | `TL323X`               | — ¹                   | Windows: BDT V5.9.0+ (EVK mode)    |
+> | `tl3228x`         | `TL322X`               |                    | Windows: BDT V5.8.4+ (EVK mode)    |
+> | `tl3238x`         | `TL323X`               |                    | Windows: BDT V5.9.0+ (EVK mode)    |
 > | `tl7218x`         | `TL721X`               | `tl721x`              |                                    |
 >
 > ¹ TL322X and TL323X are **not** supported by the Linux `bdt` command-line
@@ -470,17 +481,25 @@ hardware:
 > V4.0 and you prefer the TGui workflow, see
 > [Option A2](#option-a2-windows-tgui-tl322x--tl323x).
 
-1. **Connect the Burning EVK** to a USB port on your PC. AMD-based PCs may have
-   issues detecting the EVK — if the EVK is not recognised, try an Intel-based
-   PC.
+1. **Connect to Hardware.** Before using the BDT tool, connect the PC, programmer, and target board as follows:
+   - **PC ↔ Programmer**: Connect them using a USB cable. If the green indicator LED on the programmer stays solid, the programmer has been successfully recognized by the PC.
+   - **Programmer ↔ Target board**: Connect them using Dupont wires:
+     - Power lines: 3V3 ↔ 3V3; GND ↔ GND
+     - Data line (single-wire SWM bus): Connect the programmer's SWM pin to the target board's SWS (Swire) pin.
 
-2. **Launch BDT.** Double-click `Telink BDT.exe`. If the EVK is connected
-   successfully, the EVK device information appears in the window title bar.
+   ![Connect_Hardware](figures/Connect_Hardware.png)
+2. **Launch BDT.** Double-click `Telink BDT.exe`.
 
 3. **Select the programmer.** From the **Programmer** drop-down, choose
    **Programmer V1-V3** (the external Burning EVK). The other entries
    (`On-board Programmer`, `9118 Programmer`, `Programmer V5`) are for
    different hardware and will not work with the V1–V3 EVK.
+
+   ![Select programmer](figures/Select_Programmer.png)
+
+   If the EVK is connected successfully, the EVK device information appears in the window title bar.
+
+   ![Launch BDT](figures/Launch_BDT.png)
 
 4. **Select the chip.** From the chip-selection drop-down, choose the entry
    that matches your board (see the chip-mapping table above), e.g.
@@ -489,15 +508,21 @@ hardware:
    > B92 has two variants — `B92_3V3` (3.3 V, used by the TLSR9528A EVB) and
    > `B92_1V8` (1.8 V). Pick the one that matches your board voltage.
 
+   ![Select chip](figures/Select_Chip.png)
+
 5. **Verify the connection (SWS).** Click the **SWS** button on the toolbar. If
    the connection is good, the log window displays the connected EVK and chip
    information. If you see a `Swire err!` message, see the troubleshooting
    notes at the end of this section.
 
+   ![Verify connection](figures/Verify_Connection.png)
+
 6. **Set the flash erase size.** Click the **Setting** button on the toolbar.
    The default erase size is 512 KB — change it to **2040** (2040 KB). For
    boards with 2 MB external flash the last 8 KB is reserved for SoC data, so
    the maximum erasable area is 2040 KB.
+
+   ![Set flash erase size](figures/Set_Flash_Erase_Size.png)
 
 7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
    flash protection before erase/download for B91/B92/TL321X/TL721X. Since
@@ -506,8 +531,12 @@ hardware:
    auto-unlock mode) before proceeding. The **Flash info** button shows the
    current MID, UID, status and lock address.
 
+   ![Unlock flash](figures/Unlock.png)
+
 8. **Erase the flash.** Click the **Erase** button on the toolbar and wait for
    the erase to complete.
+
+   ![Erase flash](figures/Erase_Flash.png)
 
 9. **Open the firmware file.** Click **File → Open** and select the
    `zephyr.bin` file from your build directory (e.g. `build_blinky/zephyr/zephyr.bin`).
@@ -520,6 +549,7 @@ hardware:
 11. **Reset the board.** After flashing completes, power-cycle the board (or
     press its reset button) to start the new firmware.
 
+    ![Download_Reset](figures/Download_Reset.png)
 For more BDT commands and options, refer to the documentation in the
 `doc/` folder of the BDT package.
 
@@ -534,15 +564,22 @@ For more BDT commands and options, refer to the documentation in the
   in the BDT title bar): this is a known issue on some AMD-platform PCs. Try
   an Intel-based PC.
 
-- **`Swire err!` after clicking SWS**: two common causes:
+- **`Swire err!` after clicking SWS**: three common causes:
   1. *Hardware connection* — double-check all cables and jumper settings.
-  2. *EVK firmware too old* — upgrade the EVK firmware. BDT V5.9.x bundles
+  2. *EVK firmware too old* — upgrade the EVK firmware.
+
+      ![update warning](figures/Update_Warning.png)
+      BDT V5.9.x bundles
      EVK firmware **V5.1** (file in `config\fw\`). Use **Help → Upgrade**,
      click **Read FW version** to check the current version, **Load…** the
      newest firmware file, click **Upgrade**, then re-plug the EVK USB cable.
      BDT V5.8.1+ also self-checks the EVK firmware version on power-up and
      can auto-update it (`Firmware_Auto_Update`).
 
+     ![firmware upgrade](figures/Update_BDT_firmware.png)
+   3. *Not Activate* - Send **Activate** Command to the chip.
+
+      ![pre activate](figures/Pre_Activate.png)
 ### Option A2: Windows (TGui, TL322X / TL323X)
 
 An alternative to [Option A](#option-a-windows-bdt-gui) for **TL322X** and
@@ -729,6 +766,8 @@ After reset, confirm that the Blinky sample is running:
 The Blinky sample toggles an LED on the board. You should see the onboard LED
 blink at a steady interval (~1 Hz by default). If the LED does not blink,
 re-check the flash steps and the board's power/jumper configuration.
+
+![Blinky](figures/Blinky.png)
 
 ### 2. Check the serial output
 
