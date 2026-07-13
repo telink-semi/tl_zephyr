@@ -13,14 +13,14 @@
 
 ## 📖 Introduction
 
-This release is based on the `dev-tlk_v4.1` branch. _TODO: add a one-sentence summary of key changes._
+This release is based on the latest commit of `dev-tlk_v4.1` branch, incorporating multiple bug fixes, driver updates, and BLE SDK improvements for Telink TL323x series chips and other platforms.
 
 ### Based on Upstream Zephyr v4.1.0
 
 This release is based on upstream Zephyr **v4.1.0** (tag [`v4.1.0`](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)). For the full list of upstream changes, see:
 
 - [Zephyr v4.1.0 Release Notes](https://docs.zephyrproject.org/latest/releases/release-notes-4.1.html)
-- [Zephyr v4.1.0 Migration Guide](https://docs.zephyrproject.org/latest/migration/migration-4.1.html) — recommended reading when upgrading from a previous Zephyr version.
+- [Zephyr v4.1.0 Migration Guide](https://docs.zephyrproject.org/latest/migration/migration-4.1.html) — recommended reading when upgrading from a previous Zephyr version, as upstream v4.1.0 introduced several API and Kconfig changes (Bluetooth HCI driver API rewrite, pipe API rework, removed/deprecated options, etc.).
 
 For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../getting_started/index.md).
 
@@ -30,12 +30,24 @@ For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../gett
 
 | Category | Details |
 |----------|---------|
-| **New Chips** | _TODO_ |
-| **New Features** | _TODO_ |
-| **CI/CD** | _TODO_ |
-| **Driver Updates** | _TODO_ |
+| **New Chips** | Full support for tl323x series |
+| **New Features** | LZMA configuration support, TL523X skeleton board |
+| **CI/CD** | Dedicated pipelines for tl323x platform |
+| **Driver Updates** | PLIC, pinctrl, SHA HW cryptography |
 
-_TODO: add a brief descriptive paragraph summarizing the key changes of this release._
+This release introduces full support for the **TL323X** series — a new
+RISC-V based Telink SoC — including device tree, pin configuration and a
+dedicated CI pipeline.
+**LZMA** compression configuration is now available
+for Telink SoCs, enabling smaller firmware images that fit 2 MB flash with
+OTA.
+
+The TL721X platform has been **migrated from hal_v1 to hal_v2**, with
+optimized power consumption; existing TL721X users should follow the
+migration note in [Known Issues](#-known-issues-and-limitations).
+Driver
+work includes a new PLIC interrupt controller, pinctrl fixes, and SHA
+hardware-accelerated cryptography on TLX platforms.
 
 ---
 
@@ -53,7 +65,12 @@ More detailed information can be found in the [Zephyr Security Vulnerabilities](
 
 ## 🆕 New Features
 
-- _TODO: list new features of this release_
+- ✅ Added full support for tl323x series chips
+- ✅ New CI build pipelines specifically for the tl323x platform
+- ✅ Added device tree and pin configuration support for the tl3238x development board
+- ✅ Added PLIC interrupt controller support
+- ✅ Added LZMA module configuration support for Telink SoCs
+- ✅ Added tl523x skeleton board support
 
 ---
 
@@ -61,7 +78,17 @@ More detailed information can be found in the [Zephyr Security Vulnerabilities](
 
 | Issue | Component | Description |
 |-------|-----------|-------------|
-| _TODO_ | _TODO_ | _TODO_ |
+| **TL323x RF TX** | RF | Resolves 1M PHY DEVM transmission performance issue on TL323x series |
+| **WFI Function** | Kernel/Arch | Adjusted macro definitions and removed `ARCH_HAS_CUSTOM_CPU_IDLE` |
+| **Amazon Issues** | RF/SOC | Reset RF related registers in `soc_early_init_hook` to fix jump/reconnect failures |
+| **PM/Clock** | PM | Updated reset and clock clear on TL323x PM |
+| **AES Reentrancy** | Crypto | Resolved AES reentrancy issue |
+| **Pinctrl** | Driver | Fixed peripherals input pins; fixed pinctrl Kconfig to always disable GPIOs |
+| **PWM Driver** | Driver | Reverted incorrect PWM driver changes for Telink platform |
+| **SHA HW Crypto** | Crypto | Reworked Telink SHA calculation using HW unit on TLX platforms |
+| **Kconfig** | Build | Fixed dependency for bootloader HW cryptography on Telink B9X & TLX platforms |
+| **32K Watchdog** | PM | Changed logic - open 32k wd in idle/standby mode |
+| **TL721X V2** | HAL | Updated hal_v1 to hal_v2, optimized power consumption |
 
 ---
 
@@ -69,9 +96,14 @@ More detailed information can be found in the [Zephyr Security Vulnerabilities](
 
 ### Telink-Specific Changes
 
+The following Telink-specific Kconfig changes may affect existing applications when upgrading to this release:
+
 | Change | Impact | Migration |
 |--------|--------|-----------|
-| _TODO_ | _TODO_ | _TODO_ |
+| **`ARCH_HAS_CUSTOM_CPU_IDLE` removed** | WFI handling is now driven by the standard Zephyr path | Remove any custom override of `ARCH_HAS_CUSTOM_CPU_IDLE`; rely on the default `cpu_idle` implementation |
+| **Bootloader HW cryptography dependency** | Kconfig dependency for bootloader HW cryptography on Telink B9X & TLX platforms was fixed | Re-check your bootloader crypto Kconfig selection if you use HW crypto on B9X/TLX |
+| **PLIC interrupt controller** | New interrupt controller driver added for TL323X | No migration needed for new projects; existing TL323X boards now use PLIC by default |
+| **Pinctrl Kconfig** | Pinctrl Kconfig now always disables GPIOs on conflicting pins | Verify your DTS pin assignments if you relied on the old dual-use behavior |
 
 ### Upstream Inherited Changes
 
@@ -85,20 +117,20 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 
 | Component | Repository | Commit | Notes |
 |-----------|------------|--------|-------|
-| **Telink BLE SDK** | [telink-semi/tl_ble_sdk_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | _TODO_ | Required by all Telink SoCs; fetch via `./hal_v2/fetch_sdk.sh` (hal_v2) or `west blobs fetch hal_telink` (hal_v1) |
-| **Telink HAL Zephyr** | [telink-semi/hal_telink](https://github.com/telink-semi/hal_telink) | _TODO_ | Contains both hal_v1 and hal_v2 sources |
-| **MCUBoot** | [telink-semi/mcuboot](https://github.com/telink-semi/mcuboot) | _TODO_ | Bootloader; required for OTA/DFU |
-| **OpenThread Telink** | [telink-semi/openthread](https://github.com/telink-semi/openthread) | _TODO_ | OpenThread source adapted for Telink |
-| **OpenThread Telink Lib** | [telink-semi/openthread_telink_lib](https://github.com/telink-semi/openthread_telink_lib) | _TODO_ | Pre-built OpenThread library for Telink |
+| **Telink BLE SDK** | [telink-semi/tl_ble_sdk_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | [`46322e5`](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/46322e5b570e2a68373b18d4f08811acadd1266c) | Required by all Telink SoCs; fetch via `./hal_v2/fetch_sdk.sh` (hal_v2) or `west blobs fetch hal_telink` (hal_v1) |
+| **Telink HAL Zephyr** | [telink-semi/hal_telink](https://github.com/telink-semi/hal_telink) | [`14c6149`](https://github.com/telink-semi/hal_telink/commit/14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5) | Contains both hal_v1 and hal_v2 sources |
+| **MCUBoot** | [telink-semi/mcuboot](https://github.com/telink-semi/mcuboot) | [`ce0da85`](https://github.com/telink-semi/mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927) | Bootloader; required for OTA/DFU |
+| **OpenThread Telink** | [telink-semi/openthread](https://github.com/telink-semi/openthread) | [`542aaab`](https://github.com/telink-semi/openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee) | OpenThread source adapted for Telink |
+| **OpenThread Telink Lib** | [telink-semi/openthread_telink_lib](https://github.com/telink-semi/openthread_telink_lib) | [`308dae2`](https://github.com/telink-semi/openthread_telink_lib/commit/308dae2f80084f87073cfd4fbd30f1be0799be7b) | Pre-built OpenThread library for Telink |
 
 ---
 
 ## ⚠️ Known Issues and Limitations
 
-- **WEST tool does not auto-fetch `tl_ble_sdk`:** Zephyr CI does not allow modules containing binary files, so `west update` will not pull `tl_ble_sdk` automatically. See [Important Notes](#-important-notes) for the manual fetch step.
-- **TL721X HAL migration (hal_v1 → hal_v2):** TL721X uses **hal_v2** in this release. Fetch the BLE stack via `./hal_v2/fetch_sdk.sh` instead of `west blobs fetch hal_telink`.
-- **Toolchain:** Only `riscv64-zephyr-elf` is validated for Telink SoCs. Other toolchains (e.g. experimental IAR) are not tested.
-- _TODO: add release-specific known issues_
+- **Beta release:** This is a BETA pre-release version for demonstration and testing purposes. Not recommended for production use.
+- **WEST tool does not auto-fetch `tl_ble_sdk`:** Zephyr CI does not allow modules containing binary files, so `west update` will not pull `tl_ble_sdk` automatically. See the [Important Notes](#-important-notes) below for the manual fetch step.
+- **TL721X HAL migration (hal_v1 → hal_v2):** TL721X has been moved from **hal_v1** to **hal_v2** in this release. If you are upgrading from a previous version where TL721X used `west blobs fetch hal_telink` (hal_v1), you must now fetch the BLE stack via `./hal_v2/fetch_sdk.sh` instead. The build will fail with a missing HAL error if you forget this step.
+- **Toolchain:** Only the `riscv64-zephyr-elf` toolchain is validated for Telink SoCs. Other toolchains (e.g. the experimental IAR support introduced in upstream v4.1.0) are not tested with this release.
 
 ---
 
@@ -120,14 +152,14 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 | **Zephyr SDK** | 0.17.0 |
 | **Toolchain** | riscv64-zephyr-elf |
 
-> **Note:** Only the `riscv64-zephyr-elf` toolchain (from Zephyr SDK 0.17.0) is validated for Telink SoCs. The experimental IAR compiler support introduced in upstream Zephyr v4.1.0 is **not** tested with this release. Ubuntu 24.04 LTS is the recommended host OS.
+> **Note:** Only the `riscv64-zephyr-elf` toolchain (from Zephyr SDK 0.17.0) is validated for Telink SoCs. The experimental IAR compiler support introduced in upstream Zephyr v4.1.0 is **not** tested with this release. GCC-based `riscv64-zephyr-elf` is the recommended and only supported toolchain. Ubuntu 24.04 LTS is the recommended host OS.
 
 ### Telink SDK
 
 | Property | Value |
 |----------|-------|
 | **Branch** | dev-tlk_v4.1 |
-| **Target Commit** | _TODO_ |
+| **Target Commit** | e08fc42546e58d808bfd39f35c8df296f5617a44 |
 | **Tag Name** | tl_v1.0.1-beta-v4.1.0 |
 | **Release Type** | Pre-Release (Beta) |
 
@@ -200,11 +232,11 @@ tree (tests are under `tests/`).
 
 | Sample | B91 (TLSR951X) | B92 (TLSR952X) | TL321X | TL322X | TL323X | TL721X | W91 (TLSR911X) |
 |--------|:------------:|:------------:|:------------:|:------------:|:------------:|:------------:|:------------:|
-| **basic/blinky** | 🟡 | 🟡 | · | 🟡 | ✅ | ✅ | 🟡 |
+| **basic/blinky** | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | ✅ | 🟡 |
 | **basic/button** | · | · | 🟡 | 🟡 | ✅ | ✅ | 🟡 |
 | **basic/fade_led** | · | · | 🟡 | · | ✅ | ✅ | · |
 | **hello_world** | · | · | 🟡 | 🟡 | ✅ | ✅ | · |
-| **bluetooth/peripheral_ht** | · | 🟡 | 🟡 | · | ✅ | ✅ | 🟡 |
+| **bluetooth/peripheral_ht** | 🟡 | 🟡 | 🟡 | · | ✅ | ✅ | 🟡 |
 | **net/openthread/cli** | 🟡 | 🟡 | · | · | ✅ | ✅ | 🟡 |
 | **net/openthread/coprocessor** | · | · | · | · | · | · | · |
 | **net/sockets/echo_client** | · | · | · | · | ✅ | ✅ | · |
@@ -226,7 +258,7 @@ tree (tests are under `tests/`).
 | **factorydata** | · | · | · | · | · | · | · |
 | **smp_svr** | · | · | · | · | · | · | · |
 | **ml3m_button** | · | · | · | · | · | · | · |
-| **boards/tlsr9x/gpio-kbd-matrix** | · | 🟡 | 🟡 | · | · | · | 🟡 |
+| **boards/tlsr9x/gpio-kbd-matrix** | 🟡 | 🟡 | 🟡 | · | · | · | 🟡 |
 | **boards/tlsr9x/key_matrix** | · | · | · | · | · | · | 🟡 |
 | **boards/tlsr9x/key_pool** | · | · | · | · | · | · | 🟡 |
 | **boards/tlsr9x/led_pool** | · | · | · | · | · | · | 🟡 |
@@ -258,9 +290,11 @@ tree (tests are under `tests/`).
 📈 **Resource Usage Details**
 
 | Sample | RAMILM | ROM | RAM |
-|--------|-----|-----|-----|
-| **samples/basic/blinky** | 21248 B (16.21% of 128 KB) | 23852 B (2.27% of 1 MB) | 868 B (0.66% of 128 KB) |
-| **samples/net/openthread/cli** | 53472 B (40.80% of 128 KB) | 552448 B (52.69% of 1 MB) | 88912 B (67.83% of 128 KB) |
+|--------|--------|-----|-----|
+| **samples/basic/blinky** | 21248 B (16.21% of 128 KB) | 23848 B (2.27% of 1 MB) | 868 B (0.66% of 128 KB) |
+| **samples/bluetooth/peripheral_ht** | 65856 B (50.24% of 128 KB) | 210412 B (20.07% of 1 MB) | 12556 B (9.58% of 128 KB) |
+| **samples/boards/tlsr9x/gpio-kbd-matrix** | 24512 B (18.70% of 128 KB) | 32388 B (3.09% of 1 MB) | 2736 B (2.09% of 128 KB) |
+| **samples/net/openthread/cli** | 53472 B (40.80% of 128 KB) | 552436 B (52.68% of 1 MB) | 88912 B (67.83% of 128 KB) |
 
 ---
 
@@ -283,6 +317,7 @@ tree (tests are under `tests/`).
 
 | Sample | RAM_ILM_N | ROM | RAM |
 |--------|-----|-----|-----|
+| **samples/basic/blinky** | 5144 B (15.70% of 32 KB) | 27820 B (2.65% of 1 MB) | 18960 B (19.29% of 96 KB) |
 | **samples/basic/button** | 5144 B (15.70% of 32 KB) | 28460 B (2.71% of 1 MB) | 18984 B (19.31% of 96 KB) |
 | **samples/basic/fade_led** | 5144 B (15.70% of 32 KB) | 41680 B (3.97% of 1 MB) | 22432 B (22.82% of 96 KB) |
 | **samples/bluetooth/peripheral_ht** | 14676 B (44.79% of 32 KB) | 191866 B (18.30% of 1 MB) | 42024 B (42.75% of 96 KB) |
@@ -385,7 +420,7 @@ tree (tests are under `tests/`).
 ### 📝 Additional Notes
 
 - **Memory Regions:** May vary between chip variants; check individual board configurations
-- **Full CI Data:** For complete resource usage information across all samples (including Bluetooth, OpenThread, and MCUBoot), refer to the CI build artifacts
+- **Full CI Data:** For complete resource usage information across all samples (including Bluetooth, OpenThread, and MCUBoot), refer to CI build artifacts from [PR #774](https://github.com/telink-semi/zephyr/pull/774)
 - **Production Optimizations:** For production builds, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage
 - **Bluetooth & OpenThread:** For Bluetooth LE and OpenThread-specific resource usage, see the respective CI workflow files in `.github/workflows/`
 - **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` as in the CI pipelines
