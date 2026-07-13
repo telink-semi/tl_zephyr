@@ -194,7 +194,8 @@ The table below summarizes build and test status for Zephyr samples across Telin
 chip families in this release. Samples are located under `samples/` in the Zephyr
 tree (tests are under `tests/`).
 
-> ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested (builds successfully, not functionally validated)
+> ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested
+> &nbsp;&nbsp; (builds successfully, not functionally validated)
 > &nbsp;&nbsp; · = Untested (not built or not applicable)
 
 | Sample | B91 (TLSR951X) | B92 (TLSR952X) | TL321X | TL322X | TL323X | TL721X | W91 (TLSR911X) |

@@ -565,9 +565,22 @@ class TelinkBuildManager:
         # Group samples: top-level Zephyr directories come first in a
         # conventional order, boards/ and tests/ last.
         dir_priority = [
-            "basic", "hello_world", "bluetooth", "net", "crypto", "drivers",
-            "sensor", "subsys", "usb", "retention", "common", "factorydata",
-            "smp_svr", "ml3m_button", "boards", "tests",
+            "basic",
+            "hello_world",
+            "bluetooth",
+            "net",
+            "crypto",
+            "drivers",
+            "sensor",
+            "subsys",
+            "usb",
+            "retention",
+            "common",
+            "factorydata",
+            "smp_svr",
+            "ml3m_button",
+            "boards",
+            "tests",
         ]
 
         def sort_key(s: str):
@@ -591,21 +604,18 @@ class TelinkBuildManager:
         )
         lines.append("tree (tests are under `tests/`).")
         lines.append("")
-        lines.append(
-            "> ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested (builds successfully, not functionally validated)"
-        )
+        lines.append("> ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested")
+        lines.append("> &nbsp;&nbsp; (builds successfully, not functionally validated)")
         lines.append("> &nbsp;&nbsp; · = Untested (not built or not applicable)")
         lines.append("")
 
-        header_cells = ["Sample"] + [
-            family_header.get(f, f) for _b, f in board_columns
-        ]
+        header_cells = ["Sample"] + [family_header.get(f, f) for _b, f in board_columns]
         lines.append("| " + " | ".join(header_cells) + " |")
         lines.append("|" + "|".join(["--------"] + [":------------:"] * len(board_columns)) + "|")
 
         for sample in sample_order:
             row_cells = [f"**{sample}**"]
-            for board_name, family_name in board_columns:
+            for board_name, _family_name in board_columns:
                 built_ok = self.build_results.get((board_name, sample), False)
                 is_tested = (board_name, sample) in self.tested_samples
                 if built_ok and is_tested:
@@ -642,9 +652,7 @@ class TelinkBuildManager:
         lines.append(
             "- **Untested (·):** Combinations marked · are not built in this release, either"
         )
-        lines.append(
-            "  because the sample is not applicable to that chip family or because it has"
-        )
+        lines.append("  because the sample is not applicable to that chip family or because it has")
         lines.append("  not been ported yet.")
         lines.append(
             "- **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in"
@@ -869,7 +877,8 @@ class TelinkBuildManager:
         resource_usage_lines.append("## 📊 Resource Usage (Code Size)")
         resource_usage_lines.append("")
         resource_usage_lines.append(
-            "This section shows the RAM and ROM usage for various Zephyr samples on Telink platforms."
+            "This section shows the RAM and ROM usage for various Zephyr samples "
+            "on Telink platforms."
         )
         resource_usage_lines.append("")
 
@@ -881,13 +890,18 @@ class TelinkBuildManager:
         resource_usage_lines.append("| Zephyr SDK | 0.17.0 |")
         resource_usage_lines.append("| Toolchain | `riscv64-zephyr-elf` |")
         resource_usage_lines.append("| Optimization | Default (per sample) |")
-        resource_usage_lines.append("| Extra CMake flag | `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |")
+        resource_usage_lines.append(
+            "| Extra CMake flag | `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |"
+        )
         resource_usage_lines.append("| Debug logging | Enabled (per sample default) |")
         resource_usage_lines.append(
-            "| Reproduce | `west build -p auto -b <board> <sample> -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |"
+            "| Reproduce | `west build -p auto -b <board> <sample> -- "
+            "-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |"
         )
         resource_usage_lines.append("")
-        resource_usage_lines.append("> **Note:** The numbers below are from CI builds with the configuration above.")
+        resource_usage_lines.append(
+            "> **Note:** The numbers below are from CI builds with the configuration above."
+        )
         resource_usage_lines.append("")
 
         # Supported Boards table
@@ -931,7 +945,9 @@ class TelinkBuildManager:
             # Headers
             headers = ["Sample"] + region_names
             resource_usage_lines.append("| " + " | ".join(headers) + " |")
-            resource_usage_lines.append("|" + "|".join(["--------"] + ["-----"] * len(region_names)) + "|")
+            resource_usage_lines.append(
+                "|" + "|".join(["--------"] + ["-----"] * len(region_names)) + "|"
+            )
 
             # Data rows
             for sample in samples:
@@ -953,19 +969,26 @@ class TelinkBuildManager:
         resource_usage_lines.append("### 📝 Additional Notes")
         resource_usage_lines.append("")
         resource_usage_lines.append(
-            "- **Memory Regions:** May vary between chip variants; check individual board configurations"
+            "- **Memory Regions:** May vary between chip variants; check individual "
+            "board configurations"
         )
         resource_usage_lines.append(
-            "- **Full CI Data:** For complete resource usage information across all samples (including Bluetooth, OpenThread, and MCUBoot), refer to the CI build artifacts"
+            "- **Full CI Data:** For complete resource usage information across all "
+            "samples (including Bluetooth, OpenThread, and MCUBoot), refer to the "
+            "CI build artifacts"
         )
         resource_usage_lines.append(
-            "- **Production Optimizations:** For production builds, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage"
+            "- **Production Optimizations:** For production builds, disable debug "
+            "logging and enable appropriate optimizations to reduce RAM/ROM usage"
         )
         resource_usage_lines.append(
-            "- **Bluetooth & OpenThread:** For Bluetooth LE and OpenThread-specific resource usage, see the respective CI workflow files in `.github/workflows/`"
+            "- **Bluetooth & OpenThread:** For Bluetooth LE and OpenThread-specific "
+            "resource usage, see the respective CI workflow files in "
+            "`.github/workflows/`"
         )
         resource_usage_lines.append(
-            "- **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` as in the CI pipelines"
+            "- **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` "
+            "as in the CI pipelines"
         )
         resource_usage_lines.append("")
         resource_usage_lines.append("---")
@@ -1000,7 +1023,10 @@ class TelinkBuildManager:
                 i += 1
                 # Skip lines until we hit the next ## section at the same level
                 while i < len(template_lines):
-                    if template_lines[i].startswith("## ") and "Resource Usage" not in template_lines[i]:
+                    if (
+                        template_lines[i].startswith("## ")
+                        and "Resource Usage" not in template_lines[i]
+                    ):
                         break
                     i += 1
                 in_resource_usage = False
