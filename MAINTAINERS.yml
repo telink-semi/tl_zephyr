@@ -5112,14 +5112,6 @@ West:
   labels:
     - "platform: Telink"
 
-"West project: tl_ble_sdk":
-  status: maintained
-  maintainers:
-    - telink
-  files: []
-  labels:
-    - "platform: Telink"
-
 "West project: hal_ti":
   status: maintained
   maintainers:
