@@ -5,9 +5,10 @@
 The `build_and_update_notes.py` script can:
 1. Build all samples for all Telink boards
 2. Extract memory usage information from build logs
-3. Generate a versioned release notes file from the `release-notes-template.md` template (replacing the `{{VERSION}}` placeholder with the target version and updating the Resource Usage section)
-4. Collect all firmware files for all boards' samples and create a separate archive per board
-5. Organize all build outputs under the `zephyr/build_for_release/` directory
+3. Generate a Zephyr Samples Support Matrix showing build/test status (✅ = Tested, 🟡 = Built but untested, · = Not built)
+4. Generate a versioned release notes file from the `release-notes-template.md` template (replacing the `{{VERSION}}` placeholder with the target version and updating the Resource Usage section)
+5. Collect all firmware files for all boards' samples and create a separate archive per board
+6. Organize all build outputs under the `zephyr/build_for_release/` directory
 
 ## Files
 
@@ -144,10 +145,14 @@ Each board's archive contains:
 - **Version auto-detection**: when `--release-version` is not specified, the version is read from `zephyr/TELINK_VERSION`
 - **Filename conflict handling**: if the output file already exists, a `_2`, `_3`, ... suffix is automatically appended
 - Resource Usage section uses table format for clear display of memory usage per board per sample
+- **Zephyr Samples Support Matrix** automatically generated from build results:
+  - ✅ = Supported and Tested (functionally validated combinations defined in `tested_samples`)
+  - 🟡 = Supported but Untested (builds successfully but not functionally validated)
+  - · = Untested (not built or not applicable)
 - Only the Resource Usage section is replaced; all other static content is preserved
 - Supports adding new boards and samples
 - Detailed log output
-- Build step can be skipped to generate directly from existing logs
+- Build step can be skipped to generate directly from existing logs (support matrix inferred from log return codes)
 - Automatically collects firmware files and creates a separate archive per board
 - Supports skipping firmware collection and packaging
 
@@ -159,6 +164,21 @@ In the `TelinkBuildManager` class:
 2. Add new sample name mappings in `sample_map` (if needed)
 3. Add new board family mappings in `board_family`
 4. Add new board ordering in `board_order`
+5. Add sample short-path mappings in `_sample_short_path()` (for support matrix display)
+
+## Updating Tested Samples
+
+To mark certain (board, sample) combinations as "Supported and Tested" (✅), update the `tested_samples` set in `TelinkBuildManager.__init__()`:
+
+```python
+self.tested_samples: set[tuple[str, str]] = {
+    ("tl3238x", "basic/blinky"),
+    ("tl3238x", "basic/button"),
+    # ... add more tested combinations here
+}
+```
+
+The tuple format is `(base_board_name, sample_short_path)`, where `sample_short_path` matches the keys returned by `_sample_short_path()`.
 
 ## Updating the Template File
 

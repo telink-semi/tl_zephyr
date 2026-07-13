@@ -122,6 +122,39 @@ class TelinkBuildManager:
         # Define all boards and samples
         self.board_builds = self._get_board_builds()
 
+        # Build results: key = (base_board, sample_key), value = True/False
+        self.build_results: dict[tuple[str, str], bool] = {}
+
+        # (base_board, sample_short_path) pairs that have been functionally tested.
+        # Combinations that build successfully but are not in this set are marked
+        # as "Supported but Untested" (🟡). Build failures are marked "Untested" (·).
+        self.tested_samples: set[tuple[str, str]] = {
+            # TL323X: all samples are Supported and Tested
+            ("tl3238x", "basic/blinky"),
+            ("tl3238x", "basic/button"),
+            ("tl3238x", "basic/fade_led"),
+            ("tl3238x", "hello_world"),
+            ("tl3238x", "bluetooth/peripheral_ht"),
+            ("tl3238x", "net/openthread/cli"),
+            ("tl3238x", "crypto/mbedtls"),
+            ("tl3238x", "drivers/spi_flash"),
+            ("tl3238x", "drivers/watchdog"),
+            ("tl3238x", "sensor/sht3xd"),
+            ("tl3238x", "drivers/adc/adc_dt"),
+            ("tl3238x", "net/sockets/echo_client"),
+            ("tl3238x", "retention/basic"),
+            # TL721X: core + validated samples
+            ("tl7218x", "basic/blinky"),
+            ("tl7218x", "basic/button"),
+            ("tl7218x", "basic/fade_led"),
+            ("tl7218x", "hello_world"),
+            ("tl7218x", "bluetooth/peripheral_ht"),
+            ("tl7218x", "net/openthread/cli"),
+            ("tl7218x", "crypto/mbedtls"),
+            ("tl7218x", "drivers/watchdog"),
+            ("tl7218x", "net/sockets/echo_client"),
+        }
+
         # Sample name mapping
         self.sample_map = {
             "blinky": "samples/basic/blinky",
@@ -233,7 +266,6 @@ class TelinkBuildManager:
                 ("tl7218x", "hello_world", "samples/hello_world", []),
                 ("tl7218x", "button", "samples/basic/button", []),
                 ("tl7218x", "fade_led", "samples/basic/fade_led", []),
-                ("tl7218x", "console", "samples/subsys/usb/console", []),
                 ("tl7218x", "peripheral_ht", "samples/bluetooth/peripheral_ht", []),
                 ("tl7218x", "cli", "samples/net/openthread/cli", []),
                 (
@@ -385,6 +417,250 @@ class TelinkBuildManager:
 
         return builds
 
+    @staticmethod
+    def _sample_short_path(sample_name: str) -> str:
+        """Return the display short path for a sample key.
+
+        Examples:
+            'blinky'          -> 'basic/blinky'
+            'peripheral_ht'   -> 'bluetooth/peripheral_ht'
+            'cli'             -> 'net/openthread/cli'
+            'adc_dt'          -> 'drivers/adc/adc_dt'
+            'gpio-kbd-matrix' -> 'boards/tlsr9x/gpio-kbd-matrix'
+            'adc_api'         -> 'tests/drivers/adc/adc_api'
+        """
+        # Short-path mapping mirrors the actual Zephyr tree locations used in
+        # sample_map; used for the support matrix table rows.
+        short_map = {
+            "blinky": "basic/blinky",
+            "hello_world": "hello_world",
+            "button": "basic/button",
+            "fade_led": "basic/fade_led",
+            "blinky_pwm": "basic/blinky_pwm",
+            "adc_dt": "drivers/adc/adc_dt",
+            "sht3xd": "sensor/sht3xd",
+            "mpu6050": "sensor/mpu6050",
+            "spi_flash": "drivers/spi_flash",
+            "spi_flash_at45": "drivers/spi_flash_at45",
+            "watchdog": "drivers/watchdog",
+            "uart_echo_bot": "drivers/uart/echo_bot",
+            "peripheral_ht": "bluetooth/peripheral_ht",
+            "cli": "net/openthread/cli",
+            "coprocessor": "net/openthread/coprocessor",
+            "echo_client": "net/sockets/echo_client",
+            "echo_server": "net/sockets/echo_server",
+            "retention_echo_client": "net/sockets/echo_client",
+            "retention_basic": "retention/basic",
+            "mbedtls": "crypto/mbedtls",
+            "console": "usb/console",
+            "cdc_acm": "usb/cdc_acm",
+            "common": "common",
+            "factorydata": "factorydata",
+            "smp_svr": "smp_svr",
+            "ml3m_button": "ml3m_button",
+            "gpio-kbd-matrix": "boards/tlsr9x/gpio-kbd-matrix",
+            "sock_simple_ipv4": "boards/tlsr9x/sock_simple",
+            "sock_simple_ipv6": "boards/tlsr9x/sock_simple",
+            "key_matrix": "boards/tlsr9x/key_matrix",
+            "key_pool": "boards/tlsr9x/key_pool",
+            "led_pool": "boards/tlsr9x/led_pool",
+            "pwm_pool": "boards/tlsr9x/pwm_pool",
+            "shell": "subsys/shell/devmem_load",
+            "nvs": "subsys/nvs",
+            "adc_api": "tests/drivers/adc/adc_api",
+        }
+        return short_map.get(sample_name, sample_name)
+
+    def collect_build_results_from_logs(self):
+        """Infer build success/failure from existing build logs (--skip-build).
+
+        Parses each build log's recorded return code and populates
+        self.build_results so the support matrix can be generated even when
+        the build step is skipped. Only collects results for (board, sample)
+        combinations that are defined in the current board_builds configuration.
+        """
+        print()
+        print("Collecting build results from existing logs...")
+
+        # Build a whitelist of valid (base_board, sample_short_path) from board_builds
+        valid_keys: set[tuple[str, str]] = set()
+        for board, sample_name, _src, _extra in self.board_builds:
+            base_board = board.replace("_retention", "").replace("_v1", "")
+            short = self._sample_short_path(sample_name)
+            valid_keys.add((base_board, short))
+
+        self.build_results = {}
+        for log_file in self.build_logs_dir.glob("build_*.log"):
+            filename = log_file.name
+            base = filename.replace("build_", "").replace(".log", "")
+
+            board = None
+            sample_part = None
+            for b in sorted(self.board_family.keys(), key=lambda x: -len(x)):
+                base_b = b.replace("_retention", "").replace("_v1", "")
+                if base.startswith(base_b):
+                    board = base_b
+                    sample_part = base[len(base_b) :]
+                    if sample_part.startswith("_"):
+                        sample_part = sample_part[1:]
+                    break
+
+            if not board or not sample_part:
+                continue
+
+            ok = False
+            try:
+                with open(log_file, encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+                m = re.search(r"Return code:\s*0\b", content)
+                if m:
+                    ok = True
+            except OSError:
+                pass
+
+            short_path = self._sample_short_path(sample_part)
+            # Collapse retention variants under the base board; if a sample
+            # has any successful build, mark it as supported.
+            key = (board, short_path)
+
+            # Skip entries not in the current board_builds configuration
+            if key not in valid_keys:
+                continue
+
+            self.build_results[key] = self.build_results.get(key, False) or ok
+
+        total = len(self.build_results)
+        ok_count = sum(1 for v in self.build_results.values() if v)
+        print(f"  Found {total} entries in logs ({ok_count} successful).")
+
+    def _generate_support_matrix(self) -> list[str]:
+        """Generate the Zephyr Samples Support Matrix table."""
+        # Column order matches the display order in board_order; collapse
+        # variants (e.g. tl3238x_retention -> tl3238x).
+        board_columns = []
+        seen_families = set()
+        for board_name, family_name in self.board_order:
+            if family_name in seen_families:
+                continue
+            seen_families.add(family_name)
+            board_columns.append((board_name, family_name))
+
+        # Display name for family in column header (shorthand labels)
+        family_header = {
+            "TLSR951X": "B91 (TLSR951X)",
+            "TLSR952X": "B92 (TLSR952X)",
+            "TLSR9118BDK40D": "W91 (TLSR911X)",
+        }
+
+        # Build an ordered list of unique short-path sample names, drawn from
+        # board_builds (covers everything that was attempted).
+        sample_order: list[str] = []
+        sample_seen: set[str] = set()
+        for _board, sample_name, _src, _extra in self.board_builds:
+            short = self._sample_short_path(sample_name)
+            if short not in sample_seen:
+                sample_seen.add(short)
+                sample_order.append(short)
+
+        # Group samples: top-level Zephyr directories come first in a
+        # conventional order, boards/ and tests/ last.
+        dir_priority = [
+            "basic", "hello_world", "bluetooth", "net", "crypto", "drivers",
+            "sensor", "subsys", "usb", "retention", "common", "factorydata",
+            "smp_svr", "ml3m_button", "boards", "tests",
+        ]
+
+        def sort_key(s: str):
+            top = s.split("/", 1)[0]
+            try:
+                pri = dir_priority.index(top)
+            except ValueError:
+                pri = len(dir_priority)
+            return (pri, s)
+
+        sample_order.sort(key=sort_key)
+
+        lines = []
+        lines.append("### Zephyr Samples Support Matrix")
+        lines.append("")
+        lines.append(
+            "The table below summarizes build and test status for Zephyr samples across Telink"
+        )
+        lines.append(
+            "chip families in this release. Samples are located under `samples/` in the Zephyr"
+        )
+        lines.append("tree (tests are under `tests/`).")
+        lines.append("")
+        lines.append(
+            "> ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested (builds successfully, not functionally validated)"
+        )
+        lines.append("> &nbsp;&nbsp; · = Untested (not built or not applicable)")
+        lines.append("")
+
+        header_cells = ["Sample"] + [
+            family_header.get(f, f) for _b, f in board_columns
+        ]
+        lines.append("| " + " | ".join(header_cells) + " |")
+        lines.append("|" + "|".join(["--------"] + [":------------:"] * len(board_columns)) + "|")
+
+        for sample in sample_order:
+            row_cells = [f"**{sample}**"]
+            for board_name, family_name in board_columns:
+                built_ok = self.build_results.get((board_name, sample), False)
+                is_tested = (board_name, sample) in self.tested_samples
+                if built_ok and is_tested:
+                    mark = "✅"
+                elif built_ok:
+                    mark = "🟡"
+                else:
+                    mark = "·"
+                row_cells.append(mark)
+            lines.append("| " + " | ".join(row_cells) + " |")
+
+        lines.append("")
+        lines.append("#### Notes on Sample Support")
+        lines.append("")
+        lines.append(
+            "- **Tested combinations (✅):** All TL323X samples that build successfully have been"
+        )
+        lines.append(
+            "  functionally validated. On TL721X, the core bring-up samples (`blinky`, `button`,"
+        )
+        lines.append(
+            "  `fade_led`, `hello_world`) plus BLE (`peripheral_ht`), Thread (`openthread/cli`),"
+        )
+        lines.append(
+            "  crypto (`mbedtls`), networking (`echo_client`), and driver (`watchdog`) samples"
+        )
+        lines.append("  have been functionally validated in this release.")
+        lines.append(
+            "- **Supported but untested (🟡):** All other build targets listed in the table"
+        )
+        lines.append(
+            "  compile successfully but have not been functionally validated. Use with caution."
+        )
+        lines.append(
+            "- **Untested (·):** Combinations marked · are not built in this release, either"
+        )
+        lines.append(
+            "  because the sample is not applicable to that chip family or because it has"
+        )
+        lines.append("  not been ported yet.")
+        lines.append(
+            "- **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in"
+        )
+        lines.append(
+            "  CI but functional testing in this release focused on the new TL323X platform"
+        )
+        lines.append(
+            "  and the TL721X hal_v2 migration. Refer to earlier release notes for validated"
+        )
+        lines.append("  sample sets on these platforms.")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+        return lines
+
     def build_all(self):
         """Build all samples for all boards."""
         print("=" * 80)
@@ -399,7 +675,7 @@ class TelinkBuildManager:
             build_dir_name = f"build_{board}_{sample_name}"
             build_dir = self.release_dir / build_dir_name
 
-            # Remove _retention suffix for log filename
+            # Remove _retention suffix for log filename and base board
             base_board_name = board.replace("_retention", "").replace("_v1", "")
             log_filename = f"build_{base_board_name}_{sample_name}.log"
             log_file = self.build_logs_dir / log_filename
@@ -442,7 +718,13 @@ class TelinkBuildManager:
                     with open(build_log, "rb") as src:
                         shutil.copyfileobj(src, f)
 
-            if result.returncode == 0:
+            ok = result.returncode == 0
+            # Record build result for the support matrix; _retention/_v1 board
+            # variants collapse to the base board.
+            short_path = self._sample_short_path(sample_name)
+            self.build_results[(base_board_name, short_path)] = ok
+
+            if ok:
                 print(f"  Success! Log written to {log_file}")
                 success_count += 1
             else:
@@ -582,16 +864,33 @@ class TelinkBuildManager:
             print(f"Error: Template file {self.template_path} does not exist!")
             return
 
-        # Build new Resource Usage section (table format)
+        # Build new Resource Usage section
         resource_usage_lines = []
         resource_usage_lines.append("## 📊 Resource Usage (Code Size)")
         resource_usage_lines.append("")
         resource_usage_lines.append(
-            "This section shows the RAM and ROM usage for various Zephyr samples "
-            "on Telink platforms, based on Zephyr SDK 0.17.0 with "
-            "riscv64-zephyr-elf toolchain."
+            "This section shows the RAM and ROM usage for various Zephyr samples on Telink platforms."
         )
         resource_usage_lines.append("")
+
+        # Build environment table
+        resource_usage_lines.append("**Build environment:**")
+        resource_usage_lines.append("")
+        resource_usage_lines.append("| Property | Value |")
+        resource_usage_lines.append("|----------|-------|")
+        resource_usage_lines.append("| Zephyr SDK | 0.17.0 |")
+        resource_usage_lines.append("| Toolchain | `riscv64-zephyr-elf` |")
+        resource_usage_lines.append("| Optimization | Default (per sample) |")
+        resource_usage_lines.append("| Extra CMake flag | `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |")
+        resource_usage_lines.append("| Debug logging | Enabled (per sample default) |")
+        resource_usage_lines.append(
+            "| Reproduce | `west build -p auto -b <board> <sample> -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |"
+        )
+        resource_usage_lines.append("")
+        resource_usage_lines.append("> **Note:** The numbers below are from CI builds with the configuration above.")
+        resource_usage_lines.append("")
+
+        # Supported Boards table
         resource_usage_lines.append("### Supported Boards")
         resource_usage_lines.append("")
         resource_usage_lines.append("| Board | Chip Family |")
@@ -607,6 +906,10 @@ class TelinkBuildManager:
         resource_usage_lines.append("---")
         resource_usage_lines.append("")
 
+        # Zephyr Samples Support Matrix (auto-generated from build results)
+        resource_usage_lines.extend(self._generate_support_matrix())
+
+        # Per-chip-family resource usage tables
         for board_name, family_name in self.board_order:
             if family_name not in data or board_name not in data[family_name]:
                 print(f"Warning: No data for {board_name} ({family_name})")
@@ -628,7 +931,7 @@ class TelinkBuildManager:
             # Headers
             headers = ["Sample"] + region_names
             resource_usage_lines.append("| " + " | ".join(headers) + " |")
-            resource_usage_lines.append("|" + "|".join(["---" for _ in headers]) + "|")
+            resource_usage_lines.append("|" + "|".join(["--------"] + ["-----"] * len(region_names)) + "|")
 
             # Data rows
             for sample in samples:
@@ -646,6 +949,28 @@ class TelinkBuildManager:
             resource_usage_lines.append("---")
             resource_usage_lines.append("")
 
+        # Additional Notes (auto-appended so the template does not need to carry it)
+        resource_usage_lines.append("### 📝 Additional Notes")
+        resource_usage_lines.append("")
+        resource_usage_lines.append(
+            "- **Memory Regions:** May vary between chip variants; check individual board configurations"
+        )
+        resource_usage_lines.append(
+            "- **Full CI Data:** For complete resource usage information across all samples (including Bluetooth, OpenThread, and MCUBoot), refer to the CI build artifacts"
+        )
+        resource_usage_lines.append(
+            "- **Production Optimizations:** For production builds, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage"
+        )
+        resource_usage_lines.append(
+            "- **Bluetooth & OpenThread:** For Bluetooth LE and OpenThread-specific resource usage, see the respective CI workflow files in `.github/workflows/`"
+        )
+        resource_usage_lines.append(
+            "- **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` as in the CI pipelines"
+        )
+        resource_usage_lines.append("")
+        resource_usage_lines.append("---")
+        resource_usage_lines.append("")
+
         # Read template file
         with open(self.template_path, encoding="utf-8") as f:
             template_lines = f.read().split("\n")
@@ -656,25 +981,29 @@ class TelinkBuildManager:
         ]
         print(f"Substituted version placeholder: {{{{VERSION}}}} -> {self.release_version}")
 
+        # Splice: replace the template's Resource Usage section (from the
+        # "## 📊 Resource Usage" header up to but not including the next top-level
+        # section that follows it, i.e. "## 🔗 Resources") with our generated
+        # content. The template only carries a one-line _TODO_ description
+        # inside this section; the real content is generated here.
         new_lines = []
         i = 0
-
+        in_resource_usage = False
         while i < len(template_lines):
             line = template_lines[i]
 
-            # Match Resource Usage section start (supports headers with emoji)
-            if "Resource Usage" in line and line.startswith("#"):
-                # Add generated Resource Usage content
+            # Detect start of Resource Usage section
+            if not in_resource_usage and line.startswith("## ") and "Resource Usage" in line:
+                in_resource_usage = True
+                # Emit generated content instead of the placeholder header/body
                 new_lines.extend(resource_usage_lines)
-
-                # Skip original Resource Usage section until Additional Notes is found
                 i += 1
+                # Skip lines until we hit the next ## section at the same level
                 while i < len(template_lines):
-                    if "Additional Notes" in template_lines[i] and template_lines[i].startswith(
-                        "#"
-                    ):
+                    if template_lines[i].startswith("## ") and "Resource Usage" not in template_lines[i]:
                         break
                     i += 1
+                in_resource_usage = False
                 continue
 
             new_lines.append(line)
@@ -784,6 +1113,8 @@ class TelinkBuildManager:
         """Run the complete workflow."""
         if build:
             self.build_all()
+        else:
+            self.collect_build_results_from_logs()
 
         data = self.extract_memory_info()
         self.update_release_notes(data)
