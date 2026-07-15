@@ -129,6 +129,9 @@ static struct bt_conn_auth_cb auth_cb_display = {
 
 int main(void)
 {
+	extern void tlk_d25f_to_n22_mode_info(uint8_t mode_flag);
+	tlk_d25f_to_n22_mode_info(1);
+
 	int err;
 
 	err = bt_enable(bt_ready);

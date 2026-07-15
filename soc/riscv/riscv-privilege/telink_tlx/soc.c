@@ -6,10 +6,12 @@
 
 #include <sys.h>
 #include <clock.h>
+#include <clock_internal.h>
 #include <gpio.h>
 #include <ext_driver/ext_pm.h>
 #include "rf_common.h"
 #include "flash.h"
+#include "stimer.h"
 #include <watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
@@ -330,7 +332,7 @@ static int soc_tlx_init(void)
 #if defined(CONFIG_BT_ID_FOR_KMD)
 #define N22_FW_DOWNLOAD_FLASH_ADDR          0x20048000
 #else
-#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20080000+0x13040
+#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20048000
 #endif
     pm_set_dig_module_power_switch(FLD_PD_ZB_EN, PM_POWER_UP);
 	sys_n22_init(N22_FW_DOWNLOAD_FLASH_ADDR);
@@ -345,6 +347,8 @@ static int soc_tlx_init(void)
 #else
 	(void)deepRetWakeUp;	// remove warning
 #endif
+
+	ext_crypto_hw_init_enable();
 
 	return 0;
 }
@@ -629,3 +633,16 @@ static int soc_tlx_mcc_init(void)
 }
 SYS_INIT(soc_tlx_mcc_init, POST_KERNEL, 1);
 #endif
+
+_attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(uint8_t mode_flag)
+{
+    volatile uint32_t key = arch_irq_lock();
+
+    uint8_t cmd[8] = {0};
+
+    cmd[0] = TLK_MB_D25F_TO_N22_MODE;
+    cmd[1] = mode_flag;
+
+    mb_send_with_polling(cmd);
+	arch_irq_unlock(key);
+}
