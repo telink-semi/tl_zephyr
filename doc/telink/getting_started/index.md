@@ -1,6 +1,6 @@
 # Telink Zephyr SDK Getting Started Guide
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--beta--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/zephyr/releases/tag/tl_v1.0.1-beta-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/zephyr/releases/tag/tl_v1.0.1-rc1-v4.1.0)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](../../../LICENSE)
 
@@ -16,13 +16,13 @@ Follow this guide to:
 - Set up a command-line Telink Zephyr development environment on Ubuntu
 - Get the Telink Zephyr source code (forked from the upstream Zephyr project)
 - Install the Zephyr SDK toolchain (`riscv64-zephyr-elf`)
-- Build and flash a sample application on Telink SoCs (TL721X, TL323X)
+- Build and flash a sample application on Telink SoC (TL323X)
 
 > 💡 This guide is the Telink-flavoured counterpart of the upstream
 > [Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html).
 > The main differences are: the Telink fork repository/branch, the Telink HAL
 > binary blob fetch step, and the RISC-V toolchain selection. For the full
-> walkthrough (with screenshots and China-mainland network tips) see the
+> walkthrough (with screenshots and detailed tips) see the
 > **Telink Matter Developer Guide** → Chapter *Install Zephyr Project Environment*.
 
 ---
@@ -40,16 +40,24 @@ sudo apt upgrade
 
 ---
 
-## Hardware Requirements
+## Hardware and Software Requirements
 
-Hardware to prepare before running the SDK.
+Hardware and software requirements to prepare before running the SDK.
 |Hardware|Description|
 |-|-|
-|PC|Windows 10/11 / Linux|
-|Development board|Select a suitable development board according to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md)
+|PC|Windows 10/11 and Linux distro as ubuntu 24.04 LTS|
+|Development board|Select a suitable development board according to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md), e.g. TL323X Evaluation Kit in this guide.|
 |Programmer|Programmer (V1~ V3) is recommended|
 |USB cable|Connects the PC and the programmer|
 |Dupont wires|Connect the development board and the programmer|
+
+|Software|Description|
+|-|-|
+|IDE|Visual Studio Code (VSCode) is recommended|
+|Toolchain| RISC-V 64-bit Zephyr SDK Toolchain |
+|Burning Tool | [Telink BDT](https://doc.telink-semi.cn/tools/bdt/Windows/BDT.zip) (Burning and Debugging tool) |
+|SDK|[Telink Zephyr SDK](https://github.com/telink-semi/zephyr)  |
+
 
 ## Install Dependencies
 
@@ -130,7 +138,7 @@ which west
 The Telink Zephyr SDK is a fork of the upstream
 [zephyrproject-rtos/zephyr](https://github.com/zephyrproject-rtos/zephyr)
 repository, hosted at [telink-semi/zephyr](https://github.com/telink-semi/zephyr).
-The Telink-specific changes live on the `dev-tlk_v4.1` branch.
+The Telink-specific changes live on the `release-v1.0-v4.1-branch` branch.
 
 1. Initialize the west workspace with the upstream manifest (this creates the
    `~/zephyrproject` workspace and clones the upstream Zephyr repository as the
@@ -161,13 +169,13 @@ The Telink-specific changes live on the `dev-tlk_v4.1` branch.
    pip3 install --user -r ~/zephyrproject/zephyr/scripts/requirements.txt
    ```
 
-4. Add the Telink remote and check out the Telink `dev-tlk_v4.1` branch:
+4. Add the Telink remote and check out the Telink `release-v1.0-v4.1-branch` branch:
 
    ```bash
    cd ~/zephyrproject/zephyr
    git remote add telink https://github.com/telink-semi/zephyr
    git fetch telink
-   git checkout dev-tlk_v4.1
+   git checkout release-v1.0-v4.1-branch
    cd ..
    west update
    ```
@@ -212,9 +220,10 @@ depends on the chip family:
 | **hal_v1**  | TLSR9518ADK80D, TLSR9528A, TL321X, TLSR9118 | `west blobs fetch hal_telink` |
 | **hal_v2**  | TL322X, TL323X, TL721X                      | `./hal_v2/fetch_sdk.sh`       | -->
 
+For TL323X platform, use the following command:
 | HAL version | Applicable chips                            | Fetch command                 |
 | ----------- | ------------------------------------------- | ----------------------------- |
-| **hal_v2**  | TL323X, TL721X                      | `./hal_v2/fetch_sdk.sh`       |
+| **hal_v2**  | TL323X                      | `./hal_v2/fetch_sdk.sh`       |
 
 ---
 
@@ -325,14 +334,15 @@ From the Zephyr root directory:
 cd ~/zephyrproject/zephyr
 ```
 
-Build *Blinky* for your Telink board. Replace `<board-name>` with one of
-the supported Telink board targets:
+Build *Blinky* for your Telink board.
+
+<!-- Replace `<board-name>` with one of the supported Telink board targets. e.g. `tl3238x`: -->
 
 ```bash
-west build -p auto -b <board-name> samples/basic/blinky -d build_blinky
+west build -p auto -b tl3238x samples/basic/blinky -d build_blinky
 ```
 
-Supported Telink board targets include:
+<!-- Supported Telink board targets include: -->
 
 <!-- | Board target      | SoC            |
 | ----------------- | -------------- |
@@ -342,10 +352,6 @@ Supported Telink board targets include:
 | `tl3238x`         | TL3238X        |
 | `tl7218x`         | TL7218X        | -->
 
-| Board target      | SoC            |
-| ----------------- | -------------- |
-| `tl3238x`         | TL3238X        |
-| `tl7218x`         | TL7218X        |
 
 After the build completes, you will find `zephyr.bin` in the
 `build_blinky/zephyr/` folder.
@@ -371,10 +377,10 @@ see the **Telink Matter Developer Guide** → Chapter *Required Equipment*.
 | EVB              | SoC        | Key interfaces                                 |
 | ---------------- | ---------- | ---------------------------------------------- |
 | TL3238X          | TL3238X    | Type-C (power), UART header, buttons            |
-| TL7218X          | TL7218X    | Type-C (power), UART header, buttons            |
 
 Each EVB exposes a set of mechanical buttons (factory reset, BLE advertising,
 light control, network commissioning) and status LEDs.
+
 UART serial output is
 available at **115200 baud, 8 data bits, no parity, 1 stop bit** — see the
 developer handbook for the exact TX/RX/GND pinout of your board.
@@ -384,7 +390,7 @@ developer handbook for the exact TX/RX/GND pinout of your board.
 ## Install the Flashing Tool (BDT)
 
 Telink Burning Debug Tool (BDT) is the official flasher for Telink SoCs.
-It is available for both Windows and Linux.
+It is available for both Windows and Linux. This guide use Windows BDT only.
 
 ### Windows
 
@@ -407,6 +413,8 @@ your programmer hardware:
 
   - **`Telink BDT.exe`** (release V5.9.x) — the classic GUI. Used with an
   external **Burning EVK V1.0–V3.0** (SWS interface). Supports chips:TL323X (V5.9.0+), TL721X.
+
+  - BDT (Windows): <https://doc.telink-semi.cn/tools/bdt/Windows/BDT.zip>
 
 > **Note — msvcr120 dependency**
 > If `Telink BDT.exe` fails to open, the Microsoft Visual C++ 2013 runtime
@@ -490,7 +498,6 @@ and a USB hub with enough ports.
 > | Board target      | BDT GUI chip selection | Notes                              |
 > | ----------------- | ---------------------- | ---------------------------------- |
 > | `tl3238x`         | `TL323X`               | Windows: BDT V5.9.0+ (EVK mode)    |
-> | `tl7218x`         | `TL721X`               |                                    |
 >
 > `Telink BDT.exe` supports them in EVK mode
 > (Burning EVK V1–V3) from V5.8.4 / V5.9.0 onwards.
@@ -507,10 +514,15 @@ hardware:
 - **Linux, TL322X/TL323X** (Burning EVK V4.0 on-board) →
   [Option C: Linux (TGui-BDT CLI)](#option-c-linux-tgui-bdt-cli-tl322x--tl323x-only) -->
 
-  - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
+  <!-- - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
   [Option A: Windows (BDT GUI)](#option-a-windows-bdt-gui)
 
-### Option A: Windows (BDT GUI)
+### Option A: Windows (BDT GUI) -->
+
+  - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
+  [Windows (BDT GUI)](#windows-bdt-gui)
+
+### Windows (BDT GUI)
 
 <!-- > Covers all supported chips (B91, B92, TL321X, TL322X, TL323X, TL721X) with
 > an external **Burning EVK V1.0–V3.0**. TL322X requires BDT V5.8.4 or later;
@@ -578,7 +590,6 @@ This flash sample is implemented for the TL323X platform.
    If you see a *flash is locked* warning, click the **Unlock** button (or set
    auto-unlock mode) before proceeding. The **Flash info** button shows the
    current MID, UID, status and lock address.
-
    ![Unlock flash](figures/Unlock.png)
 
 8. **Erase the flash.** Click the **Erase** button on the toolbar and wait for
@@ -872,8 +883,7 @@ Here are some next steps for exploring the Telink Zephyr SDK:
 - Learn about [west](https://docs.zephyrproject.org/latest/develop/west/index.html#west)
   and [Application Development](https://docs.zephyrproject.org/latest/application/index.html#application)
   in the upstream Zephyr docs.
-- Check the **Telink Matter Developer Guide** for flashing, debugging and
-  China-mainland network guidance.
+- Check the **Telink Matter Developer Guide** for flashing, debugging and guidance.
 
 ---
 

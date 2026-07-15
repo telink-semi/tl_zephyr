@@ -27,7 +27,7 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 | Category | Capability |
 |----------|------------|
-| **Wireless connectivity** | BLE stack |
+| **Wireless connectivity** | Telink BLE stack, OpenThread stack |
 | **Drivers** | GPIO, UART, SPI, I²C, Flash, Timer, etc. |
 | **Development framework** | Zephyr framework |
 | **System services** | Power management, storage management, clock management, Zephyr system initialization |

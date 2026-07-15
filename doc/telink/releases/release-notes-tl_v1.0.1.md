@@ -1,19 +1,21 @@
 # Telink Zephyr SDK Release Note
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--beta--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/zephyr/releases/tag/tl_v1.0.1-beta-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/zephyr/releases/tag/tl_v1.0.1-rc1-v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](LICENSE)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 
 ---
 
-- **Release Type:** Pre-Release (Beta)
-- **Branch:** dev-tlk_v4.1
+- **Release Type:** Pre-Release (rc1)
+- **Branch:** release-v1.0-v4.1-branch
+- **Tag Version:** tl_v1.0.1-rc1-v4.1.0
+- **Target Commit:** e08fc42546e58d808bfd39f35c8df296f5617a44
 
 ---
 
 ## 📖 Introduction
 
-This release is based on the latest commit of `dev-tlk_v4.1` branch, incorporating multiple bug fixes, driver updates, and BLE SDK improvements for Telink TL323x series chips and other platforms.
+This release is based on the latest commit of `release-v1.0-v4.1-branch` branch, incorporating multiple bug fixes, driver updates, and BLE SDK improvements for Telink TL323x series chips and other platforms.
 
 ### Based on Upstream Zephyr v4.1.0
 
@@ -23,6 +25,64 @@ This release is based on upstream Zephyr **v4.1.0** (tag [`v4.1.0`](https://gith
 - [Zephyr v4.1.0 Migration Guide](https://docs.zephyrproject.org/latest/migration/migration-4.1.html) — recommended reading when upgrading from a previous Zephyr version, as upstream v4.1.0 introduced several API and Kconfig changes (Bluetooth HCI driver API rewrite, pipe API rework, removed/deprecated options, etc.).
 
 For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../getting_started/index.md).
+
+---
+
+## 📋 Version Information
+
+### Zephyr SDK & Toolchain
+
+| Component | Version |
+|-----------|---------|
+| **Host OS (recommended)** | Ubuntu 24.04 LTS |
+| **Zephyr SDK Version** | Telink Zephyr v4.1.0 |
+| **Zephyr SDK** | 0.17.0 |
+| **Toolchain** | riscv64-zephyr-elf |
+
+> **Note:** Only the `riscv64-zephyr-elf` toolchain (from Zephyr SDK 0.17.0) is validated for Telink SoCs. The experimental IAR compiler support introduced in upstream Zephyr v4.1.0 is **not** tested with this release. GCC-based `riscv64-zephyr-elf` is the recommended and only supported toolchain. Ubuntu 24.04 LTS is the recommended host OS.
+
+### Telink SDK
+
+| Property | Value |
+|----------|-------|
+| **Branch** | release-v1.0-v4.1-branch |
+| **Target Commit** | e08fc42546e58d808bfd39f35c8df296f5617a44 |
+| **Tag Name** | tl_v1.0.1-rc1-v4.1.0 |
+| **Release Type** | Pre-Release (rc1) |
+
+### Chip & Hardware Versions
+
+📦 **Chip Versions**
+
+<!-- | Chip Family | Versions |
+|-------------|----------|
+| TLSR921X/TLSR951X(B91) | A2 |
+| TLSR922X/TLSR952X(B92) | A3/A4 |
+| TL721X | A2/A3 |
+| TL321X | A1/A2/A3 |
+| TL322X | A1 |
+| TL323X | A0 | -->
+
+| Chip Family | Versions |
+|-------------|----------|
+| TL721X | A2/A3 |
+| TL323X | A0 |
+
+🔧 **Hardware EVK Versions**
+
+<!-- | Chip | EVK Version |
+|------|-------------|
+| TLSR921X | C1T213A20_V1.3 |
+| TLSR952X | C1T266A20_V1.3 |
+| TL721X | C1T315A20_V1.2 |
+| TL321X | C1T331A20_V1.0/C1T335A20_V1.3 |
+| TL322X | C1T382A20_V1.2 |
+| TL323X | C1T388A20_V1.1 | -->
+
+| Chip | EVK Version |
+|------|-------------|
+| TL721X | C1T315A20_V1.2 |
+| TL323X | C1T388A20_V1.1 |
 
 ---
 
@@ -45,8 +105,7 @@ This release introduces full support for the **TL323X** series — a new
 RISC-V based Telink SoC — including device tree, pin configuration and a
 dedicated CI pipeline.
 **LZMA** compression configuration is now available
-for Telink SoCs, enabling smaller firmware images that fit 2 MB flash with
-OTA.
+for Telink SoCs, enabling smaller OTA images that fit 2 MB flash.
 
 The TL721X platform has been **migrated from hal_v1 to hal_v2**, with
 optimized power consumption; existing TL721X users should follow the
@@ -160,7 +219,7 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 
 ## ⚠️ Known Issues and Limitations
 
-- **Beta release:** This is a BETA pre-release version for demonstration and testing purposes. Not recommended for production use.
+- **Pre-release:** This is a pre-release version for demonstration, development and testing purposes. Not recommended for production use.
 - **WEST tool does not auto-fetch `tl_ble_sdk`:** Zephyr CI does not allow modules containing binary files, so `west update` will not pull `tl_ble_sdk` automatically. See the [Important Notes](#-important-notes) below for the manual fetch step.
 - **TL721X HAL migration (hal_v1 → hal_v2):** TL721X has been moved from **hal_v1** to **hal_v2** in this release. If you are upgrading from a previous version where TL721X used `west blobs fetch hal_telink` (hal_v1), you must now fetch the BLE stack via `./hal_v2/fetch_sdk.sh` instead. The build will fail with a missing HAL error if you forget this step.
 - **Toolchain:** Only the `riscv64-zephyr-elf` toolchain is validated for Telink SoCs. Other toolchains (e.g. the experimental IAR support introduced in upstream v4.1.0) are not tested with this release.
@@ -171,64 +230,6 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 
 - Manually fetch `tl_ble_sdk` by running `./hal_v2/fetch_sdk.sh` inside `modules/hal/telink/` to pull or update the BLE stack to the version pinned by this release.
 - For full environment setup instructions, refer to the [Telink Zephyr SDK Getting Started Guide](../getting_started/index.md) or the [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
-
----
-
-## 📋 Version Information
-
-### Zephyr SDK & Toolchain
-
-| Component | Version |
-|-----------|---------|
-| **Host OS (recommended)** | Ubuntu 24.04 LTS |
-| **Zephyr SDK Version** | Telink Zephyr v4.1.0 |
-| **Zephyr SDK** | 0.17.0 |
-| **Toolchain** | riscv64-zephyr-elf |
-
-> **Note:** Only the `riscv64-zephyr-elf` toolchain (from Zephyr SDK 0.17.0) is validated for Telink SoCs. The experimental IAR compiler support introduced in upstream Zephyr v4.1.0 is **not** tested with this release. GCC-based `riscv64-zephyr-elf` is the recommended and only supported toolchain. Ubuntu 24.04 LTS is the recommended host OS.
-
-### Telink SDK
-
-| Property | Value |
-|----------|-------|
-| **Branch** | dev-tlk_v4.1 |
-| **Target Commit** | e08fc42546e58d808bfd39f35c8df296f5617a44 |
-| **Tag Name** | tl_v1.0.1-beta-v4.1.0 |
-| **Release Type** | Pre-Release (Beta) |
-
-### Chip & Hardware Versions
-
-📦 **Chip Versions**
-
-<!-- | Chip Family | Versions |
-|-------------|----------|
-| TLSR921X/TLSR951X(B91) | A2 |
-| TLSR922X/TLSR952X(B92) | A3/A4 |
-| TL721X | A2/A3 |
-| TL321X | A1/A2/A3 |
-| TL322X | A1 |
-| TL323X | A0 | -->
-
-| Chip Family | Versions |
-|-------------|----------|
-| TL721X | A2/A3 |
-| TL323X | A0 |
-
-🔧 **Hardware EVK Versions**
-
-<!-- | Chip | EVK Version |
-|------|-------------|
-| TLSR921X | C1T213A20_V1.3 |
-| TLSR952X | C1T266A20_V1.3 |
-| TL721X | C1T315A20_V1.2 |
-| TL321X | C1T331A20_V1.0/C1T335A20_V1.3 |
-| TL322X | C1T382A20_V1.2 |
-| TL323X | C1T388A20_V1.1 | -->
-
-| Chip | EVK Version |
-|------|-------------|
-| TL721X | C1T315A20_V1.2 |
-| TL323X | C1T388A20_V1.1 |
 
 ---
 
@@ -274,9 +275,10 @@ The table below summarizes build and test status for Zephyr samples across Telin
 chip families in this release. Samples are located under `samples/` in the Zephyr
 tree (tests are under `tests/`).
 
-> ✅ = Supported and Tested &nbsp;&nbsp; 🟡 = Supported but Untested
+> ✅ = Supported and Tested &nbsp;&nbsp;
+> 🟡 = Supported but Untested
 > &nbsp;&nbsp; (builds successfully, not functionally validated)
-> &nbsp;&nbsp; · = Untested (not built or not applicable)
+<!-- > &nbsp;&nbsp; · = Untested (not built or not applicable) -->
 
 <!-- | Sample | B91 (TLSR951X) | B92 (TLSR952X) | TL321X | TL322X | TL323X | TL721X | W91 (TLSR911X) |
 |--------|:------------:|:------------:|:------------:|:------------:|:------------:|:------------:|:------------:|
@@ -353,14 +355,14 @@ tree (tests are under `tests/`).
   have been functionally validated in this release.
 - **Supported but untested (🟡):** All other build targets listed in the table
   compile successfully but have not been functionally validated. Use with caution.
-- **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in
+<!-- - **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in
   CI but functional testing in this release focused on the new TL323X platform
   and the TL721X hal_v2 migration. Refer to earlier release notes for validated
-  sample sets on these platforms.
+  sample sets on these platforms. -->
 
 
 ---
-
+<!--
 ### TLSR951X (tlsr9518adk80d)
 
 📈 **Resource Usage Details**
@@ -420,7 +422,7 @@ tree (tests are under `tests/`).
 | **samples/hello_world** | 26512 B (5.06% of 512 KB) | 34250 B (3.27% of 1 MB) | 1160 B (0.89% of 128 KB) |
 | **samples/sensor/sht3xd** | 26512 B (5.06% of 512 KB) | 48326 B (4.61% of 1 MB) | 1224 B (0.93% of 128 KB) |
 
----
+--- -->
 
 ### TL323X (tl3238x)
 
@@ -447,7 +449,7 @@ tree (tests are under `tests/`).
 
 📈 **Resource Usage Details**
 
-| Sample | RAMILM | ROM | RAM |
+<!-- | Sample | RAMILM | ROM | RAM |
 |--------|-----|-----|-----|
 | **samples/basic/blinky** | 26608 B (10.15% of 256 KB) | 33630 B (3.21% of 1 MB) | 1012 B (0.39% of 256 KB) |
 | **samples/basic/button** | 26608 B (10.15% of 256 KB) | 34258 B (3.27% of 1 MB) | 1028 B (0.39% of 256 KB) |
@@ -462,9 +464,24 @@ tree (tests are under `tests/`).
 | **samples/net/sockets/echo_client** | N/A | 268848 B (25.64% of 1 MB) | 59200 B (45.17% of 128 KB) |
 | **samples/net/sockets/echo_server** | 77564 B (29.59% of 256 KB) | 416214 B (39.69% of 1 MB) | 50940 B (19.43% of 256 KB) |
 | **samples/sensor/sht3xd** | 26608 B (10.15% of 256 KB) | 46758 B (4.46% of 1 MB) | 1056 B (0.40% of 256 KB) |
-| **samples/usb/console** | 33520 B (12.79% of 256 KB) | 49428 B (4.71% of 1 MB) | 4688 B (1.79% of 256 KB) |
+| **samples/usb/console** | 33520 B (12.79% of 256 KB) | 49428 B (4.71% of 1 MB) | 4688 B (1.79% of 256 KB) | -->
 
----
+| Sample | RAMILM | ROM | RAM |
+|--------|-----|-----|-----|
+| **samples/basic/blinky** | 26608 B (10.15% of 256 KB) | 33630 B (3.21% of 1 MB) | 1012 B (0.39% of 256 KB) |
+| **samples/basic/button** | 26608 B (10.15% of 256 KB) | 34258 B (3.27% of 1 MB) | 1028 B (0.39% of 256 KB) |
+| **samples/basic/fade_led** | 28656 B (10.93% of 256 KB) | 47558 B (4.54% of 1 MB) | 2440 B (0.93% of 256 KB) |
+| **samples/bluetooth/peripheral_ht** | 57232 B (21.83% of 256 KB) | 211328 B (20.15% of 1 MB) | 8548 B (3.26% of 256 KB) |
+| **samples/crypto/mbedtls** | 31728 B (12.10% of 256 KB) | 133074 B (12.69% of 1 MB) | 2608 B (0.99% of 256 KB) |
+| **samples/drivers/adc/adc_dt** | 28384 B (10.83% of 256 KB) | 43932 B (4.19% of 1 MB) | 1648 B (0.63% of 256 KB) |
+| **samples/drivers/spi_flash** | 26784 B (10.22% of 256 KB) | 41758 B (3.98% of 1 MB) | 1284 B (0.49% of 256 KB) |
+| **samples/drivers/watchdog** | 26608 B (10.15% of 256 KB) | 41502 B (3.96% of 1 MB) | 1088 B (0.42% of 256 KB) |
+| **samples/hello_world** | 26608 B (10.15% of 256 KB) | 33098 B (3.16% of 1 MB) | 1012 B (0.39% of 256 KB) |
+| **samples/net/openthread/cli** | 60768 B (23.18% of 256 KB) | 570272 B (54.39% of 1 MB) | 89184 B (34.02% of 256 KB) |
+| **samples/net/sockets/echo_client** | N/A | 268848 B (25.64% of 1 MB) | 59200 B (45.17% of 128 KB) |
+| **samples/sensor/sht3xd** | 26608 B (10.15% of 256 KB) | 46758 B (4.46% of 1 MB) | 1056 B (0.40% of 256 KB) |
+
+<!-- ---
 
 ### TLSR9118BDK40D (tlsr9118bdk40d)
 
@@ -489,7 +506,7 @@ tree (tests are under `tests/`).
 | **samples/sensor/mpu6050** | 60 B (0.18% of 32 KB) | 38052 B (0.91% of 4 MB) | 24876 B (12.65% of 192 KB) |
 | **samples/subsys/nvs** | 60 B (0.18% of 32 KB) | 38112 B (0.91% of 4 MB) | 24860 B (12.64% of 192 KB) |
 | **samples/subsys/shell/devmem_load/** | 60 B (0.18% of 32 KB) | 52400 B (1.25% of 4 MB) | 28888 B (14.69% of 192 KB) |
-| **tests/drivers/adc/adc_api** | 60 B (0.18% of 32 KB) | 55976 B (1.33% of 4 MB) | 24548 B (12.49% of 192 KB) |
+| **tests/drivers/adc/adc_api** | 60 B (0.18% of 32 KB) | 55976 B (1.33% of 4 MB) | 24548 B (12.49% of 192 KB) | -->
 
 ---
 
@@ -497,7 +514,7 @@ tree (tests are under `tests/`).
 
 - **Memory Regions:** May vary between chip variants; check individual board configurations
 - **Full CI Data:** For complete resource usage information across all samples (including Bluetooth, OpenThread, and MCUBoot), refer to CI build artifacts from [PR #774](https://github.com/telink-semi/zephyr/pull/774)
-- **Production Optimizations:** For production builds, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage
+- **Production Optimizations:** For production builds, perform further development, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage
 - **Bluetooth & OpenThread:** For Bluetooth LE and OpenThread-specific resource usage, see the respective CI workflow files in `.github/workflows/`
 - **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` as in the CI pipelines
 
