@@ -28,10 +28,16 @@ For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../gett
 
 ## ✨ Highlights
 
-| Category | Details |
+<!-- | Category | Details |
 |----------|---------|
 | **New Chips** | Full support for tl323x series |
 | **New Features** | LZMA configuration support, TL523X skeleton board |
+| **CI/CD** | Dedicated pipelines for tl323x platform |
+| **Driver Updates** | PLIC, pinctrl, SHA HW cryptography | -->
+
+| Category | Details |
+|----------|---------|
+| **New Chips** | Full support for tl323x series |
 | **CI/CD** | Dedicated pipelines for tl323x platform |
 | **Driver Updates** | PLIC, pinctrl, SHA HW cryptography |
 
@@ -65,18 +71,24 @@ More detailed information can be found in the [Zephyr Security Vulnerabilities](
 
 ## 🆕 New Features
 
+<!-- - ✅ Added full support for tl323x series chips
+- ✅ New CI build pipelines specifically for the tl323x platform
+- ✅ Added device tree and pin configuration support for the tl3238x development board
+- ✅ Added PLIC interrupt controller support
+- ✅ Added LZMA module configuration support for Telink SoCs
+- ✅ Added tl523x skeleton board support -->
+
 - ✅ Added full support for tl323x series chips
 - ✅ New CI build pipelines specifically for the tl323x platform
 - ✅ Added device tree and pin configuration support for the tl3238x development board
 - ✅ Added PLIC interrupt controller support
 - ✅ Added LZMA module configuration support for Telink SoCs
-- ✅ Added tl523x skeleton board support
 
 ---
 
 ## 🐛 Bug Fixes
 
-| Issue | Component | Description |
+<!-- | Issue | Component | Description |
 |-------|-----------|-------------|
 | **TL323x RF TX** | RF | Resolves 1M PHY DEVM transmission performance issue on TL323x series |
 | **WFI Function** | Kernel/Arch | Adjusted macro definitions and removed `ARCH_HAS_CUSTOM_CPU_IDLE` |
@@ -88,6 +100,20 @@ More detailed information can be found in the [Zephyr Security Vulnerabilities](
 | **SHA HW Crypto** | Crypto | Reworked Telink SHA calculation using HW unit on TLX platforms |
 | **Kconfig** | Build | Fixed dependency for bootloader HW cryptography on Telink B9X & TLX platforms |
 | **32K Watchdog** | PM | Changed logic - open 32k wd in idle/standby mode |
+| **TL721X V2** | HAL | Updated hal_v1 to hal_v2, optimized power consumption | -->
+
+| Issue | Component | Description |
+|-------|-----------|-------------|
+| **TL323x RF TX** | RF | Resolves 1M PHY DEVM transmission performance issue on TL323x series |
+| **WFI Function** | Kernel/Arch | Adjusted macro definitions and removed `ARCH_HAS_CUSTOM_CPU_IDLE` |
+| **Amazon Issues** | RF/SOC | Reset RF related registers in `soc_early_init_hook` to fix jump/reconnect failures |
+| **PM/Clock** | PM | Updated reset and clock clear on TL323x PM |
+| **AES Reentrancy** | Crypto | Resolved AES reentrancy issue |
+| **Pinctrl** | Driver | Fixed peripherals input pins; fixed pinctrl Kconfig to always disable GPIOs |
+| **PWM Driver** | Driver | Reverted incorrect PWM driver changes for Telink platform |
+| **SHA HW Crypto** | Crypto | Reworked Telink SHA calculation using HW unit on TLX platforms |
+| **Kconfig** | Build | Fixed dependency for bootloader HW cryptography on Telink TLX platforms |
+| **32K Watchdog** | PM | Changed logic - open 32k wd in idle/standby mode |
 | **TL721X V2** | HAL | Updated hal_v1 to hal_v2, optimized power consumption |
 
 ---
@@ -98,10 +124,17 @@ More detailed information can be found in the [Zephyr Security Vulnerabilities](
 
 The following Telink-specific Kconfig changes may affect existing applications when upgrading to this release:
 
-| Change | Impact | Migration |
+<!-- | Change | Impact | Migration |
 |--------|--------|-----------|
 | **`ARCH_HAS_CUSTOM_CPU_IDLE` removed** | WFI handling is now driven by the standard Zephyr path | Remove any custom override of `ARCH_HAS_CUSTOM_CPU_IDLE`; rely on the default `cpu_idle` implementation |
 | **Bootloader HW cryptography dependency** | Kconfig dependency for bootloader HW cryptography on Telink B9X & TLX platforms was fixed | Re-check your bootloader crypto Kconfig selection if you use HW crypto on B9X/TLX |
+| **PLIC interrupt controller** | New interrupt controller driver added for TL323X | No migration needed for new projects; existing TL323X boards now use PLIC by default |
+| **Pinctrl Kconfig** | Pinctrl Kconfig now always disables GPIOs on conflicting pins | Verify your DTS pin assignments if you relied on the old dual-use behavior | -->
+
+| Change | Impact | Migration |
+|--------|--------|-----------|
+| **`ARCH_HAS_CUSTOM_CPU_IDLE` removed** | WFI handling is now driven by the standard Zephyr path | Remove any custom override of `ARCH_HAS_CUSTOM_CPU_IDLE`; rely on the default `cpu_idle` implementation |
+| **Bootloader HW cryptography dependency** | Kconfig dependency for bootloader HW cryptography on Telink TLX platforms was fixed | Re-check your bootloader crypto Kconfig selection if you use HW crypto on TLX |
 | **PLIC interrupt controller** | New interrupt controller driver added for TL323X | No migration needed for new projects; existing TL323X boards now use PLIC by default |
 | **Pinctrl Kconfig** | Pinctrl Kconfig now always disables GPIOs on conflicting pins | Verify your DTS pin assignments if you relied on the old dual-use behavior |
 
@@ -167,24 +200,34 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 
 📦 **Chip Versions**
 
-| Chip Family | Versions |
+<!-- | Chip Family | Versions |
 |-------------|----------|
 | TLSR921X/TLSR951X(B91) | A2 |
 | TLSR922X/TLSR952X(B92) | A3/A4 |
 | TL721X | A2/A3 |
 | TL321X | A1/A2/A3 |
 | TL322X | A1 |
+| TL323X | A0 | -->
+
+| Chip Family | Versions |
+|-------------|----------|
+| TL721X | A2/A3 |
 | TL323X | A0 |
 
 🔧 **Hardware EVK Versions**
 
-| Chip | EVK Version |
+<!-- | Chip | EVK Version |
 |------|-------------|
 | TLSR921X | C1T213A20_V1.3 |
 | TLSR952X | C1T266A20_V1.3 |
 | TL721X | C1T315A20_V1.2 |
 | TL321X | C1T331A20_V1.0/C1T335A20_V1.3 |
 | TL322X | C1T382A20_V1.2 |
+| TL323X | C1T388A20_V1.1 | -->
+
+| Chip | EVK Version |
+|------|-------------|
+| TL721X | C1T315A20_V1.2 |
 | TL323X | C1T388A20_V1.1 |
 
 ---
@@ -208,7 +251,7 @@ This section shows the RAM and ROM usage for various Zephyr samples on Telink pl
 
 ### Supported Boards
 
-| Board | Chip Family |
+<!-- | Board | Chip Family |
 |-------|-------------|
 | tlsr9518adk80d | TLSR951X/B91 |
 | tlsr9528a | TLSR952X/B92 |
@@ -216,7 +259,12 @@ This section shows the RAM and ROM usage for various Zephyr samples on Telink pl
 | tl3228x | TL322X |
 | tl3238x | TL323X |
 | tl7218x | TL721X |
-| tlsr9118bdk40d | TLSR9118BDK40D |
+| tlsr9118bdk40d | TLSR9118BDK40D | -->
+
+| Board | Chip Family |
+|-------|-------------|
+| tl3238x | TL323X |
+| tl7218x | TL721X |
 
 ---
 
@@ -230,7 +278,7 @@ tree (tests are under `tests/`).
 > &nbsp;&nbsp; (builds successfully, not functionally validated)
 > &nbsp;&nbsp; · = Untested (not built or not applicable)
 
-| Sample | B91 (TLSR951X) | B92 (TLSR952X) | TL321X | TL322X | TL323X | TL721X | W91 (TLSR911X) |
+<!-- | Sample | B91 (TLSR951X) | B92 (TLSR952X) | TL321X | TL322X | TL323X | TL721X | W91 (TLSR911X) |
 |--------|:------------:|:------------:|:------------:|:------------:|:------------:|:------------:|:------------:|
 | **basic/blinky** | 🟡 | 🟡 | 🟡 | 🟡 | ✅ | ✅ | 🟡 |
 | **basic/button** | · | · | 🟡 | 🟡 | ✅ | ✅ | 🟡 |
@@ -264,11 +312,26 @@ tree (tests are under `tests/`).
 | **boards/tlsr9x/led_pool** | · | · | · | · | · | · | 🟡 |
 | **boards/tlsr9x/pwm_pool** | · | · | · | · | · | · | 🟡 |
 | **boards/tlsr9x/sock_simple** | · | · | · | · | · | · | 🟡 |
-| **tests/drivers/adc/adc_api** | · | · | · | · | · | · | 🟡 |
+| **tests/drivers/adc/adc_api** | · | · | · | · | · | · | 🟡 | -->
+
+| Sample | TL323X | TL721X |
+|--------|:------------:|:------------:|
+| **basic/blinky** | ✅ | ✅ |
+| **basic/button** | ✅ | ✅ |
+| **basic/fade_led** | ✅ | ✅ |
+| **hello_world** | ✅ | ✅ |
+| **bluetooth/peripheral_ht** | ✅ | ✅ |
+| **net/openthread/cli** | ✅ | ✅ |
+| **net/sockets/echo_client** | ✅ | ✅ |
+| **crypto/mbedtls** | ✅ | ✅ |
+| **drivers/adc/adc_dt** | ✅ | 🟡 |
+| **drivers/spi_flash** | ✅ | 🟡 |
+| **drivers/watchdog** | ✅ | ✅ |
+| **sensor/sht3xd** | ✅ | 🟡 |
 
 #### Notes on Sample Support
 
-- **Tested combinations (✅):** All TL323X samples that build successfully have been
+<!-- - **Tested combinations (✅):** All TL323X samples that build successfully have been
   functionally validated. On TL721X, the core bring-up samples (`blinky`, `button`,
   `fade_led`, `hello_world`) plus BLE (`peripheral_ht`), Thread (`openthread/cli`),
   crypto (`mbedtls`), networking (`echo_client`), and driver (`watchdog`) samples
@@ -281,7 +344,20 @@ tree (tests are under `tests/`).
 - **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in
   CI but functional testing in this release focused on the new TL323X platform
   and the TL721X hal_v2 migration. Refer to earlier release notes for validated
+  sample sets on these platforms. -->
+
+- **Tested combinations (✅):** All TL323X samples that build successfully have been
+  functionally validated. On TL721X, the core bring-up samples (`blinky`, `button`,
+  `fade_led`, `hello_world`) plus BLE (`peripheral_ht`), Thread (`openthread/cli`),
+  crypto (`mbedtls`), networking (`echo_client`), and driver (`watchdog`) samples
+  have been functionally validated in this release.
+- **Supported but untested (🟡):** All other build targets listed in the table
+  compile successfully but have not been functionally validated. Use with caution.
+- **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in
+  CI but functional testing in this release focused on the new TL323X platform
+  and the TL721X hal_v2 migration. Refer to earlier release notes for validated
   sample sets on these platforms.
+
 
 ---
 

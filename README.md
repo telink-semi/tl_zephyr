@@ -17,7 +17,10 @@
 
 ## 📖 SDK Introduction
 
-Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL321x, TL322x, TLSR921x, TLSR922x, TLSR952x series) and is based on Zephyr Project.
+<!-- Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL321x, TL322x, TLSR921x, TLSR922x, TLSR952x series) and is based on Zephyr Project.
+It is designed for developing a wide range of wireless IoT products including smart home, wearables, lighting products, etc. -->
+
+Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL323x series) and is based on Zephyr Project.
 It is designed for developing a wide range of wireless IoT products including smart home, wearables, lighting products, etc.
 
 ### Core Capabilities
@@ -49,8 +52,8 @@ It is designed for developing a wide range of wireless IoT products including sm
 | **Release Note** | Telink SDK Changelog & New Features | [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md) |
 | **Get Started Guide** | SDK Quick Start: environment setup, toolchain, first build | [Telink Zephyr SDK Getting Started Guide](doc/telink/getting_started/index.md) |
 | **Developer Handbook** | In-depth developer guide (flashing, debugging, networking tips) | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
-| **Examples** | Sample Project Walkthroughs | See [Standard Zephyr Samples](samples) |
-| **API Reference** | Zephyr API Documentation & Lookup  | See [Zephyr API Docs](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html) |
+| **Examples** | Sample Project Walkthroughs | [Standard Zephyr Samples](samples) |
+| **API Reference** | Zephyr API Documentation & Lookup  | [Zephyr API Docs](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html) |
 
 ---
 

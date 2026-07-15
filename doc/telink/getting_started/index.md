@@ -8,10 +8,15 @@
 
 Follow this guide to:
 
+<!-- - Set up a command-line Telink Zephyr development environment on Ubuntu
+- Get the Telink Zephyr source code (forked from the upstream Zephyr project)
+- Install the Zephyr SDK toolchain (`riscv64-zephyr-elf`)
+- Build and flash a sample application on Telink SoCs (TLSR9518ADK80D, TLSR9528A, TL321X, TL721X, TL323X, etc.) -->
+
 - Set up a command-line Telink Zephyr development environment on Ubuntu
 - Get the Telink Zephyr source code (forked from the upstream Zephyr project)
 - Install the Zephyr SDK toolchain (`riscv64-zephyr-elf`)
-- Build and flash a sample application on Telink SoCs (TLSR9518ADK80D, TLSR9528A, TL321X, TL721X, TL323X, etc.)
+- Build and flash a sample application on Telink SoCs (TL721X, TL323X)
 
 > 💡 This guide is the Telink-flavoured counterpart of the upstream
 > [Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html).
@@ -202,10 +207,14 @@ depends on the chip family:
   > ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git f50d422d780efb73af93b650ef7b8c6bf5a0b99b
   > ```
 
-| HAL version | Applicable chips                            | Fetch command                 |
+<!-- | HAL version | Applicable chips                            | Fetch command                 |
 | ----------- | ------------------------------------------- | ----------------------------- |
 | **hal_v1**  | TLSR9518ADK80D, TLSR9528A, TL321X, TLSR9118 | `west blobs fetch hal_telink` |
-| **hal_v2**  | TL322X, TL323X, TL721X                      | `./hal_v2/fetch_sdk.sh`       |
+| **hal_v2**  | TL322X, TL323X, TL721X                      | `./hal_v2/fetch_sdk.sh`       | -->
+
+| HAL version | Applicable chips                            | Fetch command                 |
+| ----------- | ------------------------------------------- | ----------------------------- |
+| **hal_v2**  | TL323X, TL721X                      | `./hal_v2/fetch_sdk.sh`       |
 
 ---
 
@@ -325,11 +334,16 @@ west build -p auto -b <board-name> samples/basic/blinky -d build_blinky
 
 Supported Telink board targets include:
 
-| Board target      | SoC            |
+<!-- | Board target      | SoC            |
 | ----------------- | -------------- |
 | `tlsr9518adk80d`  | TLSR9518ADK80D |
 | `tlsr9528a`       | TLSR9528A      |
 | `tl3218x`         | TL3218X        |
+| `tl3238x`         | TL3238X        |
+| `tl7218x`         | TL7218X        | -->
+
+| Board target      | SoC            |
+| ----------------- | -------------- |
 | `tl3238x`         | TL3238X        |
 | `tl7218x`         | TL7218X        |
 
@@ -345,12 +359,17 @@ families. The table below lists the EVBs covered by this SDK. For full
 schematics, jumper configurations, button/LED layouts and power-supply options,
 see the **Telink Matter Developer Guide** → Chapter *Required Equipment*.
 
-| EVB              | SoC        | Key interfaces                                 |
+<!-- | EVB              | SoC        | Key interfaces                                 |
 | ---------------- | ---------- | ---------------------------------------------- |
 | TLSR9518ADK80D   | TLSR9518   | Mini-USB (power/flash), UART header, buttons   |
 | TLSR9528A        | TLSR9528   | Mini-USB (power/flash), UART header, buttons   |
 | TL3218X          | TL3218X    | Type-C (power), UART header, buttons            |
 | TL3228X          | TL3228X    | Type-C (power), UART header, buttons            |
+| TL3238X          | TL3238X    | Type-C (power), UART header, buttons            |
+| TL7218X          | TL7218X    | Type-C (power), UART header, buttons            | -->
+
+| EVB              | SoC        | Key interfaces                                 |
+| ---------------- | ---------- | ---------------------------------------------- |
 | TL3238X          | TL3238X    | Type-C (power), UART header, buttons            |
 | TL7218X          | TL7218X    | Type-C (power), UART header, buttons            |
 
@@ -369,7 +388,7 @@ It is available for both Windows and Linux.
 
 ### Windows
 
-Download BDT from the Telink wiki and extract it to a local folder:
+<!-- Download BDT from the Telink wiki and extract it to a local folder:
 
 - BDT (Windows): <https://doc.telink-semi.cn/tools/bdt/Windows/BDT.zip>
 
@@ -384,7 +403,10 @@ your programmer hardware:
   programmer (Burning EVK V4.0)** or **Programmer V5** (USB/serial interface,
   no external EVK jig needed). Supports TL321X, TL322X, TL323X, TL721X,
   TC321X. On first use, click the **Install drv** button inside TGui to
-  install the USB driver, then click **Refresh** to enumerate the board.
+  install the USB driver, then click **Refresh** to enumerate the board. -->
+
+  - **`Telink BDT.exe`** (release V5.9.x) — the classic GUI. Used with an
+  external **Burning EVK V1.0–V3.0** (SWS interface). Supports chips:TL323X (V5.9.0+), TL721X.
 
 > **Note — msvcr120 dependency**
 > If `Telink BDT.exe` fails to open, the Microsoft Visual C++ 2013 runtime
@@ -392,12 +414,12 @@ your programmer hardware:
 > to `C:\Windows\System32` (32-bit Windows) or `C:\Windows\SysWOW64`
 > (64-bit Windows).
 
-The detailed flashing procedures are described in
+<!-- The detailed flashing procedures are described in
 [Option A: Windows (BDT GUI)](#option-a-windows-bdt-gui) (Telink BDT, EVK
 V1–V3) and [Option A2: Windows (TGui)](#option-a2-windows-tgui-tl322x--tl323x)
-(TGui, on-board programmer) below.
+(TGui, on-board programmer) below. -->
 
-### Linux (Ubuntu 24.04)
+<!-- ### Linux (Ubuntu 24.04)
 
 Download and extract the Linux BDT package:
 
@@ -418,7 +440,7 @@ The package contains two sub-packages — choose the one that matches your
 
 The CLI steps in [Option B](#option-b-linux-linuxbdt-cli) below use the
 `bdt` tool from the first package. If your board requires TGui-BDT (e.g.
-TL322X, TL323X), refer to the documentation bundled with the TGui package.
+TL322X, TL323X), refer to the documentation bundled with the TGui package. -->
 
 ---
 
@@ -438,7 +460,7 @@ A **Telink Burning EVK** and two Mini-USB cables are required per board. When
 flashing multiple boards simultaneously you will need additional Burning EVKs
 and a USB hub with enough ports.
 
-> **Note — Chip-to-BDT name mapping**
+<!-- > **Note — Chip-to-BDT name mapping**
 > Each SoC family uses a slightly different name in BDT. On Windows both
 > `Telink BDT.exe` and `TGui` recognise the GUI chip names below; on Linux
 > the `bdt` CLI (v2.1.0) uses slightly different casing (third column).
@@ -459,27 +481,44 @@ and a USB hub with enough ports.
 > TGui-BDT package (see [Option C](#option-c-linux-tgui-bdt-cli-tl322x--tl323x-only)).
 >
 > ² B92 has a 1.8 V variant `B92_1V8` as well; the TLSR9528A EVB uses
-> `B92_3V3` (3.3 V).
+> `B92_3V3` (3.3 V). -->
+
+> **Note — Chip-to-BDT name mapping**
+> Each SoC family uses a slightly different name in BDT. On Windows
+> `Telink BDT.exe` recognise the GUI chip names below.
+>
+> | Board target      | BDT GUI chip selection | Notes                              |
+> | ----------------- | ---------------------- | ---------------------------------- |
+> | `tl3238x`         | `TL323X`               | Windows: BDT V5.9.0+ (EVK mode)    |
+> | `tl7218x`         | `TL721X`               |                                    |
+>
+> `Telink BDT.exe` supports them in EVK mode
+> (Burning EVK V1–V3) from V5.8.4 / V5.9.0 onwards.
 
 Choose the flashing procedure that matches your host OS and programmer
 hardware:
 
-- **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
+<!-- - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
   [Option A: Windows (BDT GUI)](#option-a-windows-bdt-gui)
 - **Windows, TL322X/TL323X** with the on-board programmer V4.0 (alternative
   to Option A) → [Option A2: Windows (TGui)](#option-a2-windows-tgui-tl322x--tl323x)
 - **Linux, B91/B92/TL321X/TL721X** (Burning EVK V1.0–V3.0) →
   [Option B: Linux (LinuxBDT CLI)](#option-b-linux-linuxbdt-cli)
 - **Linux, TL322X/TL323X** (Burning EVK V4.0 on-board) →
-  [Option C: Linux (TGui-BDT CLI)](#option-c-linux-tgui-bdt-cli-tl322x--tl323x-only)
+  [Option C: Linux (TGui-BDT CLI)](#option-c-linux-tgui-bdt-cli-tl322x--tl323x-only) -->
+
+  - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
+  [Option A: Windows (BDT GUI)](#option-a-windows-bdt-gui)
 
 ### Option A: Windows (BDT GUI)
 
-> Covers all supported chips (B91, B92, TL321X, TL322X, TL323X, TL721X) with
+<!-- > Covers all supported chips (B91, B92, TL321X, TL322X, TL323X, TL721X) with
 > an external **Burning EVK V1.0–V3.0**. TL322X requires BDT V5.8.4 or later;
 > TL323X requires V5.9.0 or later. If your board has an on-board programmer
 > V4.0 and you prefer the TGui workflow, see
-> [Option A2](#option-a2-windows-tgui-tl322x--tl323x).
+> [Option A2](#option-a2-windows-tgui-tl322x--tl323x). -->
+
+This flash sample is implemented for the TL323X platform.
 
 1. **Connect to Hardware.** Before using the BDT tool, connect the PC, programmer, and target board as follows:
    - **PC ↔ Programmer**: Connect them using a USB cable. If the green indicator LED on the programmer stays solid, the programmer has been successfully recognized by the PC.
@@ -501,13 +540,15 @@ hardware:
 
    ![Launch BDT](figures/Launch_BDT.png)
 
-4. **Select the chip.** From the chip-selection drop-down, choose the entry
+<!-- 4. **Select the chip.** From the chip-selection drop-down, choose the entry
    that matches your board (see the chip-mapping table above), e.g.
    `B92_3V3` for TLSR9528A, `TL321X` for TL3218X, `TL721X` for TL7218X,
    `TL322X` for TL3228X, or `TL323X` for TL3238X.
    > B92 has two variants — `B92_3V3` (3.3 V, used by the TLSR9528A EVB) and
-   > `B92_1V8` (1.8 V). Pick the one that matches your board voltage.
+   > `B92_1V8` (1.8 V). Pick the one that matches your board voltage. -->
 
+   4. **Select the chip.** From the chip-selection drop-down, choose the entry
+   that matches your board `TL323X` for TL3238X.
    ![Select chip](figures/Select_Chip.png)
 
 5. **Verify the connection (SWS).** Click the **SWS** button on the toolbar. If
@@ -524,8 +565,15 @@ hardware:
 
    ![Set flash erase size](figures/Set_Flash_Erase_Size.png)
 
-7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
+<!-- 7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
    flash protection before erase/download for B91/B92/TL321X/TL721X. Since
+   V5.7.9 a **manual/auto unlock** toggle button is available on the toolbar.
+   If you see a *flash is locked* warning, click the **Unlock** button (or set
+   auto-unlock mode) before proceeding. The **Flash info** button shows the
+   current MID, UID, status and lock address. -->
+
+   7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
+   flash protection before erase/download for TL323X. Since
    V5.7.9 a **manual/auto unlock** toggle button is available on the toolbar.
    If you see a *flash is locked* warning, click the **Unlock** button (or set
    auto-unlock mode) before proceeding. The **Flash info** button shows the
@@ -580,7 +628,7 @@ For more BDT commands and options, refer to the documentation in the
    3. *Not Activate* - Send **Activate** Command to the chip.
 
       ![pre activate](figures/Pre_Activate.png)
-### Option A2: Windows (TGui, TL322X / TL323X)
+<!-- ### Option A2: Windows (TGui, TL322X / TL323X)
 
 An alternative to [Option A](#option-a-windows-bdt-gui) for **TL322X** and
 **TL323X** boards that have an on-board programmer (Burning EVK V4.0) or an
@@ -753,7 +801,7 @@ the `Apps/app1/cmd_tool/doc/` folder of the TGui-BDT package.
 
 > For Matter applications that produce a `merged.bin` (MCUboot + application),
 > flash `merged.bin` instead of `zephyr.bin`. See the per-board
-> `*_README.md` build guides in the Matter repository for details.
+> `*_README.md` build guides in the Matter repository for details. -->
 
 ---
 
@@ -761,7 +809,7 @@ the `Apps/app1/cmd_tool/doc/` folder of the TGui-BDT package.
 
 After reset, confirm that the Blinky sample is running:
 
-### 1. Check the LED
+<!-- ### 1. Check the LED
 
 The Blinky sample toggles an LED on the board. You should see the onboard LED
 blink at a steady interval (~1 Hz by default). If the LED does not blink,
@@ -797,7 +845,16 @@ LED state: ON
 The `LED state: OFF/ON` messages toggle each time the LED changes state.
 
 For other samples that produce log output (e.g. *hello_world*), check for the
-expected console message in the same way.
+expected console message in the same way. -->
+
+
+### Check the LED
+
+The Blinky sample toggles an LED on the board. You should see the onboard LED
+blink at a steady interval (~1 Hz by default). If the LED does not blink,
+re-check the flash steps and the board's power/jumper configuration.
+
+![Blinky](figures/Blinky.png)
 
 ---
 
