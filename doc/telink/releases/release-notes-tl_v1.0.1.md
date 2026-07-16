@@ -9,7 +9,7 @@
 - **Release Type:** Pre-Release (rc1)
 - **Branch:** release-v1.0-v4.1-branch
 - **Tag Version:** tl_v1.0.1-rc1-v4.1.0
-- **Target Commit:** e08fc42546e58d808bfd39f35c8df296f5617a44
+<!-- - **Target Commit:** e08fc42546e58d808bfd39f35c8df296f5617a44 -->
 
 ---
 
@@ -43,10 +43,16 @@ For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../gett
 
 ### Telink SDK
 
-| Property | Value |
+<!-- | Property | Value |
 |----------|-------|
 | **Branch** | release-v1.0-v4.1-branch |
 | **Target Commit** | e08fc42546e58d808bfd39f35c8df296f5617a44 |
+| **Tag Name** | tl_v1.0.1-rc1-v4.1.0 |
+| **Release Type** | Pre-Release (rc1) | -->
+
+| Property | Value |
+|----------|-------|
+| **Branch** | release-v1.0-v4.1-branch |
 | **Tag Name** | tl_v1.0.1-rc1-v4.1.0 |
 | **Release Type** | Pre-Release (rc1) |
 
@@ -222,7 +228,7 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 - **Pre-release:** This is a pre-release version for demonstration, development and testing purposes. Not recommended for production use.
 - **WEST tool does not auto-fetch `tl_ble_sdk`:** Zephyr CI does not allow modules containing binary files, so `west update` will not pull `tl_ble_sdk` automatically. See the [Important Notes](#-important-notes) below for the manual fetch step.
 - **TL721X HAL migration (hal_v1 → hal_v2):** TL721X has been moved from **hal_v1** to **hal_v2** in this release. If you are upgrading from a previous version where TL721X used `west blobs fetch hal_telink` (hal_v1), you must now fetch the BLE stack via `./hal_v2/fetch_sdk.sh` instead. The build will fail with a missing HAL error if you forget this step.
-- **Toolchain:** Only the `riscv64-zephyr-elf` toolchain is validated for Telink SoCs. Other toolchains (e.g. the experimental IAR support introduced in upstream v4.1.0) are not tested with this release.
+<!-- - **Toolchain:** Only the `riscv64-zephyr-elf` toolchain is validated for Telink SoCs. Other toolchains (e.g. the experimental IAR support introduced in upstream v4.1.0) are not tested with this release. -->
 
 ---
 
@@ -243,7 +249,6 @@ This section shows the RAM and ROM usage for various Zephyr samples on Telink pl
 |----------|-------|
 | Zephyr SDK | 0.17.0 |
 | Toolchain | `riscv64-zephyr-elf` |
-| Optimization | Default (per sample) |
 | Extra CMake flag | `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |
 | Debug logging | Enabled (per sample default) |
 | Reproduce | `west build -p auto -b <board> <sample> -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` |

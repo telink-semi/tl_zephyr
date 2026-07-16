@@ -6,15 +6,6 @@
 
 ---
 
-**A software development platform for Telink RISC-V SoC platforms based on Zephyr Project**
-
-- For development environment setup, SDK acquisition, and quick-start instructions, refer to the [Telink Zephyr SDK Getting Started Guide](doc/telink/getting_started/index.md).
-- For in-depth guidance (flashing, debugging, networking tips), refer to the [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
-- For a detailed list of supported devices, refer to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md)
-- For community resources and support, refer to [Zephyr RTOS Community README](https://github.com/zephyrproject-rtos/zephyr/blob/v4.1-branch/README.rst)
-
----
-
 ## 📖 SDK Introduction
 
 <!-- Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL321x, TL322x, TLSR921x, TLSR922x, TLSR952x series) and is based on Zephyr Project.
@@ -47,6 +38,9 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 ## 🚀 Quick Reference
 
+
+**A software development platform for Telink RISC-V SoC platforms based on Zephyr Project**
+
 | Resource | Description | Link |
 |----------|-------------|------|
 | **Release Note** | Telink SDK Changelog & New Features | [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md) |
@@ -54,6 +48,11 @@ It is designed for developing a wide range of wireless IoT products including sm
 | **Developer Handbook** | In-depth developer guide (flashing, debugging, networking tips) | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
 | **Examples** | Sample Project Walkthroughs | [Standard Zephyr Samples](samples) |
 | **API Reference** | Zephyr API Documentation & Lookup  | [Zephyr API Docs](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html) |
+
+- For development environment setup, SDK acquisition, and quick-start instructions, refer to the [Telink Zephyr SDK Getting Started Guide](doc/telink/getting_started/index.md).
+- For in-depth guidance (flashing, debugging, networking tips), refer to the [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
+- For a detailed list of supported devices, refer to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md)
+- For community resources and support, refer to [Zephyr RTOS Community README](https://github.com/zephyrproject-rtos/zephyr/blob/v4.1-branch/README.rst)
 
 ---
 
