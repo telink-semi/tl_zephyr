@@ -133,7 +133,7 @@ jobs:
     - name: Build W91 net/openthread/cli
       run: |
         cd ..
-        west build -b tlsr9118bdk40d             -d build_ot_cli                         zephyr/samples/net/openthread/cli           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tlsr9118bdk40d             -d build_ot_cli                         zephyr/samples/net/openthread/cli           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=configs/extended.conf
 
     - name: Build W91 otbr
       run: |

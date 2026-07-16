@@ -95,7 +95,7 @@ jobs:
     - name: Build TL721X net/openthread/cli
       run: |
         cd ..
-        west build -b tl7218x                  -d build_ot_cli_tl721x                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl7218x                  -d build_ot_cli_tl721x                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=configs/extended.conf
 
     - name: Build TL721X net/sockets/echo_server for OpenThread
       run: |
