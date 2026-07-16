@@ -120,7 +120,7 @@ jobs:
     - name: Build B91 net/openthread/cli
       run: |
         cd ..
-        west build -b tlsr9518adk80d             -d build_ot_cli_b91                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-telink-fixed-mac.conf
+        west build -b tlsr9518adk80d             -d build_ot_cli_b91                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=configs/extended.conf
 
     - name: Build B91 crypto/mbedtls
       run: |

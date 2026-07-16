@@ -140,7 +140,7 @@ jobs:
     - name: Build B92 net/openthread/cli
       run: |
         cd ..
-        west build -b tlsr9528a                  -d build_ot_cli_b92                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-telink-fixed-mac.conf
+        west build -b tlsr9528a                  -d build_ot_cli_b92                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=configs/extended.conf
 
     - name: Build B92 crypto/mbedtls
       run: |

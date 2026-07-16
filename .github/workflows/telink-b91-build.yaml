@@ -175,7 +175,7 @@ jobs:
     - name: Build B91 net/openthread/cli
       run: |
         cd ..
-        west build -b tlsr9518adk80d             -d build_b91     zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-telink-fixed-mac.conf
+        west build -b tlsr9518adk80d             -d build_b91     zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=configs/extended.conf
         mkdir -p "$GITHUB_WORKSPACE/telink_build_artifacts"
         cp build_b91/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b91_ot_cli.bin"
         rm -rf build_b91
