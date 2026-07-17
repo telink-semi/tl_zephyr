@@ -148,14 +148,8 @@ manifest:
         - hal 
     - name: tl_ble_sdk
       url: https://github.com/telink-semi/tl_ble_sdk_zephyr.git
-      revision: 6ea79d6ffd57cb909e1ad627da6dd48ac120599a
+      revision: 588a43ea6f5b338a0fbd4fd5e34a79e2e4537604
       path: modules/hal/telink/tl_ble_sdk
-      groups:
-        - hal
-    - name: tl_ble_src
-      url: http://192.168.48.36/src/ble/telink_b91m_ble_multi_connection_src.git
-      revision: 782601133200dd5fdda999bcfa1994ef07e0d07e
-      path: modules/hal/telink/tl_ble_src
       groups:
         - hal
     - name: hal_ti
