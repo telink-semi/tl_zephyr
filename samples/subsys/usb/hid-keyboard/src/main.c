@@ -166,13 +166,30 @@ int kbd_set_report(const struct device *dev, struct usb_setup_packet *setup, int
 {
 	gpio_pin_set(led1.port, led1.pin, (**data & HID_KBD_LED_NUM_LOCK));
 	gpio_pin_set(led2.port, led2.pin, (**data & HID_KBD_LED_CAPS_LOCK));
+	LOG_ERR("get led report.");
 
 	return 0;
+}
+
+static void out_ready_cb(const struct device *dev)
+{
+	uint8_t buf[CONFIG_HID_INTERRUPT_EP_MPS];
+	uint32_t len = 0;
+	int ret;
+
+	ret = hid_int_ep_read(dev, buf, sizeof(buf), &len);
+	LOG_ERR("get OUT report.");
+	if (ret == 0 && len > 0) {
+		LOG_HEXDUMP_INF(buf, len, "OUT ep received");
+	}
 }
 
 struct hid_ops kbd_ops = {
 	.set_report = kbd_set_report,
 	.int_in_ready = in_ready_cb,
+    #ifdef CONFIG_ENABLE_HID_INT_OUT_EP
+	.int_out_ready = out_ready_cb,
+    #endif
 };
 
 static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
@@ -349,6 +366,8 @@ int main(void)
 	if (ret != 0) {
 		LOG_ERR("Failed to enable USB");
 		return 0;
+	} else {
+		LOG_ERR("enable USB.");
 	}
 
 	while (true) {

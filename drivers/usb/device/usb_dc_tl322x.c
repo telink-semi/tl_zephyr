@@ -99,7 +99,7 @@ enum usbd_endpoint_index_e endpoint_idx[] = {USBD_EP0_IDX, USBD_EP1_IDX, USBD_EP
  * @param remaining_size	The remaining available size of the USB endpoint cache.
  */
 struct ep_buf_t {
-	enum usbd_endpoint_index_e init_list[USBD_EP_TOTAL_CNT];
+	uint8_t init_list[USBD_EP_TOTAL_CNT];
 	uint8_t seg_addr;
 	uint8_t init_num;
 	uint16_t remaining_size;
@@ -179,7 +179,7 @@ struct tlx_usbd_ctx {
 	bool wakeup_feature;
 	struct k_work usb_work;
 	struct k_mutex drv_lock;
-	struct tlx_usbd_ep_ctx ep_ctx[USBD_EP_TOTAL_CNT];
+	struct tlx_usbd_ep_ctx ep_ctx[USBD_EP_TOTAL_CNT][2];
 };
 
 static struct tlx_usbd_ctx usbd_ctx = {
@@ -220,14 +220,23 @@ static inline bool ep_is_valid(const uint8_t ep)
 static struct tlx_usbd_ep_ctx *endpoint_ctx(const uint8_t ep)
 {
 	struct tlx_usbd_ctx *ctx;
+	uint8_t ep_idx;
+	uint8_t dir;
 
 	if (!ep_is_valid(ep)) {
 		return NULL;
 	}
 
 	ctx = get_usbd_ctx();
+	ep_idx = USB_EP_GET_IDX(ep);
 
-	return &ctx->ep_ctx[USB_EP_GET_IDX(ep)];
+	if (ep_idx == USBD_EP0_IDX) {
+		return &ctx->ep_ctx[USBD_EP0_IDX][0];
+	}
+
+	dir = (uint8_t)(USB_EP_GET_DIR(ep) >> 7);
+
+	return &ctx->ep_ctx[ep_idx][dir];
 }
 
 /** @brief FIFO used for queuing up events from ISR. */
@@ -470,6 +479,11 @@ static inline void usb_event_out_complete_handler(uint8_t ep)
 		} else {
 			ep_ctx->buf.left_len = ep_ctx->buf.total_len = xfered_len;
 		}
+	} else {
+		ep_ctx->buf.left_len = ep_ctx->buf.total_len = xfered_len;
+		if (ep_ctx->cfg.cb) {
+			ep_ctx->cfg.cb(ep, USB_DC_EP_DATA_OUT);
+		}
 	}
 }
 
@@ -485,12 +499,12 @@ static inline void usb_event_out_setup_handler(uint8_t ep)
 		}
 	}
 	if (xfered_len > 0) {
-		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[1] == USB_SREQ_SET_FEATURE) 
-				&& (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
+		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX][0].buf.data[1] == USB_SREQ_SET_FEATURE) 
+				&& (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX][0].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
 			usbd_ctx.wakeup_feature = true;
 		}
-		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[1] == USB_SREQ_CLEAR_FEATURE) 
-				&& (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
+		if ((get_usbd_ctx()->ep_ctx[USBD_EP0_IDX][0].buf.data[1] == USB_SREQ_CLEAR_FEATURE) 
+				&& (get_usbd_ctx()->ep_ctx[USBD_EP0_IDX][0].buf.data[2] == USB_SFS_REMOTE_WAKEUP)) {
 			usbd_ctx.wakeup_feature = false;
 		}
 
@@ -953,8 +967,8 @@ int usb_dc_ep_configure(const struct usb_dc_ep_cfg_data *const ep_cfg)
 		}
 
 		for (i = 0; i < eps_buf_inf.init_num; i++) {
-			if (eps_buf_inf.init_list[i] == ep_idx) {
-				LOG_DBG("ep%d buf address already configured", ep_idx);
+			if (eps_buf_inf.init_list[i] == ep_cfg->ep_addr) {
+				LOG_DBG("ep0x%02x buf address already configured", ep_cfg->ep_addr);
 				return 0;
 			}
 		}
@@ -970,8 +984,8 @@ int usb_dc_ep_configure(const struct usb_dc_ep_cfg_data *const ep_cfg)
 		}
 
 		for (i = 0; i < eps_buf_inf.init_num; i++) {
-			if (eps_buf_inf.init_list[i] == ep_idx) {
-				LOG_DBG("ep%d buf address already configured", ep_idx);
+			if (eps_buf_inf.init_list[i] == ep_cfg->ep_addr) {
+				LOG_DBG("ep0x%02x buf address already configured", ep_cfg->ep_addr);
 				return 0;
 			}
 		}
@@ -983,7 +997,7 @@ int usb_dc_ep_configure(const struct usb_dc_ep_cfg_data *const ep_cfg)
 		}
 
 		ep_ctx->cfg.max_sz = ep_cfg->ep_mps;
-		if (USB_EP_DIR_IS_IN(ep_ctx->cfg.addr)) {
+		if (USB_EP_DIR_IS_IN(ep_cfg->ep_addr)) {
 			usb0hw_set_epin_size(ep_idx, eps_buf_inf.seg_addr, ep_ctx->cfg.max_sz);
 			eps_buf_inf.seg_addr += ep_ctx->cfg.max_sz;
 			eps_buf_inf.remaining_size -= ep_ctx->cfg.max_sz;
@@ -994,7 +1008,7 @@ int usb_dc_ep_configure(const struct usb_dc_ep_cfg_data *const ep_cfg)
 
 	ep_ctx->cfg.addr = ep_cfg->ep_addr;
 	ep_ctx->cfg.type = ep_cfg->ep_type;
-	eps_buf_inf.init_list[eps_buf_inf.init_num] = ep_idx;
+	eps_buf_inf.init_list[eps_buf_inf.init_num] = ep_cfg->ep_addr;
 	eps_buf_inf.init_num++;
 
 	return 0;
@@ -1129,19 +1143,23 @@ int usb_dc_ep_enable(const uint8_t ep)
 
 	if (dev_ready()) {
 		ep_ctx->cfg.stall = false;
-		
-		if (USB_EP_GET_DIR(ep) == USB_EP_DIR_IN) {
-			ep_ctx->buf.data = (uint8_t *)malloc(ep_ctx->cfg.max_sz);
-			if (ep_ctx->buf.data == NULL) {
-				LOG_ERR("ep(0X%x) malloc fail", ep);
-				return -ENOSPC;
-			}
+
+		ep_ctx->buf.data = (uint8_t *)malloc(ep_ctx->cfg.max_sz);
+		if (ep_ctx->buf.data == NULL) {
+			LOG_ERR("ep(0X%x) malloc fail", ep);
+			return -ENOSPC;
 		}
-		
+
 		if (USB_EP_GET_IDX(ep) != 0) {
-			usb0hw_ep_open(USB_EP_GET_IDX(ep_ctx->cfg.addr), 
-			USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN : USB0_DIR_OUT,
+			usb0hw_ep_open(USB_EP_GET_IDX(ep),
+			USB_EP_GET_DIR(ep) ? USB0_DIR_IN : USB0_DIR_OUT,
 					ep_ctx->cfg.type, ep_ctx->cfg.max_sz);
+
+			if (USB_EP_GET_DIR(ep) == USB_EP_DIR_OUT) {
+				usb0hw_read_ep_data(USB_EP_GET_IDX(ep),
+						ep_ctx->buf.data, ep_ctx->cfg.max_sz);
+				ep_ctx->cfg.out_ack = true;
+			}
 			return 0;
 		}
 	}
@@ -1184,7 +1202,7 @@ int usb_dc_ep_disable(const uint8_t ep)
 	}
 
 	LOG_DBG("EP disable: 0x%02x", ep);
-	usb0hw_ep_close(USB_EP_GET_IDX(ep), USB_EP_GET_DIR(ep_ctx->cfg.addr) ? USB0_DIR_IN : USB0_DIR_OUT);
+	usb0hw_ep_close(USB_EP_GET_IDX(ep), USB_EP_GET_DIR(ep) ? USB0_DIR_IN : USB0_DIR_OUT);
 	ep_ctx_reset(USB_EP_GET_IDX(ep));
 
 	if (USB_EP_GET_DIR(ep) == USB_EP_DIR_IN) {
@@ -1556,9 +1574,9 @@ static void usbd_work_handler(struct k_work *item)
 
 static void usbd_retry_timer_expire(struct k_timer *timer)
 {
-	struct tlx_usbd_ep_ctx *ep_ctx = k_timer_user_data_get(timer);
+	uint8_t ep_addr = (uint8_t)(uintptr_t)k_timer_user_data_get(timer);
 
-	submit_usbd_event(USBD_EVT_EP_RETRY, ep_ctx - usbd_ctx.ep_ctx);
+	submit_usbd_event(USBD_EVT_EP_RETRY, ep_addr);
 }
 
 static int usb_init(void)
@@ -1576,8 +1594,14 @@ static int usb_init(void)
 	eps_buf_inf.seg_addr = EPS_BUFFER_OUT_SIZE;
 
 	for (size_t i = 0; i < USBD_EP_TOTAL_CNT; i++) {
-		k_timer_init(&usbd_ctx.ep_ctx[i].retry_timer, usbd_retry_timer_expire, NULL);
-		k_timer_user_data_set(&usbd_ctx.ep_ctx[i].retry_timer, &usbd_ctx.ep_ctx[i]);
+		for (size_t d = 0; d < 2; d++) {
+			uint8_t ep_addr = (uint8_t)(i | (d ? USB_EP_DIR_IN : USB_EP_DIR_OUT));
+
+			k_timer_init(&usbd_ctx.ep_ctx[i][d].retry_timer,
+					usbd_retry_timer_expire, NULL);
+			k_timer_user_data_set(&usbd_ctx.ep_ctx[i][d].retry_timer,
+					(void *)(uintptr_t)ep_addr);
+		}
 	}
 
 	ret = usb_irq_init();
