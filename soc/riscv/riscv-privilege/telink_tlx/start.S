@@ -8,8 +8,8 @@
 #define NDS_MMISC_CTL                0x7d0
 #define NDS_UITB                     0x800
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-    .equ __D25F_IRAM_SIZE,   5 //128KB
-    .equ __D25F_DRAM_SIZE,   2 //96KB
+    .equ __D25F_IRAM_SIZE,   5 //160KB
+    .equ __D25F_DRAM_SIZE,   2 //64KB
     .equ __N22_IRAM_SIZE,    3 //96KB
     .equ __N22_DRAM_SIZE,    2 //64KB
 
