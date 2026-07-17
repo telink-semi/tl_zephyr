@@ -11,6 +11,7 @@
 #include <ext_driver/ext_pm.h>
 #include "rf_common.h"
 #include "flash.h"
+#include "lpc.h"
 #include "stimer.h"
 #include <watchdog.h>
 #include <zephyr/kernel.h>
@@ -29,12 +30,16 @@
 # if TLK_ONLY_BLE_HOST
 	#include "stack/multicore_comm/service/service_d25f.h"
 # endif
-#define ext_crypto_hw_init_enable()   do{ \
-pke_reset(); \
-pke_clk_en(); \
-ske_reset();  \
-ske_clk_en();  \
-}while(0);
+#ifdef CONFIG_EXT_CRYPTO_HW_INIT
+#define ext_crypto_hw_init_enable()   do { \
+	pke_reset(); \
+	pke_clk_en(); \
+	ske_reset();  \
+	ske_clk_en();  \
+} while (0)
+#else
+#define ext_crypto_hw_init_enable()   do {} while (0)
+#endif
 #endif
 
 /* Drivers changes , so should not change castart.s, add external*/

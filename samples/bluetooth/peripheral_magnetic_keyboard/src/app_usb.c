@@ -42,11 +42,31 @@ static const uint8_t hid_report_vendor_defined[] = HID_MOUSE_REPORT_DESC(5);
 
 enum usb_dc_status_code usb_status;
 
-static K_SEM_DEFINE(usb_sem, 1, 1); /* starts off "available" */
+// static K_SEM_DEFINE(usb_sem, 1, 1); /* starts off "available" */
 static void in_ready_cb(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-	k_sem_give(&usb_sem);
+	// k_sem_give(&usb_sem);
+}
+
+static void out_ready_cb(const struct device *dev)
+{
+	uint8_t buf[CONFIG_HID_INTERRUPT_EP_MPS];
+	uint32_t len = 0;
+	int ret;
+
+	ret = hid_int_ep_read(dev, buf, sizeof(buf), &len);
+
+	if (ret == 0 && len > 0) {
+		LOG_HEXDUMP_INF(buf, len, "OUT ep received");
+        if (len == 1) {
+            extern struct gpio_dt_spec cap_led_pin;
+            extern struct gpio_dt_spec num_led_pin;
+
+            gpio_pin_set_dt(&cap_led_pin, (*buf & HID_KBD_LED_CAPS_LOCK));
+            gpio_pin_set_dt(&num_led_pin, (*buf & HID_KBD_LED_NUM_LOCK));
+        }
+	}
 }
 
 /* LED control handler implementation */
@@ -67,6 +87,9 @@ int kbd_set_report(const struct device *dev, struct usb_setup_packet *setup, int
 struct hid_ops kbd_ops = {
 	.set_report = kbd_set_report,
 	.int_in_ready = in_ready_cb,
+    #ifdef CONFIG_ENABLE_HID_INT_OUT_EP
+	.int_out_ready = out_ready_cb,
+    #endif
 };
 
 static void status_cb(enum usb_dc_status_code status, const uint8_t *param)

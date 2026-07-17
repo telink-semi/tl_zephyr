@@ -17,4 +17,11 @@ config BT_ID_FOR_KMD
       This option enables the use of a specific Bluetooth identity for the Keyboard
 	  Mouse Device (KMD) sample application.
 
+config EXT_CRYPTO_HW_INIT
+    bool "Enable external crypto hardware auto initialization"
+    default y
+    help
+      Enable PKE and SKE hardware clock & reset initialization
+      when ext_crypto_hw_init_enable() is invoked.
+
 source "Kconfig.zephyr"
