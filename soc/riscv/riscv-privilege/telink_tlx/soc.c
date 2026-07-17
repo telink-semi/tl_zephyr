@@ -29,6 +29,12 @@
 # if TLK_ONLY_BLE_HOST
 	#include "stack/multicore_comm/service/service_d25f.h"
 # endif
+#define ext_crypto_hw_init_enable()   do{ \
+pke_reset(); \
+pke_clk_en(); \
+ske_reset();  \
+ske_clk_en();  \
+}while(0);
 #endif
 
 /* Drivers changes , so should not change castart.s, add external*/
@@ -633,16 +639,3 @@ static int soc_tlx_mcc_init(void)
 }
 SYS_INIT(soc_tlx_mcc_init, POST_KERNEL, 1);
 #endif
-
-_attribute_ram_code_sec_ void tlk_d25f_to_n22_mode_info(uint8_t mode_flag)
-{
-    volatile uint32_t key = arch_irq_lock();
-
-    uint8_t cmd[8] = {0};
-
-    cmd[0] = TLK_MB_D25F_TO_N22_MODE;
-    cmd[1] = mode_flag;
-
-    mb_send_with_polling(cmd);
-	arch_irq_unlock(key);
-}
