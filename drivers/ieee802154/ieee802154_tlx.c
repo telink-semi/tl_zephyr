@@ -893,7 +893,7 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 			}
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 			rf_mode_init();
-#elif CONFIG_SOC_RISCV_TELINK_TL721X
+#elif CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM_DEVICE
 			rf_zigbee_mode_init();
 #endif
 			rf_set_zigbee_250K_mode();
