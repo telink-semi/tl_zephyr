@@ -22,8 +22,8 @@ jobs:
     - name: Setup Andes toolchain
       run: |
         mkdir ~/nds-gcc
-        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_14.2.0.txz
-        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_14.2.0.txz -C ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f.tar.gz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f.tar.gz -C ~/nds-gcc
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -46,7 +46,7 @@ jobs:
       run: |
         cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh https://github.com/damien0x0023/tl_ble_sdk_zephyr.git 9425e6cf1dc36bdeb6c5fd5b4727c2d1f6ecbcec
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git be3aac58b011b3eabd4a2a64cdf64cfdff2273d7
 
     - name: Build TL721X basic/blinky
       run: |
