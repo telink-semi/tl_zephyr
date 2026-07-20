@@ -316,8 +316,6 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X) && CONFIG_PM
 #include "pm.h"
-/* #include "pm_internal.h"
- */
 #endif
 /**
  * @brief Perform basic initialization at boot.

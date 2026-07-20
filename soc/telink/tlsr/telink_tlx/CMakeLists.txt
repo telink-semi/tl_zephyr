@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Telink Semiconductor
+# Copyright (c) 2024~2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
 if (CONFIG_TELINK_TLX_USB_SWI_DISABLE)
@@ -72,6 +72,8 @@ if(CONFIG_SOC_RISCV_TELINK_TL323X)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention_tl323x.ld)
 elseif(CONFIG_SOC_RISCV_TELINK_TL521X)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention_tl521x.ld)
+elseif(CONFIG_SOC_RISCV_TELINK_TL721X)
+zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention_tl721x.ld)
 else()
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention.ld)
 endif()
@@ -82,6 +84,8 @@ if(CONFIG_SOC_RISCV_TELINK_TL323X)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm_tl323x.ld)
 elseif(CONFIG_SOC_RISCV_TELINK_TL521X)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm_tl521x.ld)
+elseif(CONFIG_SOC_RISCV_TELINK_TL721X)
+zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm_tl721x.ld)
 else()
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm.ld)
 endif()
