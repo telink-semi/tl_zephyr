@@ -31,6 +31,8 @@ SECTION_DATA_PROLOGUE(retention_data,,)
 	. = ALIGN(4);
 	*(.retention_data)
 	*(".retention_data.*")
+	*(.retention_data_ble)
+	*(".retention_data_ble.*")
 
 	PROVIDE (_RETENTION_DATA_VMA_END = .);
 	PROVIDE (_RETENTION_DATA_VMA_START = ADDR(retention_data));
