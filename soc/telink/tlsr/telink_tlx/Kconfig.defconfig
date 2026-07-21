@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Telink Semiconductor
+# Copyright (c) 2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
 if SOC_RISCV_TELINK_TLX
@@ -26,12 +26,14 @@ config NUM_IRQS
 	default 65 if SOC_RISCV_TELINK_TL321X
 	default 77 if SOC_RISCV_TELINK_TL322X
 	default 58 if SOC_RISCV_TELINK_TL323X
+	default 58 if SOC_RISCV_TELINK_TL521X
 
 config MAX_IRQ_PER_AGGREGATOR
 	default 65 if SOC_RISCV_TELINK_TL721X
 	default 65 if SOC_RISCV_TELINK_TL321X
 	default 77 if SOC_RISCV_TELINK_TL322X
 	default 58 if SOC_RISCV_TELINK_TL323X
+	default 58 if SOC_RISCV_TELINK_TL521X
 
 config XIP
 	default n

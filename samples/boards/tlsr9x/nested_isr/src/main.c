@@ -76,8 +76,9 @@ static void low_prio_timer_init(void)
 
 static void show_isr_configuration(void)
 {
+#ifdef STD_GCC
 	uint32_t mmisc_ctl = csr_read(0x7d0);
-
+#endif
 	printk("mmisc_ctl %08x [vector mode %s]\n", mmisc_ctl,
 	       mmisc_ctl & 0x2 ? "enabled" : "disabled");
 

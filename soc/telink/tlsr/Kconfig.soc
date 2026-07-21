@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Nordic Semiconductor ASA
+# Copyright (c) 2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
 choice
@@ -45,6 +45,12 @@ config SOC_RISCV_TELINK_TL323X
 	select SOC_RISCV_TELINK_TLX
 	help
 	  Telink TL323X
+
+config SOC_RISCV_TELINK_TL521X
+	bool "Telink TL521 SoC implementation"
+	select SOC_RISCV_TELINK_TLX
+	help
+	  Telink TL521X
 
 config SOC_RISCV_TELINK_TL721X
 	bool "Telink TL721 SoC implementation"

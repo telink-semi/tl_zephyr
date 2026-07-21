@@ -37,8 +37,10 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
-        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_b91.a$' && exit 1
+        # west blobs fetch hal_telink
+        mkdir -p modules/hal/telink/zephyr/blobs
+        curl -L -o modules/hal/telink/zephyr/blobs/lib_nds_b91.a https://doc.telink-semi.cn/Zephyr/binaries/public/b91_lib/lib_nds_b91_b8fa105b4a65f58e9cf2adc51f42459e69b119bd.a
+        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_nds_b91.a$' && exit 1
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 

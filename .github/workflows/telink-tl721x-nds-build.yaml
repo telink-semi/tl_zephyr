@@ -3,7 +3,9 @@
 
 name: Telink TL721X build examples using Andes GCC
 
-on: pull_request
+# suspend Andes build for TL721X since the mis-matches of toolchains and
+# compile options, and will be re-enabled after the toolchain issue is resolved
+# on: pull_request
 
 jobs:
   telink_build_examples:
@@ -22,8 +24,8 @@ jobs:
     - name: Setup Andes toolchain
       run: |
         mkdir ~/nds-gcc
-        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_14.2.0.txz
-        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_14.2.0.txz -C ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f.tar.gz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f.tar.gz -C ~/nds-gcc
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -46,7 +48,7 @@ jobs:
       run: |
         cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git fdb4b582928016a13138d245b8a1d6943215ef90
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 2488b5b8bd5122f68d087ba2cd5a8f0c74572b8f
 
     - name: Build TL721X basic/blinky
       run: |

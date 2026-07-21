@@ -23,8 +23,10 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: babblesim
       url-base: https://github.com/BabbleSim
+    - name: telink-semi
+      url-base: https://github.com/telink-semi
 
-  group-filter: [-babblesim, -optional]
+  group-filter: [-babblesim, -optional, -hal, -tools, -tee, +telink]
 
   #
   # Please add items below based on alphabetical order
@@ -33,6 +35,8 @@ manifest:
     - name: acpica
       revision: 8d24867bc9c9d81c81eeac59391cda59333affd4
       path: modules/lib/acpica
+      groups:
+        - optional
     - name: babblesim_base
       remote: babblesim
       repo-path: base
@@ -124,13 +128,19 @@ manifest:
     - name: cmsis-dsp
       revision: d80a49b2bb186317dc1db4ac88da49c0ab77e6e7
       path: modules/lib/cmsis-dsp
+      groups:
+        - optional
     - name: cmsis-nn
       revision: e9328d612ea3ea7d0d210d3ac16ea8667c01abdd
       path: modules/lib/cmsis-nn
+      groups:
+        - optional
     - name: cmsis_6
       repo-path: CMSIS_6
       revision: 783317a3072554acbac86cca2ff24928cbf98d30
       path: modules/lib/cmsis_6
+      groups:
+        - optional
     - name: edtt
       revision: b9ca3c7030518f07b7937dacf970d37a47865a76
       path: tools/edtt
@@ -245,12 +255,15 @@ manifest:
     - name: hal_tdk
       revision: 6727477af1e46fa43878102489b9672a9d24e39f
       path: modules/hal/tdk
+      groups:
+        - optional
     - name: hal_telink
       url: https://github.com/telink-semi/hal_telink
-      revision: 14c6149f6cc466c49d81e3b2f7f1e4d8ff6fbbb5
+      revision: 84ea7a15527fca9683af30eb914adb4a32ef65d0
       path: modules/hal/telink
       groups:
         - hal
+        - telink
     - name: hal_ti
       revision: 258652a3ac5d7df68ba8df20e4705c3bd98ede38
       path: modules/hal/ti
@@ -274,12 +287,16 @@ manifest:
     - name: hostap
       path: modules/lib/hostap
       revision: 697fd2cf5cbbd0c5375fc34761b6a9d7489a67d2
+      groups:
+        - optional
     - name: liblc3
       revision: 48bbd3eacd36e99a57317a0a4867002e0b09e183
       path: modules/lib/liblc3
     - name: libmctp
       revision: b97860e78998551af99931ece149eeffc538bdb1
       path: modules/lib/libmctp
+      groups:
+        - optional
     - name: libmetal
       revision: 3e8781aae9d7285203118c05bc01d4eb0ca565a7
       path: modules/hal/libmetal
@@ -293,6 +310,8 @@ manifest:
     - name: loramac-node
       revision: fb00b383072518c918e2258b0916c996f2d4eebe
       path: modules/lib/loramac-node
+      groups:
+        - optional
     - name: lvgl
       revision: 1ed1ddd881c3784049a92bb9fe37c38c6c74d998
       path: modules/lib/gui/lvgl
@@ -319,12 +338,18 @@ manifest:
     - name: nrf_hw_models
       revision: 73a5d5827a94820be65b7d276d28173ec10bab9f
       path: modules/bsim_hw_models/nrf_hw_models
+      groups:
+        - optional
     - name: nrf_wifi
       revision: e35f707a782b7c4c0eb83a3b06ca4e6eb693f29f
       path: modules/lib/nrf_wifi
+      groups:
+        - optional
     - name: open-amp
       revision: 52bb1783521c62c019451cee9b05b8eda9d7425f
       path: modules/lib/open-amp
+      groups:
+        - optional
     - name: openthread
       revision: 3ae741f95e7dfb391dec35c48742862049eb62e8
       path: modules/lib/openthread
@@ -345,6 +370,8 @@ manifest:
       url: https://github.com/telink-semi/tflite-micro-telink.git
       revision: c89ed44791d592f4435c7fa924d2edaa0aa0e071
       path: modules/lib/tflite-micro-telink
+      groups:
+        - telink
     - name: tinycrypt
       revision: 1012a3ebee18c15ede5efc8332ee2fc37817670f
       path: modules/crypto/tinycrypt
@@ -363,6 +390,8 @@ manifest:
     - name: uoscore-uedhoc
       revision: 54abc109c9c0adfd53c70077744c14e454f04f4a
       path: modules/lib/uoscore-uedhoc
+      groups:
+        - optional
     - name: zcbor
       revision: 9b07780aca6fb21f82a241ba386ad9b379809337
       path: modules/lib/zcbor

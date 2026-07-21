@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Telink Semiconductor
+ * Copyright (c) 2024~2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -14,8 +14,7 @@ SECTION_DATA_PROLOGUE(ram_dlm_data,,)
 	. = ALIGN(4);
 	*(.data)
 	*(.sdata)
-	*(.retention_data_ble)
-	*(".retention_data_ble.*")
+
 	PROVIDE (_RAM_DLM_DATA_VMA_END = .);
 	PROVIDE (_RAM_DLM_DATA_VMA_START = ADDR(ram_dlm_data));
 	PROVIDE (_RAM_DLM_DATA_LMA_START = LOADADDR(ram_dlm_data));
@@ -42,9 +41,6 @@ SECTION_DATA_PROLOGUE(ram_dlm_bss,(NOLOAD),)
 SECTION_DATA_PROLOGUE(ram_code_ble,,)
 {
 	. = ALIGN(4);
-	*(.ram_code_ble)
-	*(".ram_code_ble.*")
-	"*tlx_bt.c.obj*"(.ram_code)
 
 	PROVIDE (_RAMCODE_BLE_VMA_END = .);
 	PROVIDE (_RAMCODE_BLE_VMA_START = ADDR(ram_code_ble));
