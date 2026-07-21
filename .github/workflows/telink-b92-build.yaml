@@ -39,7 +39,9 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
+        # west blobs fetch hal_telink
+        mkdir -p modules/hal/telink/zephyr/blobs
+        curl -L -o modules/hal/telink/zephyr/blobs/lib_zephyr_b92.a https://doc.telink-semi.cn/Zephyr/binaries/public/b92_lib/lib_zephyr_b92_006cb102109e03c04115e7abdfef0aaccd2f6b69.a
         west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_b92.a$' && exit 1
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
