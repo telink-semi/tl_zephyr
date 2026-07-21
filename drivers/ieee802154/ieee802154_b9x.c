@@ -649,16 +649,25 @@ ALWAYS_INLINE static void b9x_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(b9x->rx_buffer)) /
-		SYSTEM_TIMER_TICK_1US;
-
-	rx_time -= delta_time;
+	uint32_t rx_time_radio = stimer_get_tick();
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 
 	dma_chn_dis(DMA1);
 	rf_clr_irq_status(FLD_RF_IRQ_RX);
 
 	do {
+		uint8_t length = rf_zigbee_get_payload_len(b9x->rx_buffer);
+
+		if ((length < B9X_PAYLOAD_MIN) || (length > B9X_PAYLOAD_MAX)) {
+			if (b9x->event_handler) {
+				enum ieee802154_rx_fail_reason reason =
+					IEEE802154_RX_FAIL_NOT_RECEIVED;
+
+				b9x->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+					(void *)&reason);
+			}
+			break;
+		}
 		if (!rf_zigbee_packet_crc_ok(b9x->rx_buffer)) {
 			if (b9x->event_handler) {
 				enum ieee802154_rx_fail_reason reason =
@@ -669,19 +678,10 @@ ALWAYS_INLINE static void b9x_rf_rx_isr(const struct device *dev)
 			}
 			break;
 		}
-		uint8_t length = b9x->rx_buffer[B9X_LENGTH_OFFSET];
-
-		if ((length < B9X_PAYLOAD_MIN) || (length > B9X_PAYLOAD_MAX)) {
-			LOG_ERR("Invalid length.\n");
-			if (b9x->event_handler) {
-				enum ieee802154_rx_fail_reason reason =
-					IEEE802154_RX_FAIL_NOT_RECEIVED;
-
-				b9x->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
-			}
-			break;
-		}
+#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+		rx_time_radio -= ZB_RADIO_TIMESTAMP_GET(b9x->rx_buffer);
+		rx_time -= rx_time_radio / SYSTEM_TIMER_TICK_1US;
+#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 		uint8_t *payload = (b9x->rx_buffer + B9X_PAYLOAD_OFFSET);
 
 		if (IS_ENABLED(CONFIG_IEEE802154_RAW_MODE) ||
