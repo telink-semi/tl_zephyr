@@ -887,13 +887,20 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 #endif
 #endif
 			if (tlx->rf_mode_154 == false) {
+#if CONFIG_SOC_RISCV_TELINK_TL721X && !defined(CONFIG_PM_DEVICE)
+				/*
+				 * Clear the RF state left by BLE before switching the shared
+				 * radio to IEEE 802.15.4 mode.
+				 */
+				rf_radio_reset();
+#endif
 				rf_baseband_reset();
 				rf_reset_dma();
 				tlx->rf_mode_154 = true;
 			}
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 			rf_mode_init();
-#elif CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM_DEVICE
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
 			rf_zigbee_mode_init();
 #endif
 			rf_set_zigbee_250K_mode();
