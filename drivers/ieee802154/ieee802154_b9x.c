@@ -944,6 +944,14 @@ static void b9x_csl_rx_work(struct k_work *item)
 
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 
+/* Work handler for deferred energy scan done callback */
+static void b9x_ed_work_handler(struct k_work *work)
+{
+	struct b9x_data *b9x = CONTAINER_OF(work, struct b9x_data, ed_work);
+
+	b9x->ed_done_cb(b9x->ed_dev, b9x->ed_rssi);
+}
+
 /* Driver initialization */
 static int b9x_init(const struct device *dev)
 {
@@ -979,6 +987,8 @@ static int b9x_init(const struct device *dev)
 	b9x->csl_rx_duration_us = 0;
 	b9x->csl_rx_channel = B9X_TX_CH_NOT_SET;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+	k_work_init(&b9x->ed_work, b9x_ed_work_handler);
+	b9x->ed_done_cb = NULL;
 	return 0;
 }
 
@@ -1002,7 +1012,8 @@ static enum ieee802154_hw_caps b9x_get_capabilities(const struct device *dev)
 	ARG_UNUSED(dev);
 	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS |
 		IEEE802154_HW_FILTER |
-		IEEE802154_HW_TX_RX_ACK;
+		IEEE802154_HW_TX_RX_ACK |
+		IEEE802154_HW_ENERGY_SCAN;
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
@@ -1374,13 +1385,47 @@ static int b9x_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 static int b9x_ed_scan(const struct device *dev, uint16_t duration,
 		       energy_scan_done_cb_t done_cb)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(duration);
-	ARG_UNUSED(done_cb);
+	struct b9x_data *b9x = dev->data;
+	int16_t rssi, rssi_max = INT16_MIN;
+	unsigned int t_start;
+	uint32_t scan_time_us;
 
-	/* ed_scan not supported */
+	if (!done_cb) {
+		return -EINVAL;
+	}
 
-	return -ENOTSUP;
+	/* duration is in ms (from OpenThread).
+	 * Clamp to a reasonable range: at least ~1 ms, at most 1 second.
+	 */
+	scan_time_us = (uint32_t)duration * 1000;
+	if (scan_time_us < 1000) {
+		scan_time_us = 1000;
+	}
+	if (scan_time_us > 1000000) {
+		scan_time_us = 1000000;
+	}
+
+	rf_set_rxmode();
+	delay_us(85);
+
+	t_start = stimer_get_tick();
+	do {
+		rssi = (int16_t)rf_get_rssi();
+		if (rssi > rssi_max) {
+			rssi_max = rssi;
+		}
+	} while (!clock_time_exceed(t_start, scan_time_us));
+
+	b9x->ed_rssi = rssi_max;
+	b9x->ed_dev = dev;
+	b9x->ed_done_cb = done_cb;
+
+	/* Defer callback to system workqueue to avoid reentrancy deadlock
+	 * with radio.c's platformRadioProcess event loop.
+	 */
+	k_work_submit(&b9x->ed_work);
+
+	return 0;
 }
 
 /* API implementation: configure */

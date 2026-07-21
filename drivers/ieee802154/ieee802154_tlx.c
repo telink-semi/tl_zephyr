@@ -977,6 +977,14 @@ static void tlx_csl_rx_work(struct k_work *item)
 
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 
+/* Work handler for deferred energy scan done callback */
+static void tlx_ed_work_handler(struct k_work *work)
+{
+	struct tlx_data *tlx = CONTAINER_OF(work, struct tlx_data, ed_work);
+
+	tlx->ed_done_cb(tlx->ed_dev, tlx->ed_rssi);
+}
+
 /* Driver initialization */
 static int tlx_init(const struct device *dev)
 {
@@ -1013,6 +1021,8 @@ static int tlx_init(const struct device *dev)
 	tlx->csl_rx_duration_us = 0;
 	tlx->csl_rx_channel = TLX_TX_CH_NOT_SET;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+	k_work_init(&tlx->ed_work, tlx_ed_work_handler);
+	tlx->ed_done_cb = NULL;
 	return 0;
 }
 
@@ -1036,7 +1046,8 @@ static enum ieee802154_hw_caps tlx_get_capabilities(const struct device *dev)
 	ARG_UNUSED(dev);
 	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS |
 		IEEE802154_HW_FILTER |
-		IEEE802154_HW_TX_RX_ACK;
+		IEEE802154_HW_TX_RX_ACK |
+		IEEE802154_HW_ENERGY_SCAN;
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
@@ -1446,13 +1457,47 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 static int tlx_ed_scan(const struct device *dev, uint16_t duration,
 		       energy_scan_done_cb_t done_cb)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(duration);
-	ARG_UNUSED(done_cb);
+	struct tlx_data *tlx = dev->data;
+	int16_t rssi, rssi_max = INT16_MIN;
+	unsigned int t_start;
+	uint32_t scan_time_us;
 
-	/* ed_scan not supported */
+	if (!done_cb) {
+		return -EINVAL;
+	}
 
-	return -ENOTSUP;
+	/* duration is in ms (from OpenThread).
+	 * Clamp to a reasonable range: at least ~1 ms, at most 1 second.
+	 */
+	scan_time_us = (uint32_t)duration * 1000;
+	if (scan_time_us < 1000) {
+		scan_time_us = 1000;
+	}
+	if (scan_time_us > 1000000) {
+		scan_time_us = 1000000;
+	}
+
+	rf_set_rxmode();
+	delay_us(85);
+
+	t_start = stimer_get_tick();
+	do {
+		rssi = (int16_t)rf_get_rssi();
+		if (rssi > rssi_max) {
+			rssi_max = rssi;
+		}
+	} while (!clock_time_exceed(t_start, scan_time_us));
+
+	tlx->ed_rssi = rssi_max;
+	tlx->ed_dev = dev;
+	tlx->ed_done_cb = done_cb;
+
+	/* Defer callback to system workqueue to avoid reentrancy deadlock
+	 * with radio.c's platformRadioProcess event loop.
+	 */
+	k_work_submit(&tlx->ed_work);
+
+	return 0;
 }
 
 /* API implementation: configure */

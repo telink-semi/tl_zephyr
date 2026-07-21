@@ -112,6 +112,10 @@ struct b9x_data {
 	atomic_t current_pm_lock;
 #endif /* CONFIG_PM_DEVICE */
 	ieee802154_event_cb_t event_handler;
+	struct k_work ed_work;
+	energy_scan_done_cb_t ed_done_cb;
+	const struct device *ed_dev;
+	int16_t ed_rssi;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	struct b9x_enh_ack_table *enh_ack_table;
 	struct b9x_mac_keys *mac_keys;
