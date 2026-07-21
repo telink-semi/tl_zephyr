@@ -662,19 +662,28 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
 #if CONFIG_SOC_RISCV_TELINK_TL321X
-	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
-		SYSTEM_TIMER_TICK_1US;
+	uint32_t rx_time_radio = stimer_get_tick();
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
-	uint32_t delta_time = (rf_bb_timer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
-		BB_TIMER_TICK_1US;
+	uint32_t rx_time_radio = rf_bb_timer_get_tick();
 #endif
-	rx_time -= delta_time;
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 
 	dma_chn_dis(DMA1);
 	rf_clr_irq_status(FLD_RF_IRQ_RX);
 
 	do {
+		uint8_t length = rf_zigbee_get_payload_len(tlx->rx_buffer);
+
+		if ((length < TLX_PAYLOAD_MIN) || (length > TLX_PAYLOAD_MAX)) {
+			if (tlx->event_handler) {
+				enum ieee802154_rx_fail_reason reason =
+					IEEE802154_RX_FAIL_NOT_RECEIVED;
+
+				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+					(void *)&reason);
+			}
+			break;
+		}
 		if (!rf_zigbee_packet_crc_ok(tlx->rx_buffer)) {
 			if (tlx->event_handler) {
 				enum ieee802154_rx_fail_reason reason =
@@ -685,19 +694,15 @@ ALWAYS_INLINE static void tlx_rf_rx_isr(const struct device *dev)
 			}
 			break;
 		}
-		uint8_t length = tlx->rx_buffer[TLX_LENGTH_OFFSET];
-
-		if ((length < TLX_PAYLOAD_MIN) || (length > TLX_PAYLOAD_MAX)) {
-			LOG_ERR("Invalid length.\n");
-			if (tlx->event_handler) {
-				enum ieee802154_rx_fail_reason reason =
-					IEEE802154_RX_FAIL_NOT_RECEIVED;
-
-				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-					(void *)&reason);
-			}
-			break;
-		}
+#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+		rx_time_radio -= ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer);
+#if CONFIG_SOC_RISCV_TELINK_TL321X
+		rx_time_radio /= SYSTEM_TIMER_TICK_1US;
+#elif CONFIG_SOC_RISCV_TELINK_TL721X
+		rx_time_radio /= BB_TIMER_TICK_1US;
+#endif
+		rx_time -= rx_time_radio;
+#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 		uint8_t *payload = (tlx->rx_buffer + TLX_PAYLOAD_OFFSET);
 
 		if (IS_ENABLED(CONFIG_IEEE802154_RAW_MODE) ||
