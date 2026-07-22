@@ -1125,6 +1125,12 @@ RAM_CODE_SECTION_IEEE802154
 static int tlx_cca(const struct device *dev)
 {
 	ARG_UNUSED(dev);
+
+#if CONFIG_SOC_RISCV_TELINK_TL521X
+	/* need to wait driver update */
+	return 0;
+#endif
+
 #if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
 	if (isFirstCcaBeforeTx && isThreadCommissioned) {
 		isFirstCcaBeforeTx = false;
