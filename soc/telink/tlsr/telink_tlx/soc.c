@@ -513,7 +513,7 @@ void soc_early_init_hook(void)
 	wd_32k_stop();
 
 #endif
-    pm_set_dig_module_power_switch(FLD_PD_ZB_EN, PM_POWER_UP);
+
 #if CONFIG_SOC_RISCV_TELINK_TL322X
 #undef N22_FW_DOWNLOAD_FLASH_ADDR
 #define N22_FW_DOWNLOAD_FLASH_ADDR CONFIG_FLASH_BASE_ADDRESS + 0x80000 + 0x13040
