@@ -39,14 +39,14 @@ jobs:
         cd ..
         west init -l zephyr
         west update
-        # west blobs fetch hal_telink
-        mkdir -p modules/hal/telink/zephyr/blobs
-        curl -L -o modules/hal/telink/zephyr/blobs/lib_zephyr_tl321x.a https://doc.telink-semi.cn/Zephyr/binaries/public/tl321x_lib/lib_zephyr_tl321x_061c3f5f79bc8106cde3d4d9e7e95ad812244d23.a
-        curl -L -o modules/hal/telink/zephyr/blobs/lib_zephyr_tl321x_pm.a https://doc.telink-semi.cn/Zephyr/binaries/public/tl321x_lib/lib_zephyr_tl321x_061c3f5f79bc8106cde3d4d9e7e95ad812244d23_pm.a
-        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_tl321x.a$' && exit 1
-        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_tl321x_pm.a$' && exit 1
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
+
+    - name: Fetch Telink BLE SDK
+      run: |
+        cd ../modules/hal/telink/hal_v2
+        chmod +x fetch_sdk.sh
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 5a13315f59a88e2257febff85b65e94bff0cd7e1
 
     - name: Build TL321X samples/basic/blinky
       run: |
