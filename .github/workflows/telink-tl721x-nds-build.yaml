@@ -48,7 +48,7 @@ jobs:
       run: |
         cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 088fca414bbce2d519ff7f79520c6a593b6b9cfb
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 53eb98b32ea79ed7ab38f5daabde0a78a7880cd9
 
     - name: Build TL721X basic/blinky
       run: |
