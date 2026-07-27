@@ -1635,13 +1635,18 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		k_sleep(K_MSEC(1 + (unsigned int)(ScanPostTick - stimer_get_tick()) /
 					   SYSTEM_TIMER_TICK_1MS));
 	}
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
 
-	if (status || rf_zigbee_tx_is_stopped) {
+	if (
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		status || rf_zigbee_tx_is_stopped
+#else
+		0
+#endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
+	) {
 		/* skip 802.15.4 RF TX operation */
 		status = -EIO;
-	} else
-#endif
-	{
+	} else {
 		/* prepare tx buffer */
 		tlx_set_tx_payload(dev, frag->data, frag->len);
 
@@ -1659,11 +1664,12 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
 			k_sleep(K_TIMEOUT_ABS_TICKS(
 				k_ns_to_ticks_near64(net_pkt_timestamp_ns(pkt))));
-		} else
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
-		{
+		} else {
 			delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
 		}
+#else
+		delay_us(CONFIG_IEEE802154_TLX_SET_TXRX_DELAY_US);
+#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 		rf_tx_pkt(tlx->tx_buffer);
 	}
 
