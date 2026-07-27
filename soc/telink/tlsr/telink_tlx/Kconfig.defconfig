@@ -10,7 +10,7 @@ config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32000
 
 config RISCV_VECTORED_MODE
-	default n
+	default y
 
 config RISCV_SOC_INTERRUPT_INIT
 	default y
@@ -106,6 +106,68 @@ config MBEDTLS_CTR_DRBG_ENABLED
 config MBEDTLS_CIPHER_AES_ENABLED
 	default y if MBEDTLS_TEST && TELINK_TLX_MBEDTLS_HW_ACCELERATION
 	select MBEDTLS_AES_ROM_TABLES
+
+# OpenThread DTLS / mbedTLS algorithm reverse configuration.
+# When OpenThread Commissioner / Joiner / CoAPS / TCAT is enabled,
+# automatically pull in the required mbedTLS elliptic curve modules and
+# PSA key types so that mbedTLS' check_config.h prerequisites are met and
+# pk_internal.h can find the extern declaration of psa_to_pk_ecdsa_errors[].
+# Note: MBEDTLS_SSL_* symbols are not Kconfig symbols; they are #define'd
+# in config-tls-generic.h when CONFIG_MBEDTLS_DTLS=y, which OpenThread
+# auto-selects via "select MBEDTLS_DTLS" in subsys/net/l2/openthread/Kconfig.
+config MBEDTLS_ECP_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_ECDH_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_ECDSA_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_ECJPAKE_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS
+
+config MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS
+
+config MBEDTLS_ECP_DP_SECP256R1_ENABLED
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_HEAP_SIZE
+	default 15360 if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	                    OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+	default 6144  if MBEDTLS
+
+# PSA Crypto key type / algorithm wants.
+# Required so that psa_util_internal.h exposes the extern declaration of
+# psa_to_pk_ecdsa_errors[] (guarded by PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY)
+# and check_config.h accepts MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED.
+# Triggered by mbedTLS ECC algorithm symbols (not OT features) so that
+# any path that enables ECC (PEM certificates, OT Commissioner, etc.)
+# automatically exposes the matching PSA key types.
+config PSA_WANT_ALG_ECDSA
+	default y if MBEDTLS_ECDSA_C
+
+config PSA_WANT_ALG_JPAKE
+	default y if MBEDTLS_ECJPAKE_C
+
+config PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY
+	default y if MBEDTLS_ECP_C
+
+config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC
+	default y if MBEDTLS_ECP_C
+
+config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_DERIVE
+	default y if MBEDTLS_ECDH_C || MBEDTLS_ECJPAKE_C
+
+config PSA_WANT_ECC_SECP_R1_256
+	default y if MBEDTLS_ECP_C
 
 # Workaround for not being able to have commas in macro arguments
 DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)

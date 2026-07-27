@@ -22,195 +22,144 @@ LOG_MODULE_REGISTER(bt_cs);
 static struct bt_le_cs_test_cb cs_test_callbacks;
 #endif
 
-struct reassembly_buf_meta_data {
+#define CS_REASSEMBLY_BUF_COUNT 1
+#define CS_REASSEMBLY_BUF_SIZE  1500
+
+struct cs_reassembly_buf {
+	uint8_t data[CS_REASSEMBLY_BUF_SIZE];
+	uint16_t data_len;
 	uint16_t conn_handle;
+	bool in_use;
+	struct bt_conn_le_cs_subevent_result reassembled_result;
+	struct net_buf_simple step_data_buf;
 };
 
+static struct cs_reassembly_buf reassembly_bufs[CS_REASSEMBLY_BUF_COUNT];
+
 static void clear_on_disconnect(struct bt_conn *conn, uint8_t reason);
-
-NET_BUF_POOL_FIXED_DEFINE(reassembly_buf_pool, CONFIG_BT_CHANNEL_SOUNDING_REASSEMBLY_BUFFER_CNT,
-			  CONFIG_BT_CHANNEL_SOUNDING_REASSEMBLY_BUFFER_SIZE,
-			  sizeof(struct reassembly_buf_meta_data), NULL);
-
-static sys_slist_t reassembly_bufs = SYS_SLIST_STATIC_INIT(&reassembly_bufs);
-
-struct bt_conn_le_cs_subevent_result reassembled_result;
 
 BT_CONN_CB_DEFINE(cs_conn_callbacks) = {
 	.disconnected = clear_on_disconnect,
 };
 
-/** @brief Allocates new reassembly buffer identified by the connection handle
- *
- * @param conn_handle Connection handle
- * @return struct net_buf* Reassembly buffer, NULL if allocation fails
- */
-static struct net_buf *alloc_reassembly_buf(uint16_t conn_handle)
+static struct cs_reassembly_buf *alloc_reassembly_buf(uint16_t conn_handle)
 {
-	struct net_buf *buf = net_buf_alloc(&reassembly_buf_pool, K_NO_WAIT);
+	for (int i = 0; i < CS_REASSEMBLY_BUF_COUNT; i++) {
+		if (!reassembly_bufs[i].in_use) {
+			reassembly_bufs[i].in_use = true;
+			reassembly_bufs[i].conn_handle = conn_handle;
+			reassembly_bufs[i].data_len = 0;
+			memset(&reassembly_bufs[i].reassembled_result, 0,
+			       sizeof(reassembly_bufs[i].reassembled_result));
+			reassembly_bufs[i].step_data_buf.data = reassembly_bufs[i].data;
+			reassembly_bufs[i].step_data_buf.__buf = reassembly_bufs[i].data;
+			reassembly_bufs[i].step_data_buf.len = 0;
+			reassembly_bufs[i].step_data_buf.size = CS_REASSEMBLY_BUF_SIZE;
 
-	if (!buf) {
-		LOG_ERR("Failed to allocate new reassembly buffer");
-		return NULL;
+			LOG_DBG("Allocated reassembly buffer %d for conn handle %d", i,
+				conn_handle);
+			return &reassembly_bufs[i];
+		}
 	}
 
-	struct reassembly_buf_meta_data *buf_meta_data =
-		(struct reassembly_buf_meta_data *)buf->user_data;
-
-	buf_meta_data->conn_handle = conn_handle;
-	net_buf_slist_put(&reassembly_bufs, buf);
-
-	LOG_DBG("Allocated new reassembly buffer for conn handle %d", conn_handle);
-	return buf;
+	LOG_ERR("Failed to allocate new reassembly buffer");
+	return NULL;
 }
 
-/** @brief Frees a reassembly buffer
- *
- * @note Takes the ownership of the pointer and sets it to NULL
- *
- * @param buf Double pointer to reassembly buffer
- */
-static void free_reassembly_buf(struct net_buf **buf)
+static void free_reassembly_buf(struct cs_reassembly_buf *buf)
 {
 	if (!buf) {
-		LOG_ERR("NULL double pointer was passed when attempting to free reassembly buffer");
-		return;
-	}
-
-	if (!(*buf)) {
 		LOG_WRN("Attempted double free on reassembly buffer");
 		return;
 	}
 
-	struct reassembly_buf_meta_data *buf_meta_data =
-		(struct reassembly_buf_meta_data *)((*buf)->user_data);
-
-	LOG_DBG("De-allocating reassembly buffer for conn handle %d", buf_meta_data->conn_handle);
-	if (!sys_slist_find_and_remove(&reassembly_bufs, &(*buf)->node)) {
-		LOG_WRN("The buffer was not in the list");
-	}
-
-	net_buf_unref(*buf);
-	*buf = NULL;
+	LOG_DBG("De-allocating reassembly buffer for conn handle %d", buf->conn_handle);
+	buf->in_use = false;
+	buf->conn_handle = 0;
+	buf->data_len = 0;
+	memset(&buf->reassembled_result, 0, sizeof(buf->reassembled_result));
 }
 
-/** @brief Gets the reassembly buffer identified by the connection handle
- *
- * @param conn_handle Connection handle
- * @param allocate Allocates a new reassembly buffer if it's not allocated already
- * @return struct net_buf* Reassembly buffer, NULL if it doesn't exist or failed when allocating new
- */
-static struct net_buf *get_reassembly_buf(uint16_t conn_handle, bool allocate)
+static struct cs_reassembly_buf *get_reassembly_buf(uint16_t conn_handle, bool allocate)
 {
-	sys_snode_t *node;
-
-	SYS_SLIST_FOR_EACH_NODE(&reassembly_bufs, node) {
-		struct net_buf *buf = CONTAINER_OF(node, struct net_buf, node);
-		struct reassembly_buf_meta_data *buf_meta_data =
-			(struct reassembly_buf_meta_data *)(buf->user_data);
-
-		if (buf_meta_data->conn_handle == conn_handle) {
-			return buf;
+	for (int i = 0; i < CS_REASSEMBLY_BUF_COUNT; i++) {
+		if (reassembly_bufs[i].in_use && reassembly_bufs[i].conn_handle == conn_handle) {
+			return &reassembly_bufs[i];
 		}
 	}
 
 	return allocate ? alloc_reassembly_buf(conn_handle) : NULL;
 }
 
-/** @brief Adds step data to a reassembly buffer
- *
- * @param reassembly_buf Reassembly buffer
- * @param data Step data
- * @param data_len Step data length
- * @return true if successful, false if there is insufficient space
- */
-static bool add_reassembly_data(struct net_buf *reassembly_buf, const uint8_t *data,
+static bool add_reassembly_data(struct cs_reassembly_buf *buf, const uint8_t *data,
 				uint16_t data_len)
 {
-	if (data_len > net_buf_tailroom(reassembly_buf)) {
+	if (buf->data_len + data_len > CS_REASSEMBLY_BUF_SIZE) {
 		LOG_ERR("Not enough reassembly buffer space for subevent result");
 		return false;
 	}
 
-	net_buf_add_mem(reassembly_buf, data, data_len);
+	memcpy(buf->data + buf->data_len, data, data_len);
+	buf->data_len += data_len;
+	buf->step_data_buf.len = buf->data_len;
 	return true;
 }
 
-/** @brief Initializes a reassembly buffer from partial step data
- *
- * @note Upon first call, this function also registers the disconnection callback
- *       to ensure any dangling reassembly buffer is freed
- *
- * @param conn_handle Connection handle
- * @param steps Step data
- * @param step_data_len Step data length
- * @return struct net_buf* Pointer to reassembly buffer, NULL if fails to allocate or insert data
- */
-static struct net_buf *start_reassembly(uint16_t conn_handle, const uint8_t *steps,
-					uint16_t step_data_len)
+static struct cs_reassembly_buf *start_reassembly(uint16_t conn_handle, const uint8_t *steps,
+						  uint16_t step_data_len)
 {
-	struct net_buf *reassembly_buf = get_reassembly_buf(conn_handle, true);
+	struct cs_reassembly_buf *buf = get_reassembly_buf(conn_handle, true);
 
-	if (!reassembly_buf) {
+	if (!buf) {
 		LOG_ERR("No buffer allocated for the result reassembly");
 		return NULL;
 	}
 
-	if (reassembly_buf->len) {
+	if (buf->data_len) {
 		LOG_WRN("Over-written incomplete CS subevent results");
 	}
 
-	net_buf_reset(reassembly_buf);
+	buf->data_len = 0;
+	buf->step_data_buf.data = buf->data;
+	buf->step_data_buf.len = 0;
 
-	bool success = add_reassembly_data(reassembly_buf, steps, step_data_len);
+	bool success = add_reassembly_data(buf, steps, step_data_len);
 
-	return success ? reassembly_buf : NULL;
+	return success ? buf : NULL;
 }
 
-/** @brief Adds more step data to reassembly buffer identified by the connection handle
- *
- * @param conn_handle Connection handle
- * @param steps Step data
- * @param step_data_len Step data length
- * @return struct net_buf* Pointer to reassembly buffer, NULL if fails to insert data
- */
-static struct net_buf *continue_reassembly(uint16_t conn_handle, const uint8_t *steps,
-					   uint16_t step_data_len)
+static struct cs_reassembly_buf *continue_reassembly(uint16_t conn_handle, const uint8_t *steps,
+						     uint16_t step_data_len)
 {
-	struct net_buf *reassembly_buf = get_reassembly_buf(conn_handle, false);
+	struct cs_reassembly_buf *buf = get_reassembly_buf(conn_handle, false);
 
-	if (!reassembly_buf) {
+	if (!buf) {
 		LOG_ERR("No reassembly buffer was allocated for this CS procedure, possibly due to "
 			"an out-of-order subevent result continue event");
 		return NULL;
 	}
 
-	if (!reassembly_buf->len) {
+	if (!buf->data_len) {
 		LOG_WRN("Discarded out-of-order partial CS subevent results");
+		free_reassembly_buf(buf);
 		return NULL;
 	}
 
 	if (!step_data_len) {
-		return reassembly_buf;
+		return buf;
 	}
 
-	bool success = add_reassembly_data(reassembly_buf, steps, step_data_len);
+	bool success = add_reassembly_data(buf, steps, step_data_len);
 
-	return success ? reassembly_buf : NULL;
+	return success ? buf : NULL;
 }
 
-/**
- * @brief Disconnect callback to clear any dangling reassembly buffer
- *
- * @param conn Connection
- * @param reason Reason
- */
 static void clear_on_disconnect(struct bt_conn *conn, uint8_t reason)
 {
-	struct net_buf *buf = get_reassembly_buf(conn->handle, false);
+	struct cs_reassembly_buf *buf = get_reassembly_buf(conn->handle, false);
 
 	if (buf) {
-		free_reassembly_buf(&buf);
+		free_reassembly_buf(buf);
 	}
 }
 
@@ -230,14 +179,6 @@ static void invoke_subevent_result_callback(struct bt_conn *conn,
 	{
 		notify_cs_subevent_result(conn, p_result);
 	}
-}
-
-/** @brief Resets reassembly results
- *
- */
-static void reset_reassembly_results(void)
-{
-	memset(&reassembled_result, 0, sizeof(struct bt_conn_le_cs_subevent_result));
 }
 
 /** @brief Converts PCT to a pair of int16_t
@@ -590,7 +531,6 @@ int bt_le_cs_start_test(const struct bt_le_cs_test_param *params)
 	return bt_hci_cmd_send_sync(BT_HCI_OP_LE_CS_TEST, buf, NULL);
 }
 #endif /* CONFIG_BT_CHANNEL_SOUNDING_TEST */
-
 void bt_hci_le_cs_subevent_result(struct net_buf *buf)
 {
 	struct bt_conn *conn = NULL;
@@ -598,7 +538,7 @@ void bt_hci_le_cs_subevent_result(struct net_buf *buf)
 	struct bt_conn_le_cs_subevent_result result;
 	struct bt_conn_le_cs_subevent_result *p_result = &result;
 	struct net_buf_simple step_data_buf;
-	struct net_buf *reassembly_buf = NULL;
+	struct cs_reassembly_buf *reassembly_buf = NULL;
 
 	if (buf->len < sizeof(*evt)) {
 		LOG_ERR("Unexpected end of buffer");
@@ -647,8 +587,8 @@ void bt_hci_le_cs_subevent_result(struct net_buf *buf)
 			goto abort;
 		}
 
-		p_result = &reassembled_result;
-		p_result->step_data_buf = (struct net_buf_simple *)&reassembly_buf->data;
+		p_result = &reassembly_buf->reassembled_result;
+		p_result->step_data_buf = &reassembly_buf->step_data_buf;
 	}
 
 	p_result->header.procedure_counter = sys_le16_to_cpu(evt->procedure_counter);
@@ -675,7 +615,7 @@ void bt_hci_le_cs_subevent_result(struct net_buf *buf)
 		invoke_subevent_result_callback(conn, p_result);
 	}
 
-	if (evt->procedure_done_status != BT_CONN_LE_CS_PROCEDURE_INCOMPLETE) {
+	if (evt->procedure_done_status != BT_HCI_LE_CS_PROCEDURE_DONE_STATUS_PARTIAL) {
 		/* We can now clear the any reassembly buffer allocated for this procedure,
 		 * to avoid code duplication, we're using the abort label to do so
 		 */
@@ -697,15 +637,15 @@ abort:
 
 	reassembly_buf = get_reassembly_buf(conn_handle, false);
 	if (reassembly_buf) {
-		free_reassembly_buf(&reassembly_buf);
+		free_reassembly_buf(reassembly_buf);
+		reassembly_buf = NULL;
 	}
 }
-
 void bt_hci_le_cs_subevent_result_continue(struct net_buf *buf)
 {
 	struct bt_conn *conn = NULL;
 	struct bt_hci_evt_le_cs_subevent_result_continue *evt;
-	struct net_buf *reassembly_buf = NULL;
+	struct cs_reassembly_buf *reassembly_buf = NULL;
 	uint16_t conn_handle;
 
 	if (buf->len < sizeof(*evt)) {
@@ -739,28 +679,36 @@ void bt_hci_le_cs_subevent_result_continue(struct net_buf *buf)
 		goto abort;
 	}
 
-	reassembled_result.header.procedure_done_status = evt->procedure_done_status;
-	reassembled_result.header.subevent_done_status = evt->subevent_done_status;
-	reassembled_result.header.procedure_abort_reason = evt->procedure_abort_reason;
-	reassembled_result.header.subevent_abort_reason = evt->subevent_abort_reason;
+	reassembly_buf->reassembled_result.header.procedure_done_status =
+		evt->procedure_done_status;
+	reassembly_buf->reassembled_result.header.subevent_done_status = evt->subevent_done_status;
+	reassembly_buf->reassembled_result.header.procedure_abort_reason =
+		evt->procedure_abort_reason;
+	reassembly_buf->reassembled_result.header.subevent_abort_reason =
+		evt->subevent_abort_reason;
 
-	if (evt->num_antenna_paths != reassembled_result.header.num_antenna_paths) {
+	if (evt->num_antenna_paths != reassembly_buf->reassembled_result.header.num_antenna_paths) {
 		LOG_WRN("Received inconsistent number of antenna paths from the controller: %d, "
 			"previous number was: %d",
-			evt->num_antenna_paths, reassembled_result.header.num_antenna_paths);
+			evt->num_antenna_paths,
+			reassembly_buf->reassembled_result.header.num_antenna_paths);
 	}
 
 	if (evt->subevent_done_status == BT_HCI_LE_CS_SUBEVENT_DONE_STATUS_ABORTED &&
-	    reassembled_result.header.num_steps_reported < reassembled_result.header.abort_step) {
-		reassembled_result.header.abort_step = reassembled_result.header.num_steps_reported;
+	    reassembly_buf->reassembled_result.header.num_steps_reported <
+		    reassembly_buf->reassembled_result.header.abort_step) {
+		reassembly_buf->reassembled_result.header.abort_step =
+			reassembly_buf->reassembled_result.header.num_steps_reported;
 	}
 
-	reassembled_result.header.num_steps_reported += evt->num_steps_reported;
+	reassembly_buf->reassembled_result.header.num_steps_reported += evt->num_steps_reported;
 
 	if (evt->subevent_done_status != BT_HCI_LE_CS_SUBEVENT_DONE_STATUS_PARTIAL) {
-		invoke_subevent_result_callback(conn, &reassembled_result);
-		net_buf_reset(reassembly_buf);
-		reset_reassembly_results();
+		invoke_subevent_result_callback(conn, &reassembly_buf->reassembled_result);
+		reassembly_buf->data_len = 0;
+		net_buf_simple_reset(&reassembly_buf->step_data_buf);
+		memset(&reassembly_buf->reassembled_result, 0,
+		       sizeof(reassembly_buf->reassembled_result));
 	}
 
 	if (evt->procedure_done_status != BT_HCI_LE_CS_PROCEDURE_DONE_STATUS_PARTIAL) {
@@ -770,7 +718,8 @@ void bt_hci_le_cs_subevent_result_continue(struct net_buf *buf)
 			goto abort;
 		}
 
-		free_reassembly_buf(&reassembly_buf);
+		free_reassembly_buf(reassembly_buf);
+		reassembly_buf = NULL;
 	}
 
 	if (conn) {
@@ -787,7 +736,8 @@ abort:
 	}
 
 	if (reassembly_buf) {
-		free_reassembly_buf(&reassembly_buf);
+		free_reassembly_buf(reassembly_buf);
+		reassembly_buf = NULL;
 	}
 }
 
@@ -1242,11 +1192,11 @@ void bt_hci_le_cs_procedure_enable_complete(struct net_buf *buf)
 	}
 
 	if (evt->state == BT_HCI_OP_LE_CS_PROCEDURES_DISABLED) {
-		struct net_buf *reassembly_buf = get_reassembly_buf(conn->handle, false);
+		struct cs_reassembly_buf *reassembly_buf = get_reassembly_buf(conn->handle, false);
 
 		if (reassembly_buf) {
 			LOG_WRN("De-allocating a dangling reassembly buffer");
-			free_reassembly_buf(&reassembly_buf);
+			free_reassembly_buf(reassembly_buf);
 		}
 	}
 
@@ -1295,11 +1245,12 @@ void bt_hci_le_cs_test_end_complete(struct net_buf *buf)
 		return;
 	}
 
-	struct net_buf *reassembly_buf = get_reassembly_buf(BT_HCI_LE_CS_TEST_CONN_HANDLE, false);
+	struct cs_reassembly_buf *reassembly_buf =
+		get_reassembly_buf(BT_HCI_LE_CS_TEST_CONN_HANDLE, false);
 
 	if (reassembly_buf) {
 		LOG_WRN("De-allocating a dangling reassembly buffer");
-		free_reassembly_buf(&reassembly_buf);
+		free_reassembly_buf(reassembly_buf);
 	}
 
 	if (cs_test_callbacks.le_cs_test_end_complete) {

@@ -1,7 +1,9 @@
 /*
+ * Channel Sounding RAS Reflector port for ot_ble_test.
+ * Adapted from samples/bluetooth/channel_sounding/connected_cs/reflector.
+ *
  * Copyright (c) 2024 Nordic Semiconductor ASA
  * Copyright (c) 2025 Telink Semiconductor
- *
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,6 +12,11 @@
 #include <zephyr/bluetooth/cs.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/settings/settings.h>
+
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(ot_ble_cs, LOG_LEVEL_INF);
 
 #define RAS_DBG 0
 
@@ -18,14 +25,6 @@
 #else
 #define RAS_PRINTK(...)
 #endif
-
-/*
- * Architecture:
- * - RAS GATT service is completely implemented in Zephyr using native Zephyr GATT API.
- * - CS physical layer (LL/PHY/RTT) is handled by Telink controller.
- * - RAS protocol (GATT characteristics, Control Point commands, notify) is handled
- *   completely by Zephyr application code.
- */
 
 /* RAS Service UUIDs */
 #define BT_UUID_RAS_SERVICE_VAL          0x185B
@@ -86,13 +85,6 @@ static uint16_t latest_procedure_counter;
 #define CS_CONFIG_ID     0
 #define NUM_MODE_0_STEPS 1
 
-/* Semaphores */
-static K_SEM_DEFINE(sem_remote_capabilities_obtained, 0, 1);
-static K_SEM_DEFINE(sem_config_created, 0, 1);
-static K_SEM_DEFINE(sem_cs_security_enabled, 0, 1);
-static K_SEM_DEFINE(sem_procedure_done, 0, 1);
-static K_SEM_DEFINE(sem_connected, 0, 1);
-
 /* Connection */
 static struct bt_conn *connection;
 
@@ -102,7 +94,7 @@ static struct bt_conn *connection;
 #define RAS_SUBEVENT_HEADER_LEN 8
 #define RAS_SEG_HEADER_LEN      1
 
-#define RAS_PROCEDURE_MAX_SIZE 2000
+#define RAS_PROCEDURE_MAX_SIZE 1000
 
 #define RAS_PROCEDURE_SLOTS 1
 
@@ -121,16 +113,6 @@ static bool ras_first_subevent;
 
 static int8_t ras_selected_tx_power;
 static uint8_t ras_seg_counter;
-
-/* Advertising */
-static const char sample_str[] = "CS RAS Reflector";
-
-static const struct bt_data ad[] = {
-	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-	BT_DATA_BYTES(BT_DATA_UUID16_SOME, BT_UUID_RAS_SERVICE_VAL & 0xFF,
-		      (BT_UUID_RAS_SERVICE_VAL >> 8) & 0xFF),
-	BT_DATA(BT_DATA_NAME_COMPLETE, sample_str, sizeof(sample_str) - 1),
-};
 
 /* Forward declaration - ras_attrs used by subevent_result_cb and GATT callbacks */
 static struct bt_gatt_attr ras_attrs[];
@@ -229,6 +211,7 @@ static uint16_t ras_convert_step_data(uint8_t *buf, struct bt_conn_le_cs_subeven
 
 	return (uint16_t)(wptr - buf);
 }
+
 static uint16_t ras_build_subevent_data(uint8_t *buf, struct bt_conn_le_cs_subevent_result *result,
 					bool is_first)
 {
@@ -252,7 +235,7 @@ static uint16_t ras_build_subevent_data(uint8_t *buf, struct bt_conn_le_cs_subev
 }
 
 /* RAS data sending with work queue */
-#define MAX_RAS_DATA_SIZE  2000
+#define MAX_RAS_DATA_SIZE  1000
 #define RAS_CHUNK_BUF_SIZE 248
 
 static uint8_t ras_work_buf[MAX_RAS_DATA_SIZE];
@@ -338,7 +321,7 @@ static void ras_notify_with_frag(struct bt_conn *conn, const struct bt_gatt_attr
 }
 
 /* CS subevent result */
-static uint8_t ras_subevent_buf[2000];
+static uint8_t ras_subevent_buf[1000];
 
 static void subevent_result_cb(struct bt_conn *conn, struct bt_conn_le_cs_subevent_result *result)
 {
@@ -414,7 +397,6 @@ static void subevent_result_cb(struct bt_conn *conn, struct bt_conn_le_cs_subeve
 			RAS_PRINTK("RAS: notified Data Ready procedure=%u\n",
 				   latest_procedure_counter);
 		}
-		k_sem_give(&sem_procedure_done);
 	}
 }
 
@@ -540,63 +522,61 @@ static struct bt_gatt_cb gatt_callbacks = {
 	.att_mtu_updated = mtu_updated,
 };
 
-/* Connection callbacks */
-static void connected_cb(struct bt_conn *conn, uint8_t err)
+/* CS default settings work */
+static void cs_set_default_settings_work_handler(struct k_work *work)
 {
-	char addr[BT_ADDR_LE_STR_LEN];
-	int sec_err;
+	const struct bt_le_cs_set_default_settings_param default_settings = {
+		.enable_initiator_role = false,
+		.enable_reflector_role = true,
+		.cs_sync_antenna_selection = BT_LE_CS_ANTENNA_SELECTION_OPT_REPETITIVE,
+		.max_tx_power = BT_HCI_OP_LE_CS_MAX_MAX_TX_POWER,
+	};
+	int err;
 
-	(void)bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
-	printk("Connected to %s (err 0x%02X)\n", addr, err);
-
-	__ASSERT(connection == NULL, "Unexpected connected callback");
-
-	if (err) {
-		bt_conn_unref(conn);
-		connection = NULL;
+	if (!connection) {
+		printk("CS: no connection, skip default settings\n");
 		return;
 	}
 
-	connection = bt_conn_ref(conn);
-
-	static struct bt_gatt_exchange_params mtu_exchange_params;
-
-	mtu_exchange_params.func = mtu_exchange_cb;
-	err = bt_gatt_exchange_mtu(connection, &mtu_exchange_params);
+	err = bt_le_cs_set_default_settings(connection, &default_settings);
 	if (err) {
-		printk("MTU exchange failed (err %d)\n", err);
+		printk("Failed to configure default CS settings (err %d)\n", err);
+	} else {
+		printk("CS default settings configured (reflector role)\n");
 	}
-
-	sec_err = bt_conn_set_security(connection, BT_SECURITY_L2);
-	if (sec_err) {
-		printk("Failed to request security (err %d)\n", sec_err);
-		bt_conn_disconnect(connection, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
-		bt_conn_unref(connection);
-		connection = NULL;
-		return;
-	}
-
-	k_sem_give(&sem_connected);
 }
 
-static void disconnected_cb(struct bt_conn *conn, uint8_t reason)
-{
-	printk("Disconnected (reason 0x%02X)\n", reason);
-	bt_conn_unref(conn);
-	connection = NULL;
-}
+static struct k_work cs_set_default_settings_work;
 
+/* CS callbacks */
 static void remote_capabilities_cb(struct bt_conn *conn, struct bt_conn_le_cs_capabilities *params)
 {
 	ARG_UNUSED(params);
 	printk("CS capability exchange completed.\n");
-	k_sem_give(&sem_remote_capabilities_obtained);
 }
 
 static void config_created_cb(struct bt_conn *conn, struct bt_conn_le_cs_config *config)
 {
 	printk("CS config creation complete. ID: %d\n", config->id);
-	k_sem_give(&sem_config_created);
+}
+
+static void security_enabled_cb(struct bt_conn *conn)
+{
+	printk("CS security enabled.\n");
+	k_work_submit(&cs_set_default_settings_work);
+}
+
+static void procedure_enabled_cb(struct bt_conn *conn,
+				 struct bt_conn_le_cs_procedure_enable_complete *params)
+{
+	printk("CS procedures %s, selected_tx_power=%d dBm\n",
+	       params->state ? "enabled" : "disabled", params->selected_tx_power);
+
+	if (params->selected_tx_power != 0x7F) {
+		ras_selected_tx_power = params->selected_tx_power;
+	} else {
+		ras_selected_tx_power = 0;
+	}
 }
 
 static void security_changed_cb(struct bt_conn *conn, bt_security_t level, enum bt_security_err err)
@@ -618,33 +598,12 @@ static void pairing_failed_cb(struct bt_conn *conn, enum bt_security_err reason)
 	printk("Pairing failed: reason %d\n", reason);
 }
 
-static void security_enabled_cb(struct bt_conn *conn)
-{
-	printk("CS security enabled.\n");
-	k_sem_give(&sem_cs_security_enabled);
-}
-
-static void procedure_enabled_cb(struct bt_conn *conn,
-				 struct bt_conn_le_cs_procedure_enable_complete *params)
-{
-	printk("CS procedures %s, selected_tx_power=%d dBm\n",
-	       params->state ? "enabled" : "disabled", params->selected_tx_power);
-
-	if (params->selected_tx_power != 0x7F) {
-		ras_selected_tx_power = params->selected_tx_power;
-	} else {
-		ras_selected_tx_power = 0;
-	}
-}
-
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 	.pairing_complete = pairing_complete_cb,
 	.pairing_failed = pairing_failed_cb,
 };
 
-BT_CONN_CB_DEFINE(conn_callbacks) = {
-	.connected = connected_cb,
-	.disconnected = disconnected_cb,
+BT_CONN_CB_DEFINE(conn_cs_callbacks) = {
 	.security_changed = security_changed_cb,
 	.le_cs_remote_capabilities_available = remote_capabilities_cb,
 	.le_cs_config_created = config_created_cb,
@@ -653,62 +612,62 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.le_cs_subevent_data_available = subevent_result_cb,
 };
 
-/* Main */
-int main(void)
+/* Public API */
+void cs_reflector_init(void)
 {
 	int err;
 
-	RAS_PRINTK("Starting CS RAS Reflector Demo (Zephyr GATT)\n");
+	RAS_PRINTK("CS RAS Reflector init\n");
 
 	k_work_init(&ras_send_work, ras_send_work_handler);
-
-	err = bt_enable(NULL);
-	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
-		return 0;
-	}
-
-	/* Load bonded keys from flash so reconnects skip re-pairing. */
-	if (IS_ENABLED(CONFIG_SETTINGS)) {
-		settings_load();
-	}
+	k_work_init(&cs_set_default_settings_work, cs_set_default_settings_work_handler);
 
 	bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
 	bt_gatt_cb_register(&gatt_callbacks);
 
-	printk("Bluetooth initialized\n");
-
 	err = bt_gatt_service_register(&ras_service);
 	if (err) {
-		RAS_PRINTK("RAS service register failed (err %d)\n", err);
-		return 0;
+		printk("RAS service register failed (err %d)\n", err);
+		return;
 	}
-	RAS_PRINTK("RAS service registered (Zephyr GATT)\n");
+	RAS_PRINTK("RAS service registered\n");
+}
 
-	err = bt_le_adv_start(BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_1,
-					      BT_GAP_ADV_FAST_INT_MAX_1, NULL),
-			      ad, ARRAY_SIZE(ad), NULL, 0);
+void cs_reflector_on_connected(struct bt_conn *conn, uint8_t err)
+{
+	int sec_err;
+
 	if (err) {
-		printk("Advertising failed to start (err %d)\n", err);
-		return 0;
+		return;
 	}
-	printk("Advertising started as '%s'\n", sample_str);
 
-	k_sem_take(&sem_connected, K_FOREVER);
+	if (connection) {
+		bt_conn_unref(connection);
+		connection = NULL;
+	}
 
-	k_sem_take(&sem_cs_security_enabled, K_FOREVER);
+	connection = bt_conn_ref(conn);
 
-	const struct bt_le_cs_set_default_settings_param default_settings = {
-		.enable_initiator_role = false,
-		.enable_reflector_role = true,
-		.cs_sync_antenna_selection = BT_LE_CS_ANTENNA_SELECTION_OPT_REPETITIVE,
-		.max_tx_power = BT_HCI_OP_LE_CS_MAX_MAX_TX_POWER,
-	};
+	static struct bt_gatt_exchange_params mtu_exchange_params;
 
-	err = bt_le_cs_set_default_settings(connection, &default_settings);
+	mtu_exchange_params.func = mtu_exchange_cb;
+	err = bt_gatt_exchange_mtu(connection, &mtu_exchange_params);
 	if (err) {
-		printk("Failed to configure default CS settings (err %d)\n", err);
+		printk("MTU exchange failed (err %d)\n", err);
 	}
 
-	return 0;
+	sec_err = bt_conn_set_security(connection, BT_SECURITY_L2);
+	if (sec_err) {
+		printk("Failed to request security (err %d)\n", sec_err);
+	}
+}
+
+void cs_reflector_on_disconnected(struct bt_conn *conn)
+{
+	if (connection) {
+		bt_conn_unref(connection);
+		connection = NULL;
+	}
+	ras_first_subevent = false;
+	ras_sending = false;
 }

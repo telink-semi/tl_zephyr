@@ -1666,3 +1666,17 @@ otError otPlatRadioSetChannelMaxTransmitPower(otInstance *aInstance, uint8_t aCh
 
 	return OT_ERROR_NONE;
 }
+
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+
+void ot_radio_workq_thread_suspend(void)
+{
+	k_thread_suspend(&ot_work_q.thread);
+}
+
+void ot_radio_workq_thread_resume(void)
+{
+	k_thread_resume(&ot_work_q.thread);
+}
+
+#endif
