@@ -1,0 +1,14 @@
+mainmenu "Telink DTM HCI Bridge Sample"
+
+config DTM_HCI_BAUDRATE
+	int "HCI UART baudrate"
+	default 115200
+	help
+	  Baudrate for the HCI UART transport used to communicate
+	  with the host (upper tester).
+
+module = DTM_HCI_UART_TRANSPORT
+module-str = "DTM HCI UART transport"
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
