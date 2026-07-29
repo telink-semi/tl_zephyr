@@ -45,17 +45,17 @@ sudo apt upgrade
 Hardware and software requirements to prepare before running the SDK.
 |Hardware|Description|
 |-|-|
-|PC|Windows 10/11 and Linux distro as ubuntu 24.04 LTS|
+|PC|Linux distro as ubuntu 24.04 LTS|
 |Development board|Select a suitable development board according to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md), e.g. TL323X Evaluation Kit in this guide.|
-|Programmer|Programmer (V1~ V3) is recommended|
-|USB cable|Connects the PC and the programmer|
-|Dupont wires|Connect the development board and the programmer|
+|Programmer|Programmer V5|
+|USB cable|Connects the PC and the Programmer|
+|Dupont wires|Connect the development board and the Programmer|
 
 |Software|Description|
 |-|-|
 |IDE|Visual Studio Code (VSCode) is recommended|
 |Toolchain| RISC-V 64-bit Zephyr SDK Toolchain |
-|Burning Tool | [Telink BDT](https://doc.telink-semi.cn/tools/bdt/Windows/BDT.zip) (Burning and Debugging tool) |
+|Burning Tool | [Telink BDT for Linux](https://doc.telink-semi.cn/tools/bdt/Linux/BDT_Linux.zip) (Burning and Debugging tool) |
 |SDK|[Telink Zephyr SDK](https://github.com/telink-semi/zephyr)  |
 
 
@@ -109,27 +109,28 @@ The current minimum required versions for the main dependencies are:
 
 [west](https://docs.zephyrproject.org/latest/develop/west/index.html#west) is
 Zephyr's multi-repository meta-tool.
-Install it with `pip` and make sure
-`~/.local/bin` is on your `PATH`:
 
-```bash
-pip3 install --user -U west
-echo 'export PATH=~/.local/bin:"$PATH"' >> ~/.bashrc
-source ~/.bashrc
-```
+1. Create a new virtual environment:
 
-Confirm that `~/.local/bin` is in your `$PATH`:
+   ```bash
+   python3 -m venv ~/zephyrproject/.venv
+   ```
 
-```bash
-which west
-```
+2. Activate the virtual environment:
 
-> **Note**
-> The upstream Zephyr Getting Started Guide recommends a Python virtual
-> environment. The Telink workflow above installs west into the user site for
-> simplicity, matching the **Telink Matter Developer Guide**. If you prefer an
-> isolated environment, create one with `python3 -m venv ~/zephyrproject/.venv`
-> and `source ~/zephyrproject/.venv/bin/activate` before installing west.
+   ```bash
+   source ~/zephyrproject/.venv/bin/activate
+   ```
+   Once activated your shell will be prefixed with `(.venv)`. The virtual environment can be deactivated at any time by running `deactivate`.
+
+   > **Note**
+   > Remember to activate the virtual environment every time you start a new terminal session before working with Zephyr. If you don’t, commands such as west will not be found, or may run against a different Python environment, leading to confusing errors.
+
+3. Install west:
+
+   ```bash
+   pip3 install west
+   ```
 
 ---
 
@@ -166,7 +167,7 @@ The Telink-specific changes live on the `release-v1.0-v4.1-branch` branch.
 3. Install Zephyr's Python dependencies:
 
    ```bash
-   pip3 install --user -r ~/zephyrproject/zephyr/scripts/requirements.txt
+   pip3 install -r ~/zephyrproject/zephyr/scripts/requirements.txt
    ```
 
 4. Add the Telink remote and check out the Telink `release-v1.0-v4.1-branch` branch:
@@ -268,7 +269,7 @@ SoCs are RISC-V based, so only the `riscv64-zephyr-elf` toolchain is required.
    `~/zephyr-sdk-0.17.0`):
 
    ```bash
-   tar xvf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz ~/zephyr-sdk-0.17.0
+   tar -xvf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C ~/
    ```
 
    The SDK may be installed in any of the following recommended paths:
@@ -390,9 +391,9 @@ developer handbook for the exact TX/RX/GND pinout of your board.
 ## Install the Flashing Tool (BDT)
 
 Telink Burning Debug Tool (BDT) is the official flasher for Telink SoCs.
-It is available for both Windows and Linux. This guide use Windows BDT only.
+It is available for both Windows and Linux. This guide use Linux BDT only.
 
-### Windows
+<!-- ### Windows -->
 
 <!-- Download BDT from the Telink wiki and extract it to a local folder:
 
@@ -411,7 +412,7 @@ your programmer hardware:
   TC321X. On first use, click the **Install drv** button inside TGui to
   install the USB driver, then click **Refresh** to enumerate the board. -->
 
-  - **`Telink BDT.exe`** (release V5.9.x) — the classic GUI. Used with an
+  <!-- - **`Telink BDT.exe`** (release V5.9.x) — the classic GUI. Used with an
   external **Burning EVK V1.0–V3.0** (SWS interface). Supports chips:TL323X (V5.9.0+), TL721X.
 
   - BDT (Windows): <https://doc.telink-semi.cn/tools/bdt/Windows/BDT.zip>
@@ -420,7 +421,7 @@ your programmer hardware:
 > If `Telink BDT.exe` fails to open, the Microsoft Visual C++ 2013 runtime
 > is missing. Copy the `msvcr120.dll` from the bundled `msvcr120/` folder
 > to `C:\Windows\System32` (32-bit Windows) or `C:\Windows\SysWOW64`
-> (64-bit Windows).
+> (64-bit Windows). -->
 
 <!-- The detailed flashing procedures are described in
 [Option A: Windows (BDT GUI)](#option-a-windows-bdt-gui) (Telink BDT, EVK
@@ -449,6 +450,53 @@ The package contains two sub-packages — choose the one that matches your
 The CLI steps in [Option B](#option-b-linux-linuxbdt-cli) below use the
 `bdt` tool from the first package. If your board requires TGui-BDT (e.g.
 TL322X, TL323X), refer to the documentation bundled with the TGui package. -->
+
+### Linux (Ubuntu 24.04)
+
+This guide uses **TGui-BDT** to flash the **TL323X**.
+
+1. **Install the required dependencies:**
+
+   ```bash
+   sudo apt update
+
+   sudo apt install -y \
+       libgtk-3-dev \
+       libusb-1.0-0-dev
+   ```
+
+2. **Create a directory for the BDT tools:**
+
+   ```bash
+   mkdir -p ~/tools/telink-bdt
+   ```
+
+3. **Download and extract the Linux BDT package.**
+
+   Download [BDT_Linux.zip](https://doc.telink-semi.cn/tools/bdt/Linux/BDT_Linux.zip)
+   to `~/Downloads`, then run:
+
+   ```bash
+   cd ~/Downloads
+   unzip BDT_Linux.zip -d ~/tools/telink-bdt/
+   ```
+
+   The extracted `BDT_Linux` directory contains both the `TGui-BDT` and
+   `Telink-BDT` packages.
+
+4. **Extract TGui-BDT:**
+
+   ```bash
+   cd ~/tools/telink-bdt/BDT_Linux/
+   tar -xzf TGui-BDT-Linux-V1.0.2.tar.gz -C ~/tools/telink-bdt/
+   ```
+
+5. **Launch TGui:**
+
+   ```bash
+   cd ~/tools/telink-bdt/TGui-BDT-Linux-V1.0.2/
+   sudo ./TGui
+   ```
 
 ---
 
@@ -492,18 +540,18 @@ and a USB hub with enough ports.
 > `B92_3V3` (3.3 V). -->
 
 > **Note — Chip-to-BDT name mapping**
-> Each SoC family uses a slightly different name in BDT. On Windows
-> `Telink BDT.exe` recognise the GUI chip names below.
+> Each SoC family uses a slightly different name in BDT. On Linux
+> `TGui` recognise the GUI chip names below.
 >
-> | Board target      | BDT GUI chip selection | Notes                              |
-> | ----------------- | ---------------------- | ---------------------------------- |
-> | `tl3238x`         | `TL323X`               | Windows: BDT V5.9.0+ (EVK mode)    |
->
+> | Board target      | BDT GUI chip selection |
+> | ----------------- | ---------------------- |
+> | `tl3238x`         | `TL323X`               |
+<!-- >
 > `Telink BDT.exe` supports them in EVK mode
 > (Burning EVK V1–V3) from V5.8.4 / V5.9.0 onwards.
 
 Choose the flashing procedure that matches your host OS and programmer
-hardware:
+hardware: -->
 
 <!-- - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
   [Option A: Windows (BDT GUI)](#option-a-windows-bdt-gui)
@@ -519,10 +567,10 @@ hardware:
 
 ### Option A: Windows (BDT GUI) -->
 
-  - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
-  [Windows (BDT GUI)](#windows-bdt-gui)
+  <!-- - **Windows** (all supported chips, external Burning EVK V1.0–V3.0) →
+  [Windows (BDT GUI)](#windows-bdt-gui) -->
 
-### Windows (BDT GUI)
+<!-- ### Windows (BDT GUI) -->
 
 <!-- > Covers all supported chips (B91, B92, TL321X, TL322X, TL323X, TL721X) with
 > an external **Burning EVK V1.0–V3.0**. TL322X requires BDT V5.8.4 or later;
@@ -530,7 +578,7 @@ hardware:
 > V4.0 and you prefer the TGui workflow, see
 > [Option A2](#option-a2-windows-tgui-tl322x--tl323x). -->
 
-This flash sample is implemented for the TL323X platform.
+<!-- This flash sample is implemented for the TL323X platform.
 
 1. **Connect to Hardware.** Before using the BDT tool, connect the PC, programmer, and target board as follows:
    - **PC ↔ Programmer**: Connect them using a USB cable. If the green indicator LED on the programmer stays solid, the programmer has been successfully recognized by the PC.
@@ -550,7 +598,7 @@ This flash sample is implemented for the TL323X platform.
 
    If the EVK is connected successfully, the EVK device information appears in the window title bar.
 
-   ![Launch BDT](figures/Launch_BDT.png)
+   ![Launch BDT](figures/Launch_BDT.png) -->
 
 <!-- 4. **Select the chip.** From the chip-selection drop-down, choose the entry
    that matches your board (see the chip-mapping table above), e.g.
@@ -559,7 +607,7 @@ This flash sample is implemented for the TL323X platform.
    > B92 has two variants — `B92_3V3` (3.3 V, used by the TLSR9528A EVB) and
    > `B92_1V8` (1.8 V). Pick the one that matches your board voltage. -->
 
-   4. **Select the chip.** From the chip-selection drop-down, choose the entry
+   <!-- 4. **Select the chip.** From the chip-selection drop-down, choose the entry
    that matches your board `TL323X` for TL3238X.
    ![Select chip](figures/Select_Chip.png)
 
@@ -575,7 +623,7 @@ This flash sample is implemented for the TL323X platform.
    boards with 2 MB external flash the last 8 KB is reserved for SoC data, so
    the maximum erasable area is 2040 KB.
 
-   ![Set flash erase size](figures/Set_Flash_Erase_Size.png)
+   ![Set flash erase size](figures/Set_Flash_Erase_Size.png) -->
 
 <!-- 7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
    flash protection before erase/download for B91/B92/TL321X/TL721X. Since
@@ -584,7 +632,7 @@ This flash sample is implemented for the TL323X platform.
    auto-unlock mode) before proceeding. The **Flash info** button shows the
    current MID, UID, status and lock address. -->
 
-   7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
+   <!-- 7. **Unlock the flash (if prompted).** Since BDT V5.7.8 the tool warns about
    flash protection before erase/download for TL323X. Since
    V5.7.9 a **manual/auto unlock** toggle button is available on the toolbar.
    If you see a *flash is locked* warning, click the **Unlock** button (or set
@@ -638,7 +686,8 @@ For more BDT commands and options, refer to the documentation in the
      ![firmware upgrade](figures/Update_BDT_firmware.png)
    3. *Not Activate* - Send **Activate** Command to the chip.
 
-      ![pre activate](figures/Pre_Activate.png)
+      ![pre activate](figures/Pre_Activate.png) -->
+
 <!-- ### Option A2: Windows (TGui, TL322X / TL323X)
 
 An alternative to [Option A](#option-a-windows-bdt-gui) for **TL322X** and
@@ -814,6 +863,42 @@ the `Apps/app1/cmd_tool/doc/` folder of the TGui-BDT package.
 > flash `merged.bin` instead of `zephyr.bin`. See the per-board
 > `*_README.md` build guides in the Matter repository for details. -->
 
+### Linux (TGui-BDT GUI, TL323X)
+
+This flashing example uses the **TL323X** and the TGui application launched in
+the previous section.
+
+1. **Connect the device.** Connect the programmer and target board to the
+   Ubuntu host, then confirm that TGui detects the programmer.
+   - **PC ↔ Programmer**: Connect them using a USB cable. If the green indicator LED on the programmer stays solid, the programmer has been successfully recognized by the PC.
+   - **Programmer ↔ Target board**: Connect them using Dupont wires:
+     - Power lines: 3V3C ↔ 3V3; GND ↔ GND
+     - Data line (single-wire SWM bus): Connect the programmer's SWM pin to the target board's SWS (Swire) pin.
+
+   ![Connect the device in TGui](figures/tgui_connect.png)
+
+2. **Select the chip and firmware.** Select `TL323X` as the chip, then choose
+   the firmware binary to flash, such as
+   `build_blinky/zephyr/zephyr.bin`.
+
+   ![Select the TL323X chip and firmware binary](figures/tgui_chip_bin.png)
+
+3. **Erase the flash.** Set the erase size to **2040 KB**, then erase the
+   flash. The final 8 KB of a 2 MB flash device is reserved for SoC data.
+
+   ![Unlock and erase the flash](figures/tgui_unlock_erase.png)
+
+4. **Verify SWS, unlock, and download.** Click **SWS** first to verify that
+   communication with the target is working. Click **Unlock** to remove flash
+   protection, then click **Download** to program the selected firmware.
+
+   ![Verify SWS, unlock, and download](figures/tgui_sws_unlock_download.png)
+
+5. **Reset the target.** After the download completes, click **Reset** to
+   restart the board and run the new firmware.
+
+   ![Reset the target in TGui](figures/tgui_reset.png)
+
 ---
 
 ## Verify the Result
@@ -865,7 +950,7 @@ The Blinky sample toggles an LED on the board. You should see the onboard LED
 blink at a steady interval (~1 Hz by default). If the LED does not blink,
 re-check the flash steps and the board's power/jumper configuration.
 
-![Blinky](figures/Blinky.png)
+![Blinky](figures/tgui_blinky.png)
 
 ---
 
