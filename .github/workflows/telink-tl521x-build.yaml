@@ -43,7 +43,7 @@ jobs:
       run: |
         cd ../modules/hal/telink/hal_v2
         chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 2488b5b8bd5122f68d087ba2cd5a8f0c74572b8f
+        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 53eb98b32ea79ed7ab38f5daabde0a78a7880cd9
 
     # - name: Download and extract TL521X firmware binaries
     #   run: |

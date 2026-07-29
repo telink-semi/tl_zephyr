@@ -737,3 +737,25 @@ void openthread_api_mutex_unlock(struct openthread_context *ot_context)
 
 NET_L2_INIT(OPENTHREAD_L2, openthread_recv, openthread_send, openthread_enable,
 	    openthread_flags);
+
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+
+void openthread_suspend(void)
+{
+	STRUCT_SECTION_FOREACH(net_if, iface) {
+		struct openthread_context *ot_context = net_if_l2_data(iface);
+
+		k_thread_suspend(&ot_context->work_q.thread);
+	}
+}
+
+void openthread_resume(void)
+{
+	STRUCT_SECTION_FOREACH(net_if, iface) {
+		struct openthread_context *ot_context = net_if_l2_data(iface);
+
+		k_thread_resume(&ot_context->work_q.thread);
+	}
+}
+
+#endif

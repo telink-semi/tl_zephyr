@@ -48,6 +48,13 @@ config IEEE802154_TLX_DELAY_TRX_ACC
 	  Accuracy of the clock used for scheduling radio delayed operations (delayed transmission
 	  or delayed reception), in ppm.
 
+config IEEE802154_TLX_BLE_COEXIST
+	bool "Share single RF between 802.15.4 and BLE"
+	default n
+	help
+	  Allow the IEEE 802.15.4 radio and BLE controller to share a single
+	  RF front-end by time-division multiplexing on TLX SoCs.
+
 config IEEE802154_TLX_OPTIMIZATION
 	bool "Optimize 802.15.4 RF performance for TLX SoCs"
 	default n

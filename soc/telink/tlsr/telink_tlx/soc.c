@@ -59,14 +59,16 @@ pm_retention_register_recover(void)
 #define CLK_72MHZ  72000000u
 #define CLK_96MHZ  96000000u
 #define CLK_192MHZ 192000000u
+#define PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M \
+	clock_init(CLK_BASEBAND_PLL_192M, CLK_DIV1, CCLK_DIV2_TO_HCLK_DIV2_TO_PCLK, CLK_DIV4)
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 #define CLK_24MHZ 24000000u
 #define CLK_48MHZ 48000000u
 #define CLK_96MHZ 96000000u
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
-#define CLK_24MHZ 24000000u
-#define CLK_48MHZ 48000000u
-#define CLK_72MHZ 72000000u
+#define CLK_24MHZ  24000000u
+#define CLK_48MHZ  48000000u
+#define CLK_72MHZ  72000000u
 #define CLK_144MHZ 144000000u
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #define CLK_40MHZ  40000000u
@@ -156,8 +158,8 @@ pm_retention_register_recover(void)
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL322X
 #if ((CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_64MHZ) && (CCLK_FREQ != CLK_72MHZ) &&           \
-	 (CCLK_FREQ != CLK_96MHZ))
-#error "Invalid clock-frequency. Supported values: 48,64,72,96 MHz"
+	(CCLK_FREQ != CLK_96MHZ) && (CCLK_FREQ != CLK_192MHZ))
+#error "Invalid clock-frequency. Supported values: 48,64,72,96,192 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL323X
 #if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_96MHZ))
@@ -165,12 +167,12 @@ pm_retention_register_recover(void)
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL521X
 #if ((CCLK_FREQ != CLK_24MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_72MHZ) &&           \
-	 (CCLK_FREQ != CLK_144MHZ))
+	(CCLK_FREQ != CLK_144MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 72, 144 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
 #if ((CCLK_FREQ != CLK_40MHZ) && (CCLK_FREQ != CLK_48MHZ) && (CCLK_FREQ != CLK_60MHZ) &&           \
-	 (CCLK_FREQ != CLK_80MHZ) && (CCLK_FREQ != CLK_120MHZ) && (CCLK_FREQ != CLK_240MHZ))
+	(CCLK_FREQ != CLK_80MHZ) && (CCLK_FREQ != CLK_120MHZ) && (CCLK_FREQ != CLK_240MHZ))
 #error "Invalid clock-frequency. Supported values: 40, 48, 60, 80, 120, 240 MHz"
 #endif
 #endif
@@ -219,12 +221,12 @@ void soc_load_rf_parameters_deep_retention(void)
 #endif
 
 #if CONFIG_PM
-#define RST_BIT_SET(x, n)    ((x) |=~(n))
-#define RST_BIT_CLR(x, n)    ((x) &=~(n))
-#define CLOCK_BIT_CLR(x, n)    ((x) &=~(n))
+#define RST_BIT_SET(x, n)   ((x) |= ~(n))
+#define RST_BIT_CLR(x, n)   ((x) &= ~(n))
+#define CLOCK_BIT_CLR(x, n) ((x) &= ~(n))
 #if CONFIG_SOC_RISCV_TELINK_TL323X
-__attribute__((noinline)) __attribute__((section(".ram_code"))) __attribute__((optimize("O2")))
-void gen_fsk_close_unused_clock(void)
+__attribute__((noinline)) __attribute__((section(".ram_code")))
+__attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 {
 	RST_BIT_CLR(reg_rst0, FLD_RST0_I2C0);
 	/* comment because some user cases need UART1*/
@@ -316,6 +318,9 @@ __attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
 
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X) && CONFIG_PM
 #include "pm.h"
+#if !CONFIG_COMPILE_SDK
+#include "pm_internal.h"
+#endif
 #endif
 /**
  * @brief Perform basic initialization at boot.
@@ -461,11 +466,10 @@ void soc_early_init_hook(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-		/* case CLK_192MHZ:
-		 *  pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		 *  PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		 *  break;
-		 */
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -554,7 +558,7 @@ void soc_tlx_restore(void)
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
 #if (CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X) &&                          \
-	 CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+	CONFIG_SOC_PMOS_SWITCH_TIME_CTL
 	/* change from 0x04 to 0x06 for the board changes. */
 	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
@@ -662,11 +666,10 @@ void soc_tlx_restore(void)
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL322X
-		/* case CLK_192MHZ:
-		 *  pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
-		 *  PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
-		 *  break;
-		 */
+	case CLK_192MHZ:
+		pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000);
+		PLL_192M_D25F_192M_HCLK_N22_96M_PCLK_96M_MSPI_48M;
+		break;
 #endif
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X

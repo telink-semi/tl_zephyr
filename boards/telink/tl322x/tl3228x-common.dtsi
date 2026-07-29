@@ -125,7 +125,7 @@
 };
 
 &cpu0 {
-	clock-frequency = <64000000>;       /* TL_BLE_SDK use 64M CCLK by default */
+	clock-frequency = <192000000>;
 };
 
 &ram_ilm {
