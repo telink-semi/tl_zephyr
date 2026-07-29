@@ -53,7 +53,6 @@ Hardware and software requirements to prepare before running the SDK.
 
 |Software|Description|
 |-|-|
-|IDE|Visual Studio Code (VSCode) is recommended|
 |Toolchain| RISC-V 64-bit Zephyr SDK Toolchain |
 |Burning Tool | [Telink BDT for Linux](https://doc.telink-semi.cn/tools/bdt/Linux/BDT_Linux.zip) (Burning and Debugging tool) |
 |SDK|[Telink Zephyr SDK](https://github.com/telink-semi/zephyr)  |
@@ -507,9 +506,7 @@ Before flashing, connect the hardware:
 1. Connect the **Burning EVK** (flashing jig) to the target EVB using the
    supplied cable.
 2. Connect the Burning EVK to your host PC with a Mini-USB cable.
-3. Connect the target EVB to your host PC with a second Mini-USB cable (for
-   power).
-4. Keep the **default jumper configuration** on the EVB — do not change any
+3. Keep the **default jumper configuration** on the EVB — do not change any
    jumpers unless instructed otherwise.
 
 A **Telink Burning EVK** and two Mini-USB cables are required per board. When
