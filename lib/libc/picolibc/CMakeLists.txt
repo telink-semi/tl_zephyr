@@ -8,6 +8,7 @@ zephyr_library_sources(
   errno_wrap.c
   exit.c
   locks.c
+  sniprintf.c
   stdio.c
   )
 

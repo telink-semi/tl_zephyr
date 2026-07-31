@@ -92,8 +92,8 @@ endif()
 
 set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
 
-zephyr_cc_option_ifdef(CONFIG_ANDES_CODENSE -mexecit)
-zephyr_ld_option_ifdef(CONFIG_ANDES_CODENSE -Wl,--mexecit)
+# zephyr_cc_option_ifdef(CONFIG_ANDES_CODENSE -mexecit)
+# zephyr_ld_option_ifdef(CONFIG_ANDES_CODENSE -Wl,--mexecit)
 
 # Wrap allocator functions
 zephyr_link_libraries(
