@@ -33,6 +33,7 @@ LOG_MODULE_REGISTER(spi_telink);
 #define CHIP_SELECT_COUNT        3u
 #define SPI_WORD_SIZE            8u
 #define SPI_WR_RD_CHUNK_SIZE_MAX 16u
+#define SPI_ERROR_TIMEOUT        1000000u
 
 /* SPI configuration structure */
 struct spi_tlx_cfg {
@@ -204,7 +205,7 @@ _attribute_ram_code_sec_ static void spi_tlx_rx(uint8_t peripheral_id, struct sp
 }
 
 /* SPI transceive internal */
-_attribute_ram_code_sec_ static void spi_tlx_txrx(const struct device *dev, uint32_t len)
+_attribute_ram_code_sec_ static void spi_tlx_txrx_multibufs(const struct device *dev, uint32_t len)
 {
 	unsigned int chunk_size = SPI_WR_RD_CHUNK_SIZE_MAX;
 	struct spi_tlx_cfg *cfg = SPI_CFG(dev);
@@ -248,13 +249,50 @@ _attribute_ram_code_sec_ static void spi_tlx_txrx(const struct device *dev, uint
 		BM_SET(reg_spi_status(cfg->peripheral_id), FLD_SPI_RXF_CLR_LEVEL);
 #endif
 	}
+}
 
-	/* wait fot SPI is ready */
-	while (spi_is_busy(cfg->peripheral_id)) {
-	};
+static bool spi_tlx_is_simple_buf(size_t count, const uint8_t *buf, size_t len, uint32_t total_len)
+{
+	return (count == 1) && (buf != NULL) && (len == total_len);
+}
+
+/* SPI transceive internal */
+_attribute_ram_code_sec_ static void spi_tlx_txrx(const struct device *dev, uint32_t len)
+{
+	int err = 0;
+	struct spi_tlx_cfg *cfg = SPI_CFG(dev);
+	struct spi_context *ctx = &SPI_DATA(dev)->ctx;
+
+	bool simple_tx = spi_tlx_is_simple_buf(ctx->tx_count, ctx->tx_buf, ctx->tx_len, len);
+	bool simple_rx = spi_tlx_is_simple_buf(ctx->rx_count, ctx->rx_buf, ctx->rx_len, len);
+
+	if (simple_tx && simple_rx) {
+		/* fast path: full duplex, vendor-proven chunking + offset compensation */
+		spi_master_write_read_full_duplex(cfg->peripheral_id,
+			(uint8_t *)ctx->tx_buf, ctx->rx_buf, len);
+		spi_context_update_tx(ctx, 1, len);
+		spi_context_update_rx(ctx, 1, len);
+	} else if (simple_tx && !spi_context_rx_on(ctx)) {
+		/* fast path: write only */
+		spi_master_write(cfg->peripheral_id, (uint8_t *)ctx->tx_buf, len);
+		spi_context_update_tx(ctx, 1, len);
+	} else if (simple_rx && !spi_context_tx_on(ctx)) {
+		/* fast path: read only */
+		spi_master_read(cfg->peripheral_id, ctx->rx_buf, len);
+		spi_context_update_rx(ctx, 1, len);
+	} else {
+		/* fallback: scatter-gather / dummy-fill / discard case */
+		spi_tlx_txrx_multibufs(dev, len);
+	}
+
+	if (!WAIT_FOR(!spi_is_busy(cfg->peripheral_id), SPI_ERROR_TIMEOUT, NULL)) {
+		LOG_ERR("SPI is busy timeout");
+		spi_hw_fsm_reset(cfg->peripheral_id);
+		err = -ETIMEDOUT;
+	}
 
 	/* context complete */
-	spi_context_complete(ctx, dev, 0);
+	spi_context_complete(ctx, dev, err);
 }
 
 /* Check for supported configuration */
@@ -301,7 +339,7 @@ static bool spi_tlx_is_config_supported(const struct spi_config *config,
 	/* check for slave configuration */
 	if (SPI_OP_MODE_GET(config->operation) == SPI_OP_MODE_SLAVE) {
 		LOG_ERR("SPI Slave is not implemented");
-		return -ENOTSUP;
+		return false;
 	}
 
 	return true;
@@ -398,6 +436,8 @@ static int spi_tlx_init(const struct device *dev)
 
 	spi_context_unlock_unconditionally(&data->ctx);
 
+	spi_set_error_timeout(SPI_ERROR_TIMEOUT);
+
 	return 0;
 }
 
@@ -409,14 +449,15 @@ static int spi_tlx_transceive(const struct device *dev, const struct spi_config 
 	struct spi_tlx_data *data = SPI_DATA(dev);
 	uint32_t txrx_len = spi_tlx_get_txrx_len(tx_bufs, rx_bufs);
 
+	/* context setup */
+	spi_context_lock(&data->ctx, false, NULL, NULL, config);
+
 	/* set configuration */
 	status = spi_tlx_config(dev, config);
 	if (status) {
 		return status;
 	}
 
-	/* context setup */
-	spi_context_lock(&data->ctx, false, NULL, NULL, config);
 	spi_context_buffers_setup(&data->ctx, tx_bufs, rx_bufs, 1);
 
 	/* if cs is defined: software cs control, set active true */
