@@ -258,8 +258,9 @@ manifest:
       groups:
         - optional
     - name: hal_telink
-      url: https://github.com/telink-semi/hal_telink
-      revision: 4e0ba44314a0da44bb76aac6953c969fd4a2eb7f
+      remote: telink-semi
+      repo-path: hal_telink
+      revision: 0730476e361aef648484c51f89ff458b195cbe3f
       path: modules/hal/telink
       groups:
         - hal
@@ -366,8 +367,17 @@ manifest:
       path: modules/debug/segger
       groups:
         - debug
+    - name: telink_ble_sdk
+      remote: telink-semi
+      repo-path: tl_ble_sdk_zephyr
+      revision: 53eb98b32ea79ed7ab38f5daabde0a78a7880cd9
+      path: modules/hal/telink_ble_sdk
+      groups:
+        - hal
+        - telink
     - name: tflite-micro-telink
-      url: https://github.com/telink-semi/tflite-micro-telink.git
+      remote: telink-semi
+      repo-path: tflite-micro-telink
       revision: c89ed44791d592f4435c7fa924d2edaa0aa0e071
       path: modules/lib/tflite-micro-telink
       groups:
