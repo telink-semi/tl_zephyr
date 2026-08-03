@@ -5428,6 +5428,14 @@ West:
   labels:
     - "area: Audio"
 
+"West project: telink_ble_sdk":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
+
 "West project: tflite-micro":
   status: maintained
   maintainers:

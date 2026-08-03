@@ -42,12 +42,6 @@ jobs:
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 
-    - name: Fetch Telink BLE SDK
-      run: |
-        cd ../modules/hal/telink/hal_v2
-        chmod +x fetch_sdk.sh
-        ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 2488b5b8bd5122f68d087ba2cd5a8f0c74572b8f
-
     - name: Download and extract TL521X firmware binaries
       run: |
         wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl521x_fw/TL521X_FW.zip -O /tmp/TL521X_FW.zip
