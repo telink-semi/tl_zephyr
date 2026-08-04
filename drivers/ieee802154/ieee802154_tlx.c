@@ -1009,11 +1009,11 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 	if (!tlx->is_started) {
 		/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
 		if (!tlksdk_thd_checkIsInsertTask1()) {
-			LOG_ERR("tlx ble busy");
+			/* LOG_ERR("tlx ble busy"); */
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
-			LOG_ERR("tlx ieee802154 task ready sem");
+			/* LOG_ERR("tlx ieee802154 task ready sem"); */
 		} else {
-			LOG_ERR("tlx ble idle");
+			/* LOG_ERR("tlx ble idle"); */
 		}
 		tlx_init_802154_rf_hw();
 		tlx->is_started = true;
@@ -1096,15 +1096,18 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 	if (tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
 		if (!tlksdk_thd_checkIsInsertTask1()) {
-			LOG_ERR("tlx ble busy");
+			/* LOG_ERR("tlx ble busy"); */
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
-			LOG_ERR("tlx ieee802154 task ready sem");
+			/* LOG_ERR("tlx ieee802154 task ready sem"); */
 		} else {
-			LOG_ERR("tlx ble idle");
+			/* LOG_ERR("tlx ble idle"); */
 		}
 #endif
-
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		/* keep RF ISR enable for BLE coexist */
+#else
 		riscv_plic_irq_disable(DT_INST_IRQN(0));
+#endif
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		rf_rx_performance_mode(RF_RX_LOW_POWER);
 #endif
