@@ -15,11 +15,20 @@
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 #include "tlx_bt_flash.h"
 #endif
 
 #include <stdlib.h>
+
+/* Drivers changes for hal_v2, so should not change castart.s, add external*/
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+_attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
+__attribute__((section(".ram_code_retention"))) __attribute__((noinline)) void
+pm_retention_register_recover(void)
+{
+}
+#endif
 
 /* List of supported CCLK frequencies */
 #if CONFIG_SOC_RISCV_TELINK_TL321X
@@ -87,7 +96,7 @@
 #endif
 #endif
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 /* SOC Parameters structure */
 _attribute_data_retention_sec_ struct {
 	unsigned char cap_freq_offset_en;
@@ -113,6 +122,9 @@ void soc_load_rf_parameters_normal(void)
 /**
  * @brief Perform SOC calibration at boot time (deep retention)
  */
+#if CONFIG_PM && CONFIG_SOC_RISCV_TELINK_TL721X
+__GENERIC_SECTION(.ram_code)
+#endif
 void soc_load_rf_parameters_deep_retention(void)
 {
 	if (soc_nvParam.cap_freq_offset_value) {
@@ -120,6 +132,48 @@ void soc_load_rf_parameters_deep_retention(void)
 	}
 }
 #endif
+
+#if CONFIG_PM
+#define RST_BIT_SET(x, n)   ((x) |= ~(n))
+#define RST_BIT_CLR(x, n)   ((x) &= ~(n))
+#define CLOCK_BIT_CLR(x, n) ((x) &= ~(n))
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+__attribute__((noinline)) __attribute__((section(".ram_code")))
+__attribute__((optimize("O2"))) void gen_fsk_close_unused_clock(void)
+{
+	RST_BIT_SET(reg_rst0, FLD_RST0_I2C);
+	RST_BIT_SET(reg_rst0, FLD_RST0_USB);
+	RST_BIT_SET(reg_rst0, FLD_RST0_UART1);
+	RST_BIT_SET(reg_rst1, FLD_RST1_SPISLV);
+	RST_BIT_SET(reg_rst2, FLD_RST2_AUD);
+	RST_BIT_SET(reg_rst2, FLD_RST2_I2C1);
+	RST_BIT_SET(reg_rst2, FLD_RST2_LM);
+	RST_BIT_SET(reg_rst2, FLD_RST2_TRNG);
+	RST_BIT_SET(reg_rst2, FLD_RST2_DPR);
+	RST_BIT_SET(reg_rst3, FLD_RST3_QDEC);
+	RST_BIT_SET(reg_rst5, FLD_RST5_UART2);
+	RST_BIT_SET(reg_rst5, FLD_RST5_KEY_SCAN);
+	RST_BIT_SET(reg_rst5, FLD_RST5_PEM);
+	RST_BIT_SET(reg_rst5, FLD_RST5_CHACHA20);
+	RST_BIT_SET(reg_rst6, FLD_RST6_RZ);
+
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_I2C_EN);
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_USB_EN);
+	CLOCK_BIT_CLR(reg_clk_en0, FLD_CLK0_UART1_EN);
+	CLOCK_BIT_CLR(reg_clk_en1, FLD_CLK1_SPISLV_EN);
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_AUD_EN);
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_I2C1_EN);
+	CLOCK_BIT_CLR(reg_clk_en2, FLD_CLK2_TRNG_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_TRACE_EN);
+	CLOCK_BIT_CLR(reg_clk_en3, FLD_CLK3_BROM_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_UART2_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_KEYSCAN_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_PEM_EN);
+	CLOCK_BIT_CLR(reg_clk_en5, FLD_CLK5_CHACHA20_EN);
+	CLOCK_BIT_CLR(reg_clk_en6, FLD_CLK6_RZ_EN);
+}
+#endif /* CONFIG_SOC_RISCV_TELINK_TL721X */
+#endif /* CONFIG_PM  */
 
 /**
  * @brief Perform basic initialization at boot.
@@ -142,14 +196,18 @@ void soc_early_init_hook(void)
 	if (cclk == CLK_240MHZ) {
 		pm_set_dvdd(CORE_0P9V_SRAM_0P9V_BB_0P9V, DMA1, 1000);
 	}
+#if CONFIG_PM
+	pm_set_dig_ldo_voltage(DIG_LDO_TRIM_0P750V);
+	cclk = CLK_48MHZ;
 	pm_set_ret_ldo_voltage(RET_LDO_TRIM_0P65V);
+#endif
 #endif
 
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
 #endif
 
@@ -185,15 +243,17 @@ void soc_early_init_hook(void)
 	case CLK_120MHZ:
 		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
 		break;
-	case CLK_240MHZ:
-		PLL_240M_CCLK_240M_HCLK_120M_PCLK_120M_MSPI_48M;
-		break;
 #endif
 	}
 
 	/* Init Machine Timer source clock: 32 KHz RC */
 	clock_32k_init(CLK_32K_RC);
 	clock_cal_32k_rc();
+
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+	extern void pke_dig_en(void);
+	pke_dig_en();
+#endif
 
 	/* Stop 32k watchdog */
 	wd_32k_stop();
@@ -212,6 +272,9 @@ void sys_arch_reboot(int type)
 /**
  * @brief Restore SOC after deep-sleep.
  */
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 void soc_tlx_restore(void)
 {
 	unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
@@ -223,7 +286,11 @@ void soc_tlx_restore(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
-#if (defined(CONFIG_BT_TLX) || defined(IEEE802154_TELINK_TLX))
+#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
+	cclk = CLK_48MHZ;
+#endif
+
+#if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
 #endif
 
@@ -238,6 +305,9 @@ void soc_tlx_restore(void)
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 		PLL_192M_CCLK_48M_HCLK_24M_PCLK_24M_MSPI_48M;
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_PM
+		gen_fsk_close_unused_clock();
+#endif /* CONFIG_PM  */
 		PLL_240M_CCLK_48M_HCLK_48M_PCLK_48M_MSPI_48M;
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		break;
@@ -263,6 +333,12 @@ void soc_tlx_restore(void)
 		break;
 #endif
 	}
+
+	/* pke is not enabled by default on TL721X */
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+	extern void pke_dig_en(void);
+	pke_dig_en();
+#endif
 }
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -325,6 +401,8 @@ static int soc_tlx_check_flash(void)
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 	hw_flash_cap = (flash_capacity_e)((mid & FLASH_MID_SIZE_MASK) >> FLASH_MID_SIZE_OFFSET);
 
+#if defined(CONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE) && CONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE
+#else
 	/* Enable Quad SPI (4x) read and write mode */
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 	if (flash_set_4line_read_write(mid) != 1) {
@@ -333,6 +411,7 @@ static int soc_tlx_check_flash(void)
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
 		printk("!!! Error: Failed to switch flash model 0x%X to quad mode\n", mid);
 	}
+#endif
 
 	switch (hw_flash_cap) {
 	case FLASH_SIZE_1M:

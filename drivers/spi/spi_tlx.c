@@ -10,10 +10,28 @@
 #define DT_DRV_COMPAT telink_tl721x_spi
 #endif
 
-/*  Redefine 'spi_read' and 'spi_write' functions names from HAL */
-#define spi_read    hal_spi_read
-#define spi_write   hal_spi_write
+#if CONFIG_SOC_RISCV_TELINK_TL321X
+/*  Redefine 'spi_read' and 'spi_write' functions names from HAL_V1 */
+#define spi_read  hal_spi_read
+#define spi_write hal_spi_write
 #include "spi.c"
+#else
+/*  Include HAL_V2 spi.h with harmless rename to get type definitions (spi_sel_e,
+ *  drv_api_status_e, etc.) without declaring spi_read/spi_write, which would
+ *  conflict with Zephyr's SPI API of the same name.
+ */
+#define spi_read  __hal_spi_read_unused
+#define spi_write __hal_spi_write_unused
+#include "spi.h"
+/* Declare hal_spi_read/hal_spi_write with __asm__ labels so calls resolve to
+ * the HAL's original spi_read/spi_write symbols at link time, without
+ * conflicting with Zephyr's spi_read/spi_write (included later).
+ */
+extern drv_api_status_e hal_spi_read(spi_sel_e spi_sel, unsigned char *data,
+				    unsigned int len) __asm__("spi_read");
+extern drv_api_status_e hal_spi_write(spi_sel_e spi_sel, unsigned char *data,
+				     unsigned int len) __asm__("spi_write");
+#endif
 #undef spi_read
 #undef spi_write
 

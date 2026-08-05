@@ -23,8 +23,10 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: babblesim
       url-base: https://github.com/BabbleSim
+    - name: telink-semi
+      url-base: https://github.com/telink-semi
 
-  group-filter: [-babblesim, -optional]
+  group-filter: [-babblesim, -optional, +telink]
 
   #
   # Please add items below based on alphabetical order
@@ -246,8 +248,9 @@ manifest:
       revision: 6727477af1e46fa43878102489b9672a9d24e39f
       path: modules/hal/tdk
     - name: hal_telink
-      url: https://github.com/telink-semi/hal_telink
-      revision: 0f8033f8ec87ee9a4cb3655bda8e8b3e90e42b4e
+      remote: telink-semi
+      repo-path: hal_telink
+      revision: 6cbdea8b76731848c16cf4c0a89262f52c51043c
       path: modules/hal/telink
       groups:
         - hal
@@ -341,8 +344,17 @@ manifest:
       path: modules/debug/segger
       groups:
         - debug
+    - name: telink_ble_sdk
+      remote: telink-semi
+      repo-path: tl_ble_sdk_zephyr
+      revision: 53eb98b32ea79ed7ab38f5daabde0a78a7880cd9
+      path: modules/hal/telink_ble_sdk
+      groups:
+        - hal
+        - telink
     - name: tflite-micro-telink
-      url: https://github.com/telink-semi/tflite-micro-telink.git
+      remote: telink-semi
+      repo-path: tflite-micro-telink
       revision: c89ed44791d592f4435c7fa924d2edaa0aa0e071
       path: modules/lib/tflite-micro-telink
     - name: tinycrypt

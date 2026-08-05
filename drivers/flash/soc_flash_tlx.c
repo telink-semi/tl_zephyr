@@ -18,6 +18,11 @@
 #include <zephyr/kernel.h>
 #include <stdlib.h>
 
+#if CONFIG_SOC_RISCV_TELINK_TL721X
+/* Not available for hal_v1, only for hal_v2 */
+#include "tl_flash.h"
+#endif
+
 LOG_MODULE_REGISTER(flash_tlx, CONFIG_FLASH_LOG_LEVEL);
 
 /* driver definitions */

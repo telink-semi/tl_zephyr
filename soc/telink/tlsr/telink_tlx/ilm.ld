@@ -31,6 +31,10 @@ SECTION_DATA_PROLOGUE(retention_data,,)
 	. = ALIGN(4);
 	*(.retention_data)
 	*(".retention_data.*")
+#if defined(CONFIG_SOC_RISCV_TELINK_TL721X)
+	*(.retention_data_ble)
+	*(".retention_data_ble.*")
+#endif
 
 	PROVIDE (_RETENTION_DATA_VMA_END = .);
 	PROVIDE (_RETENTION_DATA_VMA_START = ADDR(retention_data));
