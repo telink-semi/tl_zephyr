@@ -14,7 +14,10 @@ SECTION_DATA_PROLOGUE(ram_dlm_data,,)
 	. = ALIGN(4);
 	*(.data)
 	*(.sdata)
-
+#if defined(CONFIG_SOC_RISCV_TELINK_TL721X)
+	*(.retention_data_ble)
+	*(".retention_data_ble.*")
+#endif
 	PROVIDE (_RAM_DLM_DATA_VMA_END = .);
 	PROVIDE (_RAM_DLM_DATA_VMA_START = ADDR(ram_dlm_data));
 	PROVIDE (_RAM_DLM_DATA_LMA_START = LOADADDR(ram_dlm_data));

@@ -7,13 +7,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Andes builds are temporarily disabled for TL721X.
+# HAL v2 currently provides a prebuilt GCC 12 LTO library that is
+# incompatible with the Andes GCC 14 toolchain used by this workflow.
+
 jobs:
   telink_ot_lib_build:
     runs-on: ubuntu-latest
     name: Telink openthread libraries builder
     env:
       ZEPHYR_COMPILER_VERSION: 0.17.0
-      ANDES_COMPILER_VERSION: 14.2.0
+      # ANDES_COMPILER_VERSION: 14.2.0
       BUILD_SOC: tl7218x
       SAMPLE_SRC_PATH: "samples/net/openthread/lib_builder"
     steps:
@@ -32,12 +36,12 @@ jobs:
         (cd ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
         rm -rf ~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"_linux-x86_64.tar.xz
 
-    - name: Setup Andes toolchain
-      run: |
-        mkdir ~/nds-gcc
-        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
-        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz -C ~/nds-gcc
-        rm -rf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
+    # - name: Setup Andes toolchain
+    #   run: |
+    #     mkdir ~/nds-gcc
+    #     wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
+    #     tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz -C ~/nds-gcc
+    #     rm -rf ~/nds-gcc/nds32le-elf-newlib-v5f_"${ANDES_COMPILER_VERSION}".txz
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -81,27 +85,27 @@ jobs:
           done
         fi
 
-    - name: Build libraries with Andes compiler
-      run: |
-        export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
-        export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
-        conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
-        if [[ -e "${conf_files[0]}" ]]; then
-          for build_config in "${conf_files[@]}"; do
-            config="${build_config#"${SAMPLE_SRC_PATH}"/}"
-            echo "build configuration: $config"
-            rm -rf build_tmp
-            west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -- \
-                       -DOVERLAY_CONFIG="$config" \
-                       -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
-            libname="libopenthread-andes-${config##*/}"
-            libname="${libname%.conf}.a"
-            cp build_tmp/zephyr/libopenthread.a \
-               "build_telink_ot_lib_artifacts/lib/$libname"
-          done
-        fi
-        unset ZEPHYR_TOOLCHAIN_VARIANT
-        unset ANDES_GCC_PATH
+    # - name: Build libraries with Andes compiler
+    #   run: |
+    #     export ZEPHYR_TOOLCHAIN_VARIANT="andes-gcc"
+    #     export ANDES_GCC_PATH="~/nds-gcc/nds32le-elf-newlib-v5f"
+    #     conf_files=("${SAMPLE_SRC_PATH}"/overlays/*.conf)
+    #     if [[ -e "${conf_files[0]}" ]]; then
+    #       for build_config in "${conf_files[@]}"; do
+    #         config="${build_config#"${SAMPLE_SRC_PATH}"/}"
+    #         echo "build configuration: $config"
+    #         rm -rf build_tmp
+    #         west build -b "$BUILD_SOC" -d build_tmp "${SAMPLE_SRC_PATH}" -- \
+    #                    -DOVERLAY_CONFIG="$config" \
+    #                    -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+    #         libname="libopenthread-andes-${config##*/}"
+    #         libname="${libname%.conf}.a"
+    #         cp build_tmp/zephyr/libopenthread.a \
+    #            "build_telink_ot_lib_artifacts/lib/$libname"
+    #       done
+    #     fi
+    #     unset ZEPHYR_TOOLCHAIN_VARIANT
+    #     unset ANDES_GCC_PATH
 
     - name: Install headers
       run: |
@@ -135,8 +139,8 @@ jobs:
 
         if(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "zephyr")
           set(TELINK_COMPILER "zephyr")
-        elseif(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "andes-gcc")
-          set(TELINK_COMPILER "andes")
+        # elseif(ZEPHYR_TOOLCHAIN_VARIANT STREQUAL "andes-gcc")
+        #   set(TELINK_COMPILER "andes")
         else()
           message(FATAL_ERROR "Unknown openthread Telink library compiler")
         endif()
@@ -259,7 +263,7 @@ jobs:
         ot_hash=$(cd "${ot_submodule_path}" && git rev-parse HEAD)
         [[ -n "$(cd "${ot_submodule_path}" && git status --porcelain)" ]] && ot_hash+="-dirty"
         zephyr_gcc_ver="$(~/zephyr_gcc/zephyr-sdk-"${ZEPHYR_COMPILER_VERSION}"/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-gcc --version)"
-        andes_gcc_ver="$(~/nds-gcc/nds32le-elf-newlib-v5f/bin/riscv32-elf-gcc --version)"
+        # andes_gcc_ver="$(~/nds-gcc/nds32le-elf-newlib-v5f/bin/riscv32-elf-gcc --version)"
         cat << EOF > build_telink_ot_lib_artifacts/README.md
         # openthread Telink prebuilt libraries
 
@@ -275,9 +279,9 @@ jobs:
         \`\`\`
 
         ## andes compiler version
-        \`\`\`text
-        ${andes_gcc_ver}
-        \`\`\`
+        # \`\`\`text
+        # ${andes_gcc_ver}
+        # \`\`\`
 
         ## build time
         time zone: *${build_timezone}*
