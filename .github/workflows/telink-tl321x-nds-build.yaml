@@ -3,7 +3,9 @@
 
 name: Telink TL321X build examples using Andes GCC
 
-on: pull_request
+# suspend Andes build for TL321X since the mis-matches of toolchains and
+# compile options, and will be re-enabled after the toolchain issue is resolved
+# on: pull_request
 
 jobs:
   telink_build_examples:
