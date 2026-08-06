@@ -37,8 +37,9 @@
 #endif
 
 /* Drivers changes for hal_v2, so should not change castart.s, add external*/
-#if CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X || \
-	CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X ||                        \
+	CONFIG_SOC_RISCV_TELINK_TL521X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
 __attribute__((section(".ram_code_retention"))) __attribute__((noinline)) void
 pm_retention_register_recover(void)
@@ -865,4 +866,12 @@ static int soc_tlx_wd_32k_init(void)
 	return 0;
 }
 SYS_INIT(soc_tlx_wd_32k_init, POST_KERNEL, 2);
+#endif
+
+#if CONFIG_SOC_RISCV_TELINK_TL321X && (CONFIG_BT_TLX || CONFIG_IEEE802154_TELINK_TLX)
+void soc_prep_hook(void)
+{
+	extern void rf_sw_config(void);
+	rf_sw_config();
+}
 #endif
