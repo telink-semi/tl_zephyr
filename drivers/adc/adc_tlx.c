@@ -206,10 +206,9 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 				adc_start_sample_nodma();
 				while (!adc_get_rxfifo_cnt()) {
 				}
-#if CONFIG_SOC_RISCV_TELINK_TL721X  || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X ||                            \
+	CONFIG_SOC_RISCV_TELINK_TL321X
 				value += (int16_t)adc_get_raw_code();
-#elif CONFIG_SOC_RISCV_TELINK_TL321X
-				value += (int16_t)adc_get_code();
 #else
 #error unsupported SOC
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
