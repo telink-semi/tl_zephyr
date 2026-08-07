@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Wi-Fi AP/STA power test"
+
+choice WIFI_TEST_MODE
+	prompt "Wi-Fi power test mode"
+	default WIFI_TEST_MODE_APSTA
+
+config WIFI_TEST_MODE_STA
+	bool "STA only"
+
+config WIFI_TEST_MODE_AP
+	bool "SoftAP only"
+
+config WIFI_TEST_MODE_APSTA
+	bool "SoftAP + STA"
+
+config WIFI_TEST_MODE_APSTA_BLE
+	bool "SoftAP + STA + BLE advertising"
+	depends on BT && BT_BROADCASTER
+
+endchoice
+
+config WIFI_TEST_STA_DISCONNECTED_SECONDS
+	int "STA disconnected baseline duration (seconds)"
+	default 30
+	range 1 3600
+	depends on WIFI_TEST_MODE_STA
+	help
+	  Time spent in STA-only mode without a connection before the sample
+	  starts the STA connection. This gives one run both disconnected and
+	  connected idle measurement phases.
+
+source "Kconfig.zephyr"
