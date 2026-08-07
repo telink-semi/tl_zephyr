@@ -679,12 +679,8 @@ class TelinkBuildManager:
         lines.append("")
         lines.append("#### Notes on Sample Support")
         lines.append("")
-        lines.append(
-            "- **Tested combinations (✅):** All TL521X and TL323X samples that build"
-        )
-        lines.append(
-            "  successfully have been"
-        )
+        lines.append("- **Tested combinations (✅):** All TL521X and TL323X samples that build")
+        lines.append("  successfully have been")
         lines.append(
             "  functionally validated. On TL721X, the core bring-up samples (`blinky`, `button`,"
         )
