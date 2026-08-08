@@ -369,3 +369,17 @@ _RESTORE:
 #endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 
 	.option pop
+
+#if CONFIG_SOC_RISCV_TELINK_TL321X && (CONFIG_BT_TLX || CONFIG_IEEE802154_TELINK_TLX)
+.global soc_reset_hook
+soc_reset_hook:
+	li t0, 0x79000
+	mv     sp, t0
+	addi sp, sp, -16
+	sw   ra, 0(sp)
+	la     t0, rf_sw_config
+	jalr   t0
+	lw   ra, 0(sp)
+    addi sp, sp, 16
+	ret
+#endif
