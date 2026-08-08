@@ -864,11 +864,3 @@ static int soc_tlx_wd_32k_init(void)
 }
 SYS_INIT(soc_tlx_wd_32k_init, POST_KERNEL, 2);
 #endif
-
-#if CONFIG_SOC_RISCV_TELINK_TL321X && (CONFIG_BT_TLX || CONFIG_IEEE802154_TELINK_TLX)
-void soc_prep_hook(void)
-{
-	extern void rf_sw_config(void);
-	rf_sw_config();
-}
-#endif
