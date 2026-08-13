@@ -74,7 +74,7 @@ For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../gett
 | ----------- | -------- |
 | TL321X      | A4       |
 | TL322X      | A1       |
-| TL323X      | A0       |
+| TL323X      | A1       |
 | TL521X      | A0       |
 | TL721X      | A2/A3    |
 
