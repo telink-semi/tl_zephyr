@@ -456,10 +456,17 @@ class TelinkBuildManager:
             [
                 ("tl3228x", "blinky", "samples/basic/blinky", []),
                 ("tl3228x", "button", "samples/basic/button", []),
+                ("tl3228x", "fade_led", "samples/basic/fade_led", []),
+                ("tl3228x", "peripheral_ht", "samples/bluetooth/peripheral_ht", []),
+                ("tl3228x", "gpio-kbd-matrix", "samples/boards/tlsr9x/gpio-kbd-matrix", []),
                 ("tl3228x", "common", "samples/common", []),
+                ("tl3228x", "mbedtls", "samples/crypto/mbedtls", []),
                 ("tl3228x", "adc_dt", "samples/drivers/adc/adc_dt", []),
+                ("tl3228x", "spi_flash", "samples/drivers/spi_flash", []),
                 ("tl3228x", "watchdog", "samples/drivers/watchdog", []),
                 ("tl3228x", "hello_world", "samples/hello_world", []),
+                ("tl3228x", "cli", "samples/net/openthread/cli", []),
+                ("tl3228x", "coprocessor", "samples/net/openthread/coprocessor", []),
                 ("tl3228x", "sht3xd", "samples/sensor/sht3xd", []),
             ]
         )
