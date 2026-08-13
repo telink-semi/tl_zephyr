@@ -1,7 +1,5 @@
 # Telink Zephyr SDK
 
-* [Chinese README](README_cn.md)
-
 [![Telink Website](https://img.shields.io/badge/Website-Telink-blue?style=flat-square)](https://www.telink-semi.com/)
 [![Forum](https://img.shields.io/badge/Forum-Telink-green?style=flat-square)](https://forum.telink-semi.cn/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](LICENSE)
@@ -13,17 +11,18 @@
 <!-- Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL321x, TL322x, TLSR921x, TLSR922x, TLSR952x series) and is based on Zephyr Project.
 It is designed for developing a wide range of wireless IoT products including smart home, wearables, lighting products, etc. -->
 
-Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL721x, TL323x series) and is based on Zephyr Project.
+Telink Zephyr SDK is a software development platform for Telink RISC-V SoC platforms (such as TL521x, TL721x, TL323x series) and is based on Zephyr Project.
 It is designed for developing a wide range of wireless IoT products including smart home, wearables, lighting products, etc.
 
 ### Core Capabilities
 
 | Category | Capability |
 |----------|------------|
-| **Wireless connectivity** | Telink BLE stack, OpenThread stack |
+| **Wireless connectivity** | Telink BLE stack, OpenThread stack, BLE + Thread concurrent mode |
 | **Drivers** | GPIO, UART, SPI, I²C, Flash, Timer, etc. |
 | **Development framework** | Zephyr framework |
 | **System services** | Power management, storage management, clock management, Zephyr system initialization |
+| **Positioning** | Bluetooth 6.0 Channel Sounding (CS) for distance measurement (TL721X) |
 | **Security** | SMP, secure connection |
 
 ---
@@ -34,6 +33,8 @@ It is designed for developing a wide range of wireless IoT products including sm
 |--------------|-------------|
 | **Bluetooth LE** | Wireless sensors, beacons, HID devices, audio streaming, wearables |
 | **Thread / Matter** | Lights, switches, sensors, door locks, and Matter over Thread devices |
+| **BLE + Thread Concurrent** | Hub/gateway devices running BLE and Thread simultaneously (TL323X, TL721X) |
+| **Channel Sounding** | High-accuracy distance measurement for positioning and fine-ranging (TL721X) |
 | **Wi-Fi enabled IoT devices** | Gateways, Lights, and cloud-connected edge devices |
 
 ---
@@ -45,7 +46,7 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 | Resource | Description | Link |
 |----------|-------------|------|
-| **Release Note** | Telink SDK Changelog & New Features | [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md) |
+| **Release Note** | Telink SDK Changelog & New Features | [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes.md) |
 | **Get Started Guide** | SDK Quick Start: environment setup, toolchain, first build | [Telink Zephyr SDK Getting Started Guide](doc/telink/getting_started/index.md) |
 | **Developer Handbook** | In-depth developer guide (flashing, debugging, networking tips) | [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/) |
 | **Examples** | Sample Project Walkthroughs | [Standard Zephyr Samples](samples) |
@@ -53,7 +54,7 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 - For development environment setup, SDK acquisition, and quick-start instructions, refer to the [Telink Zephyr SDK Getting Started Guide](doc/telink/getting_started/index.md).
 - For in-depth guidance (flashing, debugging, networking tips), refer to the [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
-- For a detailed list of supported devices, refer to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md)
+- For a detailed list of supported devices, refer to the [Telink Zephyr SDK Release Note](doc/telink/releases/release-notes.md)
 - For community resources and support, refer to [Zephyr RTOS Community README](https://github.com/zephyrproject-rtos/zephyr/blob/v4.1-branch/README.rst)
 
 ---
@@ -71,7 +72,9 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 ## 📝 Release Information
 
-For version history and detailed changelog, refer to the [Release Note](doc/telink/releases/release-notes-tl_v1.0.1.md).
+For version history and detailed changelog, refer to the [Release Note](doc/telink/releases/release-notes.md).
+
+Historical release notes are available under [`doc/telink/releases/`](doc/telink/releases/).
 
 ---
 

@@ -129,6 +129,19 @@ class TelinkBuildManager:
         # Combinations that build successfully but are not in this set are marked
         # as "Supported but Untested" (🟡). Build failures are marked "Untested" (·).
         self.tested_samples: set[tuple[str, str]] = {
+            # TL521X: all samples are Supported and Tested
+            ("tl5218x", "basic/blinky"),
+            ("tl5218x", "basic/button"),
+            ("tl5218x", "basic/fade_led"),
+            ("tl5218x", "hello_world"),
+            ("tl5218x", "bluetooth/peripheral_ht"),
+            ("tl5218x", "net/openthread/cli"),
+            ("tl5218x", "crypto/mbedtls"),
+            ("tl5218x", "drivers/spi_flash"),
+            ("tl5218x", "drivers/watchdog"),
+            ("tl5218x", "sensor/sht3xd"),
+            ("tl5218x", "drivers/adc/adc_dt"),
+            ("tl5218x", "net/sockets/echo_client"),
             # TL323X: all samples are Supported and Tested
             ("tl3238x", "basic/blinky"),
             ("tl3238x", "basic/button"),
@@ -197,6 +210,8 @@ class TelinkBuildManager:
 
         # Board family mapping
         self.board_family = {
+            "tl5218x": "TL521X",
+            "tl5218x_retention": "TL521X",
             "tl3238x": "TL323X",
             "tl3238x_retention": "TL323X",
             "tl7218x": "TL721X",
@@ -215,6 +230,7 @@ class TelinkBuildManager:
             ("tlsr9528a", "TLSR952X"),
             ("tl3218x", "TL321X"),
             ("tl3228x", "TL322X"),
+            ("tl5218x", "TL521X"),
             ("tl3238x", "TL323X"),
             ("tl7218x", "TL721X"),
             ("tlsr9118bdk40d", "TLSR9118BDK40D"),
@@ -223,6 +239,39 @@ class TelinkBuildManager:
     def _get_board_builds(self) -> list[tuple[str, str, str, list[str]]]:
         """Define build configurations for all boards and samples."""
         builds = []
+
+        # -------------------------- TL521X --------------------------
+        builds.extend(
+            [
+                ("tl5218x", "blinky", "samples/basic/blinky", []),
+                ("tl5218x", "hello_world", "samples/hello_world", []),
+                ("tl5218x", "button", "samples/basic/button", []),
+                ("tl5218x", "fade_led", "samples/basic/fade_led", []),
+                ("tl5218x", "peripheral_ht", "samples/bluetooth/peripheral_ht", []),
+                ("tl5218x", "cli", "samples/net/openthread/cli", []),
+                (
+                    "tl5218x",
+                    "mbedtls",
+                    "tests/crypto/mbedtls",
+                    ["-DCONFIG_MBEDTLS_ECP_C=y", "-DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y"],
+                ),
+                ("tl5218x", "spi_flash", "samples/drivers/spi_flash", []),
+                ("tl5218x", "watchdog", "samples/drivers/watchdog", []),
+                ("tl5218x", "sht3xd", "samples/sensor/sht3xd", []),
+                ("tl5218x", "adc_dt", "samples/drivers/adc/adc_dt", []),
+                (
+                    "tl5218x_retention",
+                    "retention_echo_client",
+                    "samples/net/sockets/echo_client",
+                    [
+                        "-DOVERLAY_CONFIG=overlay-ot-sed.conf",
+                        "-DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"",
+                        "-DCONFIG_PM=y",
+                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y",
+                    ],
+                ),
+            ]
+        )
 
         # -------------------------- TL323X --------------------------
         builds.extend(
@@ -630,9 +679,8 @@ class TelinkBuildManager:
         lines.append("")
         lines.append("#### Notes on Sample Support")
         lines.append("")
-        lines.append(
-            "- **Tested combinations (✅):** All TL323X samples that build successfully have been"
-        )
+        lines.append("- **Tested combinations (✅):** All TL521X and TL323X samples that build")
+        lines.append("  successfully have been")
         lines.append(
             "  functionally validated. On TL721X, the core bring-up samples (`blinky`, `button`,"
         )
@@ -913,6 +961,7 @@ class TelinkBuildManager:
         resource_usage_lines.append("| tlsr9528a | TLSR952X/B92 |")
         resource_usage_lines.append("| tl3218x | TL321X |")
         resource_usage_lines.append("| tl3228x | TL322X |")
+        resource_usage_lines.append("| tl5218x | TL521X |")
         resource_usage_lines.append("| tl3238x | TL323X |")
         resource_usage_lines.append("| tl7218x | TL721X |")
         resource_usage_lines.append("| tlsr9118bdk40d | TLSR9118BDK40D |")
