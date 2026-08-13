@@ -1,6 +1,6 @@
 # SDK 介绍
 
-* [English README](README.md)
+* [英文 README](README.md)
 
 Telink Zephyr SDK 是基于 Zephyr Project 构建的面向 Telink RISC-V SoC 平台的软件开发平台。通过 Telink Zephyr SDK，开发者可以基于 Zephyr RTOS 标准开发框架，在 Telink SoC 平台上快速开发嵌入式应用。
 

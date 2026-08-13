@@ -1,6 +1,6 @@
 # Telink Zephyr SDK
 
-* [中文 README](README_cn.md)
+* [Chinese README](README_cn.md)
 
 [![Telink Website](https://img.shields.io/badge/Website-Telink-blue?style=flat-square)](https://www.telink-semi.com/)
 [![Forum](https://img.shields.io/badge/Forum-Telink-green?style=flat-square)](https://forum.telink-semi.cn/)
