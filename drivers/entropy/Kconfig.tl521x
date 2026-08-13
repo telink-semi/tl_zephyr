@@ -1,0 +1,12 @@
+# Copyright (c) 2024-2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+# Telink TL521X-series Entropy configuration options
+
+config ENTROPY_TELINK_TL521X_TRNG
+	bool "Telink TL521X-series Entropy driver"
+	default y
+	depends on DT_HAS_TELINK_TL521X_TRNG_ENABLED
+	select ENTROPY_HAS_DRIVER
+	help
+	  Enable the TL521X-series Entropy driver.

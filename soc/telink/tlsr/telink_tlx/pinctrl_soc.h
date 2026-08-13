@@ -33,6 +33,15 @@ typedef uint32_t pinctrl_soc_pin_t;
  * @param prop Property name.
  * @param idx Property entry index.
  */
+#if CONFIG_SOC_RISCV_TELINK_TL521X
+#define Z_PINCTRL_STATE_PIN_INIT(node_id, prop, idx)					\
+	(DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), pinmux) |				\
+	 ((TL521X_PULL_DOWN * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_down))	\
+		<< TL521X_PULL_POS) |							\
+	 ((TL521X_PULL_UP * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_up))	\
+		<< TL521X_PULL_POS)							\
+	),
+#else
 #define Z_PINCTRL_STATE_PIN_INIT(node_id, prop, idx)					\
 	(DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), pinmux) |				\
 	 ((TLX_PULL_DOWN * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_down))	\
@@ -40,6 +49,7 @@ typedef uint32_t pinctrl_soc_pin_t;
 	 ((TLX_PULL_UP * DT_PROP(DT_PROP_BY_IDX(node_id, prop, idx), bias_pull_up))	\
 		<< TLX_PULL_POS)							\
 	),
+#endif
 
 /**
  * @brief Utility macro to initialize state pins contained in a given property.

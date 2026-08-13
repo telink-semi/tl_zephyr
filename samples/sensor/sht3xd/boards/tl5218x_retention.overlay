@@ -9,11 +9,11 @@
 	/* Define I2C pins: SCL(PE0), SDA(PE1) */
 
 	i2c_scl_pd3_default: i2c_scl_pd3_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_3, TL521X_FUNC_I2C_SCL_IO)>;
+		pinmux = <TL521X_PINMUX_SET(TL521X_PORT_D, TL521X_PIN_3, TL521X_FUNC_I2C_SCL_IO)>;
 		bias-pull-up;
 	};
 	i2c_sda_pd2_default: i2c_sda_pd2_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_2, TL521X_FUNC_I2C_SDA_IO)>;
+		pinmux = <TL521X_PINMUX_SET(TL521X_PORT_D, TL521X_PIN_2, TL521X_FUNC_I2C_SDA_IO)>;
 		bias-pull-up;
 	};
 };

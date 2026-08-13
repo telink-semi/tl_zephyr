@@ -1,0 +1,16 @@
+# Copyright (c) 2024-2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config PWM_TELINK_TL521X
+	bool "Telink Semiconductor TL521X PWM driver"
+	default y
+	depends on DT_HAS_TELINK_TL521X_PWM_ENABLED
+	help
+	  Enables Telink TL521X PWM driver.
+
+config PWM_TELINK_TL521X_MAX_CHANNELS
+	int "Maximum number of PWM channels supported by TL521X PWM"
+	default 6
+	depends on PWM_TELINK_TL521X
+	help
+	  Defines maximum number of PWM channels supported by Telink TL521X PWM hardware.

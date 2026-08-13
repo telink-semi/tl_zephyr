@@ -129,6 +129,16 @@ config SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	help
 		Telink TLx SoCs retention memory layout
 
+config SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
+	bool "Telink TL521X SoC retention memory layout"
+	depends on SOC_RISCV_TELINK_TL521X
+	select SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	help
+		Telink TL521X SoC retention memory layout.
+
+		The TL521X SoC reuses the Telink TLx retention memory layout, so
+		selecting this option enables the shared TLx retention mechanism.
+
 config SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE
 	bool "Telink TLx SoCs non retention ram code"
 	depends on SOC_SERIES_RISCV_TELINK_TLX_RETENTION

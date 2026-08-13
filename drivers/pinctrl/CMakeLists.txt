@@ -4,6 +4,7 @@
 zephyr_library()
 zephyr_library_sources(common.c)
 zephyr_library_sources_ifdef(CONFIG_PINCTRL_TELINK_B9X pinctrl_b9x.c)
+zephyr_library_sources_ifdef(CONFIG_PINCTRL_TELINK_TL521X pinctrl_tl521x.c)
 zephyr_library_sources_ifdef(CONFIG_PINCTRL_TELINK_TLX pinctrl_tlx.c)
 zephyr_library_sources_ifdef(CONFIG_PINCTRL_TELINK_TL5X pinctrl_tl5x.c)
 zephyr_library_sources_ifdef(CONFIG_PINCTRL_TELINK_W91 pinctrl_w91.c)

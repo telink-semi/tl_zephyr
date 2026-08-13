@@ -129,7 +129,7 @@ static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 	int result = -ENXIO;
 
 	if (base_addr == (REG_RW_BASE_ADDR | ADC_BASE_ADDR)) {
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL721X
 		const adc_pre_scale_e *hw_pre_scale = ARRAY_REMAP(
 			((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
 			((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1F2, ADC_PRESCALE_1}),
@@ -146,13 +146,8 @@ static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 			((adc_sample_freq_e[]){ADC_SAMPLE_FREQ_23K, ADC_SAMPLE_FREQ_48K,
 					       ADC_SAMPLE_FREQ_96K, ADC_SAMPLE_FREQ_192K}),
 			sample_freq);
-#if CONFIG_SOC_RISCV_TELINK_TL521X
-		const adc_ref_vol_e *hw_ref_vol = ARRAY_REMAP(((uint16_t[]){1200}),
-			((adc_ref_vol_e[]){ADC_VREF_VBAT_1P2V}), ref_internal);
-#else
 		const adc_ref_vol_e *hw_ref_vol = ARRAY_REMAP(
 			((uint16_t[]){1200}), ((adc_ref_vol_e[]){ADC_VREF_1P2V}), ref_internal);
-#endif /* CONFIG_SOC_RISCV_TELINK_TL521X */
 		const adc_res_e *hw_resolution =
 			ARRAY_REMAP(((uint8_t[]){8, 10, 12}),
 				    ((adc_res_e[]){ADC_RES8, ADC_RES10, ADC_RES12}), resolution);
@@ -206,8 +201,7 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 				adc_start_sample_nodma();
 				while (!adc_get_rxfifo_cnt()) {
 				}
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 				value += (int16_t)adc_get_raw_code();
 #else
 #error unsupported SOC
@@ -301,7 +295,7 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 	int result = -EINVAL;
 
 	do {
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL721X
 		if (!ARRAY_CONTAINS(((enum adc_gain[]){ADC_GAIN_1_4, ADC_GAIN_1_2, ADC_GAIN_1}),
 				    channel_cfg->gain)) {
 			LOG_ERR("adc not supported gain: %u", channel_cfg->gain);

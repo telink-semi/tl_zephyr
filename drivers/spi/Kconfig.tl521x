@@ -1,0 +1,9 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config SPI_TELINK_TL521X
+	bool "Telink Semiconductor TL521X SPI driver"
+	default y
+	depends on DT_HAS_TELINK_TL521X_SPI_ENABLED
+	help
+	  Enables Telink TL521X SPI driver.
