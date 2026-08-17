@@ -302,9 +302,6 @@ static int uart_tl521x_config_get(const struct device *dev, struct uart_config *
 #endif
 
 /* API implementation: driver initialization */
-#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
-__GENERIC_SECTION(.ram_code)
-#endif
 static int uart_tl521x_driver_init(const struct device *dev)
 {
 	int status = 0;
@@ -569,10 +566,8 @@ int uart_tl521x_drv_cmd(const struct device *dev, uint32_t cmd, uint32_t p)
 		k_sched_lock();
 		while (uart_tl521x_get_tx_bufcnt(uart)) {
 		}
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X
 		while (!(uart->txrx_status & FLD_UART_TXDONE_IRQ)) {
 		}
-#endif
 		/* CMD 0: Get logical zero level UART pins count */
 		ARG_UNUSED(p);
 		const struct uart_tl521x_config *cfg = dev->config;
