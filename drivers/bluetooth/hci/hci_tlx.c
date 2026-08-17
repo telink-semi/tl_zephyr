@@ -187,6 +187,10 @@ static int hci_tlx_open(const struct device *dev, bt_hci_recv_t recv)
 	extern volatile bool tlx_rf_zigbee_250K_mode;
 
 	tlx_rf_zigbee_250K_mode = false;
+#elif CONFIG_IEEE802154_TELINK_TL521X
+	extern volatile bool tl521x_rf_zigbee_250K_mode;
+
+	tl521x_rf_zigbee_250K_mode = false;
 #endif
 	int status;
 
@@ -254,6 +258,10 @@ static int hci_tlx_close(const struct device *dev)
 	extern volatile bool tlx_rf_zigbee_250K_mode;
 
 	tlx_rf_zigbee_250K_mode = false;
+#elif CONFIG_IEEE802154_TELINK_TL521X
+	extern volatile bool tl521x_rf_zigbee_250K_mode;
+
+	tl521x_rf_zigbee_250K_mode = false;
 #endif
 	return 0;
 }
