@@ -21,7 +21,7 @@
 		#size-cells = <0>;
 		cpu0: cpu@0 {
 			reg = <0>;
-			clock-frequency = <80000000>;
+			clock-frequency = <120000000>;
 			compatible ="telink,tlx", "riscv";
 			riscv,isa = "rv32imac_zicsr_zifencei";
 			hlic: interrupt-controller {

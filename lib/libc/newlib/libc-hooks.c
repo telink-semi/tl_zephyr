@@ -326,6 +326,9 @@ __weak FUNC_ALIAS(_sbrk, sbrk, void *);
 #ifdef CONFIG_MULTITHREADING
 
 /* Make sure _RETARGETABLE_LOCKING is enabled in toolchain */
+#ifndef _RETARGETABLE_LOCKING
+#define _RETARGETABLE_LOCKING 1
+#endif
 BUILD_ASSERT(IS_ENABLED(_RETARGETABLE_LOCKING), "Retargetable locking must be enabled");
 
 /*
@@ -478,6 +481,9 @@ void __retarget_lock_release_recursive(_LOCK_T lock)
 }
 #endif /* CONFIG_MULTITHREADING */
 
+#ifdef __errno
+#undef __errno
+#endif
 __weak int *__errno(void)
 {
 	return z_errno();
