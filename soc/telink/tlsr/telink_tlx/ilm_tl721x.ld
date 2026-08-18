@@ -57,10 +57,6 @@ SECTION_DATA_PROLOGUE(ram_code,,)
 	*(".ram_code.*")
 	*(.ram_code_ble)
 	*(".ram_code_ble.*")
-	*(.text.sinf)
-	*(.text.cosf)
-	*(.text.ref__mathlib_rredf2)
-
 	PROVIDE (_RAMCODE_VMA_END = .);
 	PROVIDE (_RAMCODE_VMA_START = ADDR(ram_code));
 	PROVIDE (_RAMCODE_LMA_START = LOADADDR(ram_code));

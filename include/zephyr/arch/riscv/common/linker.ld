@@ -181,7 +181,7 @@ SECTIONS
 		__text_region_start = .;
 
 		*(.text)
-		EXCLUDE_FILE(*sf_sin* *sf_cos* *rredf*) *(".text.*")
+		*(".text.*")
 		*(.gnu.linkonce.t.*)
 #include <zephyr/linker/kobject-text.ld>
 	} GROUP_LINK_IN(ROMABLE_REGION)
