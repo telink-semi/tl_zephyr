@@ -1519,7 +1519,7 @@ void bt_le_adv_resume(void)
 		LOG_DBG("No valid legacy adv");
 		return;
 	}
-#if !CONFIG_SOC_FAMILY_TELINK_TLSR
+#if !(CONFIG_SOC_FAMILY_TELINK_TLSR || CONFIG_SOC_FAMILY_TELINK_TL)
 	/* Connection is possible only in state adv-connectable.
 	 * After disconnect we are in state disconnected.
 	 * To make future connection possible we should set
@@ -1530,7 +1530,7 @@ void bt_le_adv_resume(void)
 	      !atomic_test_bit(adv->flags, BT_ADV_ENABLED))) {
 		return;
 	}
-#endif /* !CONFIG_SOC_FAMILY_TELINK_TLSR */
+#endif /* !(CONFIG_SOC_FAMILY_TELINK_TLSR || CONFIG_SOC_FAMILY_TELINK_TL) */
 	if (!atomic_test_bit(adv->flags, BT_ADV_CONNECTABLE)) {
 		return;
 	}

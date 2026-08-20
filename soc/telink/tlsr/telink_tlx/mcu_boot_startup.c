@@ -13,9 +13,6 @@
 #include "efuse.h"
 #include "gpio.h"
 #include <zephyr/dt-bindings/pinctrl/tl323x-pinctrl.h>
-#elif CONFIG_SOC_RISCV_TELINK_TL521X
-#include "gpio.h"
-#include <zephyr/dt-bindings/pinctrl/tl521x-pinctrl.h>
 #endif
 
 BOOT_LOG_MODULE_REGISTER(telink_tlx_mcuboot);

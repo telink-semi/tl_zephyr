@@ -1,0 +1,6 @@
+family:
+  - name: telink_tlx
+    series:
+      - name: telink_tl521x
+        socs:
+          - name: telink_tl521x

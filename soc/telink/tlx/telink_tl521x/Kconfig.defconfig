@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-if SOC_RISCV_TELINK_TLX
+if SOC_SERIES_RISCV_TELINK_TL521X
 
 config SYS_CLOCK_EXISTS
 	default y
@@ -21,20 +21,11 @@ config 2ND_LVL_INTR_00_OFFSET
 config 2ND_LVL_ISR_TBL_OFFSET
 	default 12
 
-config SOC_RESET_HOOK
-	default y if SOC_RISCV_TELINK_TL321X && (BT_TLX || IEEE802154_TELINK_TLX)
-
 config NUM_IRQS
-	default 65 if SOC_RISCV_TELINK_TL721X
-	default 65 if SOC_RISCV_TELINK_TL321X
-	default 77 if SOC_RISCV_TELINK_TL322X
-	default 58 if SOC_RISCV_TELINK_TL323X
+	default 58
 
 config MAX_IRQ_PER_AGGREGATOR
-	default 65 if SOC_RISCV_TELINK_TL721X
-	default 65 if SOC_RISCV_TELINK_TL321X
-	default 77 if SOC_RISCV_TELINK_TL322X
-	default 58 if SOC_RISCV_TELINK_TL323X
+	default 58
 
 config XIP
 	default n
@@ -177,4 +168,4 @@ DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
 config SETTINGS_NVS_SECTOR_COUNT
 	default $(shell,expr $(dt_node_reg_size_int,$(DT_LABEL_Z_STORAGE),0,K) / 4)
 
-endif # SOC_RISCV_TELINK_TLX
+endif # SOC_SERIES_RISCV_TELINK_TL521X

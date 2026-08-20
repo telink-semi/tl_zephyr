@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "telink_tlx_regions.ld"
+#include "telink_tl521x_regions.ld"
 
 SECTION_DATA_PROLOGUE(retention_reset,,)
 {

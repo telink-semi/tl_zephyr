@@ -1,20 +1,17 @@
 # Copyright (c) 2021-2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-config SOC_RISCV_TELINK_TLX
+config SOC_SERIES_RISCV_TELINK_TL521X
 	bool
-	select SOC_FAMILY_TELINK_TLSR
+	select SOC_FAMILY_TELINK_TL
 	help
-	  Telink TLX
+	  Telink TL521X Series
 
 config SOC_SERIES
-	default "telink_tlx" if SOC_RISCV_TELINK_TLX
+	default "telink_tl521x" if SOC_SERIES_RISCV_TELINK_TL521X
 
 config SOC
-	default "telink_tl321x" if SOC_RISCV_TELINK_TL321X
-	default "telink_tl322x" if SOC_RISCV_TELINK_TL322X
-	default "telink_tl323x" if SOC_RISCV_TELINK_TL323X
-	default "telink_tl721x" if SOC_RISCV_TELINK_TL721X
+	default "telink_tl521x" if SOC_RISCV_TELINK_TL521X
 
 config NORMAL_MODE
 	int "independent matter mode"

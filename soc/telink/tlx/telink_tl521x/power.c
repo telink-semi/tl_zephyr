@@ -24,11 +24,7 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 	(((uint64_t)(sticks)*CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC) / SYSTEM_TIMER_TICK_1S)
 
 #if CONFIG_BT
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
 #define SYSTICKS_MAX_SLEEP 0x20000000
-#else
-#define SYSTICKS_MAX_SLEEP 0x40000000
-#endif
 #else
 #define SYSTICKS_MAX_SLEEP 0xe0000000
 #endif /* CONFIG_BT */
@@ -98,9 +94,6 @@ static volatile bool tlx_deep_sleep_retention_occurred;
  * @brief PM state set API implementation.
  */
 
-#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
-__GENERIC_SECTION(.ram_code)
-#endif
 void pm_state_set(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(substate_id);
@@ -109,10 +102,8 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 	uint64_t current_time = get_mtime();
 	uint64_t wakeup_time = get_mtime_compare();
 
-#if CONFIG_SOC_RISCV_TELINK_TL323X
 	/* before go into deep , should feed 32k watchdog */
 	wd_32k_feed();
-#endif
 	if (wakeup_time <= current_time) {
 		LOG_DBG("Sleep Time = 0 or less\n");
 		return;
@@ -130,11 +121,9 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
 		}
-#if CONFIG_SOC_RISCV_TELINK_TL323X
 		/*after exit from suspend or deep-retention ,should feed 32k watdog quickly*/
 		wd_32k_feed();
 		wd_32k_start();
-#endif
 		break;
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	case PM_STATE_STANDBY:
@@ -162,9 +151,6 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 /**
  * @brief PM state exit post operations API implementation.
  */
-#if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
-__GENERIC_SECTION(.ram_code)
-#endif
 void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(state);
@@ -174,12 +160,8 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	if (tlx_resumed_from_deep_sleep_retention) {
 		csr_clear(mip, MIP_MEIP);
 		tlx_resumed_from_deep_sleep_retention = false;
-	}else
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
-	{
-		extern void blc_ll_set_suspend_exit_latency(void);
-		blc_ll_set_suspend_exit_latency();
 	}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 
 	/*
 	 * System is now in active mode. Enabling interrupts which were

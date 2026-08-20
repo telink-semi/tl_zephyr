@@ -9,30 +9,12 @@
 #define NDS_UITB                     0x800
 #define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
 #define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-        .equ __D25F_IRAM_SIZE,   7 //224KB
-        .equ __D25F_DRAM_SIZE,   5 //160KB
-        .equ __N22_IRAM_SIZE,    0
-        .equ __N22_DRAM_SIZE,    0
 
-    .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12) | \
-                                 (__N22_DRAM_SIZE<<8) | \
-                                 (__D25F_DRAM_SIZE)
+.equ _DRAM_SIZE,     4
+.equ _IRAM_SIZE,     4
 
-    .section .vectors, "ax"
-
-    .global     __D25F_IRAM_SIZE
-    .global     __D25F_DRAM_SIZE
-    .global     __N22_IRAM_SIZE
-    .global     __N22_DRAM_SIZE
-    .global     __D25F_N22_RAM_REG
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-    .equ __D25F_IRAM_SIZE,   3 //96KB   note: configuration Options: 1/2/3
-    .equ __D25F_DRAM_SIZE,   2 //64KB   note: configuration Options: 4/3/2
-
-	.global     __D25F_IRAM_SIZE
-    .global     __D25F_DRAM_SIZE
-#endif
+.global     _DRAM_SIZE
+.global     _IRAM_SIZE
 
 #include <zephyr/toolchain.h>
 #include <zephyr/devicetree.h>
@@ -40,7 +22,6 @@
 	.option push
 	.option norelax
 
-/* exports */
 GTEXT(entry)
 
 SECTION_FUNC(init, init)
@@ -54,29 +35,22 @@ entry:
 
 	.org 0x24
 #if defined(CONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE) && CONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE
-	.word (0x3b4097a9)              #/ 2 - wire SPI interface
+	.word (0x3b4097a9)
 #else
-	.word (0x3b4097a9)              #/ 4 - wire SPI interface set in soc_tlx_check_flash
+	.word (0x3b4097a9)
 #endif
 
 	.align 2
 
 start:
-#if CONFIG_SOC_RISCV_TELINK_TL322X
-    /*Initialize D25 & N22 ILM DLM Size */
-    lui    t0 , 0x80141
-    li     t1 , __D25F_N22_RAM_REG
-    sh     t1 , -2036(t0)              //write16(0x8014080c,0x2105)
-#elif CONFIG_SOC_RISCV_TELINK_TL323X
-    /*Initialize D25 ILM DLM Size */
-    lui    t0 , 0x80141
-    li     t1 , __D25F_DRAM_SIZE
-    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
-#endif
+	/*Initialize D25 ILM DLM Size */
+	lui    t0 , 0x80141
+	li     t1 , _DRAM_SIZE
+	sb     t1 , -2036(t0)
 
 #if defined(CONFIG_ANDES_CODENSE) && CONFIG_ANDES_CODENSE
 	la     t0, _ITB_BASE_
-	csrw   NDS_UITB, t0                     #/ CoDense instruction table
+	csrw   NDS_UITB, t0
 #endif
 
 	/* Select PLIC mode */
@@ -97,12 +71,12 @@ start:
 	addi   t0, t0, %lo(PLIC_BASE_ADDRESS)
 	li     t1, 0
 	sw     t1, 0(t0)
-#endif /* CONFIG_RISCV_VECTORED_MODE */
+#endif
 
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
-	ori    t0, t0, 1                #/ I-Cache
-	ori    t0, t0, 2                #/ D-Cache
+	ori    t0, t0, 1
+	ori    t0, t0, 2
 	csrw   NDS_MCACHE_CTL, t0
 	fence.i
 
@@ -144,7 +118,7 @@ _ZERO_DLM_BSS_BEGIN:
 	sw     t0, 0(t2)
 	addi   t2, t2, 4
 	j      _ZERO_DLM_BSS_BEGIN
-#endif /* CONFIG_TELINK_TLX_MATTER_RETENTION_LAYOUT */
+#endif
 
 _RETENTION_RESET_INIT:
 	la     t1, _RETENTION_RESET_LMA_START
@@ -210,7 +184,6 @@ _START:
 
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 
-/* exports */
 GTEXT(retention_entry)
 
 SECTION_FUNC(retention_reset, retention_reset)
@@ -222,13 +195,10 @@ retention_entry:
 	.org 0x22
 
 retention_start:
-	/* Select ram mode */
-#if CONFIG_SOC_RISCV_TELINK_TL323X
-/*Initialize D25 ILM DLM Size */
-    lui    t0 , 0x80141
-    li     t1 , __D25F_DRAM_SIZE
-    sb     t1 , -2036(t0)              //write8(0x8014080c,0x2105)
-#endif
+	/*Initialize D25 ILM DLM Size */
+	lui    t0 , 0x80141
+	li     t1 , _DRAM_SIZE
+	sb     t1 , -2036(t0)
 
 	/* Select PLIC mode */
 #ifdef CONFIG_RISCV_VECTORED_MODE
@@ -260,13 +230,13 @@ _ZERO_PLIC_PRIO_BEGIN:
 	sw     t2, 0(t0)
 	addi   t0, t0, 4
 	j      _ZERO_PLIC_PRIO_BEGIN
-#endif /* CONFIG_RISCV_VECTORED_MODE */
+#endif
 
 _CORE_FEATURES_SETUP:
 	/* Enable I/D-Cache */
 	csrr   t0, NDS_MCACHE_CTL
-	ori    t0, t0, 1                #/ I-Cache
-	ori    t0, t0, 2                #/ D-Cache
+	ori    t0, t0, 1
+	ori    t0, t0, 2
 	csrw   NDS_MCACHE_CTL, t0
 	fence.i
 
@@ -275,9 +245,6 @@ _CORE_FEATURES_SETUP:
 	csrs   NDS_MMISC_CTL, t0
 
 	/* flash wakeup */
-#if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X \
-	|| CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
-	/* we are not in ISR so use ISR stack to restore registers */
 	la     sp, z_interrupt_stacks
 	li     t0, CONFIG_ISR_STACK_SIZE
 	add    sp, sp, t0
@@ -287,39 +254,38 @@ _CORE_FEATURES_SETUP:
 	lui    t0, 0xa3fff
 	addi   t0, t0, 0x790
 	li     t1, 0x0e
-	sb     t1, 0x78c(t0)            #/ xip_stop          :0xa3ffff1c = 0x0e
+	sb     t1, 0x78c(t0)
 _MSPI_WAIT_1:
 	lui     t0, 0xa3fff
 	addi    t0, t0, 0x790
 	lb      t2, 0x798(t0)
 	li      t3, 0x80
-	beq     t3, t2, _MSPI_WAIT_1    #/ read reg_mspi_status FLD_MSPI_BUSY(0xA3FFFF28[bit7])
+	beq     t3, t2, _MSPI_WAIT_1
 	lui     t0, 0xa3fff
 	addi    t0, t0, 0x790
 	li      t1, 0x06
-	sb      t1, 0x78c(t0)           #/ xip_disable       :0xa3ffff1c = 0x06
+	sb      t1, 0x78c(t0)
 	lui     t0, 0x80140
 	li      t1, 0x3f
-	sb      t1, 0x331(t0)           #/ mspi ie enable    :0x80140331 = 0x3f
+	sb      t1, 0x331(t0)
 	lui     t0, 0xa3fff
 	addi    t0, t0, 0x790
 	li      t2, 0x80
-	sb      t2, 0x778(t0)           #/ mspi_ctrl1        :0xa3ffff08 = 0x80
+	sb      t2, 0x778(t0)
 	li      t3, 0xab
-	sb      t3, 0x774(t0)           #/ wakeup_cmd        :0xa3ffff04 = 0xab
+	sb      t3, 0x774(t0)
 _MSPI_WAIT_2:
 	lui     t0, 0xa3fff
 	addi    t0, t0, 0x790
 	lb      t2, 0x798(t0)
 	li      t3, 0x80
-	beq     t3, t2, _MSPI_WAIT_2    #/ read reg_mspi_status FLD_MSPI_BUSY(0xa3ffff28[bit7])
+	beq     t3, t2, _MSPI_WAIT_2
 	lui     t0, 0xa3fff
 	addi    t0, t0, 0x790
 	li      t1, 0x0a
-	sb      t1, 0x78c(t0)           #/ xip_enable        :0xa3ffff1c = 0x0a
-	/* flash wakeup need delay about 20us, efuse load need delay about 0us */
+	sb      t1, 0x78c(t0)
 	li      t0, 0
-	li      t1, 320                 #/ 25us
+	li      t1, 320
 _WAIT_EFUSE_LOAD_AND_FLASH_WAKEUP_FINISH:
 	addi    t0, t0, 1
 	bgeu    t1, t0, _WAIT_EFUSE_LOAD_AND_FLASH_WAKEUP_FINISH
@@ -329,8 +295,7 @@ _MULTI_ADDRESS_BEGIN:
 	addi    t0, t0, 0x790
 	la      t1, g_pm_mspi_cfg
 	lw      t2, 0(t1)
-	sw      t2, 0x790(t0)           #/ g_pm_mspi_cfg->0xa3ffff20
-#endif /* flash wakeup chip dependent */
+	sw      t2, 0x790(t0)
 
 #ifdef CONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE
 _IRAMCODE_INIT:
@@ -344,25 +309,11 @@ _IRAMCODE_INIT_BEGIN:
 	addi   t1, t1, 4
 	addi   t2, t2, 4
 	j      _IRAMCODE_INIT_BEGIN
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE */
+#endif
 
 _RESTORE:
 	j      tl_context_restore
 
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif
 
 	.option pop
-
-#if CONFIG_SOC_RISCV_TELINK_TL321X && (CONFIG_BT_TLX || CONFIG_IEEE802154_TELINK_TLX)
-.global soc_reset_hook
-soc_reset_hook:
-	li t0, 0x79000
-	mv     sp, t0
-	addi sp, sp, -16
-	sw   ra, 0(sp)
-	la     t0, rf_sw_config
-	jalr   t0
-	lw   ra, 0(sp)
-    addi sp, sp, 16
-	ret
-#endif
