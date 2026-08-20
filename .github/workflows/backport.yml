@@ -6,6 +6,8 @@ on:
       - labeled
     branches:
       - main
+      - develop
+      - dev-tlk_v*
 
 jobs:
   backport:
