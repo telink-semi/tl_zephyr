@@ -4,24 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <zephyr/toolchain.h>
+#include <zephyr/devicetree.h>
+
 #define NDS_MCACHE_CTL               0x7ca
 #define NDS_MMISC_CTL                0x7d0
 #define NDS_UITB                     0x800
 #define PLIC_BASE_ADDRESS            DT_REG_ADDR(DT_NODELABEL(plic0))
 #define PLIC_PRI_SIZE                ((CONFIG_NUM_IRQS - CONFIG_2ND_LVL_ISR_TBL_OFFSET) << 2)
-#if CONFIG_SOC_RISCV_TELINK_TL322X
 
-#if CONFIG_TELINK_TL322X_ENABLE_N22
-    .equ __D25F_IRAM_SIZE,   2 //64KB
-    .equ __D25F_DRAM_SIZE,   3 //96KB
-    .equ __N22_IRAM_SIZE,    5 //160KB
-    .equ __N22_DRAM_SIZE,    2 //64KB
-#else
-	.equ __D25F_IRAM_SIZE,   7 //224KB
-	.equ __D25F_DRAM_SIZE,   5 //160KB
-	.equ __N22_IRAM_SIZE,    0
-	.equ __N22_DRAM_SIZE,    0
-#endif
+#if CONFIG_SOC_RISCV_TELINK_TL322X
+    /* @breif ILM/DLM partition size in 32KB units, taken from the
+     * ram_ilm / ram_dlm reg size in the devicetree.
+     */
+    .equ __D25F_IRAM_SIZE,   (DT_REG_SIZE(DT_NODELABEL(ram_ilm)) >> 15)
+    .equ __D25F_DRAM_SIZE,   (DT_REG_SIZE(DT_NODELABEL(ram_dlm)) >> 15)
+    .equ __N22_IRAM_SIZE,    (DT_REG_SIZE(DT_NODELABEL(n22_ram_ilm)) >> 15)
+    .equ __N22_DRAM_SIZE,    (DT_REG_SIZE(DT_NODELABEL(n22_ram_dlm)) >> 15)
 
 
     .equ __D25F_N22_RAM_REG,    ((__N22_DRAM_SIZE+__N22_IRAM_SIZE)<<12) | \
@@ -48,9 +47,6 @@
 	.global     _DRAM_SIZE
     .global     _IRAM_SIZE
 #endif
-
-#include <zephyr/toolchain.h>
-#include <zephyr/devicetree.h>
 
 	.option push
 	.option norelax

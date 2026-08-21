@@ -11,6 +11,10 @@
 		/* Use UART1 for HCI transport (DT_CHOSEN(uart1) in sample) */
 		uart1 = &uart1;
 	};
+
+	soc {
+		compatible = "telink,telink_tl322x-soc";
+	};
 };
 
 /* Memory layout override (values match board defaults, kept for clarity) */
@@ -21,6 +25,15 @@
 &ram_dlm {
 	reg = <0x00080000 0x00018000>;
 };
+
+&n22_ram_ilm {
+	reg = <0x50000000 0x00028000>;
+};
+
+&n22_ram_dlm {
+	reg = <0x50080000 0x00010000>;
+};
+
 
 &power {
 	power-mode = "LDO_1P25_LDO_1P8";

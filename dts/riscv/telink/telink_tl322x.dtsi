@@ -57,6 +57,14 @@
 			compatible = "mmio-sram";
 		};
 
+		n22_ram_ilm: memory@50000000 {
+			compatible = "mmio-sram";
+		};
+
+		n22_ram_dlm: memory@50080000 {
+			compatible = "mmio-sram";
+		};
+
 		mtimer: timer@c6000000 {
 			compatible = "riscv,machine-timer";
 			reg = <0xc6000000 0x8 0xc6000008 0x8>;
