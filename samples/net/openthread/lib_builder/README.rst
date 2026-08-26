@@ -2,7 +2,7 @@ Telink openthread library builder
 #################################
 This is a project to create Telink openthread prebuilt libraries.
 This project is used by github CI, see `openthread_telink_lib <../../../../.github/workflows/telink-ot-lib.yaml>`_ for details.
-This job is creating Telink openthread libraries set as its artifacts, which are usually populated in `official Telink openthread libraries repository <https://github.com/telink-semi/openthread_telink_lib>`_.
+This job is creating Telink openthread libraries set as its artifacts, which are usually populated in `official Telink openthread libraries repository <https://github.com/telink-semi/tl_openthread_libs>`_.
 
 
 CI libraries generating
@@ -52,7 +52,7 @@ Building details
 Link application against prebuilt library
 *****************************************
 To link application against prebuilt library provide variable *OVERLAY_CONFIG* with corresponding library type.
-See *configs/* directory under `openthread_telink_lib module <https://github.com/telink-semi/openthread_telink_lib>`_ for available configurations.
+See *configs/* directory under `openthread_telink_lib module <https://github.com/telink-semi/tl_openthread_libs>`_ for available configurations.
 
 As example building *openthread-cli*:
 
