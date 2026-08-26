@@ -4,24 +4,24 @@
 manifest:
   projects:
     - name: lzma
-      url: https://github.com/telink-semi/xz
+      url: https://github.com/telink-semi/tl_xz
       revision: 053c1629f452b43339e7cd5c66fc89a143f4827a
       path: modules/lib/lzma
 
     - name: mcuboot
-      url: https://github.com/telink-semi/mcuboot
+      url: https://github.com/telink-semi/tl_mcuboot
       revision: ce0da85c39c749df49b0ec62b33d2ecdea24c927
       path: bootloader/mcuboot
       groups:
         - bootloader
 
     - name: openthread
-      url: https://github.com/telink-semi/openthread
+      url: https://github.com/telink-semi/tl_openthread
       revision: 542aaab44e1308e1a8a24573dfbd413fade342ee
       path: modules/lib/openthread
 
     - name: openthread_telink_lib
-      url: https://github.com/telink-semi/openthread_telink_lib
+      url: https://github.com/telink-semi/tl_openthread_libs
       revision: tags/v4.1.2
       path: modules/lib/openthread_telink_lib
 
