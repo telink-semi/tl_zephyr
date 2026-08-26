@@ -70,6 +70,29 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 ---
 
+## 🧩 Telink Maintained Repositories
+
+Besides this repository, the SDK pulls in the following Telink maintained
+modules through `submanifests/telink.yaml`. They carry Telink specific
+modifications and optimizations on top of their upstream projects, or are
+Telink provided components, and are therefore published under the `tl_`
+naming convention:
+
+| Repository | Upstream | Telink Modifications |
+|------------|----------|----------------------|
+| [tl_mcuboot](https://github.com/telink-semi/tl_mcuboot) | [MCUboot](https://github.com/mcu-tools/mcuboot) | Boot time optimizations: the primary slot image is validated only on the first boot (`BOOT_VALIDATE_SLOT0_ONCE`); on TL323X the application image hash is computed directly from flash storage (`CONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE`) without a RAM copy. |
+| [tl_openthread](https://github.com/telink-semi/tl_openthread) | [OpenThread](https://github.com/openthread/openthread) | Performance optimization: the sleepy end device (SED) processing call tree (tasklets, timers, MAC frame handling, mesh forwarding) is placed in the RAM code section (`OT_SED_RAM`) for faster execution on Telink SoCs. |
+| [tl_xz](https://github.com/telink-semi/tl_xz) | [XZ Utils](https://github.com/tukaani-project/xz) | Zephyr module integration for `liblzma` (a `zephyr/` CMake and Kconfig wrapper) with size optimization (`-Os`) enabled by default. |
+| [tl_openthread_libs](https://github.com/telink-semi/tl_openthread_libs) | Telink owned | Prebuilt OpenThread FTD libraries for Telink SoCs, in extended and reduced feature set variants, linked as a Zephyr module when `CONFIG_OPENTHREAD_TELINK_LIBRARY` is selected. |
+
+The Telink HAL module [hal_telink](https://github.com/telink-semi/hal_telink) keeps the
+upstream Zephyr HAL naming convention (`hal_<vendor>`) and is fetched through the
+top-level `west.yml`; the NFC driver module `nfc_st25dv` keeps its component name as
+well. All other manifest projects are consumed unchanged from their upstream
+repositories.
+
+---
+
 ## 📝 Release Information
 
 For version history and detailed changelog, refer to the [Release Note](doc/telink/releases/release-notes.md).
