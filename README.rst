@@ -39,6 +39,55 @@ Getting Started
 Welcome to Zephyr! See the `Introduction to Zephyr`_ for a high-level overview,
 and the documentation's `Getting Started Guide`_ to start developing.
 
+Telink Maintained Repositories
+******************************
+
+Besides this repository, the SDK pulls in the following Telink maintained
+modules through its west manifests (``west.yml`` and
+``submanifests/telink.yaml``). They carry Telink specific modifications and
+optimizations on top of their upstream projects, or are Telink provided
+components, and are therefore published under the ``tl_`` naming convention:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Repository
+     - Upstream
+     - Telink Modifications
+   * - `tl_mcuboot`_
+     - `MCUboot`_
+     - Boot time optimizations: the primary slot image is validated only on the first boot (``BOOT_VALIDATE_SLOT0_ONCE``); on TL323X the application image hash is computed directly from flash storage (``CONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE``) without a RAM copy.
+   * - `tl_openthread`_
+     - `OpenThread`_
+     - Security fix for a MAC Key ID Mode 2 frame injection issue, and performance optimization placing the sleepy end device (SED) processing call tree (tasklets, timers, MAC frame handling, mesh forwarding) in the RAM code section (``OT_SED_RAM``) for faster execution on Telink SoCs.
+   * - `tl_xz`_
+     - `XZ Utils`_
+     - Zephyr module integration for ``liblzma`` (a ``zephyr/`` CMake and Kconfig wrapper) with size optimization (``-Os``) enabled by default.
+   * - `tl_openthread_libs`_
+     - Telink owned
+     - Prebuilt OpenThread FTD libraries for Telink SoCs, in extended and reduced feature set variants, linked as a Zephyr module when ``CONFIG_OPENTHREAD_TELINK_LIBRARY`` is selected.
+
+The Telink HAL module `hal_telink`_ keeps the upstream Zephyr HAL naming
+convention (``hal_<vendor>``). Other Telink provided components, such as the
+BLE SDK (``tl_ble_sdk_zephyr``), ``tflite-micro-telink`` and the NFC driver
+``nfc_st25dv``, keep their component oriented names and are referenced
+unchanged; all remaining manifest projects are consumed as-is from their
+upstream repositories.
+
+This repository and the modules listed above were previously published under
+their upstream-derived names (``zephyr``, ``mcuboot``, ``openthread``, ``xz``
+and ``openthread_telink_lib``) and have been renamed to carry the ``tl_``
+prefix, making the Telink maintained components of the SDK easy to identify.
+
+.. _tl_mcuboot: https://github.com/telink-semi/tl_mcuboot
+.. _MCUboot: https://github.com/mcu-tools/mcuboot
+.. _tl_openthread: https://github.com/telink-semi/tl_openthread
+.. _OpenThread: https://github.com/openthread/openthread
+.. _tl_xz: https://github.com/telink-semi/tl_xz
+.. _XZ Utils: https://github.com/tukaani-project/xz
+.. _tl_openthread_libs: https://github.com/telink-semi/tl_openthread_libs
+.. _hal_telink: https://github.com/telink-semi/hal_telink
+
 .. start_include_here
 
 Community Support

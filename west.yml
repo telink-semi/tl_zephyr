@@ -184,7 +184,7 @@ manifest:
       revision: 8e303c264fc21c2116dc612658003a22e933124d
       path: modules/lib/lz4
     - name: lzma
-      url: https://github.com/telink-semi/xz
+      url: https://github.com/telink-semi/tl_xz
       revision: 053c1629f452b43339e7cd5c66fc89a143f4827a
       path: modules/lib/lzma
     - name: mbedtls
@@ -215,11 +215,11 @@ manifest:
       revision: 233fb29c52ffa7733ba132a2b5987a8201ba8ec6
       path: modules/lib/open-amp
     - name: openthread_telink_lib
-      url: https://github.com/telink-semi/openthread_telink_lib
+      url: https://github.com/telink-semi/tl_openthread_libs
       revision: b5a4ac39d4823a627d8c785879348bf92c49ad7c
       path: modules/lib/openthread_telink_lib
     - name: openthread
-      url: https://github.com/telink-semi/openthread
+      url: https://github.com/telink-semi/tl_openthread
       revision: aabbee49c8c9721ed1ca22a7b326ae3a23aaae09
       path: modules/lib/openthread
     - name: picolibc
