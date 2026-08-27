@@ -15,3 +15,5 @@ config SOC
 	default "telink_tl721x" if SOC_RISCV_TELINK_TL721X
 	default "telink_tl322x" if SOC_RISCV_TELINK_TL322X
 	default "telink_tl323x" if SOC_RISCV_TELINK_TL323X
+	default "telink_tl521x" if SOC_RISCV_TELINK_TL521X
+	default "telink_tl523x" if SOC_RISCV_TELINK_TL523X

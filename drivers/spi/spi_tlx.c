@@ -10,7 +10,7 @@
 #define DT_DRV_COMPAT telink_tl721x_spi
 #endif
 
-#if CONFIG_SOC_RISCV_TELINK_TL321X
+#if CONFIG_SOC_RISCV_TELINK_TL321X && CONFIG_HAL_TELINK_V1
 /*  Redefine 'spi_read' and 'spi_write' functions names from HAL_V1 */
 #define spi_read  hal_spi_read
 #define spi_write hal_spi_write

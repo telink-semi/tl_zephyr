@@ -14,3 +14,5 @@ family:
           - name: telink_tl721x
           - name: telink_tl322x
           - name: telink_tl323x
+          - name: telink_tl521x
+          - name: telink_tl523x
