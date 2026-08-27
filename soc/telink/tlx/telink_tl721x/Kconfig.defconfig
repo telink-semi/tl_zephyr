@@ -1,0 +1,171 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+if SOC_SERIES_RISCV_TELINK_TL721X
+
+config SYS_CLOCK_EXISTS
+	default y
+
+config SYS_CLOCK_HW_CYCLES_PER_SEC
+	default 32000
+
+config RISCV_VECTORED_MODE
+	default y
+
+config RISCV_SOC_INTERRUPT_INIT
+	default y
+
+config 2ND_LVL_INTR_00_OFFSET
+	default 11
+
+config 2ND_LVL_ISR_TBL_OFFSET
+	default 12
+
+config NUM_IRQS
+	default 65
+
+config MAX_IRQ_PER_AGGREGATOR
+	default 65
+
+config XIP
+	default n
+
+config FLASH
+	default y
+
+config FLASH_HAS_EXPLICIT_ERASE
+	default y
+
+config STACK_SENTINEL
+	default y
+
+config THREAD_NAME
+	default y if STACK_SENTINEL
+
+config MAIN_STACK_SIZE
+	default 2048
+
+config IDLE_STACK_SIZE
+	default 1536
+
+config SYSTEM_WORKQUEUE_STACK_SIZE
+	int
+	default 2048
+
+config LOG_PROCESS_THREAD_STACK_SIZE
+	int
+	default 2048
+
+config OPENTHREAD_RADIO_WORKQUEUE_STACK_SIZE
+	default 2048
+
+config TEST_EXTRA_STACK_SIZE
+	default 1024
+
+config COMMON_LIBC_MALLOC
+	default y
+
+config COMMON_LIBC_MALLOC_ARENA_SIZE
+	default 8192
+
+config HEAP_MEM_POOL_SIZE
+	default 4096
+
+config HAS_FLASH_LOAD_OFFSET
+	default y if BOOTLOADER_MCUBOOT
+
+config HAS_PM
+	default y
+
+config PM_DEVICE
+	default y if PM
+
+config MBEDTLS_USER_CONFIG_ENABLE
+	default y if !MCUBOOT
+
+config MBEDTLS_USER_CONFIG_FILE
+	default "telink_soc_mbedtls_user_config.h" if !MCUBOOT
+
+config MBEDTLS_ENTROPY_POLL_ZEPHYR
+	default y if ENTROPY_HAS_DRIVER
+
+config MBEDTLS_ENTROPY_C
+	default y if MBEDTLS_TEST && TELINK_TLX_MBEDTLS_HW_ACCELERATION
+
+config MBEDTLS_CTR_DRBG_ENABLED
+	default y if MBEDTLS_TEST && TELINK_TLX_MBEDTLS_HW_ACCELERATION
+
+config MBEDTLS_CIPHER_AES_ENABLED
+	default y if MBEDTLS_TEST && TELINK_TLX_MBEDTLS_HW_ACCELERATION
+	select MBEDTLS_AES_ROM_TABLES
+
+# OpenThread DTLS / mbedTLS algorithm reverse configuration.
+# When OpenThread Commissioner / Joiner / CoAPS / TCAT is enabled,
+# automatically pull in the required mbedTLS elliptic curve modules and
+# PSA key types so that mbedTLS' check_config.h prerequisites are met and
+# pk_internal.h can find the extern declaration of psa_to_pk_ecdsa_errors[].
+# Note: MBEDTLS_SSL_* symbols are not Kconfig symbols; they are #define'd
+# in config-tls-generic.h when CONFIG_MBEDTLS_DTLS=y, which OpenThread
+# auto-selects via "select MBEDTLS_DTLS" in subsys/net/l2/openthread/Kconfig.
+config MBEDTLS_ECP_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_ECDH_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_ECDSA_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_ECJPAKE_C
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS
+
+config MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS
+
+config MBEDTLS_ECP_DP_SECP256R1_ENABLED
+	default y if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	               OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+
+config MBEDTLS_HEAP_SIZE
+	default 15360 if OPENTHREAD_COMMISSIONER || OPENTHREAD_JOINER || \
+	                    OPENTHREAD_COAPS || OPENTHREAD_BLE_TCAT
+	default 6144  if MBEDTLS
+
+# PSA Crypto key type / algorithm wants.
+# Required so that psa_util_internal.h exposes the extern declaration of
+# psa_to_pk_ecdsa_errors[] (guarded by PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY)
+# and check_config.h accepts MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED.
+# Triggered by mbedTLS ECC algorithm symbols (not OT features) so that
+# any path that enables ECC (PEM certificates, OT Commissioner, etc.)
+# automatically exposes the matching PSA key types.
+config PSA_WANT_ALG_ECDSA
+	default y if MBEDTLS_ECDSA_C
+
+config PSA_WANT_ALG_JPAKE
+	default y if MBEDTLS_ECJPAKE_C
+
+config PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY
+	default y if MBEDTLS_ECP_C
+
+config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC
+	default y if MBEDTLS_ECP_C
+
+config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_DERIVE
+	default y if MBEDTLS_ECDH_C || MBEDTLS_ECJPAKE_C
+
+config PSA_WANT_ECC_SECP_R1_256
+	default y if MBEDTLS_ECP_C
+
+# Workaround for not being able to have commas in macro arguments
+DT_LABEL_Z_STORAGE := $(dt_nodelabel_path,storage_partition)
+
+# Set the sector count of NVS as the storage partition size divided by the sector size (4 KB)
+config SETTINGS_NVS_SECTOR_COUNT
+	default $(shell,expr $(dt_node_reg_size_int,$(DT_LABEL_Z_STORAGE),0,K) / 4)
+
+endif # SOC_SERIES_RISCV_TELINK_TL721X

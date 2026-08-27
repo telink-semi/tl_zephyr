@@ -140,7 +140,7 @@ static inline int telink_tlx_adc_hw_set_channel(uintptr_t base_addr,
 			((adc_pre_scale_e[]){ADC_PRESCALE_1F4, ADC_PRESCALE_1}), channel->gain);
 #else
 #error unsupported SOC
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+#endif /* CONFIG_SOC_FAMILY_TELINK_TLX */
 		const adc_sample_freq_e *hw_sample_freq = ARRAY_REMAP(
 			((uint32_t[]){23000, 48000, 96000, 192000}),
 			((adc_sample_freq_e[]){ADC_SAMPLE_FREQ_23K, ADC_SAMPLE_FREQ_48K,
@@ -205,7 +205,7 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 				value += (int16_t)adc_get_raw_code();
 #else
 #error unsupported SOC
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+#endif /* CONFIG_SOC_FAMILY_TELINK_TLX */
 				adc_stop_sample_nodma();
 			}
 			adc_power_off();
@@ -309,7 +309,7 @@ static int telink_tlx_adc_channel_setup(const struct device *dev,
 		}
 #else
 #error unsupported SOC
-#endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+#endif /* CONFIG_SOC_FAMILY_TELINK_TLX */
 		if (!ARRAY_CONTAINS(((enum adc_reference[]){ADC_REF_INTERNAL}),
 				    channel_cfg->reference)) {
 			LOG_ERR("adc not supported reference: %u", channel_cfg->reference);

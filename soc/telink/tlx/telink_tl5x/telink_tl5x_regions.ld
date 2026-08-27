@@ -1,0 +1,12 @@
+/*
+ * Copyright (c) 2024 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#if !CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
+	#define TELINK_RAM_REGION              RAMABLE_REGION
+	#define TELINK_RAM_CODE_REGION         RAMABLE_REGION
+	#define TELINK_RAM_CODE_RET_REGION     RAMABLE_REGION
+#else
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */

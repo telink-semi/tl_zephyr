@@ -3,7 +3,7 @@
 
 config SOC_SERIES_RISCV_TELINK_TL521X
 	bool
-	select SOC_FAMILY_TELINK_TL
+	select SOC_FAMILY_TELINK_TLX
 	help
 	  Telink TL521X Series
 
@@ -11,7 +11,7 @@ config SOC_SERIES
 	default "telink_tl521x" if SOC_SERIES_RISCV_TELINK_TL521X
 
 config SOC
-	default "telink_tl521x" if SOC_RISCV_TELINK_TL521X
+	default "telink_tl5218x" if SOC_RISCV_TELINK_TL521X
 
 config NORMAL_MODE
 	int "independent matter mode"

@@ -5,7 +5,7 @@ manifest:
   projects:
     - name: lzma
       url: https://github.com/telink-semi/tl_xz
-      revision: 053c1629f452b43339e7cd5c66fc89a143f4827a
+      revision: 84f083c866aa05db29a4b7a7fb46eb89822ad6a8
       path: modules/lib/lzma
 
     - name: mcuboot
@@ -22,7 +22,7 @@ manifest:
 
     - name: openthread_telink_lib
       url: https://github.com/telink-semi/tl_openthread_libs
-      revision: tags/v4.1.2
+      revision: 33e8609ff93cd56b2d2a04643e1685f515d7dfb6
       path: modules/lib/openthread_telink_lib
 
     - name: nfc_st25dv

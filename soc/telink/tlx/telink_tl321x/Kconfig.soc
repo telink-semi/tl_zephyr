@@ -1,0 +1,38 @@
+# Copyright (c) 2021-2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config SOC_SERIES_RISCV_TELINK_TL321X
+	bool
+	select SOC_FAMILY_TELINK_TLX
+	help
+	  Telink TL321X Series
+
+config SOC_SERIES
+	default "telink_tl321x" if SOC_SERIES_RISCV_TELINK_TL321X
+
+config SOC
+	default "telink_tl3218x" if SOC_RISCV_TELINK_TL321X
+
+config NORMAL_MODE
+	int "independent matter mode"
+	default 0
+	help
+		This option enables independent matter mode.
+
+config ACTION_DUAL_MODE
+	int "action dual mode"
+	default 1
+	help
+		This option enables matter switch mode ,such as by button.
+
+config AUTO_SWITCH_DUAL_MODE
+	int "auto switch dual mode"
+	default 2
+	help
+		This option enables matter auto-switch mode ,such as by scan QR code.
+
+config DUAL_MODE
+	int "Support dual-mode switch"
+	default NORMAL_MODE
+	help
+		This option enables different dual mode.

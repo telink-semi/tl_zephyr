@@ -3,4 +3,19 @@ family:
     series:
       - name: telink_tl521x
         socs:
-          - name: telink_tl521x
+          - name: telink_tl5218x
+      - name: telink_tl321x
+        socs:
+          - name: telink_tl3218x
+      - name: telink_tl322x
+        socs:
+          - name: telink_tl3228x
+      - name: telink_tl323x
+        socs:
+          - name: telink_tl3238x
+      - name: telink_tl721x
+        socs:
+          - name: telink_tl7218x
+      - name: telink_tl5x
+        socs:
+          - name: telink_tl5238x
