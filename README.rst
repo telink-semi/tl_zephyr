@@ -39,42 +39,25 @@ and the documentation's `Getting Started Guide`_ to start developing.
 Telink Maintained Repositories
 ******************************
 
-Besides this repository, the SDK pulls in the following Telink maintained
-modules through its west manifests (``west.yml`` and
-``submanifests/telink.yaml``). They carry Telink specific modifications and
-optimizations on top of their upstream projects, or are Telink provided
-components, and are therefore published under the ``tl_`` naming convention:
+Besides this repository (``tl_zephyr``), the SDK pulls in the following Telink
+maintained modules through its west manifests (``west.yml`` and
+``submanifests/telink.yaml``). Forked repositories carry Telink-specific
+modifications and optimizations on top of upstream projects; others are Telink
+provided components. All forked modules are published under the ``tl_`` prefix
+to distinguish them from their upstreams:
 
-.. list-table::
-   :header-rows: 1
+- `tl_mcuboot`_ — fork of `MCUboot`_ with Telink boot-time optimizations
+- `tl_openthread`_ — fork of `OpenThread`_ with Telink security and performance patches
+- `tl_xz`_ — fork of `XZ Utils`_ integrated as a Zephyr module
+- `tl_openthread_libs`_ — Telink-provided prebuilt OpenThread FTD libraries
+- `hal_telink`_ — Telink HAL module (follows the upstream ``hal_<vendor>`` naming convention)
 
-   * - Repository
-     - Upstream
-     - Telink Modifications
-   * - `tl_mcuboot`_
-     - `MCUboot`_
-     - Boot time optimizations: the primary slot image is validated only on the first boot (``BOOT_VALIDATE_SLOT0_ONCE``); on TL323X the application image hash is computed directly from flash storage (``CONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE``) without a RAM copy.
-   * - `tl_openthread`_
-     - `OpenThread`_
-     - Security fix for a MAC Key ID Mode 2 frame injection issue, and performance optimization placing the sleepy end device (SED) processing call tree (tasklets, timers, MAC frame handling, mesh forwarding) in the RAM code section (``OT_SED_RAM``) for faster execution on Telink SoCs.
-   * - `tl_xz`_
-     - `XZ Utils`_
-     - Zephyr module integration for ``liblzma`` (a ``zephyr/`` CMake and Kconfig wrapper) with size optimization (``-Os``) enabled by default.
-   * - `tl_openthread_libs`_
-     - Telink owned
-     - Prebuilt OpenThread FTD libraries for Telink SoCs, in extended and reduced feature set variants, linked as a Zephyr module when ``CONFIG_OPENTHREAD_TELINK_LIBRARY`` is selected.
+For details on each module, see the linked repositories.
 
-The Telink HAL module `hal_telink`_ keeps the upstream Zephyr HAL naming
-convention (``hal_<vendor>``). Other Telink provided components, such as the
-BLE SDK (``tl_ble_sdk_zephyr``), ``tflite-micro-telink`` and the NFC driver
-``nfc_st25dv``, keep their component oriented names and are referenced
-unchanged; all remaining manifest projects are consumed as-is from their
-upstream repositories.
-
-This repository and the modules listed above were previously published under
-their upstream-derived names (``zephyr``, ``mcuboot``, ``openthread``, ``xz``
-and ``openthread_telink_lib``) and have been renamed to carry the ``tl_``
-prefix, making the Telink maintained components of the SDK easy to identify.
+The modules above were previously published under their upstream-derived names
+(``zephyr``, ``mcuboot``, ``openthread``, ``xz`` and ``openthread_telink_lib``)
+and have been renamed with the ``tl_`` prefix to make the Telink maintained
+components of the SDK easy to identify.
 
 .. _tl_mcuboot: https://github.com/telink-semi/tl_mcuboot
 .. _MCUboot: https://github.com/mcu-tools/mcuboot
