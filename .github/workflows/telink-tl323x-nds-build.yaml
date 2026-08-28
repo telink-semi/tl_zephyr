@@ -37,6 +37,9 @@ jobs:
       run: |
         pip install west
         cd ..
+        # checkout dir is "tl_zephyr", but west and build paths expect "zephyr"
+        # create symlink to "tl_zephyr" as "zephyr"
+        ln -sf tl_zephyr zephyr
         west init -l zephyr
         west update
         west zephyr-export
