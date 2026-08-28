@@ -46,8 +46,6 @@ modifications and optimizations on top of upstream projects; others are Telink
 provided components. All forked modules are published under the ``tl_`` prefix
 to distinguish them from their upstreams:
 
-- `tl_mcuboot`_ — fork of `MCUboot`_ with Telink boot-time optimizations
-- `tl_openthread`_ — fork of `OpenThread`_ with Telink security and performance patches
 - `tl_xz`_ — fork of `XZ Utils`_ integrated as a Zephyr module
 - `tl_openthread_libs`_ — Telink-provided prebuilt OpenThread FTD libraries
 - `hal_telink`_ — Telink HAL module (follows the upstream ``hal_<vendor>`` naming convention)
@@ -55,14 +53,10 @@ to distinguish them from their upstreams:
 For details on each module, see the linked repositories.
 
 The modules above were previously published under their upstream-derived names
-(``zephyr``, ``mcuboot``, ``openthread``, ``xz`` and ``openthread_telink_lib``)
+(``zephyr``, ``xz`` and ``openthread_telink_lib``)
 and have been renamed with the ``tl_`` prefix to make the Telink maintained
 components of the SDK easy to identify.
 
-.. _tl_mcuboot: https://github.com/telink-semi/tl_mcuboot
-.. _MCUboot: https://github.com/mcu-tools/mcuboot
-.. _tl_openthread: https://github.com/telink-semi/tl_openthread
-.. _OpenThread: https://github.com/openthread/openthread
 .. _tl_xz: https://github.com/telink-semi/tl_xz
 .. _XZ Utils: https://github.com/tukaani-project/xz
 .. _tl_openthread_libs: https://github.com/telink-semi/tl_openthread_libs
