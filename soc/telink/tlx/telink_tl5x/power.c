@@ -59,13 +59,13 @@ static uint64_t get_mtime(void)
 	return (((uint64_t)mtime_h) << 32) | mtime_l;
 }
 
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 static void set_mtime_compare(uint64_t time_cmp)
 {
 	*(volatile uint64_t *const)((uint32_t)(MTIMECMP_REG +
 					       (_current_cpu->id * sizeof(uint64_t)))) = time_cmp;
 }
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */
 
 /**
  * @brief Set Machine Timer value.
@@ -80,13 +80,13 @@ static void set_mtime(uint64_t time)
 	*rl = (uint32_t)time;
 }
 
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 /* Indicating that system has resumed from deep sleep retention */
 static volatile bool tlx_resumed_from_deep_sleep_retention;
 
 /* Indicating that deep sleep retention has occurred since boot */
 static volatile bool tlx_deep_sleep_retention_occurred;
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */
 
 /**
  * @brief PM state set API implementation.
@@ -116,7 +116,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			set_mtime(current_time);
 		}
 		break;
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 	case PM_STATE_STANDBY:
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
@@ -129,7 +129,7 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 			tlx_deep_sleep_retention_occurred = true;
 		}
 		break;
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */
 	default:
 		LOG_DBG("Unsupported power state %u", state);
 		k_cpu_idle();
@@ -145,12 +145,12 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	ARG_UNUSED(state);
 	ARG_UNUSED(substate_id);
 
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 	if (tlx_resumed_from_deep_sleep_retention) {
 		csr_clear(mip, MIP_MEIP);
 		tlx_resumed_from_deep_sleep_retention = false;
 	}else
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */
 	{
 		extern void blc_ll_set_suspend_exit_latency(void);
 		blc_ll_set_suspend_exit_latency();
@@ -163,7 +163,7 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	arch_irq_unlock(MSTATUS_IEN);
 }
 
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION
 /**
  * @brief Check if system has resumed from deep sleep retention.
  */
@@ -179,4 +179,4 @@ bool pm_has_deep_sleep_retention_occurred(void)
 {
 	return tlx_deep_sleep_retention_occurred;
 }
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */

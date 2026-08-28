@@ -3,6 +3,13 @@
 
 if SOC_FAMILY_TELINK_TLX
 
+# Family-level retention flag: series retention options select it,
+# shared code (HAL, drivers) tests it instead of enumerating series.
+config SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+	bool
+	help
+		Telink TLx SoCs retention memory layout.
+
 rsource "*/Kconfig"
 
 endif # SOC_FAMILY_TELINK_TLX

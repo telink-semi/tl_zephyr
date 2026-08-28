@@ -267,7 +267,7 @@ class TelinkBuildManager:
                         "-DOVERLAY_CONFIG=overlay-ot-sed.conf",
                         "-DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"",
                         "-DCONFIG_PM=y",
-                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y",
+                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TL521X_NON_RETENTION_RAM_CODE=y",
                     ],
                 ),
             ]
@@ -302,7 +302,7 @@ class TelinkBuildManager:
                         "-DOVERLAY_CONFIG=overlay-ot-sed.conf",
                         "-DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"",
                         "-DCONFIG_PM=y",
-                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y",
+                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TL521X_NON_RETENTION_RAM_CODE=y",
                     ],
                 ),
             ]
@@ -353,7 +353,7 @@ class TelinkBuildManager:
                         "-DOVERLAY_CONFIG=overlay-ot-sed.conf",
                         "-DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"",
                         "-DCONFIG_PM=y",
-                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TLX_NON_RETENTION_RAM_CODE=y",
+                        "-DCONFIG_SOC_SERIES_RISCV_TELINK_TL521X_NON_RETENTION_RAM_CODE=y",
                     ],
                 ),
             ]

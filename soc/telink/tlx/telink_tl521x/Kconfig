@@ -95,6 +95,7 @@ config TELINK_TLX_MALLOC_FAILED_HOOK
 
 config SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
 	bool "Telink TL521X SoC retention memory layout"
+	select SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	help
 		Telink TL521X SoC retention memory layout.
 

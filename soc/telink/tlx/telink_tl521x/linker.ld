@@ -13,7 +13,7 @@
 
 MEMORY
 {
-#if !CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if !CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
 	RAM_ILM_N    (rwx) : ORIGIN = DT_REG_ADDR(DT_NODELABEL(ram_ilm_non_retention)),LENGTH = DT_REG_SIZE(DT_NODELABEL(ram_ilm_non_retention))
 #else
 	RAM_ILM_N    (rwx) : ORIGIN = DT_REG_ADDR(DT_NODELABEL(ram_ilm_nonretention)), LENGTH = DT_REG_SIZE(DT_NODELABEL(ram_ilm_nonretention))
