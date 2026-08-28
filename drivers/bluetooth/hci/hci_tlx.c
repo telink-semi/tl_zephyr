@@ -48,7 +48,7 @@ static bool is_hci_event_discardable(const uint8_t *evt_data)
 	}
 }
 
-static struct net_buf *bt_tlx_evt_recv(uint8_t *data, size_t len)
+static struct net_buf *hci_tlx_evt_recv(uint8_t *data, size_t len)
 {
 	bool discardable;
 	struct bt_hci_evt_hdr hdr;
@@ -96,7 +96,7 @@ static struct net_buf *bt_tlx_evt_recv(uint8_t *data, size_t len)
 	return buf;
 }
 
-static struct net_buf *bt_tlx_acl_recv(uint8_t *data, size_t len)
+static struct net_buf *hci_tlx_acl_recv(uint8_t *data, size_t len)
 {
 	struct bt_hci_acl_hdr hdr;
 	struct net_buf *buf;
@@ -149,11 +149,11 @@ static void hci_tlx_host_rcv_pkt(uint8_t *data, uint16_t len)
 
 	switch (pkt_indicator) {
 	case HCI_EVT:
-		buf = bt_tlx_evt_recv(data, len);
+		buf = hci_tlx_evt_recv(data, len);
 		break;
 
 	case HCI_ACL:
-		buf = bt_tlx_acl_recv(data, len);
+		buf = hci_tlx_acl_recv(data, len);
 		break;
 
 	default:
@@ -209,7 +209,7 @@ static int hci_tlx_open(const struct device *dev, bt_hci_recv_t recv)
 	return 0;
 }
 
-static int bt_tlx_send(const struct device *dev, struct net_buf *buf)
+static int hci_tlx_send(const struct device *dev, struct net_buf *buf)
 {
 	(void) dev;
 	int err = 0;
@@ -266,26 +266,26 @@ static int hci_tlx_close(const struct device *dev)
 	return 0;
 }
 
-static int tlx_bt_hci_init(const struct device *dev)
+static int hci_tlx_init(const struct device *dev)
 {
 	return 0;
 }
 
-static const struct bt_hci_driver_api tlx_bt_hci_api = {
+static const struct bt_hci_driver_api hci_tlx_api = {
 	.open  = hci_tlx_open,
-	.send  = bt_tlx_send,
+	.send  = hci_tlx_send,
 	.close = hci_tlx_close
 };
 
 /* BT HCI driver registration */
 #define TLX_BT_HCI_INIT(n)                                              \
-	DEVICE_DT_INST_DEFINE(n, tlx_bt_hci_init,                           \
+	DEVICE_DT_INST_DEFINE(n, hci_tlx_init,                             \
 		NULL,                                                           \
 		NULL,                                                           \
 		NULL,                                                           \
 		POST_KERNEL,                                                    \
 		CONFIG_KERNEL_INIT_PRIORITY_DEVICE,                             \
-		&tlx_bt_hci_api);
+		&hci_tlx_api);
 
 DT_INST_FOREACH_STATUS_OKAY(TLX_BT_HCI_INIT)
 
