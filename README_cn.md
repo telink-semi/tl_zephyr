@@ -59,7 +59,22 @@ Telink Zephyr SDK 在保持与 Zephyr 生态兼容的基础上，增加了 Telin
 | [Zephyr Project Documentation](https://docs.zephyrproject.org/latest/) | Zephyr 技术文档 |
 | [Zephyr 示例工程](https://docs.zephyrproject.org/latest/samples/index.html#samples) | Zephyr 示例程序说明 |
 | [API Reference](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html) | API 查询 |
-| [GitHub](https://github.com/telink-semi/zephyr)  | SDK 源码仓库 |
+| [GitHub](https://github.com/telink-semi/tl_zephyr)  | SDK 源码仓库 |
+
+# Telink 维护的仓库
+
+除本仓库（`tl_zephyr`）外，SDK 还通过 west 清单（`west.yml` 和 `submanifests/telink.yaml`）引入以下由 Telink 维护的模块。它们在上游项目基础上包含 Telink 特有的修改与优化，或为 Telink 提供的组件，因此采用 `tl_` 命名规范发布：
+
+| 仓库 | 上游 | Telink 修改内容 |
+| --- | --- | --- |
+| [tl_mcuboot](https://github.com/telink-semi/tl_mcuboot) | [MCUboot](https://github.com/mcu-tools/mcuboot) | 启动时间优化：主槽镜像仅在首次启动时校验（`BOOT_VALIDATE_SLOT0_ONCE`）；TL323X 上应用镜像直接在 Flash 上计算哈希完成校验（`BOOT_IMG_HASH_DIRECTLY_ON_STORAGE`），无需拷贝到 RAM。 |
+| [tl_openthread](https://github.com/telink-semi/tl_openthread) | [OpenThread](https://github.com/openthread/openthread) | 安全性修复：修复 MAC Key ID Mode 2 帧注入问题；性能优化：将 sleepy end device（SED）处理调用链（tasklet、定时器、MAC 帧处理、mesh 转发）放入 RAM 代码段（`OT_SED_RAM`），提升 Telink SoC 上的执行速度。 |
+| [tl_xz](https://github.com/telink-semi/tl_xz) | [XZ Utils](https://github.com/tukaani-project/xz) | 为 `liblzma` 提供 Zephyr module 集成（`zephyr/` 下的 CMake 与 Kconfig 封装），并默认启用 `-Os` 体积优化。 |
+| [tl_openthread_libs](https://github.com/telink-semi/tl_openthread_libs) | Telink 自有 | 提供 Telink SoC 的 OpenThread FTD 预编译库（extended / reduced 两档功能配置），在启用 `OPENTHREAD_TELINK_LIBRARY` 时以 Zephyr module 方式链接。 |
+
+Telink HAL 模块 [hal_telink](https://github.com/telink-semi/hal_telink) 沿用上游 Zephyr HAL 模块命名规范（`hal_<vendor>`），由顶层 `west.yml` 引入；NFC 驱动模块 `nfc_st25dv` 同样保留其组件名称。其余清单项目均按上游仓库原样引用。
+
+本仓库及上述模块此前以上游衍生名称（`zephyr`、`mcuboot`、`openthread`、`xz` 和 `openthread_telink_lib`）发布，现已统一改为 `tl_` 前缀命名，便于识别 SDK 中由 Telink 维护的组件。
 
 # 贡献指南
 
@@ -82,5 +97,7 @@ You may obtain a copy of the License at:
 [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and limitations under the License.
 
 See the License for the specific language governing permissions and limitations under the License.
