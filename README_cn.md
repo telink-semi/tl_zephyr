@@ -59,7 +59,26 @@ Telink Zephyr SDK 在保持与 Zephyr 生态兼容的基础上，增加了 Telin
 | [Zephyr Project Documentation](https://docs.zephyrproject.org/latest/) | Zephyr 技术文档 |
 | [Zephyr 示例工程](https://docs.zephyrproject.org/latest/samples/index.html#samples) | Zephyr 示例程序说明 |
 | [API Reference](https://docs.zephyrproject.org/4.1.0/doxygen/html/index.html) | API 查询 |
-| [GitHub](https://github.com/telink-semi/zephyr)  | SDK 源码仓库 |
+| [GitHub](https://github.com/telink-semi/tl_zephyr)  | SDK 源码仓库 |
+
+# Telink 维护的仓库
+
+除本仓库（`tl_zephyr`）外，SDK 还通过 west manifests（`west.yml` 和
+`submanifests/telink.yaml`）引入以下由 Telink 维护的模块。派生仓库在上游项目
+基础上包含 Telink 特有的修改与优化；其余为 Telink 提供的组件。所有派生模块均以
+`tl_` 前缀发布，以便与上游区分：
+
+- [tl_mcuboot](https://github.com/telink-semi/tl_mcuboot) — [MCUboot](https://github.com/mcu-tools/mcuboot) 的派生，包含 Telink 启动时间优化
+- [tl_openthread](https://github.com/telink-semi/tl_openthread) — [OpenThread](https://github.com/openthread/openthread) 的派生，包含 Telink 安全与性能补丁
+- [tl_xz](https://github.com/telink-semi/tl_xz) — [XZ Utils](https://github.com/tukaani-project/xz) 的派生，集成为 Zephyr module
+- [tl_openthread_libs](https://github.com/telink-semi/tl_openthread_libs) — Telink 提供的 OpenThread FTD 预编译库
+- [hal_telink](https://github.com/telink-semi/hal_telink) — Telink HAL 模块（沿用上游 `hal_<vendor>` 命名规范）
+
+各模块详情请参见对应仓库链接。
+
+以上模块此前以上游派生名称（`zephyr`、`mcuboot`、`openthread`、`xz` 和
+`openthread_telink_lib`）发布，现已以 `tl_` 前缀重命名，以便识别 SDK 中由
+Telink 维护的组件。
 
 # 贡献指南
 

@@ -1,6 +1,6 @@
 # Telink Zephyr SDK Getting Started Guide
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/zephyr/releases/tag/tl_v1.0.1-rc1-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.0.1-rc1-v4.1.0)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](../../../LICENSE)
 
@@ -55,7 +55,7 @@ Hardware and software requirements to prepare before running the SDK.
 |-|-|
 |Toolchain| RISC-V 64-bit Zephyr SDK Toolchain |
 |Burning Tool | [Telink BDT for Linux](https://doc.telink-semi.cn/tools/bdt/Linux/BDT_Linux.zip) (Burning and Debugging tool) |
-|SDK|[Telink Zephyr SDK](https://github.com/telink-semi/zephyr)  |
+|SDK|[Telink Zephyr SDK](https://github.com/telink-semi/tl_zephyr)  |
 
 
 ## Install Dependencies
@@ -137,7 +137,7 @@ Zephyr's multi-repository meta-tool.
 
 The Telink Zephyr SDK is a fork of the upstream
 [zephyrproject-rtos/zephyr](https://github.com/zephyrproject-rtos/zephyr)
-repository, hosted at [telink-semi/zephyr](https://github.com/telink-semi/zephyr).
+repository, hosted at [telink-semi/tl_zephyr](https://github.com/telink-semi/tl_zephyr).
 The Telink-specific changes live on the `release-v1.0-v4.1-branch` branch.
 
 1. Initialize the west workspace with the upstream manifest (this creates the
@@ -173,7 +173,7 @@ The Telink-specific changes live on the `release-v1.0-v4.1-branch` branch.
 
    ```bash
    cd ~/zephyrproject/zephyr
-   git remote add telink https://github.com/telink-semi/zephyr
+   git remote add telink https://github.com/telink-semi/tl_zephyr
    git fetch telink
    git checkout release-v1.0-v4.1-branch
    cd ..
@@ -977,7 +977,7 @@ answer there.
 
 - **Telink Matter Developer Guide**: https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/
 - **Upstream Zephyr docs**: https://docs.zephyrproject.org/
-- **GitHub (Telink fork)**: https://github.com/telink-semi/zephyr
+- **GitHub (Telink fork)**: https://github.com/telink-semi/tl_zephyr
 
 When asking for help, include:
 
