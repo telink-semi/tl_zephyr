@@ -147,6 +147,8 @@ unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
+
 #if (defined(CONFIG_BT_B9X) || defined(CONFIG_IEEE802154))
 	soc_load_rf_parameters_normal();
 #endif
@@ -216,6 +218,8 @@ void soc_b9x_restore(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
+
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_B9X) || defined(CONFIG_IEEE802154))
 	soc_load_rf_parameters_deep_retention();
