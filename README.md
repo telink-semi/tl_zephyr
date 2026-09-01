@@ -70,6 +70,30 @@ It is designed for developing a wide range of wireless IoT products including sm
 
 ---
 
+## 🧩 Telink Maintained Repositories
+
+Besides this repository (`tl_zephyr`), the SDK pulls in the following Telink
+maintained modules through its west manifests (`west.yml` and
+`submanifests/telink.yaml`). Forked repositories carry Telink-specific
+modifications and optimizations on top of upstream projects; others are Telink
+provided components. All forked modules are published under the `tl_` prefix
+to distinguish them from their upstreams:
+
+- [tl_mcuboot](https://github.com/telink-semi/tl_mcuboot) — fork of [MCUboot](https://github.com/mcu-tools/mcuboot) with Telink boot-time optimizations
+- [tl_openthread](https://github.com/telink-semi/tl_openthread) — fork of [OpenThread](https://github.com/openthread/openthread) with Telink security and performance patches
+- [tl_xz](https://github.com/telink-semi/tl_xz) — fork of [XZ Utils](https://github.com/tukaani-project/xz) integrated as a Zephyr module
+- [tl_openthread_libs](https://github.com/telink-semi/tl_openthread_libs) — Telink-provided prebuilt OpenThread FTD libraries
+- [hal_telink](https://github.com/telink-semi/hal_telink) — Telink HAL module (follows the upstream `hal_<vendor>` naming convention)
+
+For details on each module, see the linked repositories.
+
+The modules above were previously published under their upstream-derived names
+(`zephyr`, `mcuboot`, `openthread`, `xz` and `openthread_telink_lib`) and have
+been renamed with the `tl_` prefix to make the Telink maintained components of
+the SDK easy to identify.
+
+---
+
 ## 📝 Release Information
 
 For version history and detailed changelog, refer to the [Release Note](doc/telink/releases/release-notes.md).
