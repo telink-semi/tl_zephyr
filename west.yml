@@ -260,7 +260,7 @@ manifest:
     - name: hal_telink
       remote: telink-semi
       repo-path: hal_telink
-      revision: 3967e49a847705a8e81b5556b7df720c90e83c26
+      revision: pull/205/head
       path: modules/hal/telink
       groups:
         - hal
@@ -370,7 +370,7 @@ manifest:
     - name: telink_ble_sdk
       remote: telink-semi
       repo-path: tl_ble_sdk_zephyr
-      revision: 9135c8eddb7caf72256c911b0ef113fb4037b1b4
+      revision: pull/4/head
       path: modules/hal/telink_ble_sdk
       groups:
         - hal
