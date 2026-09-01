@@ -207,6 +207,8 @@ void soc_early_init_hook(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
+
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_normal();
 #endif
@@ -285,6 +287,8 @@ void soc_tlx_restore(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
+
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X && CONFIG_PM
 	cclk = CLK_48MHZ;
