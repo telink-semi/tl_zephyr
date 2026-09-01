@@ -149,12 +149,18 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 	if (tlx_resumed_from_deep_sleep_retention) {
 		csr_clear(mip, MIP_MEIP);
 		tlx_resumed_from_deep_sleep_retention = false;
-	}else
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */
-	{
+	} else {
 		extern void blc_ll_set_suspend_exit_latency(void);
+
 		blc_ll_set_suspend_exit_latency();
 	}
+#else
+	{
+		extern void blc_ll_set_suspend_exit_latency(void);
+
+		blc_ll_set_suspend_exit_latency();
+	}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL5X_RETENTION */
 
 	/*
 	 * System is now in active mode. Enabling interrupts which were
