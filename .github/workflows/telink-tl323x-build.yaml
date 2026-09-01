@@ -101,6 +101,12 @@ jobs:
         cd ..
         west build -b tl3238x     -d build_ot_cli_tl323x                      zephyr/samples/net/openthread/cli              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL323x net/openthread/ot_ble_test
+      run: |
+        cd ..
+        west build -b tl3238x     -d build_ot_ble_test_tl323x                    zephyr/samples/net/openthread/ot_ble_test           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+
     - name: Build TL323x net/openthread/coprocessor in RCP configuration with UART interface
       run: |
         cd ..
@@ -135,6 +141,7 @@ jobs:
         cp ../build_fade_tl323x/zephyr/zephyr.bin                       telink_build_artifacts/tl323x_tests_pwm.bin
         cp ../build_peripheral_ht_tl323x/zephyr/zephyr.bin              telink_build_artifacts/tl323x_peripheral_ht.bin
         cp ../build_ot_cli_tl323x/zephyr/zephyr.bin                     telink_build_artifacts/tl323x_ot_cli.bin
+        cp ../build_ot_ble_test_tl323x/zephyr/zephyr.bin                telink_build_artifacts/tl323x_ot_ble_test.bin
         cp ../build_ot_coprocessor_rcp_uart_tl323x/zephyr/zephyr.bin    telink_build_artifacts/tl323x_ot_coprocessor_rcp_uart.bin
         cp ../build_crypto_mbedtls_tl323x/zephyr/zephyr.bin             telink_build_artifacts/tl323x_mbedtls.bin
         cp ../build_ot_echo_client_pm_deep_tl3238x/zephyr/zephyr.bin    telink_build_artifacts/tl323x_ot_echo_client_pm_retention.bin

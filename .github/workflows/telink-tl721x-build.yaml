@@ -97,6 +97,11 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_ot_cli_tl721x                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
+    - name: Build TL721X samples/net/openthread/ot_ble_test
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_ot_ble_test_tl721x                    zephyr/samples/net/openthread/ot_ble_test           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Build TL721X samples/net/sockets/echo_server for OpenThread
       run: |
         cd ..
@@ -147,6 +152,7 @@ jobs:
         cp ../build_adc_tl721x/zephyr/zephyr.bin                       telink_build_artifacts/tl721x_adc.bin
         cp ../build_usb_console_tl721x/zephyr/zephyr.bin               telink_build_artifacts/tl721x_usb_console.bin
         cp ../build_ot_cli_tl721x/zephyr/zephyr.bin                    telink_build_artifacts/tl721x_ot_cli.bin
+        cp ../build_ot_ble_test_tl721x/zephyr/zephyr.bin               telink_build_artifacts/tl721x_ot_ble_test.bin
         cp ../build_ot_echo_server_tl721x/zephyr/zephyr.bin            telink_build_artifacts/tl721x_ot_echo_server.bin
         cp ../build_ot_echo_client_tl721x/zephyr/zephyr.bin            telink_build_artifacts/tl721x_ot_echo_client.bin
         cp ../build_ot_echo_client_pm_deep_tl721x/zephyr/zephyr.bin    telink_build_artifacts/tl721x_ot_echo_client_pm_retention.bin
