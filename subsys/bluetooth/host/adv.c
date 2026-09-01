@@ -1519,7 +1519,17 @@ void bt_le_adv_resume(void)
 		LOG_DBG("No valid legacy adv");
 		return;
 	}
-#if !CONFIG_SOC_FAMILY_TELINK_TLSR
+#if CONFIG_SOC_FAMILY_TELINK_TLSR
+	/* Telink controller does not keep BT_ADV_ENABLED in sync with the
+	 * controller state, so only rely on BT_ADV_PERSIST here. An explicit
+	 * bt_le_adv_stop() clears BT_ADV_PERSIST, which still prevents resuming
+	 * after a deliberate stop, while advertising implicitly paused by an
+	 * established connection can be resumed on disconnect for reconnection.
+	 */
+	if (!atomic_test_bit(adv->flags, BT_ADV_PERSIST)) {
+		return;
+	}
+#else
 	/* Connection is possible only in state adv-connectable.
 	 * After disconnect we are in state disconnected.
 	 * To make future connection possible we should set
@@ -1530,7 +1540,7 @@ void bt_le_adv_resume(void)
 	      !atomic_test_bit(adv->flags, BT_ADV_ENABLED))) {
 		return;
 	}
-#endif /* !CONFIG_SOC_FAMILY_TELINK_TLSR */
+#endif /* CONFIG_SOC_FAMILY_TELINK_TLSR */
 	if (!atomic_test_bit(adv->flags, BT_ADV_CONNECTABLE)) {
 		return;
 	}
