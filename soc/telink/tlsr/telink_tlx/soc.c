@@ -344,7 +344,7 @@ void soc_early_init_hook(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
-
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 	/* Only need for lighting to switch from zigbee to matter */
 #if CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM && !CONFIG_MCUBOOT
 	/* Enable clock before operate rf register */
