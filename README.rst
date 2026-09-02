@@ -36,6 +36,35 @@ Getting Started
 Welcome to Zephyr! See the `Introduction to Zephyr`_ for a high-level overview,
 and the documentation's `Getting Started Guide`_ to start developing.
 
+Telink Maintained Repositories
+******************************
+
+Besides this repository (``tl_zephyr``), the SDK pulls in the following Telink
+maintained modules through its west manifests (``west.yml`` and
+``submanifests/telink.yaml``). Forked repositories carry Telink-specific
+modifications and optimizations on top of upstream projects; others are Telink
+provided components. All forked modules are published under the ``tl_`` prefix
+to distinguish them from their upstreams:
+
+- `tl_mcuboot`_ — fork of `MCUboot`_ with Telink boot-time optimizations
+- `tl_xz`_ — fork of `XZ Utils`_ integrated as a Zephyr module
+- `tl_openthread_libs`_ — Telink-provided prebuilt OpenThread FTD libraries
+- `hal_telink`_ — Telink HAL module (follows the upstream ``hal_<vendor>`` naming convention)
+
+For details on each module, see the linked repositories.
+
+The modules above were previously published under their upstream-derived names
+(``zephyr``, ``mcuboot``, ``xz`` and ``openthread_telink_lib``)
+and have been renamed with the ``tl_`` prefix to make the Telink maintained
+components of the SDK easy to identify.
+
+.. _tl_mcuboot: https://github.com/telink-semi/tl_mcuboot
+.. _MCUboot: https://github.com/mcu-tools/mcuboot
+.. _tl_xz: https://github.com/telink-semi/tl_xz
+.. _XZ Utils: https://github.com/tukaani-project/xz
+.. _tl_openthread_libs: https://github.com/telink-semi/tl_openthread_libs
+.. _hal_telink: https://github.com/telink-semi/hal_telink
+
 .. start_include_here
 
 Community Support

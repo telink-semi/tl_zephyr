@@ -4,12 +4,12 @@
 manifest:
   projects:
     - name: lzma
-      url: https://github.com/telink-semi/xz
+      url: https://github.com/telink-semi/tl_xz
       revision: 053c1629f452b43339e7cd5c66fc89a143f4827a
       path: modules/lib/lzma
 
     - name: openthread_telink_lib
-      url: https://github.com/telink-semi/openthread_telink_lib
+      url: https://github.com/telink-semi/tl_openthread_libs
       revision: tags/v4.1.1
       path: modules/lib/openthread_telink_lib
 
