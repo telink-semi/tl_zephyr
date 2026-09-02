@@ -10,6 +10,12 @@ config SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	help
 		Telink TLx SoCs retention memory layout.
 
+# Legacy compatibility alias for the pre-split family symbol: keep it
+# as a hidden symbol so out-of-tree Kconfigs referencing it still resolve.
+config SOC_RISCV_TELINK_TLX
+	bool
+	default y
+
 rsource "*/Kconfig"
 
 endif # SOC_FAMILY_TELINK_TLX
