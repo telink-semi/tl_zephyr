@@ -233,7 +233,7 @@ config USB_TELINK_TLX
 	bool "Telink Semiconductor USB Device Controller Driver for TLx"
 	default y
 	default n if SOC_RISCV_TELINK_TL322X
-	depends on SOC_RISCV_TELINK_TLX
+	depends on SOC_FAMILY_TELINK_TLX
 	imply USB_DEVICE_REMOTE_WAKEUP
 	help
 	  TLx USB Device Controller Driver

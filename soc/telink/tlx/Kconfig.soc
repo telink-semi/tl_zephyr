@@ -1,0 +1,57 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+choice SOC_TELINK_TLX_CHOICE
+	prompt "Telink TLX Family SoCs implementation"
+	default SOC_FAMILY_TELINK_TLX_NONE
+
+config SOC_FAMILY_TELINK_TLX_NONE
+	bool "TLX family SoC deselected"
+	help
+	  No TLX family SoC selected
+
+config SOC_RISCV_TELINK_TL521X
+	bool "Telink TL521X SoC implementation"
+	select SOC_SERIES_RISCV_TELINK_TL521X
+	help
+	  Telink TL521X
+
+config SOC_RISCV_TELINK_TL321X
+	bool "Telink TL321 SoC implementation"
+	select SOC_SERIES_RISCV_TELINK_TL321X
+	help
+	  Telink TL321X
+
+config SOC_RISCV_TELINK_TL322X
+	bool "Telink TL322 SoC implementation"
+	select SOC_SERIES_RISCV_TELINK_TL322X
+	help
+	  Telink TL322X
+
+config SOC_RISCV_TELINK_TL323X
+	bool "Telink TL323 SoC implementation"
+	select SOC_SERIES_RISCV_TELINK_TL323X
+	help
+	  Telink TL323X
+
+config SOC_RISCV_TELINK_TL721X
+	bool "Telink TL721 SoC implementation"
+	select SOC_SERIES_RISCV_TELINK_TL721X
+	help
+	  Telink TL721X
+
+config SOC_RISCV_TELINK_TL523X
+	bool "Telink TL523 SoC implementation"
+	select SOC_SERIES_RISCV_TELINK_TL5X
+	help
+	  Telink TL523X
+
+endchoice
+
+config SOC_FAMILY_TELINK_TLX
+	bool
+
+config SOC_FAMILY
+	default "telink_tlx" if SOC_FAMILY_TELINK_TLX
+
+rsource "*/Kconfig.soc"

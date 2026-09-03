@@ -411,24 +411,24 @@ static int adc_tl521x_pm_action(const struct device *dev, enum pm_device_action 
 {
 	switch (action) {
 	case PM_DEVICE_ACTION_RESUME: {
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
 		extern bool pm_has_resumed_from_deep_sleep_retention(void);
 
 		if (pm_has_resumed_from_deep_sleep_retention()) {
 			adc_tl521x_channel_setup(dev, &tl521x_channel_cfg);
 		}
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION */
 	} break;
 
 	case PM_DEVICE_ACTION_SUSPEND: {
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
+#if CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
 		/*
 		 * Close LPC before sleep, otherwise
 		 * it will increase the standby current.
 		 */
 		lpc_vbat_detect_disable();
 		lpc_power_down();
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION */
 	} break;
 
 	default:

@@ -1,0 +1,15 @@
+# Copyright (c) 2024-2026, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TL521X I2C
+
+include: [i2c-controller.yaml, pinctrl-device.yaml]
+
+compatible: "telink,tl521x-i2c"
+
+properties:
+  reg:
+    required: true
+
+  pinctrl-0:
+    required: true

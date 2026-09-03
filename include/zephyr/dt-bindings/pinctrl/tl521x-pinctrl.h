@@ -102,29 +102,29 @@
 
 /* IDs for GPIO Ports  */
 
-#define TLX_PORT_A 0x00
-#define TLX_PORT_B 0x01
-#define TLX_PORT_C 0x02
-#define TLX_PORT_D 0x03
-#define TLX_PORT_E 0x04
-#define TLX_PORT_F 0x05
+#define TL521X_PORT_A 0x00
+#define TL521X_PORT_B 0x01
+#define TL521X_PORT_C 0x02
+#define TL521X_PORT_D 0x03
+#define TL521X_PORT_E 0x04
+#define TL521X_PORT_F 0x05
 
 /* IDs for GPIO Pins */
 
-#define TLX_PIN_0 0x01
-#define TLX_PIN_1 0x02
-#define TLX_PIN_2 0x04
-#define TLX_PIN_3 0x08
-#define TLX_PIN_4 0x10
-#define TLX_PIN_5 0x20
-#define TLX_PIN_6 0x40
-#define TLX_PIN_7 0x80
+#define TL521X_PIN_0 0x01
+#define TL521X_PIN_1 0x02
+#define TL521X_PIN_2 0x04
+#define TL521X_PIN_3 0x08
+#define TL521X_PIN_4 0x10
+#define TL521X_PIN_5 0x20
+#define TL521X_PIN_6 0x40
+#define TL521X_PIN_7 0x80
 
-/* TLx pinctrl pull-up/down */
+/* TL521X pinctrl pull-up/down */
 
-#define TLX_PULL_NONE 0
-#define TLX_PULL_DOWN 2
-#define TLX_PULL_UP   3
+#define TL521X_PULL_NONE 0
+#define TL521X_PULL_DOWN 2
+#define TL521X_PULL_UP   3
 
 /* Pin function positions */
 
@@ -132,35 +132,35 @@
 
 /* Pin pull up positions */
 
-#define TLX_PIN_0_PULL_UP_EN_POS 0x00
-#define TLX_PIN_1_PULL_UP_EN_POS 0x02
-#define TLX_PIN_2_PULL_UP_EN_POS 0x04
-#define TLX_PIN_3_PULL_UP_EN_POS 0x06
-#define TLX_PIN_4_PULL_UP_EN_POS 0x00
-#define TLX_PIN_5_PULL_UP_EN_POS 0x02
-#define TLX_PIN_6_PULL_UP_EN_POS 0x04
-#define TLX_PIN_7_PULL_UP_EN_POS 0x06
+#define TL521X_PIN_0_PULL_UP_EN_POS 0x00
+#define TL521X_PIN_1_PULL_UP_EN_POS 0x02
+#define TL521X_PIN_2_PULL_UP_EN_POS 0x04
+#define TL521X_PIN_3_PULL_UP_EN_POS 0x06
+#define TL521X_PIN_4_PULL_UP_EN_POS 0x00
+#define TL521X_PIN_5_PULL_UP_EN_POS 0x02
+#define TL521X_PIN_6_PULL_UP_EN_POS 0x04
+#define TL521X_PIN_7_PULL_UP_EN_POS 0x06
 
 /* TL521X pin configuration bit field positions and masks */
 
-#define TLX_PULL_POS    24
-#define TLX_PULL_MSK    0x3
-#define TLX_FUNC_POS    16
+#define TL521X_PULL_POS    24
+#define TL521X_PULL_MSK    0x3
+#define TL521X_FUNC_POS    16
 #define TL521X_FUNC_MSK 0xFF
-#define TLX_PORT_POS    8
-#define TLX_PORT_MSK    0xFF
+#define TL521X_PORT_POS    8
+#define TL521X_PORT_MSK    0xFF
 
-#define TLX_PIN_POS    0
-#define TLX_PIN_MSK    0xFFFF
-#define TLX_PIN_ID_MSK 0xFF
+#define TL521X_PIN_POS    0
+#define TL521X_PIN_MSK    0xFFFF
+#define TL521X_PIN_ID_MSK 0xFF
 
 /* Setters and getters */
 
-#define TLX_PINMUX_SET(port, pin, func)                                                            \
-	((func << TLX_FUNC_POS) | (port << TLX_PORT_POS) | (pin << TLX_PIN_POS))
-#define TLX_PINMUX_GET_PULL(pinmux)   ((pinmux >> TLX_PULL_POS) & TLX_PULL_MSK)
-#define TLX_PINMUX_GET_FUNC(pinmux)   ((pinmux >> TLX_FUNC_POS) & TL521X_FUNC_MSK)
-#define TLX_PINMUX_GET_PIN(pinmux)    ((pinmux >> TLX_PIN_POS) & TLX_PIN_MSK)
-#define TLX_PINMUX_GET_PIN_ID(pinmux) ((pinmux >> TLX_PIN_POS) & TLX_PIN_ID_MSK)
+#define TL521X_PINMUX_SET(port, pin, func) \
+	((func << TL521X_FUNC_POS) | (port << TL521X_PORT_POS) | (pin << TL521X_PIN_POS))
+#define TL521X_PINMUX_GET_PULL(pinmux)   ((pinmux >> TL521X_PULL_POS) & TL521X_PULL_MSK)
+#define TL521X_PINMUX_GET_FUNC(pinmux)   ((pinmux >> TL521X_FUNC_POS) & TL521X_FUNC_MSK)
+#define TL521X_PINMUX_GET_PIN(pinmux)    ((pinmux >> TL521X_PIN_POS) & TL521X_PIN_MSK)
+#define TL521X_PINMUX_GET_PIN_ID(pinmux) ((pinmux >> TL521X_PIN_POS) & TL521X_PIN_ID_MSK)
 
 #endif /* ZEPHYR_TL521X_PINCTRL_COMMON_H_ */

@@ -19,8 +19,7 @@
 #include <stdlib.h>
 
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL322X ||                            \
-	CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X ||                        \
-	CONFIG_SOC_RISCV_TELINK_TL521X
+	CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL721X
 /* Not available for hal_v1, only for hal_v2 */
 #include "tl_flash.h"
 #endif
@@ -185,7 +184,7 @@ static int flash_tlx_erase(const struct device *dev, off_t offset, size_t len)
 		wdt_been_enabled = true;
 	}
 	flash_tlx_unlock(offset);
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL323X
 	wd_32k_feed();
 #endif
 	if (offset % SECTOR_SIZE == 0 && len % SECTOR_SIZE == 0) {
@@ -230,7 +229,7 @@ static int flash_tlx_write(const struct device *dev, off_t offset,
 		BM_CLR(reg_tmr_ctrl2, FLD_TMR_WD_EN);
 		wdt_been_enabled = true;
 	}
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL323X
 	wd_32k_feed();
 #endif
 	/* need to store data in intermediate RAM buffer in case from flash to flash write */
@@ -296,7 +295,7 @@ static int flash_tlx_read(const struct device *dev, off_t offset,
 		BM_CLR(reg_tmr_ctrl2, FLD_TMR_WD_EN);
 		wdt_been_enabled = true;
 	}
-#if CONFIG_SOC_RISCV_TELINK_TL323X || CONFIG_SOC_RISCV_TELINK_TL521X
+#if CONFIG_SOC_RISCV_TELINK_TL323X
 	wd_32k_feed();
 #endif
 

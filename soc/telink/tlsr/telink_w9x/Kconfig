@@ -79,4 +79,10 @@ source "soc/telink/tlsr/telink_w9x/bluetooth/Kconfig.bt"
 source "soc/telink/tlsr/telink_w9x/crypto/Kconfig.crypto"
 source "soc/telink/tlsr/telink_w9x/Kconfig.n22"
 
+config MCUBOOT_START_OFFSET
+	hex "Leave space during building MCUBoot"
+	default 0x0
+	help
+		The MCUboot offset value.
+
 endif # SOC_RISCV_TELINK_W9X

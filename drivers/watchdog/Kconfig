@@ -145,6 +145,8 @@ source "drivers/watchdog/Kconfig.litex"
 
 source "drivers/watchdog/Kconfig.b9x"
 
+source "drivers/watchdog/Kconfig.tl521x"
+
 source "drivers/watchdog/Kconfig.tlx"
 
 source "drivers/watchdog/Kconfig.w91"

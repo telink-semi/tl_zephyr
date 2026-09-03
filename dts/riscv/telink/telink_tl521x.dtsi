@@ -66,7 +66,7 @@
 		};
 
 		flash_mspi: flash-controller@A3FFFF00 {
-			compatible = "telink,tlx-flash-controller";
+			compatible = "telink,tl521x-flash-controller";
 			reg = <0xA3FFFF00 0x100>;
 
 			#address-cells = <1>;
@@ -88,7 +88,7 @@
 		};
 
 		gpioa: gpio@80140c00 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl521x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -98,7 +98,7 @@
 		};
 
 		gpiob: gpio@80140c10 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl521x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -108,7 +108,7 @@
 		};
 
 		gpioc: gpio@80140c20 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl521x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -118,7 +118,7 @@
 		};
 
 		gpiod: gpio@80140c30 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl521x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -128,7 +128,7 @@
 		};
 
 		gpioe: gpio@80140c40 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl521x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -138,7 +138,7 @@
 		};
 
 		gpiof: gpio@80140c50 {
-			compatible = "telink,tlx-gpio";
+			compatible = "telink,tl521x-gpio";
 			gpio-controller;
 			interrupt-parent = <&plic0>;
 			interrupts = <34 1>, <35 1>, <36 1>, <37 1>, <38 1>, <39 1>, <40 1>, <41 1>;
@@ -160,7 +160,7 @@
 		};
 
 		uart0: serial@80140080 {
-			compatible = "telink,tlx-uart";
+			compatible = "telink,tl521x-uart";
 			reg = <0x80140080 0x40>;
 			interrupts = <19 1>;
 			interrupt-parent = <&plic0>;
@@ -168,7 +168,7 @@
 		};
 
 		uart1: serial@801400C0 {
-			compatible = "telink,tlx-uart";
+			compatible = "telink,tl521x-uart";
 			reg = <0x801400C0 0x40>;
 			interrupts = <18 1>;
 			interrupt-parent = <&plic0>;
@@ -176,7 +176,7 @@
 		};
 
 		ieee802154: ieee802154@80140800 {
-			compatible = "telink,tlx-zb";
+			compatible = "telink,tl521x-zb";
 			reg = <0x80140800 0x800>;
 			interrupt-parent = <&plic0>;
 			interrupts = <15 2>;
@@ -189,13 +189,13 @@
 		};
 
 		trng0: trng@80103000 {
-			compatible = "telink,tlx-trng";
+			compatible = "telink,tl521x-trng";
 			reg = <0x80103000 0x20>;
 			status = "disabled";
 		};
 
 		pwm0: pwm@80140400 {
-			compatible = "telink,tlx-pwm";
+			compatible = "telink,tl521x-pwm";
 			reg = <0x80140400 0x80>;
 			channels = <6>;
 			status = "disabled";
@@ -215,7 +215,7 @@
 		};
 
 		i2c: i2c@80140280 {
-			compatible = "telink,tlx-i2c";
+			compatible = "telink,tl521x-i2c";
 			reg = <0x80140280 0x40>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -231,7 +231,7 @@
 		};
 
 		pinctrl: pinctrl@80140cb0 {
-			compatible = "telink,tlx-pinctrl";
+			compatible = "telink,tl521x-pinctrl";
 			reg = <0x80140cb0 0x30
 				   0x80140c06 0x50
 				   0x00000017 0x0C>;
@@ -242,7 +242,7 @@
 		};
 
 		wdt: watchdog@140140 {
-			compatible = "telink,tlx-watchdog";
+			compatible = "telink,tl521x-watchdog";
 			reg = <0x140140 0x10>;
 			status = "disabled";
 		};

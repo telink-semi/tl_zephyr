@@ -1,14 +1,14 @@
 # Copyright (c) 2026 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-choice
-	prompt "Telink SoCs implementation"
-	default SOC_RISCV_TELINK_NONE
+choice SOC_TELINK_TLSR_CHOICE
+	prompt "Telink TLSR Family SoCs implementation"
+	default SOC_RISCV_TELINK_TLSR_NONE
 
-config SOC_RISCV_TELINK_NONE
-	bool "Telink B91 SoC implementation"
+config SOC_RISCV_TELINK_TLSR_NONE
+	bool "TLSR family SoC deselected"
 	help
-	  Telink SOC deselected
+	  No TLSR family SoC selected
 
 config SOC_RISCV_TELINK_B91
 	bool "Telink B91 SoC implementation"
@@ -27,43 +27,6 @@ config SOC_RISCV_TELINK_W91
 	select SOC_RISCV_TELINK_W9X
 	help
 	  Telink W91
-
-config SOC_RISCV_TELINK_TL321X
-	bool "Telink TL321 SoC implementation"
-	select SOC_RISCV_TELINK_TLX
-	help
-	  Telink TL321X
-
-config SOC_RISCV_TELINK_TL322X
-	bool "Telink TL322 SoC implementation"
-	select SOC_RISCV_TELINK_TLX
-	help
-	  Telink TL322X
-
-config SOC_RISCV_TELINK_TL323X
-	bool "Telink TL323 SoC implementation"
-	select SOC_RISCV_TELINK_TLX
-	help
-	  Telink TL323X
-
-config SOC_RISCV_TELINK_TL521X
-	bool "Telink TL521 SoC implementation"
-	select SOC_RISCV_TELINK_TLX
-	help
-	  Telink TL521X
-
-config SOC_RISCV_TELINK_TL721X
-	bool "Telink TL721 SoC implementation"
-	select SOC_RISCV_TELINK_TLX
-	help
-	  Telink TL721X
-
-config SOC_RISCV_TELINK_TL523X
-	bool "Telink TL523 SoC implementation"
-	select SOC_RISCV_TELINK_TL5X
-	help
-	  Telink TL523X
-
 
 endchoice
 

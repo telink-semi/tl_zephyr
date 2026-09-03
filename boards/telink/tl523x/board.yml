@@ -2,9 +2,9 @@ boards:
 - name: tl5238x
   vendor: telink
   socs:
-  - name: telink_tl523x
+  - name: telink_tl5238x
 
 - name: tl5238x_retention
   vendor: telink
   socs:
-  - name: telink_tl523x
+  - name: telink_tl5238x

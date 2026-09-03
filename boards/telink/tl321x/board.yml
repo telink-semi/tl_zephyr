@@ -2,14 +2,14 @@ boards:
 - name: tl3218x
   vendor: telink
   socs:
-  - name: telink_tl321x
+  - name: telink_tl3218x
 
 - name: tl3218x_retention
   vendor: telink
   socs:
-  - name: telink_tl321x
+  - name: telink_tl3218x
 
 - name: tl3218x_ml3m
   vendor: telink
   socs:
-  - name: telink_tl321x
+  - name: telink_tl3218x

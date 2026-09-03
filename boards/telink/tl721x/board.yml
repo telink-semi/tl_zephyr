@@ -2,19 +2,19 @@ boards:
 - name: tl7218x
   vendor: telink
   socs:
-  - name: telink_tl721x
+  - name: telink_tl7218x
 
 - name: tl7218x_retention
   vendor: telink
   socs:
-  - name: telink_tl721x
+  - name: telink_tl7218x
 
 - name: tl7218x_ml7g
   vendor: telink
   socs:
-  - name: telink_tl721x
+  - name: telink_tl7218x
 
 - name: tl7218x_ml7m
   vendor: telink
   socs:
-  - name: telink_tl721x
+  - name: telink_tl7218x
