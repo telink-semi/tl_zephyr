@@ -201,6 +201,7 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 				adc_start_sample_nodma();
 				while (!adc_get_rxfifo_cnt()) {
 				}
+#if CONFIG_HAL_TELINK_V1
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 				value += (int16_t)adc_get_raw_code();
 #elif CONFIG_SOC_RISCV_TELINK_TL321X
@@ -208,6 +209,11 @@ static inline int telink_tlx_adc_hw_get_data(uintptr_t base_addr, uint8_t oversa
 #else
 #error unsupported SOC
 #endif /* CONFIG_SOC_RISCV_TELINK_TLX */
+#elif CONFIG_HAL_TELINK_V2
+				value += (int16_t)adc_get_raw_code();
+#else
+#error unsupported HAL version
+#endif /* Telink HAL version */
 				adc_stop_sample_nodma();
 			}
 			adc_power_off();

@@ -31,7 +31,7 @@ SECTION_DATA_PROLOGUE(retention_data,,)
 	. = ALIGN(4);
 	*(.retention_data)
 	*(".retention_data.*")
-#if defined(CONFIG_SOC_RISCV_TELINK_TL721X)
+#if defined(CONFIG_SOC_RISCV_TELINK_TL721X) || defined(CONFIG_SOC_RISCV_TELINK_TL321X)
 	*(.retention_data_ble)
 	*(".retention_data_ble.*")
 #endif

@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 /* Drivers changes for hal_v2, so should not change castart.s, add external*/
-#if CONFIG_SOC_RISCV_TELINK_TL721X
+#if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X
 _attribute_data_retention_sec_ unsigned int g_pm_mspi_cfg;
 __attribute__((section(".ram_code_retention"))) __attribute__((noinline)) void
 pm_retention_register_recover(void)
@@ -81,8 +81,7 @@ pm_retention_register_recover(void)
 /* Check System Clock value. */
 #if CONFIG_SOC_RISCV_TELINK_TL321X
 #if ((DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_24MHZ) &&	  \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ) &&  \
-	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_96MHZ))
+	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency) != CLK_48MHZ))
 #error "Invalid clock-frequency. Supported values: 24, 48, 96 MHz"
 #endif
 #elif CONFIG_SOC_RISCV_TELINK_TL721X
@@ -236,11 +235,6 @@ void soc_early_init_hook(void)
 		break;
 #endif /* CONFIG_SOC_RISCV_TELINK_TL721X */
 
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case CLK_96MHZ:
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
-		break;
-#endif /* CONFIG_SOC_RISCV_TELINK_TL321X */
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	case CLK_120MHZ:
 		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
@@ -323,11 +317,7 @@ void soc_tlx_restore(void)
 		PLL_240M_CCLK_80M_HCLK_40M_PCLK_40M_MSPI_48M;
 		break;
 #endif /* CONFIG_SOC_RISCV_TELINK_TL721X */
-#if CONFIG_SOC_RISCV_TELINK_TL321X
-	case CLK_96MHZ:
-		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_64M;
-		break;
-#endif /* CONFIG_SOC_RISCV_TELINK_TL321X */
+
 #if CONFIG_SOC_RISCV_TELINK_TL721X
 	case CLK_120MHZ:
 		PLL_240M_CCLK_120M_HCLK_60M_PCLK_60M_MSPI_48M;
