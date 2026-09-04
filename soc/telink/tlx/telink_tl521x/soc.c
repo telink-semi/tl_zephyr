@@ -126,7 +126,6 @@ void soc_early_init_hook(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
-	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore. */
 #if CONFIG_SOC_PMOS_SWITCH_TIME_CTL
@@ -135,6 +134,8 @@ void soc_early_init_hook(void)
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
 	gpio_shutdown(GPIO_ALL);
+
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TL521X))
 	soc_load_rf_parameters_normal();
@@ -218,6 +219,8 @@ void soc_tlx_restore(void)
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
 	gpio_shutdown(GPIO_ALL);
+
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TL521X))
 	soc_load_rf_parameters_deep_retention();

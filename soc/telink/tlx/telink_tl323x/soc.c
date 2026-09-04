@@ -198,7 +198,6 @@ void soc_early_init_hook(void)
 
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
-	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 	/* Only need for lighting to switch from zigbee to matter */
 #if (!CONFIG_PM && !CONFIG_MCUBOOT)
@@ -219,6 +218,8 @@ void soc_early_init_hook(void)
 #endif
 
 	gpio_shutdown(GPIO_ALL);
+
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if CONFIG_ADC_TELINK_TL323X
 	g_adc_calib_flag = efuse_calib_sd_adc_vref();
@@ -307,6 +308,8 @@ void soc_tlx_restore(void)
 #endif
 
 	gpio_shutdown(GPIO_ALL);
+
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if CONFIG_ADC_TELINK_TL323X
 	if (g_adc_calib_flag == DRV_API_SUCCESS) {
