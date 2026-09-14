@@ -403,12 +403,15 @@ _attribute_ram_code_sec_ unsigned char app_system_key_report_to_usb(unsigned cha
     return ret;
 }
 
-_attribute_ram_code_sec_ void app_usb_try_wakeup(void)
+_attribute_ram_code_sec_ int app_usb_try_wakeup(void)
 {
-	if (usb_suspended == 1) {
-		usbd_wakeup_request(&app_usbd);
-		LOG_INF("Request remote wakeup");
-	}
+    if (usb_suspended == 1) {
+        usbd_wakeup_request(&app_usbd);
+        LOG_INF("Request remote wakeup");
+        return 1;
+    }
+
+    return 0;
 }
 
 _attribute_ram_code_sec_ void app_usb_report_to_pc(void)
@@ -419,7 +422,9 @@ _attribute_ram_code_sec_ void app_usb_report_to_pc(void)
         unsigned char cmd = p[1];
         int ret = 0; 
 
-        app_usb_try_wakeup();
+        if (app_usb_try_wakeup()) {
+            return;
+        }
         if(cmd==MOUSE_DATA)
         {
             // ret=app_mouse_report_to_usb(&p[3]);

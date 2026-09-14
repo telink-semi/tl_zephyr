@@ -80,7 +80,7 @@ extern volatile unsigned int usb_suspended;
 
 int usb_hw_init(void);
 void app_usb_main_loop(void);
-void app_usb_try_wakeup(void);
+int app_usb_try_wakeup(void);
 void app_usb_status_check(void);
 #ifdef __cplusplus
 }

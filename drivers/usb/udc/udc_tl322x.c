@@ -408,6 +408,7 @@ static void udc_tlx_handler_out(const struct device *dev, uint8_t ep)
 static void udc_tlx_handler_reset(const struct device *dev)
 {
 	usb0hw_reset();
+	udc_set_suspended(dev, false);
 
 #if IS_ENABLED(CONFIG_UDC_TELINK_TLX_HIGH_SPEED)
 	/* Bus reset clears DEVSPD in DCFG register, must re-program for HS
