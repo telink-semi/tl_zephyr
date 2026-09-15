@@ -1,0 +1,114 @@
+# Copyright (c) 2026, Telink Semiconductor
+#
+# SPDX-License-Identifier: Apache-2.0
+
+import os
+import subprocess
+
+from runners.core import BuildConfiguration, RunnerCaps, ZephyrBinaryRunner
+
+
+class CMDBinaryRunner(ZephyrBinaryRunner):
+    '''Runner front-end for TC.'''
+
+    def __init__(self, cfg, cmd_path, address, erase=False):
+        super().__init__(cfg)
+        self.cmd_path = cmd_path
+        self.address = address
+        self.erase = bool(erase)
+
+    @classmethod
+    def name(cls):
+        return 'cmd_tool'
+
+    @classmethod
+    def capabilities(cls):
+        return RunnerCaps(commands={'flash'}, erase=True)
+
+    @classmethod
+    def do_add_parser(cls, parser):
+        parser.add_argument('--cmd-path', default='', help='path to TC installation root')
+        parser.add_argument('--address', default='0x0', help='start flash address to write')
+
+    @classmethod
+    def do_create(cls, cfg, args):
+        if args.cmd_path:
+            cmd_path = args.cmd_path
+        else:
+            cmd_path = os.getenv('TELINK_CMD_BASE_DIR')
+        return CMDBinaryRunner(cfg, cmd_path, args.address, args.erase)
+
+    def do_run(self, command, **kwargs):
+        self.require(self.cmd_path + '/TC')
+        if command == "flash":
+            self._flash()
+        else:
+            self.logger.error(f'{command} not supported!')
+
+    def _flash(self):
+        # obtain build configuration
+        build_conf = BuildConfiguration(self.cfg.build_dir)
+        # get chip
+        soc_type = None
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL323X']:
+            soc_type = 'TL323X'
+            print('Telink TL323')
+        if soc_type is None:
+            print('only Telink chips are supported!')
+            exit()
+        # get flash size
+        flash_size = str(build_conf['CONFIG_FLASH_SIZE']) + 'K'
+        # get binary file
+        bin_file = os.path.abspath(self.cfg.bin_file)
+        # adjust flash offset for MCU boot application
+        if 'CONFIG_BOOTLOADER_MCUBOOT' in build_conf:
+            if self.address == '0x0' and build_conf['CONFIG_BOOTLOADER_MCUBOOT']:
+                self.address = hex(build_conf['CONFIG_FLASH_LOAD_OFFSET'])
+                print('set address offset for MCUBOOT application to', self.address)
+            else:
+                print('default application offset', self.address)
+        else:
+            print('default application offset', self.address)
+        # select chip
+        print('chip selecting...')
+        chip_sel = subprocess.Popen(
+            ['./TC', 'setchip', soc_type], cwd=self.cmd_path, stdout=subprocess.DEVNULL
+        )
+        chip_sel.wait()
+        # activate chip
+        print('activating...')
+        activate = subprocess.Popen(['./TC', 'ac'], cwd=self.cmd_path, stdout=subprocess.DEVNULL)
+        activate.wait()
+        # unlock flash
+        if soc_type in ('B92', 'TL321X', 'TL721X', 'TL322X', 'TL323X'):
+            print('unlocking flash...')
+            unlock = subprocess.Popen(
+                ['./TC', 'ulf', '0', '0'], cwd=self.cmd_path, stdout=subprocess.DEVNULL
+            )
+            if unlock.wait():
+                exit()
+        # erase flash
+        if self.erase:
+            print(f'erasing {flash_size}...')
+            erase = subprocess.Popen(
+                ['./TC', 'ef', '0', flash_size], cwd=self.cmd_path, stdout=subprocess.DEVNULL
+            )
+            if erase.wait():
+                exit()
+        # flash
+        print(f'flashing "{bin_file}" at offset {self.address}...')
+        flash = subprocess.Popen(
+            ['./TC', 'wf', self.address, '-i', bin_file],
+            cwd=self.cmd_path,
+            stdout=subprocess.DEVNULL,
+        )
+        if flash.wait():
+            exit()
+        # reset chip
+        print('resetting...')
+        reset = subprocess.Popen(
+            ['./TC', 'rst', '-f'], cwd=self.cmd_path, stdout=subprocess.DEVNULL
+        )
+        if reset.wait():
+            exit()
+        print('done!')
