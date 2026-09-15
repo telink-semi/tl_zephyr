@@ -45,8 +45,11 @@ static const struct flash_parameters flash_tlx_parameters = {
 };
 
 
+static unsigned int saved_mie;
 static inline void flash_tlx_unlock(uint32_t offset)
 {
+	__asm__ volatile ("csrr %0, mie" : "=r" (saved_mie));
+	__asm__ volatile ("csrc mie, %0" : : "r" (MIP_MTIP | MIP_MSIP) : "memory");
 	flash_protection_unlock_operation(offset);
 }
 
@@ -54,6 +57,7 @@ static inline void flash_tlx_unlock(uint32_t offset)
 static inline void flash_tlx_lock(uint32_t offset)
 {
 	flash_protection_lock_operation(offset);
+	__asm__ volatile ("csrw mie, %0" : : "r" (saved_mie) : "memory");
 }
 
 
@@ -299,8 +303,14 @@ static int flash_tlx_read(const struct device *dev, off_t offset,
 	wd_32k_feed();
 #endif
 
+	unsigned int saved_mie2;
+	__asm__ volatile ("csrr %0, mie" : "=r" (saved_mie2));
+	__asm__ volatile ("csrc mie, %0" : : "r" (MIP_MTIP | MIP_MSIP) : "memory");
+
 	/* read flash */
 	flash_read_page(CONFIG_FLASH_BASE_ADDRESS + offset, len, (unsigned char *)data);
+
+	__asm__ volatile ("csrw mie, %0" : : "r" (saved_mie2) : "memory");
 
 	if (wdt_been_enabled) {
 		BM_SET(reg_tmr_ctrl2, FLD_TMR_WD_EN);

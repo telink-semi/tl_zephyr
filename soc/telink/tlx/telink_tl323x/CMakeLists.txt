@@ -30,6 +30,7 @@ zephyr_sources_ifdef(CONFIG_PM
 zephyr_sources_ifdef(CONFIG_RISCV_VECTORED_MODE
 	isr_table.c
 	isr_vectored.S
+	higher_isr_vector.S
 )
 
 zephyr_sources_ifdef(CONFIG_MCUBOOT_ACTION_HOOKS

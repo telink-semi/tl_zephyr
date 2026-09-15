@@ -11,6 +11,16 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/linker/linker-tool.h>
 
+/* Redirect exception code to ILM (ram_code) instead of Flash.
+ * The .exception.entry.* and .exception.other.* sections are
+ * captured in the ram_code section via ilm.ld, and copied to
+ * ILM by start.S at boot. The common linker.ld skips capturing
+ * them when _EXCEPTION_IN_RAM is defined.
+ */
+#define CONFIG_EXCEPTION_IN_RAM
+#define CONFIG_IRQ_VECTOR_TABLE_IN_RAM
+#define CONFIG_SW_ISR_TABLE_IN_RAM
+
 MEMORY
 {
 #if !CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION

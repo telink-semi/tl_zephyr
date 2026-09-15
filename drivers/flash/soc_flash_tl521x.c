@@ -41,9 +41,11 @@ static const struct flash_parameters flash_tl521x_parameters = {
 	.erase_value = 0xff,
 };
 
-
+static unsigned int saved_mie;
 static inline void flash_tl521x_unlock(uint32_t offset)
 {
+	__asm__ volatile ("csrr %0, mie" : "=r" (saved_mie));
+	__asm__ volatile ("csrc mie, %0" : : "r" (MIP_MTIP | MIP_MSIP) : "memory");
 	flash_protection_unlock_operation(offset);
 }
 
@@ -51,6 +53,7 @@ static inline void flash_tl521x_unlock(uint32_t offset)
 static inline void flash_tl521x_lock(uint32_t offset)
 {
 	flash_protection_lock_operation(offset);
+	__asm__ volatile ("csrw mie, %0" : : "r" (saved_mie) : "memory");
 }
 
 

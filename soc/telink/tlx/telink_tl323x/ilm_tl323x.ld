@@ -53,6 +53,18 @@ SECTION_DATA_PROLOGUE(ram_code_retention,,)
 SECTION_DATA_PROLOGUE(ram_code,,)
 {
 	. = ALIGN(4);
+#ifdef CONFIG_EXCEPTION_IN_RAM
+	KEEP(*(".exception.entry.*"))
+	*(".exception.other.*")
+#endif
+#ifdef CONFIG_IRQ_VECTOR_TABLE_IN_RAM
+	. = ALIGN(256);
+	KEEP(*(.gnu.linkonce.irq_vector_table*))
+#endif
+#ifdef CONFIG_SW_ISR_TABLE_IN_RAM
+	. = ALIGN(CONFIG_ARCH_SW_ISR_TABLE_ALIGN);
+	KEEP(*(.gnu.linkonce.sw_isr_table*))
+#endif
 	*(.ram_code)
 	*(".ram_code.*")
 	*(.ram_code_ble)

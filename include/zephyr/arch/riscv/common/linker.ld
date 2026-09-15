@@ -168,8 +168,10 @@ SECTIONS
 
     SECTION_PROLOGUE(_EXCEPTION_SECTION_NAME,,)
     {
+#ifndef CONFIG_EXCEPTION_IN_RAM
 		 KEEP(*(".exception.entry.*"))
 		 *(".exception.other.*")
+#endif
     } GROUP_LINK_IN(ROMABLE_REGION)
 
     SECTION_PROLOGUE(_TEXT_SECTION_NAME,,)

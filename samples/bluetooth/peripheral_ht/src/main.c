@@ -13,6 +13,10 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+#include "default_config.h"
+#include "drivers.h"
 
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
@@ -22,6 +26,7 @@
 #include <zephyr/bluetooth/services/bas.h>
 
 #include "hts.h"
+#include "zephyr/device.h"
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -115,13 +120,46 @@ int main(void)
 	 * of starting delayed work so we do it here
 	 */
 	while (1) {
-		k_sleep(K_SECONDS(1));
+		k_sleep(K_MSEC(100));
 
 		/* Temperature measurements simulation */
 		hts_indicate();
 
 		/* Battery level simulation */
 		bas_notify();
+
+		/* Flash erase test: erase 16 KB to verify flash preemptive safety */
+		{
+			const struct device *flash_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
+			static off_t test_offset = 0x40000; /* 256 KB offset, avoid app code */
+			static uint8_t erase_phase = 0;
+
+			if (erase_phase == 0) {
+				printk("Flash erase: start 16KB @0x%x\n", (uint32_t)test_offset);
+
+				DBG_CHN7_HIGH;
+				DBG_CHN7_LOW;
+				DBG_CHN7_HIGH;
+				int flash_err = flash_erase(flash_dev, test_offset, 16 * 1024);
+				DBG_CHN7_LOW;
+				printk("Flash erase: %s (%d)\n",
+				       flash_err ? "FAIL" : "OK", flash_err);
+				erase_phase = 0;
+			} else if (erase_phase == 1) {
+				static uint8_t write_buf[256];
+
+				memset(write_buf, 0xA5, sizeof(write_buf));
+				printk("Flash write: 256B @0x%x\n", (uint32_t)test_offset);
+				DBG_CHN8_HIGH;
+				int flash_err = flash_write(flash_dev, test_offset,
+							    write_buf, sizeof(write_buf));
+				DBG_CHN8_LOW;
+				printk("Flash write: %s (%d)\n",
+				       flash_err ? "FAIL" : "OK", flash_err);
+
+				erase_phase = 0;
+			}
+		}
 	}
 	return 0;
 }
