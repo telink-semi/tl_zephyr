@@ -4,6 +4,7 @@
 
 import os
 import subprocess
+import time
 
 from runners.core import BuildConfiguration, RunnerCaps, ZephyrBinaryRunner
 
@@ -50,9 +51,16 @@ class CMDBinaryRunner(ZephyrBinaryRunner):
         build_conf = BuildConfiguration(self.cfg.build_dir)
         # get chip
         soc_type = None
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL321X']:
+            soc_type = 'TL321X'
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL322X']:
+            soc_type = 'TL322X'
         if build_conf['CONFIG_SOC_RISCV_TELINK_TL323X']:
             soc_type = 'TL323X'
-            print('Telink TL323')
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL521X']:
+            soc_type = 'TL521X'
+        if build_conf['CONFIG_SOC_RISCV_TELINK_TL721X']:
+            soc_type = 'TL721X'
         if soc_type is None:
             print('only Telink chips are supported!')
             exit()
@@ -61,54 +69,72 @@ class CMDBinaryRunner(ZephyrBinaryRunner):
         # get binary file
         bin_file = os.path.abspath(self.cfg.bin_file)
         # adjust flash offset for MCU boot application
-        if 'CONFIG_BOOTLOADER_MCUBOOT' in build_conf:
-            if self.address == '0x0' and build_conf['CONFIG_BOOTLOADER_MCUBOOT']:
-                self.address = hex(build_conf['CONFIG_FLASH_LOAD_OFFSET'])
-                print('set address offset for MCUBOOT application to', self.address)
-            else:
-                print('default application offset', self.address)
-        else:
-            print('default application offset', self.address)
+        if (
+            'CONFIG_BOOTLOADER_MCUBOOT' in build_conf
+            and self.address == '0x0'
+            and build_conf['CONFIG_BOOTLOADER_MCUBOOT']
+        ):
+            self.address = hex(build_conf['CONFIG_FLASH_LOAD_OFFSET'])
         # select chip
-        print('chip selecting...')
-        chip_sel = subprocess.Popen(
-            ['./TC', 'setchip', soc_type], cwd=self.cmd_path, stdout=subprocess.DEVNULL
-        )
-        chip_sel.wait()
-        # activate chip
+        print(f'select chip {soc_type}')
+        if self._shell_execute(f'./TC setchip {soc_type}', self.cmd_path):
+            print('failed!')
+            exit()
+        # activate
         print('activating...')
-        activate = subprocess.Popen(['./TC', 'ac'], cwd=self.cmd_path, stdout=subprocess.DEVNULL)
-        activate.wait()
+        if self._shell_execute('./TC ac', self.cmd_path):
+            print('failed!')
+            exit()
         # unlock flash
-        if soc_type in ('B92', 'TL321X', 'TL721X', 'TL322X', 'TL323X'):
-            print('unlocking flash...')
-            unlock = subprocess.Popen(
-                ['./TC', 'ulf', '0', '0'], cwd=self.cmd_path, stdout=subprocess.DEVNULL
-            )
-            if unlock.wait():
-                exit()
+        print('unlocking flash...')
+        if self._shell_execute('./TC ulf 0 0', self.cmd_path):
+            print('failed!')
+            exit()
         # erase flash
         if self.erase:
             print(f'erasing {flash_size}...')
-            erase = subprocess.Popen(
-                ['./TC', 'ef', '0', flash_size], cwd=self.cmd_path, stdout=subprocess.DEVNULL
-            )
-            if erase.wait():
+            if self._shell_execute(f'./TC ef 0 {flash_size}', self.cmd_path):
+                print('failed!')
                 exit()
         # flash
-        print(f'flashing "{bin_file}" at offset {self.address}...')
-        flash = subprocess.Popen(
-            ['./TC', 'wf', self.address, '-i', bin_file],
-            cwd=self.cmd_path,
-            stdout=subprocess.DEVNULL,
-        )
-        if flash.wait():
+        f_name = os.path.basename(bin_file)
+        print(f'flashing "{f_name}" at offset {self.address}...')
+        if self._shell_execute(f'./TC wf {self.address} -i "{bin_file}"', self.cmd_path):
+            print('failed!')
             exit()
-        # reset chip
         print('resetting...')
-        reset = subprocess.Popen(
-            ['./TC', 'rst', '-f'], cwd=self.cmd_path, stdout=subprocess.DEVNULL
-        )
-        if reset.wait():
+        if self._shell_execute('./TC rst -f', self.cmd_path):
+            print('failed!')
             exit()
         print('done!')
+
+    def _shell_execute(self, command: str, path: str = None) -> int:
+        if path is None:
+            path = os.getcwd()
+        print(command)
+        exec_cmd = subprocess.Popen(
+            command, shell=True, cwd=path, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        time.sleep(1e-2)
+        progress_shown = False
+        while True:
+            ret_code = exec_cmd.poll()
+            if ret_code is not None:
+                if progress_shown:
+                    print('')
+                break
+            progress_shown = True
+            print('.', end='', flush=True)
+            time.sleep(1)
+        while ret_code:
+            err = exec_cmd.stderr.read()
+            if err != '':
+                print(err, end='', flush=True)
+                break
+            out = exec_cmd.stdout.read()
+            if out != '':
+                print(out, end='', flush=True)
+                break
+            print('error!', end='', flush=True)
+            break
+        return ret_code
