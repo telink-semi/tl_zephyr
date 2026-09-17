@@ -153,9 +153,10 @@ config MICRO_SPEECH_EXTRA_DRIVER
 
 config MCUBOOT_START_OFFSET
 	hex "Leave space during building MCUBoot"
-	default 0x5000 if MCUBOOT
 	default 0x0
 	help
-		The MCUboot offset value.
+	  Offset reserved before MCUBoot.
+	  Keep it at 0 for the normal MCUBoot flow.
+	  Set it to 0x5000 when software secure boot is used.
 
 endif # SOC_SERIES_RISCV_TELINK_TL721X
