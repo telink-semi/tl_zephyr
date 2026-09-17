@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Telink Semiconductor
+ * Copyright (c) 2025 - 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -9,6 +9,8 @@
 #include <freq.h>
 #include <telink/telink_tl322x.dtsi>
 #include "tl3228x-pinctrl.dtsi"
+#include <zephyr/dt-bindings/input/tlx-kscan.h>
+#include <zephyr/dt-bindings/input/tlx-kscan-ana.h>
 
 / {
 	model = "telink,tl322x";
@@ -266,4 +268,27 @@ zephyr_udc0: &usbd {
 
 &bt_hci {
 	status = "okay";
+};
+
+&tlx_kscan {
+	pinctrl-row = <&gpio_pg3_default>, <&gpio_pg2_default>;
+	pinctrl-col = <&gpio_pg1_default>, <&gpio_pg0_default>;
+	col-pull-type = <TLX_KSCAN_COL_INT_PULL_DOWN>;
+	debounce-period = <TLX_KSCAN_DEBOUNCE_PERIOD_8MS>;
+	idle-period = <1>;
+	scan-times = <TLX_KSCAN_SCAN_TIMES_TRIPLE>;
+};
+
+&tlx_kscan_ana {
+	pin-group = <TLX_KSCAN_ANA_PIN_GROUP_ID_0>;
+	switch-enable-pin = <&gpio_ph2_default>;
+	switch-channel-pin = <&gpio_pe3_default>, <&gpio_pe4_default>,
+						 <&gpio_pe5_default>, <&gpio_pe6_default>;
+	hall-power-pin = <&gpio_ph3_default>, <&gpio_ph4_default>,
+					 <&gpio_ph5_default>, <&gpio_ph6_default>,
+					 <&gpio_ph7_default>, <&gpio_pe0_default>,
+					 <&gpio_pe1_default>, <&gpio_pe2_default>;
+	release-threshold = <768>;
+	press-threshold = <864>;
+	hall-init-time = <0x14>;
 };

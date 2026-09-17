@@ -1,0 +1,20 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+config INPUT_TELINK_TLX_KSCAN_ANA
+	bool "Telink TLX KSCAN Analog driver"
+	default y
+	depends on DT_HAS_TELINK_TLX_KSCAN_ANA_ENABLED
+
+if INPUT_TELINK_TLX_KSCAN_ANA
+
+config INPUT_TELINK_TLX_KSCAN_ANA_DMA_LLP_ENABLE
+	bool "Telink TLX KSCAN Analog driver DMA LLP enable"
+	default y
+
+config INPUT_TELINK_TLX_KSCAN_ANA_SCAN_PERIOD_MS
+	int "Telink TLX KSCAN Analog driver scan period, ms"
+	default 10
+	depends on INPUT_TELINK_TLX_KSCAN_ANA_DMA_LLP_ENABLE
+
+endif # INPUT_TELINK_TLX_KSCAN_ANA
