@@ -90,10 +90,5 @@ int main(void)
 	bt_le_task_init();
 #endif
 
-	/* Main loop: simulate sensor data and send BLE notifications */
-	while (1) {
-		k_sleep(K_SECONDS(1));
-	}
-
 	return 0;
 }
