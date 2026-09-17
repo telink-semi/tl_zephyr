@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Telink Semiconductor
+ * Copyright (c) 2025 - 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -108,5 +108,60 @@
 	};
 	adc_pc7_default: adc_pc7_default {
 		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_7, TL322X_FUNC_DEFAULT)>;
+	};
+
+	/* KSCAN: ROW(PG3, PG2), COL(PG1, PG0) */
+	gpio_pg0_default: gpio_pg0_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_0, 0)>;
+	};
+	gpio_pg1_default: gpio_pg1_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_1, 0)>;
+	};
+	gpio_pg2_default: gpio_pg2_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_2, 0)>;
+	};
+	gpio_pg3_default: gpio_pg3_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_G, TLX_PIN_3, 0)>;
+	};
+
+	/* KSCAN_ANA */
+	gpio_ph2_default: gpio_ph2_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_2, 0)>;
+	};
+	gpio_ph3_default: gpio_ph3_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_3, 0)>;
+	};
+	gpio_ph4_default: gpio_ph4_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_4, 0)>;
+	};
+	gpio_ph5_default: gpio_ph5_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_5, 0)>;
+	};
+	gpio_ph6_default: gpio_ph6_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_6, 0)>;
+	};
+	gpio_ph7_default: gpio_ph7_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_H, TLX_PIN_7, 0)>;
+	};
+	gpio_pe0_default: gpio_pe0_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_0, 0)>;
+	};
+	gpio_pe1_default: gpio_pe1_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_1, 0)>;
+	};
+	gpio_pe2_default: gpio_pe2_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_2, 0)>;
+	};
+	gpio_pe3_default: gpio_pe3_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_3, 0)>;
+	};
+	gpio_pe4_default: gpio_pe4_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_4, 0)>;
+	};
+	gpio_pe5_default: gpio_pe5_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_5, 0)>;
+	};
+	gpio_pe6_default: gpio_pe6_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_6, 0)>;
 	};
 };

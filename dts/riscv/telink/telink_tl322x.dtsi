@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Telink Semiconductor
+ * Copyright (c) 2025 - 2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -304,6 +304,22 @@
 		wdt: watchdog@140140 {
 			compatible = "telink,tlx-watchdog";
 			reg = <0x140140 0x10>;
+			status = "disabled";
+		};
+
+		tlx_kscan: tlx-kscan@80140700 {
+			compatible = "telink,tlx-kscan";
+			reg = <0x80140700 0x40>;
+			interrupts = <49 1>;
+			interrupt-parent = <&plic0>;
+			status = "disabled";
+		};
+
+		tlx_kscan_ana: tlx-kscan-ana@80140700 {
+			compatible = "telink,tlx-kscan-ana";
+			reg = <0x80140700 0x40>;
+			interrupts = <49 1>;
+			interrupt-parent = <&plic0>;
 			status = "disabled";
 		};
 	};
