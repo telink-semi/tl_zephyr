@@ -1,0 +1,17 @@
+/ {
+	/delete-node/ keys;
+	/delete-node/ key_pool;
+	/delete-node/ key_matrix;
+
+	aliases {
+		/delete-property/ sw0;
+		/delete-property/ sw1;
+		/delete-property/ sw2;
+		/delete-property/ sw3;
+		/delete-property/ mcuboot-button0;
+	};
+};
+
+&tlx_kscan_ana {
+	status = "okay";
+};

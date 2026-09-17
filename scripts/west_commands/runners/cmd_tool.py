@@ -108,7 +108,8 @@ class CMDBinaryRunner(ZephyrBinaryRunner):
             exit()
         print('done!')
 
-    def _shell_execute(self, command: str, path: str = None) -> int:
+    @classmethod
+    def _shell_execute(cls, command: str, path: str = None) -> int:
         if path is None:
             path = os.getcwd()
         print(command)
