@@ -44,12 +44,12 @@ jobs:
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 
-    - name: Download and extract TL521X firmware binaries
-      run: |
-        wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl521x_fw/TL521X_FW.zip -O /tmp/TL521X_FW.zip
-        unzip -q /tmp/TL521X_FW.zip -d ${{ github.workspace }}
-        ls -la ${{ github.workspace }}/TL521X_FW/
-        rm -f /tmp/TL521X_FW.zip
+    # - name: Download and extract TL521X firmware binaries
+    #   run: |
+    #     wget -q https://doc.telink-semi.cn/Zephyr/binaries/public/tl521x_fw/TL521X_FW.zip -O /tmp/TL521X_FW.zip
+    #     unzip -q /tmp/TL521X_FW.zip -d ${{ github.workspace }}
+    #     ls -la ${{ github.workspace }}/TL521X_FW/
+    #     rm -f /tmp/TL521X_FW.zip
 
     - name: Build TL521x samples/basic/blinky
       run: |
