@@ -1113,6 +1113,15 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 #endif
 		rf_set_tx_rx_off();
 #ifdef CONFIG_PM_DEVICE
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		/*
+		 * Do not reset the radio in coexist mode: resetting the RF registers
+		 * restores the IRQ mask/status to their default values while IRQ_ZB_RT
+		 * must stay enabled for the BLE controller, which causes spurious RF
+		 * interrupt storms. The radio is fully re-initialized later by
+		 * tlx_init_802154_rf_hw()/tlksdk_init_ble_rf_hw().
+		 */
+#else
 		/* Reset Radio */
 		rf_radio_reset();
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
@@ -1121,6 +1130,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 		rf_baseband_reset();
 #endif
 		tlx_rf_zigbee_250K_mode = false;
+#endif
 #endif /* CONFIG_PM_DEVICE */
 		tlx->is_started = false;
 	}
