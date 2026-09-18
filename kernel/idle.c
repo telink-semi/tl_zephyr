@@ -98,7 +98,7 @@ void idle(void *unused1, void *unused2, void *unused3)
 #endif /* CONFIG_BT_B9X */
 		extern uint32_t blc_ll_checkBleRfFsmIsBusy(void);
 
-		if (blc_ll_checkBleRfFsmIsBusy() && tl_bt_controller_state()) {
+		if (tl_bt_controller_state() && blc_ll_checkBleRfFsmIsBusy()) {
 			k_cpu_idle();
 		} else if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
 			k_cpu_idle();
