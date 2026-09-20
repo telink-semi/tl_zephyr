@@ -58,6 +58,15 @@ static void connected(struct bt_conn *conn, uint8_t err)
 		printk("Failed to set security\n");
 	}
 
+	/* Update connection parameters for low-latency communication.
+	 * Interval: 7.5ms - 15ms, latency: 0, timeout: 4s
+	 */
+	int ret = bt_conn_le_param_update(conn, BT_LE_CONN_PARAM(32, 32, 24, 400));
+
+	if (ret) {
+		printk("Failed to update connection parameters (err %d)\n", ret);
+	}
+
 	led_state = true;
 	gpio_pin_set_dt(&led, led_state);
 }
@@ -93,11 +102,21 @@ static void recycled(void)
 	bt_le_adv_start(BT_LE_ADV_CONN_FAST_1, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
 }
 
+static bool le_param_req(struct bt_conn *conn,
+			struct bt_le_conn_param *param)
+{
+	if(param->timeout < 100){
+		return false;
+	}
+	return true;
+}
+
 BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.connected = connected,
 	.disconnected = disconnected,
 	.security_changed = security_changed,
 	.recycled = recycled,
+	.le_param_req = le_param_req,
 };
 
 static void bt_ready(int err)
