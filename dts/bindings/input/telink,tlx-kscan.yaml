@@ -1,0 +1,58 @@
+# Copyright (c) 2026, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TLx kscan node
+
+compatible: "telink,tlx-kscan"
+
+include: [base.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  pinctrl-row:
+    type: phandles
+    required: true
+    description: row pincontrol
+
+  pinctrl-col:
+    type: phandles
+    required: true
+    description: column pincontrol
+
+  col-pull-type:
+    type: int
+    required: true
+    enum: [0x10, 0x20, 0x13, 0x22]
+    default: 0x22
+    description: columns pull type
+
+  debounce-period:
+    type: int
+    required: true
+    enum: [0x2, 0x3, 0x4, 0x5, 0x6, 0x7]
+    default: 0x2
+    description: debounce period
+
+  idle-period:
+    type: int
+    required: true
+    enum: [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+      11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+      31, 32
+    ]
+    default: 1
+    description: debounce cycles to enter the idle state
+
+  scan-times:
+    type: int
+    required: true
+    enum: [0, 1]
+    default: 1
+    description: scanning times

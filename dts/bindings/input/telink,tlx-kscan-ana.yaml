@@ -1,0 +1,54 @@
+# Copyright (c) 2026, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TLx kscan analog node
+
+compatible: "telink,tlx-kscan-ana"
+
+include: [base.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  pin-group:
+    type: int
+    required: true
+    enum: [0, 1, 2, 3]
+    description: GPIO pin group
+
+  switch-enable-pin:
+    type: phandle
+    required: true
+    description: enable pin for all analog switches
+
+  switch-channel-pin:
+    type: phandles
+    required: true
+    description: channels pins for the analog switches
+
+  hall-power-pin:
+    type: phandles
+    required: true
+    description: power pins the halls
+
+  release-threshold:
+    type: int
+    required: true
+    default: 768
+    description: hall value release threshold
+
+  press-threshold:
+    type: int
+    required: true
+    default: 864
+    description: hall value press threshold
+
+  hall-init-time:
+    type: int
+    required: true
+    default: 0x14
+    description: t = (16*hall-init-time)*(1/ks_ana_clock_freq), default ks_ana_clock_freq = 8MHz
