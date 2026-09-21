@@ -414,8 +414,8 @@ BT_GATT_SERVICE_DEFINE(
 
 	/* Keyboard Input Report: READ | NOTIFY + Report Ref */
 	BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT, BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
-			       BT_GATT_PERM_READ, read_kb_in, NULL, hids_kb_in),
-	BT_GATT_CCC(ccc_kb_in_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
+			       BT_GATT_PERM_READ_ENCRYPT, read_kb_in, NULL, hids_kb_in),
+	BT_GATT_CCC(ccc_kb_in_cfg_changed, BT_GATT_PERM_READ_ENCRYPT | BT_GATT_PERM_WRITE_ENCRYPT),
 	BT_GATT_DESCRIPTOR(BT_UUID_HIDS_REPORT_REF, BT_GATT_PERM_READ, read_kb_in_ref, NULL, NULL),
 
 	/* Keyboard Output Report: READ | WRITE | WRITE_WITHOUT_RESP + Report Ref */
