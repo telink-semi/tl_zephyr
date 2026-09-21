@@ -1,13 +1,13 @@
 # Telink Zephyr SDK Release Note
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.4.0--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.4.0-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.4.1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.4.1-v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](../../../LICENSE)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 
 ***
 
 - **Release Type:** Public-Release
-- **Tag Version:** tl\_v1.4.0-v4.1.0
+- **Tag Version:** tl\_v1.4.1-v4.1.0
 
 <!-- - **Branch:** dev-tlk_v4.1 -->
 <!-- - **Target Commit:** 0858e43f05a91d84ab2fed77f3849ff589510b24 -->
@@ -29,6 +29,22 @@ For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../gett
 
 ***
 
+## 🆕 Changes in tl_v1.4.1
+
+This patch release backports the following changes on top of tl_v1.4.0:
+
+- **Dependencies:** Update `hal_telink` to `31f167f` and `telink_ble_sdk` to `aff054a7` ([#862](https://github.com/telink-semi/tl_zephyr/pull/862)).
+- **New drivers:** Add TLX keyboard scan (kscan) drivers and samples ([#863](https://github.com/telink-semi/tl_zephyr/pull/863)).
+- **Flash support:** Add `west flash` support for `tl5218x` ([#860](https://github.com/telink-semi/tl_zephyr/pull/860)) and `tl3238x` ([#855](https://github.com/telink-semi/tl_zephyr/pull/855)).
+- **HAL v2 crypto:** Rework the TLX HAL v2 cryptography unit ([#853](https://github.com/telink-semi/tl_zephyr/pull/853)).
+- **Bug fixes:**
+  - Fix BLE RF check after controller shutdown ([#858](https://github.com/telink-semi/tl_zephyr/pull/858)).
+  - Fix iOS reconnection issues in the `peripheral_remote_test` demo ([#866](https://github.com/telink-semi/tl_zephyr/pull/866)).
+- **Demo:** Update the peripheral remote demo ([#854](https://github.com/telink-semi/tl_zephyr/pull/854)).
+- **CI:** Avoid checking out the PR HEAD in the manifest workflow ([#857](https://github.com/telink-semi/tl_zephyr/pull/857)).
+
+***
+
 ## 📋 Version Information
 
 ### Zephyr SDK & Toolchain
@@ -46,7 +62,7 @@ For environment setup, see the [Telink Zephyr SDK Getting Started Guide](../gett
 
 | Property         | Value                    |
 | ---------------- | ------------------------ |
-| **Tag Name**     | tl\_v1.4.0-v4.1.0        |
+| **Tag Name**     | tl\_v1.4.1-v4.1.0        |
 | **Release Type** | Public-Release           |
 
 ### Chip & Hardware Versions
@@ -125,27 +141,26 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 
 | Component                 | Repository                                                   | Commit                                                       | Notes                                                        |
 | ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| **Telink BLE SDK**        | [telink-semi/tl\_ble\_sdk\_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | [`de6f125`](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/de6f125c8ae6d29c4a640ab3526b40ff8c3f0a20) | Required by TL521X; fetch via `./hal_v2/fetch_sdk.sh` (hal\_v2) or `west blobs fetch hal_telink` (hal\_v1) |
-| **Telink HAL Zephyr**     | [telink-semi/hal\_telink](https://github.com/telink-semi/hal_telink) | [`bd870dc`](https://github.com/telink-semi/hal_telink/commit/bd870dc273989756f908077761a5e3adbd7d108f) | Contains both hal\_v1 and hal\_v2 sources                    |
+| **Telink BLE SDK**        | [telink-semi/tl\_ble\_sdk\_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | [`aff054a7`](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/aff054a7b9b495a51881aed4d45123551955a828) | Required by TL521X; fetch via `./hal_v2/fetch_sdk.sh` (hal\_v2) or `west blobs fetch hal_telink` (hal\_v1) |
+| **Telink HAL Zephyr**     | [telink-semi/hal\_telink](https://github.com/telink-semi/hal_telink) | [`31f167f`](https://github.com/telink-semi/hal_telink/commit/31f167f86a5ea2bd28e4c07c598586ae72bd332e) | Contains both hal\_v1 and hal\_v2 sources                    |
 | **MCUBoot**               | [telink-semi/tl\_mcuboot](https://github.com/telink-semi/tl_mcuboot) | [`ce0da85`](https://github.com/telink-semi/tl_mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927) | Bootloader; required for OTA/DFU                             |
 | **OpenThread Telink**     | [telink-semi/tl\_openthread](https://github.com/telink-semi/tl_openthread) | [`542aaab`](https://github.com/telink-semi/tl_openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee) | OpenThread source adapted for Telink                         |
 | **OpenThread Telink Lib** | [telink-semi/tl\_openthread\_libs](https://github.com/telink-semi/tl_openthread_libs) | [`f69c186`](https://github.com/telink-semi/tl_openthread_libs/commit/f69c186d65a41259480e87ccf9d2a7f665249778) | Pre-built OpenThread library for Telink                      |
 | **Telink XZ (LZMA)**      | [telink-semi/tl\_xz](https://github.com/telink-semi/tl_xz) | [`831f338`](https://github.com/telink-semi/tl_xz/commit/831f338fd6784661d3bec62fd01060ee4d7d373d) | LZMA compression library module (modules/lib/lzma)           |
 
-### Telink HAL Zephyr (hal\_telink) `tl_v1.4.0-v4.0.4.8`
+### Telink HAL Zephyr (hal\_telink) `tl_v1.4.1-v4.0.4.8`
 
-The HAL module is pinned at tag `tl_v1.4.0-v4.0.4.8` (commit [`bd870dc`](https://github.com/telink-semi/hal_telink/commit/bd870dc273989756f908077761a5e3adbd7d108f)). Compared with the previous release tag (`tl_v1.3.0-v4.0.4.8`), it includes the following changes:
+The HAL module is pinned at tag `tl_v1.4.1-v4.0.4.8` (commit [`31f167f`](https://github.com/telink-semi/hal_telink/commit/31f167f86a5ea2bd28e4c07c598586ae72bd332e)). Compared with the previous release tag (`tl_v1.4.0-v4.0.4.8`), it includes the following changes:
 
 | Change | Description |
 | ------ | ----------- |
-| Support the new `tlx` SoC family ([#203](https://github.com/telink-semi/hal_telink/pull/203)) | Adapt the CMake build system for `CONFIG_SOC_FAMILY_TELINK_TLX`: `SOC_FAMILY` is set to `tlx` so the controller driver path resolves correctly; update the mbedtls ECP acceleration and IEEE802.15.4 include conditionals; keep the legacy TLX Kconfig symbols working for backward compatibility |
-| Role-based BLE controller library variants ([#205](https://github.com/telink-semi/hal_telink/pull/205)) | Replace the `COMPILE_TL_LIB_GENERAL` option with the `TL_BLE_CTRL_VARIANT` Kconfig choice (`TL_BLE_CTRL_PERIPHERAL` / `TL_BLE_CTRL_CENTRAL` / `TL_BLE_CTRL_MULTIROLE`), auto-selected from the BLE role configs; controller library names change from SoC-based (`_dual_core` / `_single_core` / `_general` / `_concurrent`) to role-based (`_peripheral` / `_central` / `_multirole`) |
-| Dynamic suspend-exit latency ([#205](https://github.com/telink-semi/hal_telink/pull/205)) | Remove the per-SoC hardcoded `SUSPEND_EXIT_LATENCY_US` macros from `tlx_bt_init.c`; the BLE library now records the suspend-exit start tick (`blc_ll_get_suspend_exit_start_tick`) for more accurate runtime latency handling |
-| Driver source sync ([#202](https://github.com/telink-semi/hal_telink/pull/202)) | Sync the hal_v2 wrapper with the latest Telink BLE SDK driver source changes (e.g. RF power control in `tl_rf_power.c`) |
+| HAL v2 rework cryptography unit | Synchronize cryptography with HAL v1: fix HW SHA in multi-thread environment, support all SHA types (not only SHA-256), add HW acceleration for tinycrypt, and clean up the SW structure |
+| Update signature verification ([#209](https://github.com/telink-semi/hal_telink/pull/209)) | Accelerate signature verification for ECDSA keys using the Telink HW PKE module |
+| Update tl5218x LPD level | Update the LPD (low power) level for `tl5218x` with driver confirmed |
 
-### Telink Zephyr OpenThread (tl_openthread) `tl_v1.4.0-v1.4`
+### Telink Zephyr OpenThread (tl_openthread) `tl_v1.4.1-v1.4`
 
-The Telink OpenThread module for Zephyr, not a mirror of the offical OpenThread repository. The OpenThread module is pinned at tag `tl_v1.4.0-v1.4` (commit [`542aaab`](https://github.com/telink-semi/tl_openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee)). For Zephyr 4.1, the corresponding OpenThread module is commit [`3ae741f`](https://github.com/telink-semi/tl_openthread/commit/3ae741f95e7dfb391dec35c48742862049eb62e8).Relative to the base version, this release tag includes the following changes:
+The Telink OpenThread module for Zephyr, not a mirror of the offical OpenThread repository. The OpenThread module is pinned at tag `tl_v1.4.1-v1.4` (commit [`542aaab`](https://github.com/telink-semi/tl_openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee)). For Zephyr 4.1, the corresponding OpenThread module is commit [`3ae741f`](https://github.com/telink-semi/tl_openthread/commit/3ae741f95e7dfb391dec35c48742862049eb62e8).Relative to the base version, this release tag includes the following changes:
 
 | Change | Description |
 | ------ | ----------- |
@@ -162,7 +177,7 @@ The Telink OpenThread module for Zephyr, not a mirror of the offical OpenThread 
 ## 📌 Important Notes
 
 - Use `west update` to automatically pull `telink_ble_sdk` along with other modules.
-- Alternatively, manually fetch `telink_ble_sdk` by running `./hal_v2/fetch_sdk.sh {REPO_URL} {COMMIT_HASH}` inside `modules/hal/telink/` to pull or update the BLE stack to the version pinned by this release, where `{COMMIT_HASH}` is the `telink_ble_sdk` revision in `west.yml`. For this release, that is: `./hal_v2/fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git de6f125c8ae6d29c4a640ab3526b40ff8c3f0a20`
+- Alternatively, manually fetch `telink_ble_sdk` by running `./hal_v2/fetch_sdk.sh {REPO_URL} {COMMIT_HASH}` inside `modules/hal/telink/` to pull or update the BLE stack to the version pinned by this release, where `{COMMIT_HASH}` is the `telink_ble_sdk` revision in `west.yml`. For this release, that is: `./hal_v2/fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git aff054a7b9b495a51881aed4d45123551955a828`
 - For full environment setup instructions, refer to the [Telink Zephyr SDK Getting Started Guide](../getting_started/index.md) or the [Telink Matter Developer Guide](https://doc.telink-semi.cn/doc/en/software/res/sdk/matter/telink_matter_developer_guide_en/).
 
 ***
@@ -201,26 +216,30 @@ under `tests/`).
 > &nbsp;&nbsp; (builds successfully, not functionally validated)
 > &nbsp;&nbsp; · = Untested (not built or not applicable)
 
-| Sample                       | TL521X |
-| ---------------------------- | :----: |
-| **basic/blinky**             |   ✅    |
-| **basic/button**             |   ✅    |
-| **basic/fade\_led**          |   ✅    |
-| **hello\_world**             |   ✅    |
-| **bluetooth/peripheral\_ht** |   ✅    |
-| **net/openthread/cli**       |   ✅    |
-| **net/sockets/echo\_client** |   ✅    |
-| **net/sockets/echo\_server** |   ·    |
-| **crypto/mbedtls**           |   ✅    |
-| **drivers/adc/adc\_dt**      |   ✅    |
-| **drivers/spi\_flash**       |   ·    |
-| **drivers/watchdog**         |   ✅    |
-| **sensor/sht3xd**            |   ✅    |
+| Sample                         | TL521X |
+| ------------------------------ | :----: |
+| **basic/blinky**               |   ✅    |
+| **basic/blinky\_pwm**          |   🟡    |
+| **basic/button**               |   ✅    |
+| **basic/fade\_led**            |   ✅    |
+| **hello\_world**               |   ✅    |
+| **bluetooth/peripheral\_ht**   |   ✅    |
+| **net/openthread/cli**         |   ✅    |
+| **net/openthread/coprocessor** |   🟡    |
+| **net/sockets/echo\_client**   |   ✅    |
+| **crypto/mbedtls**             |   ✅    |
+| **drivers/adc/adc\_dt**        |   ✅    |
+| **drivers/spi\_flash**         |   ·    |
+| **drivers/watchdog**           |   ✅    |
+| **sensor/sht3xd**              |   ✅    |
+| **tests/drivers/flash/common** |   🟡    |
+| **tests/drivers/hwinfo/api**   |   🟡    |
+| **bootloader/mcuboot**         |   🟡    |
 
 > **Notes on Sample Support**
 >
 > - **Tested combinations (✅):** All samples listed as ✅ have been built and functionally validated on TL521X.
-> - **Supported but untested (🟡):** None in this release.
+> - **Supported but untested (🟡):** New samples in this release (`blinky_pwm`, `openthread/coprocessor`, `tests/drivers/hwinfo/api`, `tests/drivers/flash/common`, `bootloader/mcuboot`) compile successfully but have not been functionally validated.
 > - **Untested (·):** Combinations marked · are not built in this release, either because the sample is not applicable to the TL521X chip family or because the build failed.
 
 ***
@@ -231,17 +250,22 @@ under `tests/`).
 
 | Sample                               | RAM\_ILM\_N                | ROM                       | RAM                         |
 | ------------------------------------ | -------------------------- | ------------------------- | --------------------------- |
-| **samples/basic/blinky**             | 5186 B (3.96% of 128 KB)   | 31186 B (2.97% of 1 MB)   | 19200 B (14.65% of 128 KB)  |
-| **samples/basic/button**             | 5186 B (3.96% of 128 KB)   | 31826 B (3.04% of 1 MB)   | 19216 B (14.66% of 128 KB)  |
-| **samples/basic/fade\_led**          | 5186 B (3.96% of 128 KB)   | 45186 B (4.31% of 1 MB)   | 22680 B (17.30% of 128 KB)  |
-| **samples/bluetooth/peripheral\_ht** | 18572 B (14.17% of 128 KB) | 203664 B (19.42% of 1 MB) | 41908 B (31.97% of 128 KB)  |
-| **samples/crypto/mbedtls**           | 5186 B (3.96% of 128 KB)   | 131526 B (12.54% of 1 MB) | 25908 B (19.77% of 128 KB)  |
-| **samples/drivers/adc/adc\_dt**      | 5186 B (3.96% of 128 KB)   | 41422 B (3.95% of 1 MB)   | 20084 B (15.32% of 128 KB)  |
-| **samples/drivers/watchdog**         | 5186 B (3.96% of 128 KB)   | 39542 B (3.77% of 1 MB)   | 19272 B (14.70% of 128 KB)  |
-| **samples/hello\_world**             | 5186 B (3.96% of 128 KB)   | 30710 B (2.93% of 1 MB)   | 19200 B (14.65% of 128 KB)  |
-| **samples/net/openthread/cli**       | 12034 B (9.18% of 128 KB)  | 571700 B (54.52% of 1 MB) | 104912 B (80.04% of 128 KB) |
-| **samples/net/sockets/echo\_client** | 19434 B (14.83% of 128 KB) | 267072 B (25.47% of 1 MB) | 59408 B (45.32% of 128 KB)  |
-| **samples/sensor/sht3xd**            | 5262 B (4.01% of 128 KB)   | 44794 B (4.27% of 1 MB)   | 19244 B (14.68% of 128 KB)  |
+| **bootloader/mcuboot/boot/zephyr** | 23522 B (17.95% of 128 KB) | 83649 B (7.98% of 1 MB) | 92212 B (70.35% of 128 KB) |
+| **samples/basic/blinky**             | 7590 B (5.79% of 128 KB)   | 33682 B (3.21% of 1 MB)   | 19200 B (14.65% of 128 KB)  |
+| **samples/basic/blinky\_pwm**        | 7590 B (5.79% of 128 KB)   | 43018 B (4.10% of 1 MB)   | 19272 B (14.70% of 128 KB)  |
+| **samples/basic/button**             | 7590 B (5.79% of 128 KB)   | 34322 B (3.27% of 1 MB)   | 19216 B (14.66% of 128 KB)  |
+| **samples/basic/fade\_led**          | 7590 B (5.79% of 128 KB)   | 47682 B (4.55% of 1 MB)   | 22680 B (17.30% of 128 KB)  |
+| **samples/bluetooth/peripheral\_ht** | 18542 B (14.15% of 128 KB) | 206322 B (19.68% of 1 MB) | 43800 B (33.42% of 128 KB)  |
+| **samples/crypto/mbedtls**           | 7590 B (5.79% of 128 KB)   | 136650 B (13.03% of 1 MB) | 27784 B (21.20% of 128 KB)  |
+| **samples/drivers/adc/adc\_dt**      | 7590 B (5.79% of 128 KB)   | 43918 B (4.19% of 1 MB)   | 20084 B (15.32% of 128 KB)  |
+| **samples/drivers/watchdog**         | 7590 B (5.79% of 128 KB)   | 42038 B (4.01% of 1 MB)   | 19272 B (14.70% of 128 KB)  |
+| **samples/hello\_world**             | 7590 B (5.79% of 128 KB)   | 33206 B (3.17% of 1 MB)   | 19200 B (14.65% of 128 KB)  |
+| **samples/net/openthread/cli**       | 12064 B (9.20% of 128 KB)  | 574570 B (54.80% of 1 MB) | 106788 B (81.47% of 128 KB) |
+| **samples/net/openthread/coprocessor** | 12084 B (9.22% of 128 KB) | 137336 B (13.10% of 1 MB) | 56064 B (42.77% of 128 KB)  |
+| **samples/net/sockets/echo\_client** | 19434 B (14.83% of 128 KB) | 269864 B (25.74% of 1 MB) | 61300 B (46.77% of 128 KB)  |
+| **samples/sensor/sht3xd**            | 7666 B (5.85% of 128 KB)   | 47290 B (4.51% of 1 MB)   | 19244 B (14.68% of 128 KB)  |
+| **tests/drivers/flash/common**       | 7590 B (5.79% of 128 KB)   | 57290 B (5.46% of 1 MB)   | 25216 B (19.24% of 128 KB)  |
+| **tests/drivers/hwinfo/api**         | 7866 B (6.00% of 128 KB)   | 52422 B (5.00% of 1 MB)   | 21568 B (16.46% of 128 KB)  |
 
 ***
 

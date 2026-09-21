@@ -370,7 +370,7 @@ manifest:
     - name: telink_ble_sdk
       remote: telink-semi
       repo-path: tl_ble_sdk_zephyr
-      revision: 169a4bddb989da595d261db464584b84443b86b9
+      revision: aff054a7b9b495a51881aed4d45123551955a828
       path: modules/hal/telink_ble_sdk
       groups:
         - hal
