@@ -206,6 +206,9 @@ class TelinkBuildManager:
             "shell": "samples/subsys/shell/devmem_load/",
             "nvs": "samples/subsys/nvs",
             "adc_api": "tests/drivers/adc/adc_api",
+            "hwinfo": "tests/drivers/hwinfo/api",
+            "flash": "tests/drivers/flash/common",
+            "mcuboot": "bootloader/mcuboot/boot/zephyr",
         }
 
         # Board family mapping
@@ -251,6 +254,13 @@ class TelinkBuildManager:
                 ("tl5218x", "cli", "samples/net/openthread/cli", []),
                 (
                     "tl5218x",
+                    "coprocessor",
+                    "samples/net/openthread/coprocessor",
+                    ["-DOVERLAY_CONFIG=overlay-rcp.conf"],
+                ),
+                ("tl5218x", "blinky_pwm", "samples/basic/blinky_pwm", []),
+                (
+                    "tl5218x",
                     "mbedtls",
                     "tests/crypto/mbedtls",
                     ["-DCONFIG_MBEDTLS_ECP_C=y", "-DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y"],
@@ -259,6 +269,19 @@ class TelinkBuildManager:
                 ("tl5218x", "watchdog", "samples/drivers/watchdog", []),
                 ("tl5218x", "sht3xd", "samples/sensor/sht3xd", []),
                 ("tl5218x", "adc_dt", "samples/drivers/adc/adc_dt", []),
+                ("tl5218x", "hwinfo", "tests/drivers/hwinfo/api", []),
+                ("tl5218x", "flash", "tests/drivers/flash/common", []),
+                (
+                    "tl5218x",
+                    "mcuboot",
+                    "../bootloader/mcuboot/boot/zephyr",
+                    [
+                        "-DCONFIG_COMPRESS_LZMA=y",
+                        "-DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000",
+                        "-DCONFIG_BOOT_UPGRADE_ONLY=y",
+                        "-DCONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE=y",
+                    ],
+                ),
                 (
                     "tl5218x_retention",
                     "retention_echo_client",
@@ -524,6 +547,9 @@ class TelinkBuildManager:
             "shell": "subsys/shell/devmem_load",
             "nvs": "subsys/nvs",
             "adc_api": "tests/drivers/adc/adc_api",
+            "hwinfo": "tests/drivers/hwinfo/api",
+            "flash": "tests/drivers/flash/common",
+            "mcuboot": "bootloader/mcuboot",
         }
         return short_map.get(sample_name, sample_name)
 
