@@ -1,6 +1,6 @@
 # Telink Zephyr SDK Getting Started Guide
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.0.1--rc1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.0.1-rc1-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.4.1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.4.1-v4.1.0)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](../../../LICENSE)
 
