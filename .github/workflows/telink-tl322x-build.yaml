@@ -94,7 +94,7 @@ jobs:
     - name: Build TL322x net/openthread/cli
       run: |
         cd ..
-        west build -b tl3228x     -d build_ot_cli_tl322x                      zephyr/samples/net/openthread/cli              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl3228x     -d build_ot_cli_tl322x                      zephyr/samples/net/openthread/cli              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y  -DOVERLAY_CONFIG=configs/extended.conf
 
     - name: Build TL322x net/openthread/coprocessor in RCP configuration with UART interface
       run: |
