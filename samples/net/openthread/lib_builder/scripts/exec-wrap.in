@@ -1,0 +1,6 @@
+#!/bin/bash
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+export SOURCE_DATE_EPOCH=@TELINK_OT_LIB_BUILD_TIMESTAMP@
+exec "$@"
