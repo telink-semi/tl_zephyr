@@ -65,6 +65,7 @@ K_SEM_DEFINE(ieee802154_task_ready_sem, 0, 1);
 static volatile uint8_t tlx_rf_zigbee_tx_is_sending;
 extern bool tlksdk_thd_checkIsInsertTask1(void); /* todo: need to be changed */
 extern uint32_t tlksdk_thd_getInsertTask1PostTick(void);
+extern volatile bool tlx_rf_802154_mode; /* defined in tlx_bt_init.c: true = RF is in 802.15.4 mode */
 #endif /*CONFIG_IEEE802154_TLX_BLE_COEXIST*/
 
 #ifdef CONFIG_OPENTHREAD_FTD
@@ -1008,7 +1009,11 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 	/* check if RF is already started */
 	if (!tlx->is_started) {
 		/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
-		if (!tlksdk_thd_checkIsInsertTask1()) {
+		/* Only wait for the insert time slot to release RF when RF is not already in
+		 * 802.15.4 mode (i.e. held by BLE). In post-join permanent mode (insert task
+		 * stopped) tlx_rf_802154_mode is always true, so skip this to avoid k_sem_take
+		 * blocking forever */
+		if (!tlksdk_thd_checkIsInsertTask1() && !tlx_rf_802154_mode) {
 			/* LOG_ERR("tlx ble busy"); */
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			/* LOG_ERR("tlx ieee802154 task ready sem"); */
@@ -1095,7 +1100,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 	/* check if RF is already stopped */
 	if (tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
-		if (!tlksdk_thd_checkIsInsertTask1()) {
+		if (!tlksdk_thd_checkIsInsertTask1() && !tlx_rf_802154_mode) {
 			/* LOG_ERR("tlx ble busy"); */
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			/* LOG_ERR("tlx ieee802154 task ready sem"); */
