@@ -360,7 +360,17 @@ static void udc_tlx_handler_in(const struct device *dev, uint8_t ep)
 	if (ep == USB_CONTROL_EP_IN) {
 		udc_tlx_event_xfer_ctrl_in(dev, buf);
 	} else {
-		udc_submit_ep_event(dev, buf, 0);
+		if (udc_submit_ep_event(dev, buf, 0)) {
+			/* The completion event was dropped (usbd_msgq full).
+			 * The buffer is no longer referenced anywhere, so
+			 * release it explicitly. Leaking it here would
+			 * permanently exhaust the class IN net_buf pool
+			 * (e.g. HID CONFIG_USBD_HID_IN_BUF_COUNT=2) and all
+			 * subsequent report submissions would fail with
+			 * -ENOMEM until reboot. */
+			LOG_ERR("ep 0x%02x: failed to submit ep event", ep);
+			udc_ep_buf_free(dev, buf);
+		}
 		udc_tlx_xfer_in_next(dev, ep);
 	}
 }
@@ -401,7 +411,13 @@ static void udc_tlx_handler_out(const struct device *dev, uint8_t ep)
 
 	buf = udc_buf_get(dev, ep);
 	udc_ep_set_busy(dev, ep, false);
-	udc_submit_ep_event(dev, buf, 0);
+	if (udc_submit_ep_event(dev, buf, 0)) {
+		/* The completion event was dropped (usbd_msgq full).
+		 * Release the buffer to avoid permanently leaking it
+		 * from the class OUT net_buf pool. */
+		LOG_ERR("ep 0x%02x: failed to submit ep event", ep);
+		udc_ep_buf_free(dev, buf);
+	}
 	udc_tlx_xfer_out_next(dev, ep);
 }
 
