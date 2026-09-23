@@ -58,4 +58,11 @@ if(CONFIG_PLIC_SHELL)
   )
 endif()
 
+if(PLIC_TELINK_SHELL)
+  message(WARNING "
+      WARNING:  `PLIC_TELINK_SHELL` is enabled.
+      This can use quite a bit of RAM (PLICs * IRQs * sizeof(uint16_t))"
+  )
+endif()
+
 zephyr_library_include_directories(${ZEPHYR_BASE}/arch/common/include)
