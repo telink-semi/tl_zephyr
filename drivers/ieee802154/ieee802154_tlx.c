@@ -1347,7 +1347,8 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 	return 0;
 }
 
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION && \
+	!CONFIG_SOC_RISCV_TELINK_TL322X
 extern bool isThreadCommissioned;
 
 __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
@@ -1389,7 +1390,8 @@ static int tlx_stop(const struct device *dev)
 	return tlx_stop_radio(dev->data);
 }
 
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION && \
+	!CONFIG_SOC_RISCV_TELINK_TL322X
 RAM_CODE_SECTION_IEEE802154
 static void tlx_wfi_direct(uint32_t time_ms)
 {

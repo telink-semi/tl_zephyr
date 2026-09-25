@@ -283,8 +283,8 @@ config HWINFO_TELINK_B9X
 config HWINFO_TELINK_TLX
 	bool "Telink TLx device ID"
 	default y
-	depends on SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL322X || \
-		SOC_RISCV_TELINK_TL323X || SOC_RISCV_TELINK_TL721X
+	depends on SOC_RISCV_TELINK_TL321X || SOC_RISCV_TELINK_TL323X || \
+		SOC_RISCV_TELINK_TL721X
 	help
 	  Enable Telink Tlx hwinfo driver.
 
