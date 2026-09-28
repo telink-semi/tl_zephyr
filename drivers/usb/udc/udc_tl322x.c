@@ -49,7 +49,7 @@ LOG_MODULE_REGISTER(udc_tl322x, CONFIG_UDC_DRIVER_LOG_LEVEL);
  * cache while configuring IN endpoint TX FIFOs.
  */
 struct tlx_ep_fifo {
-	uint8_t seg_addr;
+	uint16_t seg_addr;
 	uint16_t remaining_size;
 };
 
