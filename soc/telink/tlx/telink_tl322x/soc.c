@@ -202,7 +202,7 @@ void soc_early_init_hook(void)
 #undef N22_FW_DOWNLOAD_FLASH_ADDR
 #if defined(CONFIG_BT_ID_FOR_KMD)
 	#ifdef CONFIG_SOC_RRAM_TELINK_TLX
-	#define N22_FW_DOWNLOAD_FLASH_ADDR          0x00540000
+	#define N22_FW_DOWNLOAD_FLASH_ADDR          0x00548000
 	#else
 	#define N22_FW_DOWNLOAD_FLASH_ADDR          0x20048000
 	#endif
