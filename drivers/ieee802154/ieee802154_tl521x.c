@@ -689,15 +689,25 @@ ALWAYS_INLINE static void tl521x_rf_rx_isr(const struct device *dev)
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
-	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer)) /
-			      SYSTEM_TIMER_TICK_1US;
-	rx_time -= delta_time;
+	uint32_t rx_time_radio = stimer_get_tick();
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 
 	dma_chn_dis(DMA1);
 	rf_clr_irq_status(FLD_RF_IRQ_RX);
 
 	do {
+		uint8_t length = rf_zigbee_get_payload_len(tlx->rx_buffer);
+
+		if ((length < TL521X_PAYLOAD_MIN) || (length > TL521X_PAYLOAD_MAX)) {
+			if (tlx->event_handler) {
+				enum ieee802154_rx_fail_reason reason =
+					IEEE802154_RX_FAIL_NOT_RECEIVED;
+
+				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
+						   (void *)&reason);
+			}
+			break;
+		}
 		if (!rf_zigbee_packet_crc_ok(tlx->rx_buffer)) {
 			if (tlx->event_handler) {
 				enum ieee802154_rx_fail_reason reason =
@@ -708,19 +718,10 @@ ALWAYS_INLINE static void tl521x_rf_rx_isr(const struct device *dev)
 			}
 			break;
 		}
-		uint8_t length = tlx->rx_buffer[TL521X_LENGTH_OFFSET];
-
-		if ((length < TL521X_PAYLOAD_MIN) || (length > TL521X_PAYLOAD_MAX)) {
-			LOG_ERR("Invalid length.\n");
-			if (tlx->event_handler) {
-				enum ieee802154_rx_fail_reason reason =
-					IEEE802154_RX_FAIL_NOT_RECEIVED;
-
-				tlx->event_handler(dev, IEEE802154_EVENT_RX_FAILED,
-						   (void *)&reason);
-			}
-			break;
-		}
+#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+		rx_time_radio -= ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer);
+		rx_time -= rx_time_radio / SYSTEM_TIMER_TICK_1US;
+#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
 		uint8_t *payload = (tlx->rx_buffer + TL521X_PAYLOAD_OFFSET);
 
 		if (IS_ENABLED(CONFIG_IEEE802154_RAW_MODE) ||
@@ -1122,6 +1123,14 @@ static void tl521x_csl_rx_work(struct k_work *item)
 
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 
+/* Work handler for deferred energy scan done callback */
+static void tl521x_ed_work_handler(struct k_work *work)
+{
+	struct tl521x_data *tlx = CONTAINER_OF(work, struct tl521x_data, ed_work);
+
+	tlx->ed_done_cb(tlx->ed_dev, tlx->ed_rssi);
+}
+
 /* Driver initialization */
 static int tl521x_init(const struct device *dev)
 {
@@ -1160,6 +1169,8 @@ static int tl521x_init(const struct device *dev)
 	tlx->csl_rx_duration_us = 0;
 	tlx->csl_rx_channel = TL521X_TX_CH_NOT_SET;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
+	k_work_init(&tlx->ed_work, tl521x_ed_work_handler);
+	tlx->ed_done_cb = NULL;
 	return 0;
 }
 
@@ -1181,8 +1192,8 @@ static void tl521x_iface_init(struct net_if *iface)
 static enum ieee802154_hw_caps tl521x_get_capabilities(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-	enum ieee802154_hw_caps caps =
-		IEEE802154_HW_FCS | IEEE802154_HW_FILTER | IEEE802154_HW_TX_RX_ACK;
+	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS | IEEE802154_HW_FILTER |
+				       IEEE802154_HW_TX_RX_ACK | IEEE802154_HW_ENERGY_SCAN;
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
@@ -1682,13 +1693,39 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 static int tl521x_ed_scan(const struct device *dev, uint16_t duration,
 			  energy_scan_done_cb_t done_cb)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(duration);
-	ARG_UNUSED(done_cb);
+	if (!done_cb) {
+		return -EINVAL;
+	}
+	/* duration is in ms (from OpenThread).
+	 * Clamp to a reasonable range: at least ~1 ms, at most 1 second.
+	 */
+	uint32_t scan_time_us = CLAMP((uint32_t)duration * 1000, 1000, 1000000);
+	int16_t rssi_max = INT16_MIN;
 
-	/* ed_scan not supported */
+	rf_set_rxmode();
+	delay_us(85);
 
-	return -ENOTSUP;
+	uint32_t t_start = stimer_get_tick();
+
+	do {
+		int16_t rssi = (int16_t)rf_get_rssi();
+
+		if (rssi > rssi_max) {
+			rssi_max = rssi;
+		}
+	} while (!clock_time_exceed(t_start, scan_time_us));
+
+	struct tl521x_data *tlx = dev->data;
+
+	tlx->ed_rssi = rssi_max;
+	tlx->ed_dev = dev;
+	tlx->ed_done_cb = done_cb;
+	/* Defer callback to system workqueue to avoid reentrancy deadlock
+	 * with radio.c's platformRadioProcess event loop.
+	 */
+	k_work_submit(&tlx->ed_work);
+
+	return 0;
 }
 
 /* API implementation: configure */
