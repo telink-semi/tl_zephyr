@@ -107,6 +107,11 @@ volatile bool isFirstCcaBeforeTx = true;
 volatile bool shouldPowerDownRFEarly;
 #endif
 
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION && \
+	!defined(CONFIG_IEEE802154_TLX_BLE_COEXIST) && defined(CONFIG_DYNAMIC_INTERRUPTS)
+#define TLX_STIMER_WFI_OPTIMIZATION 1
+#endif
+
 #ifdef CONFIG_OPENTHREAD_FTD
 
 /* clean radio search match table */
@@ -1346,9 +1351,7 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 	return 0;
 }
 
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
-extern bool isThreadCommissioned;
-
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 {
 	(void)param;
@@ -1388,7 +1391,7 @@ static int tlx_stop(const struct device *dev)
 	return tlx_stop_radio(dev->data);
 }
 
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 RAM_CODE_SECTION_IEEE802154
 static void tlx_wfi_direct(uint32_t time_ms)
 {
@@ -1694,7 +1697,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	if (tlx->event_handler) {
 		tlx->event_handler(dev, IEEE802154_EVENT_TX_STARTED, (void *)frag);
 	}
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 	if (isThreadCommissioned == true) {
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 		tlx_wfi_direct(800);
@@ -1702,7 +1705,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		tlx_wfi_direct(880);
 #endif
 	}
-#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif /* TLX_STIMER_WFI_OPTIMIZATION */
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		rf_rx_performance_mode(RF_RX_LOW_POWER);
@@ -1741,9 +1744,9 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	/* wait for ACK if requested */
 	if (!status && tlx->ack_handler_en) {
 		{
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 #if CONFIG_SOC_RISCV_TELINK_TL721X
-			tlx_wfi_direct(300);
+		tlx_wfi_direct(300);
 #endif
 #endif
 			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {

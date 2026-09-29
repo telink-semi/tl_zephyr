@@ -18,22 +18,45 @@ LOG_MODULE_REGISTER(ot_main, LOG_LEVEL_DBG);
 #include "tlx_bt_init.h"
 
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
-/* Stop insert task + BLE adv after a delay following Thread join; 802.15.4 takes over RF */
+
 static struct k_work_delayable post_join_dwork;
+
+extern volatile bool tlx_rf_802154_mode;
+
+volatile bool isThreadCommissioned = false;
 
 static void post_join_dwork_handler(struct k_work *work)
 {
 	otDeviceRole role = otThreadGetDeviceRole(openthread_get_default_context()->instance);
 
-	/* Re-check the device is still attached (child/router) after the delay, avoid stopping BLE while detached */
+	/* Re-check the device is still attached (child) after the delay, avoid stopping BLE while detached */
 	if (role != OT_DEVICE_ROLE_CHILD) {
 		LOG_INF("Not in Thread network anymore, skip post-join");
 		return;
 	}
 
-	LOG_INF("Thread joined 30s: stop insert task & BLE, handover RF to 802.15.4");
-	tlx_bt_802154_post_join();
+	LOG_INF("Thread joined: stop BLE entirely, handover RF to 802.15.4");
+
+	tlx_bt_802154_dual_mode_disable();
+
+	for (uint32_t waited_ms = 0; tlx_rf_802154_mode; waited_ms += 10) {
+		if (waited_ms >= 1000) {
+			LOG_ERR("RF failed to park in BLE mode, skip BLE teardown");
+			return;
+		}
+		k_sleep(K_MSEC(10));
+	}
+
 	bt_le_adv_stop();
+	int err = bt_disable();
+
+	if (err) {
+		LOG_ERR("bt_disable failed (%d), continue with 802.15.4 revival", err);
+	}
+
+	tlx_bt_802154_post_join();
+
+	LOG_INF("Post-join done: RF owned by 802.15.4, BLE fully stopped");
 }
 #endif /* CONFIG_IEEE802154_TLX_BLE_COEXIST */
 
@@ -62,6 +85,7 @@ static void ot_satate_changed(otChangedFlags flags,
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
 			LOG_INF("Thread joined: schedule post-join & stop adv in 30s");
 			k_work_schedule(&post_join_dwork, K_SECONDS(10));
+			isThreadCommissioned = true;
 #endif
 		}
 
