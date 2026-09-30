@@ -34,6 +34,7 @@
 #include "drivers.h"
 #include "app_kb_matrix.h"
 #include "nvm.h"
+#include "tl322x_rram_volt.h"
 
 #define LOG_LEVEL LOG_LEVEL_DBG
 #include <zephyr/logging/log.h>
@@ -207,7 +208,10 @@ void write_storage_from_ram(unsigned int addr, unsigned int len, unsigned int *d
         }
     }
 #endif
+    /* RRAM writes require the core voltage at 1.1V */
+    bool volt_boosted = tl322x_rram_volt_boost();
     nvm_reg_write(addr,length,ptr);
+    tl322x_rram_volt_restore(volt_boosted);
 #if APP_NVM_PROTECTION_ENABLE
     if (!g_nvm_bulk_write) {
         nvm_mtp_lock_set(NVM_MTP_LOCK_ALL_512K);

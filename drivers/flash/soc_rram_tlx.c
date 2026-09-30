@@ -26,6 +26,7 @@
 #include <zephyr/kernel.h>
 #include <stdlib.h>
 #include <nvm.h>
+#include "tl322x_rram_volt.h"
 
 LOG_MODULE_REGISTER(rram_tlx, CONFIG_FLASH_LOG_LEVEL);
 
@@ -139,6 +140,13 @@ static int rram_tlx_write_impl(const struct device *dev, off_t offset,
 		return 0;
 	}
 
+	/*
+	 * RRAM writes require the core voltage at 1.1V. Boost/restore
+	 * once around the whole burst loop below; do not switch voltage
+	 * per iteration.
+	 */
+	bool volt_boosted = tl322x_rram_volt_boost();
+
 	aligned_off = offset & ~(RRAM_WRITE_MIN_SIZE - 1);
 	block_off  = offset - aligned_off;
 	remaining  = len;
@@ -202,6 +210,8 @@ static int rram_tlx_write_impl(const struct device *dev, off_t offset,
 		block_off = 0;
 		remaining -= copy_len;
 	}
+
+	tl322x_rram_volt_restore(volt_boosted);
 
 	return rc;
 }
