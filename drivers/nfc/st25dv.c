@@ -1,38 +1,31 @@
 /*
- * Copyright (c) 2023-2025 Telink Semiconductor
+ * Copyright (c) 2023-2026 Telink Semiconductor
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 #define DT_DRV_COMPAT st_st25dvxxkc
 
-#include <zephyr/kernel.h>
-
-#include <zephyr/device.h>
-
 #include <zephyr/drivers/i2c.h>
+
 #include <zephyr/drivers/nfc/st25dv.h>
 #include <zephyr/drivers/nfc/nfc_tag.h>
-#include <zephyr/drivers/nfc/st25dvxxkc/stm32l4s5i_iot01_nfctag.h>
+#include <zephyr/drivers/nfc/st25dvxxkc/lib_NDEF.h>
 #include <zephyr/drivers/nfc/st25dvxxkc/tagtype5_wrapper.h>
 
 #include <zephyr/logging/log.h>
 
-#include <zephyr/sys/reboot.h>
-
 LOG_MODULE_REGISTER(st25dvxxkc, CONFIG_ST25DVXXKC_LOG_LEVEL);
 
-static int st25dvxxkc_tag_init(const struct device *dev, nfc_tag_cb_t cb)
+#define ST25DV_USER_MEMORY_ADDR 0x53
+#define ST25DV_SYSTEM_AREA_ADDR 0x57
+
+static int st25dv_tag_init(const struct device *dev, nfc_tag_cb_t cb)
 {
-	/* setup callback */
+	LOG_DBG("st25dv tag init");
+
 	struct st25dvxxkc_data *data = dev->data;
 
 	data->nfc_tag_cb = cb;
-
-	if (data->dev_i2c == NULL) {
-		printk("Error dev\n");
-		return -ENODEV;
-	}
 	/* Init of the Type Tag 5 component (ST25DV-I2C) */
 	if (BSP_NFCTAG_Init(dev, 0) != NFCTAG_OK) {
 		return NFCTAG_ERROR;
@@ -40,12 +33,13 @@ static int st25dvxxkc_tag_init(const struct device *dev, nfc_tag_cb_t cb)
 	return 0;
 }
 
-static int st25dvxxkc_tag_set_type(const struct device *dev, enum nfc_tag_type type)
+static int st25dv_tag_set_type(const struct device *dev, enum nfc_tag_type type)
 {
 	struct st25dvxxkc_data *data = dev->data;
 
 	/* st25dvxxkc only support T5T messages */
 	if (type != NFC_TAG_TYPE_T5T) {
+		LOG_ERR("unsupported tag type");
 		return -ENOTSUP;
 	}
 
@@ -59,7 +53,7 @@ static int st25dvxxkc_tag_set_type(const struct device *dev, enum nfc_tag_type t
 		CCFileStruct.TT5Tag = 0x05;
 		/* Init of the Type Tag 5 component */
 		if (NfcType5_TT5Init(dev) != NFCTAG_OK) {
-			printk("Cannot setup ST25\n");
+			LOG_ERR("can't setup ST25 tag");
 			return NDEF_ERROR;
 		}
 	}
@@ -69,28 +63,28 @@ static int st25dvxxkc_tag_set_type(const struct device *dev, enum nfc_tag_type t
 	return 0;
 }
 
-static int st25dvxxkc_tag_get_type(const struct device *dev, enum nfc_tag_type *type)
+static int st25dv_tag_get_type(const struct device *dev, enum nfc_tag_type *type)
 {
 	struct st25dvxxkc_data *data = dev->data;
 	*type = data->tag_type;
 	return 0;
 }
 
-static int st25dvxxkc_tag_start(const struct device *dev)
+static int st25dv_tag_start(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 	BSP_NFCTAG_ResetRFSleep_Dyn(dev, 0);
 	return 0;
 }
 
-static int st25dvxxkc_tag_stop(const struct device *dev)
+static int st25dv_tag_stop(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 	BSP_NFCTAG_SetRFSleep_Dyn(dev, 0);
 	return 0;
 }
 
-static int st25dvxxkc_tag_set_ndef(const struct device *dev, uint8_t *buf, uint16_t len)
+static int st25dv_tag_set_ndef(const struct device *dev, uint8_t *buf, uint16_t len)
 {
 	uint8_t current_ndef[ST25DVXXKC_NDEF_MAX_SIZE] = {0};
 	int rv = NfcTag_ReadNDEF(dev, current_ndef);
@@ -105,8 +99,8 @@ static int st25dvxxkc_tag_set_ndef(const struct device *dev, uint8_t *buf, uint1
 	return rv;
 }
 
-static int st25dvxxkc_tag_cmd(const struct device *dev, enum nfc_tag_cmd cmd, uint8_t *buf,
-			      uint16_t *buf_len)
+static int st25dv_tag_cmd(const struct device *dev, enum nfc_tag_cmd cmd, uint8_t *buf,
+			  uint16_t *buf_len)
 {
 	ARG_UNUSED(dev);
 	ARG_UNUSED(cmd);
@@ -115,55 +109,58 @@ static int st25dvxxkc_tag_cmd(const struct device *dev, enum nfc_tag_cmd cmd, ui
 	return 0;
 }
 
-static struct nfc_tag_driver_api _st25dvxxkc_driver_api = {.init = st25dvxxkc_tag_init,
-							   .set_type = st25dvxxkc_tag_set_type,
-							   .get_type = st25dvxxkc_tag_get_type,
-							   .start = st25dvxxkc_tag_start,
-							   .stop = st25dvxxkc_tag_stop,
-							   .set_ndef = st25dvxxkc_tag_set_ndef,
-							   .cmd = st25dvxxkc_tag_cmd};
-
-/**
- * @brief Initialize NTAG driver IC.
- *
- * @param[in] *dev : Pointer to st25dvxxkc device
- * @return         : 0 on success, negative upon error.
- */
-static int _st25dvxxkc_init(const struct device *dev)
+static int st25dv_init(const struct device *dev)
 {
-	int rv = 0;
-	struct st25dvxxkc_data *data = (struct st25dvxxkc_data *)dev->data;
-	const struct st25dvxxkc_cfg *cfg = (const struct st25dvxxkc_cfg *)dev->config;
+	int result = -ENODEV;
 
-	LOG_DBG("st25dvxxkc: init");
+	do {
+		struct st25dvxxkc_data *data = dev->data;
 
-	/* setup i2c */
-	data->parent = (const struct device *)dev;
-	data->dev_i2c = cfg->i2c.bus;
+		if (!device_is_ready(data->dev_i2c)) {
+			LOG_ERR("st25dv i2c bus %s not ready", data->dev_i2c->name);
+			break;
+		}
 
-	if (data->dev_i2c == NULL) {
-		LOG_ERR("Init I2C failed, could not bind, %s", cfg->i2c.bus->name);
-		return -ENXIO;
-	}
+		struct i2c_msg msg = {
+			.flags = I2C_MSG_WRITE | I2C_MSG_STOP,
+		};
 
-	LOG_DBG("st25dvxxkc: init OK");
+		result = i2c_transfer(data->dev_i2c, &msg, 1, ST25DV_USER_MEMORY_ADDR);
+		if (result) {
+			LOG_ERR("st25dv device not detected %s : 0x%02x", data->dev_i2c->name,
+				ST25DV_USER_MEMORY_ADDR);
+			break;
+		}
+		result = i2c_transfer(data->dev_i2c, &msg, 1, ST25DV_SYSTEM_AREA_ADDR);
+		if (result) {
+			LOG_ERR("st25dv device not detected %s : 0x%02x", data->dev_i2c->name,
+				ST25DV_SYSTEM_AREA_ADDR);
+			break;
+		}
 
-	return rv;
+		LOG_DBG("st25dv device  %s ok", data->dev_i2c->name);
+	} while (0);
+
+	return result;
 }
 
-#define ST25DVXXKC_INIT(inst)                                                                      \
-	static struct st25dvxxkc_data st25dvxxkc_data##inst = {0};                                 \
-	static const struct st25dvxxkc_cfg st25dvxxkc_cfg##inst = {                                \
-		.i2c = I2C_DT_SPEC_INST_GET(inst),                                                 \
+static struct nfc_tag_driver_api st25dv_api = {
+	.init = st25dv_tag_init,
+	.set_type = st25dv_tag_set_type,
+	.get_type = st25dv_tag_get_type,
+	.start = st25dv_tag_start,
+	.stop = st25dv_tag_stop,
+	.set_ndef = st25dv_tag_set_ndef,
+	.cmd = st25dv_tag_cmd,
+};
+
+#define ST25DV_DEFINE(i)                                                                           \
+                                                                                                   \
+	static struct st25dvxxkc_data st25dv_data##i = {                                           \
+		.dev_i2c = DEVICE_DT_GET(DT_INST_BUS(i)),                                          \
 	};                                                                                         \
                                                                                                    \
-	static int _st25dvxxkc_init##inst(const struct device *dev)                                \
-	{                                                                                          \
-		return _st25dvxxkc_init(dev);                                                      \
-	}                                                                                          \
-                                                                                                   \
-	DEVICE_DT_INST_DEFINE(inst, _st25dvxxkc_init##inst, NULL, &st25dvxxkc_data##inst,          \
-			      &st25dvxxkc_cfg##inst, POST_KERNEL, CONFIG_ST25DVXXKC_INIT_PRIORITY, \
-			      &_st25dvxxkc_driver_api);
+	DEVICE_DT_INST_DEFINE(i, st25dv_init, NULL, &st25dv_data##i, NULL, POST_KERNEL,            \
+			      CONFIG_ST25DVXXKC_INIT_PRIORITY, &st25dv_api);
 
-DT_INST_FOREACH_STATUS_OKAY(ST25DVXXKC_INIT)
+DT_INST_FOREACH_STATUS_OKAY(ST25DV_DEFINE)

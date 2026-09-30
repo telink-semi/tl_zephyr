@@ -27,5 +27,5 @@ manifest:
 
     - name: nfc_st25dv
       url: https://github.com/telink-semi/nfc_st25dv
-      revision: 8854cf1e33f60e85a96e84bf35e442660883324f
+      revision: pull/1/head
       path: modules/lib/nfc_st25dv

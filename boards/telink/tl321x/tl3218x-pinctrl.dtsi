@@ -68,10 +68,12 @@
 	/* Define I2C pins: SCL(PC3), SDA(PC2) */
 
 	i2c_scl_pc3_default: i2c_scl_pc3_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_3, TL321X_FUNC_I2C_SCL_IO)>;
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_3,
+			(TL321X_FUNC_I2C_SCL_IO | TL321X_PULL_UP))>;
 	};
 	i2c_sda_pc2_default: i2c_sda_pc2_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_2, TL321X_FUNC_I2C_SDA_IO)>;
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_C, TLX_PIN_2,
+			(TL321X_FUNC_I2C_SDA_IO | TL321X_PULL_UP))>;
 	};
 
 	/* Define ADC pins: PB0..PB7, PD0, PD1 */

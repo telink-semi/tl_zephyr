@@ -133,6 +133,11 @@ jobs:
         cd ..
         west build -b tl5218x_retention        -d build_ot_echo_client_pm_deep_tl5218x    zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y -DCONFIG_SOC_SERIES_RISCV_TELINK_TL521X_NON_RETENTION_RAM_CODE=y -DCONFIG_TELINK_TLX_2_WIRE_SPI_ENABLE=y
 
+    - name: Build TL521X samples/subsys/nfc
+      run: |
+        cd ..
+        west build -b tl5218x                  -d build_nfc_tl521x                        zephyr/samples/subsys/nfc                                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
     - name: Collect artifacts
       run: |
         mkdir telink_build_artifacts
@@ -150,6 +155,7 @@ jobs:
         cp ../build_ot_coprocessor_rcp_uart_tl521x/zephyr/zephyr.bin    telink_build_artifacts/tl521x_ot_coprocessor_rcp_uart.bin
         cp ../build_crypto_mbedtls_tl521x/zephyr/zephyr.bin             telink_build_artifacts/tl521x_mbedtls.bin
         cp ../build_ot_echo_client_pm_deep_tl5218x/zephyr/zephyr.bin    telink_build_artifacts/tl521x_ot_echo_client_pm_retention.bin
+        cp ../build_nfc_tl521x/zephyr/zephyr.bin                        telink_build_artifacts/tl521x_nfc.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

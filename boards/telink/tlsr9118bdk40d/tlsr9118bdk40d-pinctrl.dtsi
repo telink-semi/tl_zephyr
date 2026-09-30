@@ -57,10 +57,10 @@
 
 	/* I2C0 */
 	i2c0_scl_default: i2c0_scl_default {
-		pinmux = <W91_PINMUX_SET(W91_PIN_15, W91_FUNC_I2C0_SCL)>;
+		pinmux = <W91_PINMUX_SET(W91_PIN_15, (W91_FUNC_I2C0_SCL | W91_PULL_UP))>;
 	};
 	i2c0_sda_default: i2c0_sda_default {
-		pinmux = <W91_PINMUX_SET(W91_PIN_16, W91_FUNC_I2C0_SDA)>;
+		pinmux = <W91_PINMUX_SET(W91_PIN_16, (W91_FUNC_I2C0_SDA | W91_PULL_UP))>;
 	};
 	/* PWM Channel 0 (P15) */
 
