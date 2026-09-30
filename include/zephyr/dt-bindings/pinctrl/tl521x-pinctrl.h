@@ -122,9 +122,9 @@
 
 /* TL521X pinctrl pull-up/down */
 
-#define TL521X_PULL_NONE 0
-#define TL521X_PULL_DOWN 2
-#define TL521X_PULL_UP   3
+#define TL521_PULL_NONE 0
+#define TL521_PULL_DOWN 2
+#define TL521_PULL_UP   3
 
 /* Pin function positions */
 
@@ -153,6 +153,10 @@
 #define TL521X_PIN_POS    0
 #define TL521X_PIN_MSK    0xFFFF
 #define TL521X_PIN_ID_MSK 0xFF
+
+#define TL521X_PULL_NONE (TL521_PULL_NONE << (TL521X_PULL_POS - TL521X_FUNC_POS))
+#define TL521X_PULL_DOWN (TL521_PULL_DOWN << (TL521X_PULL_POS - TL521X_FUNC_POS))
+#define TL521X_PULL_UP   (TL521_PULL_UP << (TL521X_PULL_POS - TL521X_FUNC_POS))
 
 /* Setters and getters */
 

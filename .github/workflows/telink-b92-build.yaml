@@ -232,14 +232,13 @@ jobs:
         cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_gpio-kbd-matrix.bin"
         rm -rf build_b92
 
-    # Temporary off due to broken sample (modules under license)
-    # - name: Build B92 samples/subsys/nfc
-    #   run: |
-    #     cd ..
-    #     west build -b tlsr9528a                  -d build_b92     zephyr/samples/subsys/nfc                                -- -DOVERLAY_CONFIG=boards/st25dv.conf
-    #     mkdir -p "$GITHUB_WORKSPACE/telink_build_artifacts"
-    #     cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_nfc.bin"
-    #     rm -rf build_b92
+    - name: Build B92 samples/subsys/nfc
+      run: |
+        cd ..
+        west build -b tlsr9528a                  -d build_b92     zephyr/samples/subsys/nfc                                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        mkdir -p "$GITHUB_WORKSPACE/telink_build_artifacts"
+        cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_nfc.bin"
+        rm -rf build_b92
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

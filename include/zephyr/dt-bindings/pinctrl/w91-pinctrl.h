@@ -90,9 +90,9 @@
 #define W91_FUNC_SDIO_CMD          52
 
 /* W91 pinctrl pull-up/down */
-#define W91_PULL_NONE    0
-#define W91_PULL_DOWN    2
-#define W91_PULL_UP      3
+#define W9X_PULL_NONE 0
+#define W9X_PULL_DOWN 2
+#define W9X_PULL_UP   3
 
 /* W91 pin configuration bit field positions and masks */
 #define W91_PULL_POS     21
@@ -102,6 +102,10 @@
 #define W91_PIN_POS      0
 #define W91_PIN_MSK      0xFFFF
 #define W91_PIN_ID_MSK   0xFF
+
+#define W91_PULL_NONE (W9X_PULL_NONE << (W91_PULL_POS - W91_FUNC_POS))
+#define W91_PULL_DOWN (W9X_PULL_DOWN << (W91_PULL_POS - W91_FUNC_POS))
+#define W91_PULL_UP   (W9X_PULL_UP << (W91_PULL_POS - W91_FUNC_POS))
 
 /* Setters and getters */
 #define W91_PINMUX_SET(pin, func)   ((func << W91_FUNC_POS) | \
