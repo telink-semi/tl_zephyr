@@ -79,10 +79,12 @@
 	/* Define I2C pins: SCL(PC0), SDA(PC1) */
 
 	i2c_scl_pc0_default: i2c_scl_pc0_default {
-		pinmux = <B9x_PINMUX_SET(B9x_PORT_C, B9x_PIN_0, B92_FUNC_I2C_SCL_IO)>;
+		pinmux = <B9x_PINMUX_SET(B9x_PORT_C, B9x_PIN_0,
+			(B92_FUNC_I2C_SCL_IO | B92_PULL_UP))>;
 	};
 	i2c_sda_pc1_default: i2c_sda_pc1_default {
-		pinmux = <B9x_PINMUX_SET(B9x_PORT_C, B9x_PIN_1, B92_FUNC_I2C_SDA_IO)>;
+		pinmux = <B9x_PINMUX_SET(B9x_PORT_C, B9x_PIN_1,
+			(B92_FUNC_I2C_SDA_IO | B92_PULL_UP))>;
 	};
 
 	/* Define ADC pins: PB0..PB7, PD0-PD1 */

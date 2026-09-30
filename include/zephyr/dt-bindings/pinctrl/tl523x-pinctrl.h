@@ -98,6 +98,10 @@
 #define TL5X_PIN_MSK    0xFFFF
 #define TL5X_PIN_ID_MSK 0xFF
 
+#define TL523X_PULL_NONE (TL5X_PULL_NONE << (TL5X_PULL_POS - TL5X_FUNC_POS))
+#define TL523X_PULL_DOWN (TL5X_PULL_DOWN << (TL5X_PULL_POS - TL5X_FUNC_POS))
+#define TL523X_PULL_UP   (TL5X_PULL_UP << (TL5X_PULL_POS - TL5X_FUNC_POS))
+
 /* Setters and getters， TODO */
 #define TL5X_PINMUX_SET(port, pin, func)                                                           \
 	((func << TL5X_FUNC_POS) | (port << TL5X_PORT_POS) | (pin << TL5X_PIN_POS))

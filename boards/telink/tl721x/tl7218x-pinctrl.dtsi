@@ -79,10 +79,12 @@
 	/* Define I2C pins: SCL(PE6), SDA(PE7) */
 
 	i2c_scl_pe6_default: i2c_scl_pe6_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_6, TL721X_FUNC_I2C_SCL_IO)>;
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_6,
+			(TL721X_FUNC_I2C_SCL_IO | TL721X_PULL_UP))>;
 	};
 	i2c_sda_pe7_default: i2c_sda_pe7_default {
-		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_7, TL721X_FUNC_I2C_SDA_IO)>;
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_E, TLX_PIN_7,
+			(TL721X_FUNC_I2C_SDA_IO | TL721X_PULL_UP))>;
 	};
 
 	/* Define ADC pins: PB0..PB7, PD0-PD1 */
