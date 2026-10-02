@@ -139,6 +139,10 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_mcuboot_chip_id_tl721x          bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3
 
+    - name: Build TL721X samples/subsys/nfc
+      run: |
+        cd ..
+        west build -b tl7218x                  -d build_nfc_tl721x                      zephyr/samples/subsys/nfc                                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Collect artifacts
       run: |
@@ -161,6 +165,7 @@ jobs:
         cp ../build_crypto_mbedtls_tl721x/zephyr/zephyr.bin            telink_build_artifacts/tl721x_mbedtls.bin
         cp ../build_spi_flash_tl721x/zephyr/zephyr.bin                 telink_build_artifacts/tl721x_spi_flash.bin
         cp ../build_mcuboot_chip_id_tl721x/zephyr/zephyr.bin           telink_build_artifacts/tl721x_mcuboot_chip_id.bin
+        cp ../build_nfc_tl721x/zephyr/zephyr.bin                       telink_build_artifacts/tl7218x_nfc.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4

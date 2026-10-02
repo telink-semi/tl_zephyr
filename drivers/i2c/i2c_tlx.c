@@ -127,7 +127,7 @@ static int i2c_tlx_transfer(const struct device *dev,
 
 		/* check status */
 		if (!status) {
-			LOG_ERR("Failed to transfer I2C messages\n");
+			LOG_DBG("Failed to transfer I2C messages");
 			k_sem_give(&data->mutex);
 			return -EIO;
 		}
