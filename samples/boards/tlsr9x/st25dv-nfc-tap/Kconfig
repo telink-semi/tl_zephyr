@@ -1,0 +1,18 @@
+#
+# Copyright (c) 2026 Telink Semiconductor
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+choice APPLICATION_TYPE
+	default APPLICATION_TYPE_ST25DV_MAILBOX
+	prompt "Application type"
+
+config APPLICATION_TYPE_ST25DV_MAILBOX
+	bool "Application type ST25DV mailbox"
+config APPLICATION_TYPE_ST25DV_STATIC_TAG
+	bool "Application type ST25DV static tag"
+
+endchoice
+
+source "Kconfig.zephyr"

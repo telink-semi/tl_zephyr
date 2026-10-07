@@ -5436,6 +5436,15 @@ West:
   labels:
     - "platform: Telink"
 
+"West project: telink_st25dv":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
+    - "area: NFC"
+
 "West project: tflite-micro":
   status: maintained
   maintainers:

@@ -1092,6 +1092,7 @@ flagged.
         "MY_DRIVER_0",
         "NORMAL_SLEEP",  # #defined by RV32M1 in ext/
         "NRF_WIFI_FW_BIN", # Directly passed from CMakeLists.txt
+        "OPENTHREAD_TELINK_LIBRARY",
         "OPT",
         "OPT_0",
         "PEDO_THS_MIN",

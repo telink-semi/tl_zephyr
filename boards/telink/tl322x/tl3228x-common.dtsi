@@ -113,6 +113,13 @@
 		};
 	};
 
+	st25dv_matter: st25dv {
+		compatible = "st25dv";
+		i2c-bus = <&i2c>;
+		isr-port = <&gpioe>;
+		isr-port-pin = <2>;
+	};
+
 	chosen {
 		zephyr,console = &uart0;
 		zephyr,shell-uart = &uart0;
@@ -193,6 +200,7 @@
 };
 
 &gpioe {
+	interrupts = <37 1>;
 	status = "okay";
 };
 
@@ -202,7 +210,6 @@
 };
 
 &gpiog {
-	interrupts = <37 1>;
 	status = "okay";
 };
 

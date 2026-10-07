@@ -155,10 +155,10 @@ jobs:
         cd ..
         west build -b tl3218x     -d build_gpio-kbd-matrix_tl321x             zephyr/samples/boards/tlsr9x/gpio-kbd-matrix  -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
-    - name: Build TL321X samples/subsys/nfc
+    - name: Build TL321X samples/boards/tlsr9x/st25dv-nfc-tap
       run: |
         cd ..
-        west build -b tl3218x     -d build_nfc_tl321x                         zephyr/samples/subsys/nfc                     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl3218x     -d build_nfc_tl321x                         zephyr/samples/boards/tlsr9x/st25dv-nfc-tap   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Collect artifacts
       run: |
