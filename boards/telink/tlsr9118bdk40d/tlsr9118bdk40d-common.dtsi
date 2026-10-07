@@ -58,6 +58,13 @@
 		};
 	};
 
+	st25dv_matter: st25dv {
+		compatible = "st25dv";
+		i2c-bus = <&i2c0>;
+		isr-port = <&gpio0>;
+		isr-port-pin = <14>;
+	};
+
 	chosen {
 		/* zephyr,aux_ram = &sram; */
 		zephyr,sram = &ram_dlm;

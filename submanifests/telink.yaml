@@ -29,3 +29,8 @@ manifest:
       url: https://github.com/telink-semi/nfc_st25dv
       revision: f7e03b0616e454fed9a02c7c612a17e20b8af616
       path: modules/lib/nfc_st25dv
+
+    - name: telink_st25dv
+      url: https://github.com/telink-semi/tl_st25dv
+      revision: 4e499bdd6feb4c237f35dcf12b760d9af724cb42
+      path: modules/telink/st25dv

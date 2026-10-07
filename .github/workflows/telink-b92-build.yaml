@@ -232,10 +232,10 @@ jobs:
         cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_gpio-kbd-matrix.bin"
         rm -rf build_b92
 
-    - name: Build B92 samples/subsys/nfc
+    - name: Build B92 samples/boards/tlsr9x/st25dv-nfc-tap
       run: |
         cd ..
-        west build -b tlsr9528a                  -d build_b92     zephyr/samples/subsys/nfc                                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tlsr9528a                  -d build_b92     zephyr/samples/boards/tlsr9x/st25dv-nfc-tap              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
         mkdir -p "$GITHUB_WORKSPACE/telink_build_artifacts"
         cp build_b92/zephyr/zephyr.bin           "$GITHUB_WORKSPACE/telink_build_artifacts/b92_nfc.bin"
         rm -rf build_b92

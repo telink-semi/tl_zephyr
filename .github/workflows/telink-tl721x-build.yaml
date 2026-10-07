@@ -139,10 +139,10 @@ jobs:
         cd ..
         west build -b tl7218x                  -d build_mcuboot_chip_id_tl721x          bootloader/mcuboot/boot/zephyr                           -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_LOG_DEFAULT_LEVEL=3
 
-    - name: Build TL721X samples/subsys/nfc
+    - name: Build TL721X samples/boards/tlsr9x/st25dv-nfc-tap
       run: |
         cd ..
-        west build -b tl7218x                  -d build_nfc_tl721x                      zephyr/samples/subsys/nfc                                -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+        west build -b tl7218x                  -d build_nfc_tl721x                      zephyr/samples/boards/tlsr9x/st25dv-nfc-tap              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Collect artifacts
       run: |
