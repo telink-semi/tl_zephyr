@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Dynamic NFC/RFID tag IC
+compatible: "st25dv"
+
+properties:
+  i2c-bus:
+    type: phandle
+    required: true
+  isr-port:
+    type: phandle
+    required: true
+  isr-port-pin:
+    type: int
+    required: true
