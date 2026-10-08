@@ -1,0 +1,27 @@
+#
+# Copyright (c) 2026 Telink Semiconductor
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+choice
+	prompt "ST25DVXXK driver log level"
+config ST25DV_LOG_LEVEL_ERR
+	bool "Error"
+config ST25DV_LOG_LEVEL_WRN
+	bool "Warning"
+config ST25DV_LOG_LEVEL_INF
+	bool "Information"
+config ST25DV_LOG_LEVEL_DBG
+	bool "Debug"
+endchoice
+
+config ST25DV_LOG_LEVEL
+	int
+	default 1 if ST25DV_LOG_LEVEL_ERR
+	default 2 if ST25DV_LOG_LEVEL_WRN
+	default 3 if ST25DV_LOG_LEVEL_INF
+	default 4 if ST25DV_LOG_LEVEL_DBG
+	default 0
+
+source "Kconfig.zephyr"
