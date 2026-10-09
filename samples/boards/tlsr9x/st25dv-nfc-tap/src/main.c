@@ -22,11 +22,20 @@ int main(void)
 			break;
 		}
 
+		const char test_msg[] = "Matter NFC Tx Test";
+
+		result = st25dv_mailbox_send(&st25dv, test_msg, sizeof(test_msg));
+		if (result) {
+			LOG_ERR("st25dv mailbox send failed %d", result);
+			break;
+		}
+#if 0
 		result = st25dv_deinit(&st25dv);
 		if (result) {
 			LOG_ERR("st25dv deinit failed %d", result);
 			break;
 		}
+#endif
 	} while (0);
 
 	return result;

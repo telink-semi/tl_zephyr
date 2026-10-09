@@ -27,8 +27,10 @@ struct st25dv_data {
 	}
 
 int st25dv_probe(struct st25dv_data *data);
+int st25dv_unlock(struct st25dv_data *data);
 int st25dv_reset(struct st25dv_data *data);
 int st25dv_init(struct st25dv_data *data);
 int st25dv_deinit(struct st25dv_data *data);
+int st25dv_mailbox_send(struct st25dv_data *data, const void *buffer, size_t len);
 
 #endif /* ST25DV_H */

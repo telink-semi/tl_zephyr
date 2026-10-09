@@ -15,60 +15,23 @@ LOG_MODULE_REGISTER(MODULE_NAME, CONFIG_ST25DV_LOG_LEVEL);
 
 #define ST25DV_USER_MEMORY_ADDR 0x53
 #define ST25DV_SYSTEM_AREA_ADDR 0x57
+#define ST25DV_MBOX_LENGTH_MAX  255
 
 #define ST25DV_REG_SYS_IC_REF      0x0017
 #define ST25DV_REG_SYS_IC_REV      0x0020
 #define ST25DV_REG_USR_MB_CTRL_DYN 0x2006
 #define ST25DV_REG_USR_GPO_DYN     0x2000
+#define ST25DV_REG_USR_MB_DATA_DYN 0x2008
+#define ST25DV_REG_SYS_I2C_PWD     0x0900
+#define ST25DV_REG_SYS_MB_MODE     0x000d
+#define ST25DV_REG_SYS_CONFIG      0x0018
 
 static const char *st25dv_module_name = STRINGIFY(MODULE_NAME);
-static const uint8_t st25dv_chip_ref[] = {0x51, 0x50, 0x50, 0x27, 0x25};
+static const uint8_t st25dv_chip_ref[] = {0x51, 0x50};
 
 static void st25dv_isr_handler(const struct device *port, struct gpio_callback *cb,
 			       gpio_port_pins_t pins);
 static void st25dv_work_handler(struct k_work *item);
-
-inline static int st25dv_i2c_reg_read(const struct device *i2c_dev, uint8_t i2c_addr,
-				      uint16_t reg_addr, void *data, size_t data_len)
-{
-	struct i2c_msg msgs[2] = {
-		{
-			.buf = (uint8_t[]){(uint8_t)(reg_addr >> 8), (uint8_t)reg_addr},
-			.len = 2,
-			.flags = I2C_MSG_WRITE,
-		},
-		{
-			.buf = data,
-			.len = data_len,
-			.flags = I2C_MSG_RESTART | I2C_MSG_READ | I2C_MSG_STOP,
-		}};
-
-	return i2c_transfer(i2c_dev, msgs, ARRAY_SIZE(msgs), i2c_addr);
-}
-
-inline static int st25dv_i2c_reg_write(const struct device *i2c_dev, uint8_t i2c_addr,
-				       uint16_t reg_addr, const void *data, size_t data_len)
-{
-	struct i2c_msg msgs[2] = {
-		{
-			.buf = (uint8_t[]){(uint8_t)(reg_addr >> 8), (uint8_t)reg_addr},
-			.len = 2,
-			.flags = I2C_MSG_WRITE,
-		},
-		{
-			.buf = (void *)data,
-			.len = data_len,
-			.flags = I2C_MSG_RESTART | I2C_MSG_WRITE | I2C_MSG_STOP,
-		}};
-
-	return i2c_transfer(i2c_dev, msgs, ARRAY_SIZE(msgs), i2c_addr);
-}
-
-#define st25dv_i2c_read_object(i2c_bus, i2c_addr, obj_addr, obj)                                   \
-	st25dv_i2c_reg_read(i2c_bus, i2c_addr, obj_addr, &obj, sizeof(obj))
-
-#define st25dv_i2c_write_object(i2c_bus, i2c_addr, obj_addr, obj)                                  \
-	st25dv_i2c_reg_write(i2c_bus, i2c_addr, obj_addr, &obj, sizeof(obj))
 
 int st25dv_probe(struct st25dv_data *data)
 {
@@ -79,13 +42,18 @@ int st25dv_probe(struct st25dv_data *data)
 
 		uint8_t chip_ref, chip_rev;
 
-		result = st25dv_i2c_read_object(data->i2c_bus, ST25DV_SYSTEM_AREA_ADDR,
-						ST25DV_REG_SYS_IC_REF, chip_ref);
+		result = i2c_write_read(data->i2c_bus, ST25DV_SYSTEM_AREA_ADDR,
+					(uint8_t[]){
+						(uint8_t)(ST25DV_REG_SYS_IC_REF >> 8),
+						(uint8_t)ST25DV_REG_SYS_IC_REF,
+					},
+					2, &chip_ref, sizeof(chip_ref));
 		if (result) {
 			LOG_ERR("%s read chip id failed %d", st25dv_module_name, result);
 			break;
 		}
-		for (size_t i = 0, result = -ENODEV; i < ARRAY_SIZE(st25dv_chip_ref); ++i) {
+		result = -ENODEV;
+		for (size_t i = 0; i < ARRAY_SIZE(st25dv_chip_ref); ++i) {
 			if (chip_ref == st25dv_chip_ref[i]) {
 				result = 0;
 				break;
@@ -95,13 +63,31 @@ int st25dv_probe(struct st25dv_data *data)
 			LOG_ERR("%s invalid chip id %02x", st25dv_module_name, chip_ref);
 			break;
 		}
-		result = st25dv_i2c_read_object(data->i2c_bus, ST25DV_SYSTEM_AREA_ADDR,
-						ST25DV_REG_SYS_IC_REV, chip_rev);
+		result = i2c_write_read(data->i2c_bus, ST25DV_SYSTEM_AREA_ADDR,
+					(uint8_t[]){
+						(uint8_t)(ST25DV_REG_SYS_IC_REV >> 8),
+						(uint8_t)ST25DV_REG_SYS_IC_REV,
+					},
+					2, &chip_rev, sizeof(chip_rev));
 		if (result) {
 			LOG_ERR("%s read chip id failed %d", st25dv_module_name, result);
 			break;
 		}
 		LOG_INF("%s chip id %02x rev %02x", st25dv_module_name, chip_ref, chip_rev);
+	} while (0);
+
+	return result;
+}
+
+int st25dv_unlock(struct st25dv_data *data)
+{
+	int result;
+
+	do {
+		LOG_DBG("%s %s", st25dv_module_name, __func__);
+
+		/* TODO: Set static regs: GPO, MB */
+		result = 0;
 	} while (0);
 
 	return result;
@@ -113,17 +99,24 @@ int st25dv_reset(struct st25dv_data *data)
 
 	do {
 		LOG_DBG("%s %s", st25dv_module_name, __func__);
-
-		uint8_t zero = 0;
-
-		result = st25dv_i2c_write_object(data->i2c_bus, ST25DV_USER_MEMORY_ADDR,
-						 ST25DV_REG_USR_MB_CTRL_DYN, zero);
+		result = i2c_write(data->i2c_bus,
+				   (uint8_t[]){
+					   (uint8_t)(ST25DV_REG_USR_MB_CTRL_DYN >> 8),
+					   (uint8_t)ST25DV_REG_USR_MB_CTRL_DYN,
+					   0x00, /* bit 0: MB_EN = 1 */
+				   },
+				   3, ST25DV_USER_MEMORY_ADDR);
 		if (result) {
 			LOG_ERR("%s mailbox switching off failed %d", st25dv_module_name, result);
 			break;
 		}
-		result = st25dv_i2c_write_object(data->i2c_bus, ST25DV_USER_MEMORY_ADDR,
-						 ST25DV_REG_USR_GPO_DYN, zero);
+		result = i2c_write(data->i2c_bus,
+				   (uint8_t[]){
+					   (uint8_t)(ST25DV_REG_USR_GPO_DYN >> 8),
+					   (uint8_t)ST25DV_REG_USR_GPO_DYN,
+					   0x00, /* bit 0: GPO_Enable */
+				   },
+				   3, ST25DV_USER_MEMORY_ADDR);
 		if (result) {
 			LOG_ERR("%s clear isr config failed %d", st25dv_module_name, result);
 			break;
@@ -156,6 +149,11 @@ int st25dv_init(struct st25dv_data *data)
 			LOG_ERR("%s not detected on i2c bus", st25dv_module_name);
 			break;
 		}
+		result = st25dv_unlock(data);
+		if (result) {
+			LOG_ERR("%s unlock failed", st25dv_module_name);
+			break;
+		}
 		result = st25dv_reset(data);
 		if (result) {
 			LOG_ERR("%s reset failed", st25dv_module_name);
@@ -180,20 +178,26 @@ int st25dv_init(struct st25dv_data *data)
 			LOG_ERR("%s gpio isr setup failed %d", st25dv_module_name, result);
 			break;
 		}
-
-		uint8_t gpo_dyn_reg = 0x11,  /* bit 4: MB_PUT_MSG, bit 0: GPO_Enable */
-			mbox_ctl_reg = 0x01; /* bit 0: MB_EN = 1 */
-
-		result = st25dv_i2c_write_object(data->i2c_bus, ST25DV_USER_MEMORY_ADDR,
-						 ST25DV_REG_USR_GPO_DYN, gpo_dyn_reg);
+		result = i2c_write(data->i2c_bus,
+				   (uint8_t[]){
+					   (uint8_t)(ST25DV_REG_USR_GPO_DYN >> 8),
+					   (uint8_t)ST25DV_REG_USR_GPO_DYN,
+					   0x01, /* bit 0: GPO_Enable */
+				   },
+				   3, ST25DV_USER_MEMORY_ADDR);
 		if (result) {
 			LOG_ERR("%s gpo register config failed %d", st25dv_module_name, result);
 			break;
 		}
-		result = st25dv_i2c_write_object(data->i2c_bus, ST25DV_USER_MEMORY_ADDR,
-						 ST25DV_REG_USR_MB_CTRL_DYN, mbox_ctl_reg);
+		result = i2c_write(data->i2c_bus,
+				   (uint8_t[]){
+					   (uint8_t)(ST25DV_REG_USR_MB_CTRL_DYN >> 8),
+					   (uint8_t)ST25DV_REG_USR_MB_CTRL_DYN,
+					   0x01, /* bit 0: MB_EN = 1 */
+				   },
+				   3, ST25DV_USER_MEMORY_ADDR);
 		if (result) {
-			LOG_ERR("%s gpo register config failed %d", st25dv_module_name, result);
+			LOG_ERR("%s enable mailbox failed %d", st25dv_module_name, result);
 			break;
 		}
 		data->inited = true;
@@ -239,6 +243,62 @@ int st25dv_deinit(struct st25dv_data *data)
 		(void)k_work_cancel_sync(&data->work, &sync_handle);
 		data->inited = false;
 		LOG_DBG("%s deinit ok", st25dv_module_name);
+	} while (0);
+
+	return result;
+}
+
+int st25dv_mailbox_send(struct st25dv_data *data, const void *buf, size_t buf_len)
+{
+	int result = -EINVAL;
+
+	do {
+		LOG_DBG("%s %s", st25dv_module_name, __func__);
+		if (!buf || !buf_len || buf_len > ST25DV_MBOX_LENGTH_MAX) {
+			LOG_ERR("%s invalid data send", st25dv_module_name);
+			break;
+		}
+		if (!data->inited) {
+			result = -ENODEV;
+			LOG_ERR("%s not inited", st25dv_module_name);
+			break;
+		}
+
+		uint8_t ctrl_reg;
+
+		result = i2c_write_read(data->i2c_bus, ST25DV_USER_MEMORY_ADDR,
+					(uint8_t[]){
+						(uint8_t)(ST25DV_REG_USR_MB_CTRL_DYN >> 8),
+						(uint8_t)ST25DV_REG_USR_MB_CTRL_DYN,
+					},
+					2, &ctrl_reg, sizeof(ctrl_reg));
+		if (result) {
+			LOG_ERR("%s mailbox status failed %d", st25dv_module_name, result);
+			break;
+		}
+		if (!(ctrl_reg & 0x01)) { /* bit 0: MB_EN = 1 */
+			result = -EIO;
+			LOG_ERR("%s mailbox disabled", st25dv_module_name);
+			break;
+		}
+		if (ctrl_reg & 0x06) { /* bit 1: HOST_PUT_MSG = 1, bit 2: RF_PUT_MSG = 1 */
+			result = -EBUSY;
+			LOG_ERR("%s mailbox busy %x", st25dv_module_name, ctrl_reg & 0x06);
+			break;
+		}
+
+		uint8_t mbox_data[2 + buf_len];
+
+		mbox_data[0] = (uint8_t)(ST25DV_REG_USR_MB_DATA_DYN >> 8);
+		mbox_data[1] = (uint8_t)ST25DV_REG_USR_MB_DATA_DYN;
+		memcpy(&mbox_data[2], buf, buf_len);
+		result = i2c_write(data->i2c_bus, mbox_data, sizeof(mbox_data),
+				   ST25DV_USER_MEMORY_ADDR);
+		if (result) {
+			LOG_ERR("%s mailbox send failed %d", st25dv_module_name, result);
+			break;
+		}
+		LOG_DBG("%s mailbox send ok", st25dv_module_name);
 	} while (0);
 
 	return result;
