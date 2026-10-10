@@ -17,10 +17,19 @@
 	power-mode = "LDO_1P25_LDO_1P8";
 };
 
+&pinctrl {
+	uart1_tx_pd6_default: uart1_tx_pd6_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_6, TL322X_FUNC_UART1_TX)>;
+	};
+	uart1_rx_pd7_default: uart1_rx_pd7_default {
+		pinmux = <TLX_PINMUX_SET(TLX_PORT_D, TLX_PIN_7, TL322X_FUNC_UART1_RTX_IO)>;
+	};
+};
+
 /* UART1 on PC6(TX)/PC7(RX) for HCI transport */
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;
-	pinctrl-0 = <&uart1_tx_pc6_default &uart1_rx_pc7_default>;
+	pinctrl-0 = <&uart1_tx_pd6_default &uart1_rx_pd7_default>;
 	pinctrl-names = "default";
 };
