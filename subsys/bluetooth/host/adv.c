@@ -1519,7 +1519,8 @@ void bt_le_adv_resume(void)
 		LOG_DBG("No valid legacy adv");
 		return;
 	}
-#if !(CONFIG_SOC_FAMILY_TELINK_TLSR || CONFIG_SOC_FAMILY_TELINK_TLX)
+#if (!(CONFIG_SOC_FAMILY_TELINK_TLSR || CONFIG_SOC_FAMILY_TELINK_TLX)) || \
+	(CONFIG_TELINK_TL322X_ENABLE_N22)
 	/* Connection is possible only in state adv-connectable.
 	 * After disconnect we are in state disconnected.
 	 * To make future connection possible we should set
