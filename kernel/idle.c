@@ -98,7 +98,14 @@ void idle(void *unused1, void *unused2, void *unused3)
 #endif /* CONFIG_BT_B9X */
 		extern uint32_t blc_ll_checkBleRfFsmIsBusy(void);
 
-		if (blc_ll_checkBleRfFsmIsBusy() && tl_bt_controller_state()) {
+		/* Check the controller state first: with the Matter retention
+		 * layout the BLE library ram code (including
+		 * blc_ll_checkBleRfFsmIsBusy's callees) lives in non-retention
+		 * RAM and is wiped by every retention deep sleep. Calling into
+		 * it after the controller was stopped (e.g. BLE disabled after
+		 * commissioning) executes garbage. tl_bt_controller_state()
+		 * only reads a retained variable, so short-circuit on it. */
+		if (tl_bt_controller_state() && blc_ll_checkBleRfFsmIsBusy()) {
 			k_cpu_idle();
 		} else if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
 			k_cpu_idle();
