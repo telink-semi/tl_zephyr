@@ -319,6 +319,9 @@ void soc_tlx_restore(void)
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
 	soc_load_rf_parameters_deep_retention();
+#if defined(CONFIG_IEEE802154_TLX_BLE_COEXIST)
+	rf_zb_init();
+#endif
 #endif
 
 	/* clocks init: CCLK, HCLK, PCLK */
