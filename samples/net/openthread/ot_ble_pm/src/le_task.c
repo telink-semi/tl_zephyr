@@ -139,3 +139,9 @@ void bt_le_task_init(void)
 		printk("OpenThread start (err %d)\n", ot_err);
 	}
 }
+
+/* Restart advertising for main.c after re-enabling BLE */
+void bt_le_adv_restart(void)
+{
+	bt_ready();
+}
