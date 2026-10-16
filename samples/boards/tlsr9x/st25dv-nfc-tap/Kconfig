@@ -10,8 +10,10 @@ choice APPLICATION_TYPE
 
 config APPLICATION_TYPE_ST25DV_MAILBOX
 	bool "Application type ST25DV mailbox"
-config APPLICATION_TYPE_ST25DV_STATIC_TAG
-	bool "Application type ST25DV static tag"
+config APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD
+	bool "Application type ST25DV static tag publish"
+config APPLICATION_TYPE_ST25DV_STATIC_TAG_RM
+	bool "Application type ST25DV static tag withdraw"
 
 endchoice
 

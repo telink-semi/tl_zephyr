@@ -57,14 +57,22 @@ int main(void)
 	}
 #endif
 
-#if CONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG
-	uint8_t tag_data[] = {0xd1, 0x01, 0x0f, 0x54, 0x02, 0x65, 0x6e, 0x48, 0x65, 0x6c,
-			      0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21};
+#if CONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD
+	const uint8_t tag_data[] = {0xd1, 0x01, 0x0f, 0x54, 0x02, 0x65, 0x6e, 0x48, 0x65, 0x6c,
+				    0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21};
 
 	result = st25dv_type5_tag_add(&st25dv, tag_data, sizeof(tag_data));
 	if (result) {
-		LOG_ERR("st25dv tag failed %d", result);
+		LOG_ERR("st25dv tag add failed %d", result);
 	}
 #endif
+
+#if CONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_RM
+	result = st25dv_type5_tag_rm(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv tag remove failed %d", result);
+	}
+#endif
+
 	return result;
 }

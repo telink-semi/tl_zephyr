@@ -7,7 +7,8 @@ Supported ICs are: *ST25DV04KC*, *ST25DV16KC*, *ST25DV64KC*.
 Demo covers two possible ST25DV functionality modes:
 
 - *APPLICATION_TYPE_ST25DV_MAILBOX* (by default) - NFC data exchange using mailbox.
-- *APPLICATION_TYPE_ST25DV_STATIC_TAG* - NFC static tag.
+- *APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD* - NFC static tag publish.
+- *APPLICATION_TYPE_ST25DV_STATIC_TAG_RM* - NFC static tag withdraw.
 
 Building and flashing (*tl7218x*)
 *********************************
@@ -23,7 +24,14 @@ Static tag application can be built by specifying config option:
 
 .. code-block:: bash
 
-	west build -b tl7218x -d build_nfc samples/boards/tlsr9x/st25dv-nfc-tap -- -DCONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG=y
+	west build -b tl7218x -d build_nfc samples/boards/tlsr9x/st25dv-nfc-tap -- -DCONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD=y
+
+or
+
+.. code-block:: bash
+
+	west build -b tl7218x -d build_nfc samples/boards/tlsr9x/st25dv-nfc-tap -- -DCONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_RM=y
+
 
 HW connection
 *************
