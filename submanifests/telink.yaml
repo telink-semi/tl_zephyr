@@ -32,5 +32,5 @@ manifest:
 
     - name: telink_st25dv
       url: https://github.com/telink-semi/tl_st25dv
-      revision: 0185d821b1f9c75f3547dd7f4c7b7508fe0655cb
+      revision: a8e38cdd10fc0212612ce4712e2739f0efa3a317
       path: modules/telink/st25dv

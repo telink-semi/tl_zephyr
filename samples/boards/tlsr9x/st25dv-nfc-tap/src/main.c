@@ -6,7 +6,7 @@
  * Zephyr ST25DVXXKC mailbox driver demonstration use android ST25 application to interact
  */
 
-#include "st25dv.h"
+#include <st25dv.h>
 
 #include <zephyr/logging/log.h>
 
@@ -40,7 +40,6 @@ int main(void)
 
 #if CONFIG_APPLICATION_TYPE_ST25DV_MAILBOX
 	result = st25dv_init(&st25dv);
-
 	if (result) {
 		LOG_ERR("st25dv init failed %d", result);
 		return result;
@@ -58,20 +57,69 @@ int main(void)
 #endif
 
 #if CONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD
+	/* reset ic sequence (init/deinit) */
+	result = st25dv_init(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv init failed %d", result);
+		return result;
+	}
+	result = st25dv_deinit(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv deinit failed %d", result);
+		return result;
+	}
+
 	const uint8_t tag_data[] = {0xd1, 0x01, 0x0f, 0x54, 0x02, 0x65, 0x6e, 0x48, 0x65, 0x6c,
 				    0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21};
 
 	result = st25dv_type5_tag_add(&st25dv, tag_data, sizeof(tag_data));
 	if (result) {
 		LOG_ERR("st25dv tag add failed %d", result);
+		return result;
 	}
+	result = st25dv_type5_tag_enable(&st25dv, true);
+	if (result) {
+		LOG_ERR("st25dv tag enabling failed %d", result);
+	}
+	LOG_INF("st25dv NFC tag switched on");
 #endif
 
 #if CONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_RM
+	/* reset ic sequence (init/deinit) */
+	result = st25dv_init(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv init failed %d", result);
+		return result;
+	}
+	result = st25dv_deinit(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv deinit failed %d", result);
+		return result;
+	}
 	result = st25dv_type5_tag_rm(&st25dv);
 	if (result) {
 		LOG_ERR("st25dv tag remove failed %d", result);
+		return result;
 	}
+	result = st25dv_type5_tag_enable(&st25dv, false);
+	if (result) {
+		LOG_ERR("st25dv tag enabling failed %d", result);
+	}
+	LOG_INF("st25dv NFC tag switched off");
+#endif
+
+#if CONFIG_APPLICATION_TYPE_ST25DV_NONE
+	/* reset ic sequence (init/deinit) */
+	result = st25dv_init(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv init failed %d", result);
+		return result;
+	}
+	result = st25dv_deinit(&st25dv);
+	if (result) {
+		LOG_ERR("st25dv deinit failed %d", result);
+	}
+	LOG_INF("st25dv app does nothing (to check tag after it was switched off)");
 #endif
 
 	return result;

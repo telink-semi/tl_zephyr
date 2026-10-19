@@ -14,6 +14,8 @@ config APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD
 	bool "Application type ST25DV static tag publish"
 config APPLICATION_TYPE_ST25DV_STATIC_TAG_RM
 	bool "Application type ST25DV static tag withdraw"
+config APPLICATION_TYPE_ST25DV_NONE
+	bool "Application does nothing (to check past radio off state)"
 
 endchoice
 
