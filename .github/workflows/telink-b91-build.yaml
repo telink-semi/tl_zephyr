@@ -16,7 +16,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y --no-install-recommends libdigest-sha-perl cmake python3 ninja-build
+        sudo apt install -y --no-install-recommends libdigest-sha-perl python3 ninja-build
+        pip install cmake==3.30.9
 
     - name: Setup Zephyr toolchain
       run: |
