@@ -26,7 +26,7 @@ static struct k_work_delayable ble_enable_dwork;
 
 extern volatile bool tlx_rf_802154_mode;
 
-volatile bool isThreadCommissioned = false;
+volatile bool isThreadCommissioned;
 
 /* BLE control state */
 enum ble_ctrl_state {
@@ -82,6 +82,7 @@ static void ble_enable(void)
 	 *      -> tlx_bt_irq_init()                      (reconnect IRQ_ZB_RT to rf_irq_handler)
 	 */
 	int err = bt_enable(NULL);
+
 	if (err) {
 		LOG_ERR("bt_enable failed (%d), rollback to 802.15.4", err);
 		tlx_bt_802154_dual_mode_suspend();
@@ -97,8 +98,16 @@ static void ble_enable(void)
 	/* 3. Restart advertising */
 	bt_le_adv_restart();
 
+	/* Same as the boot-time bt_le_task_init(): give the BLE controller thread a
+	 * window to run (broadcast / connection / connection parameter update) before
+	 * the Thread insert task starts switching the RF. k_sleep() lets the BLE
+	 * thread run, unlike k_busy_wait() which would keep it starved.
+	 */
+	/* k_sleep(K_SECONDS(1)); */
+
 	/* 4. Restore insert-task time-sharing: 802.15.4 runs in the BLE scheduler again.
-	 *    The switch_to_802154_mode() callback then resumes OT threads + gives ready_sem */
+	 *    The switch_to_802154_mode() callback then resumes OT threads + gives ready_sem
+	 */
 	tlksdk_thd_enableInsertTask1(0x01);
 
 	ble_state = BLE_STATE_COEXIST;
@@ -134,7 +143,7 @@ static void post_join_dwork_handler(struct k_work *work)
 {
 	otDeviceRole role = otThreadGetDeviceRole(openthread_get_default_context()->instance);
 
-	/* Re-check the device is still attached (child) after the delay, avoid stopping BLE while detached */
+	/* Re-check still attached (child) after delay, avoid stopping BLE while detached */
 	if (role != OT_DEVICE_ROLE_CHILD) {
 		LOG_INF("Not in Thread network anymore, skip post-join");
 		return;
@@ -160,13 +169,15 @@ static void ot_show_ip6_addr(otInstance *inst)
 	}
 }
 
-static void ot_satate_changed(otChangedFlags flags,
-	struct openthread_context *ot_context, void *user_data)
+static void ot_satate_changed(otChangedFlags flags, struct openthread_context *ot_context,
+			      void *user_data)
 {
 	if (flags & OT_CHANGED_THREAD_ROLE) {
 		otDeviceRole role = otThreadGetDeviceRole(ot_context->instance);
 
-		/* Joined as child/router, run once: schedule stopping insert task + BLE adv after a delay */
+		/* Joined as child/router, run once: schedule stopping insert task + BLE adv after a
+		 * delay
+		 */
 		if (role == OT_DEVICE_ROLE_CHILD) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
 			LOG_INF("Thread joined: schedule post-join & stop adv in 30s");
@@ -181,7 +192,7 @@ static void ot_satate_changed(otChangedFlags flags,
 			LOG_INF("OT Short address: %04x",
 				otLinkGetShortAddress(ot_context->instance));
 			LOG_HEXDUMP_INF(otLinkGetExtendedAddress(ot_context->instance),
-				OT_EXT_ADDRESS_SIZE, "OT Extended address:");
+					OT_EXT_ADDRESS_SIZE, "OT Extended address:");
 			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_ROUTER:
@@ -189,7 +200,7 @@ static void ot_satate_changed(otChangedFlags flags,
 			LOG_INF("OT Short address: %04x",
 				otLinkGetShortAddress(ot_context->instance));
 			LOG_HEXDUMP_INF(otLinkGetExtendedAddress(ot_context->instance),
-				OT_EXT_ADDRESS_SIZE, "OT Extended address:");
+					OT_EXT_ADDRESS_SIZE, "OT Extended address:");
 			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_LEADER:
@@ -197,7 +208,7 @@ static void ot_satate_changed(otChangedFlags flags,
 			LOG_INF("OT Short address: %04x",
 				otLinkGetShortAddress(ot_context->instance));
 			LOG_HEXDUMP_INF(otLinkGetExtendedAddress(ot_context->instance),
-				OT_EXT_ADDRESS_SIZE, "OT Extended address:");
+					OT_EXT_ADDRESS_SIZE, "OT Extended address:");
 			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_DISABLED:
@@ -215,17 +226,10 @@ static void ot_satate_changed(otChangedFlags flags,
 
 int main(void)
 {
-	// LOG_INF("***** OpenThread SED joiner @ F_CPU = %u *****",
-	// 	(DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency)));
-	// LOG_INF("OT channel     %u",     CONFIG_OPENTHREAD_CHANNEL);
-	// LOG_INF("OT pan id      %04x",   CONFIG_OPENTHREAD_PANID);
-	// LOG_INF("OT pan ext id  %s",     CONFIG_OPENTHREAD_XPANID);
-	// LOG_INF("OT network key %s",     CONFIG_OPENTHREAD_NETWORKKEY);
 	LOG_INF("***** OpenThread + BLE Peripheral *****");
 
-	static struct openthread_state_changed_cb ot_state_cahnge = {
-		.state_changed_cb = ot_satate_changed
-	};
+	static struct openthread_state_changed_cb ot_state_cahnge = {.state_changed_cb =
+									     ot_satate_changed};
 
 	openthread_state_changed_cb_register(openthread_get_default_context(), &ot_state_cahnge);
 

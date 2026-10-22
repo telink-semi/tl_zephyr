@@ -122,18 +122,18 @@ void bt_le_task_init(void)
 
 	if (i == 0) {
 		i = 1;
-		// extern struct k_sem controller_sem;
+		/* extern struct k_sem controller_sem; */
 		/* tlksdk_thd_enableFlexibleTask(THD_TASK_ENABLE); */
 		tlksdk_thd_enableInsertTask1(0x01);
-		// k_sem_give(&controller_sem);
+		/* k_sem_give(&controller_sem); */
 
 		/*
-			* Start OpenThread only after the BLE/thd coexistence
-			* framework is ready. Otherwise the 802.15.4 radio
-			* start blocks forever on ieee802154_task_ready_sem,
-			* which is only released when the BLE controller hands
-			* the RF over to the Thread insert-task slot.
-			*/
+		 * Start OpenThread only after the BLE/thd coexistence
+		 * framework is ready. Otherwise the 802.15.4 radio
+		 * start blocks forever on ieee802154_task_ready_sem,
+		 * which is only released when the BLE controller hands
+		 * the RF over to the Thread insert-task slot.
+		 */
 		int ot_err = openthread_start(openthread_get_default_context());
 
 		printk("OpenThread start (err %d)\n", ot_err);
