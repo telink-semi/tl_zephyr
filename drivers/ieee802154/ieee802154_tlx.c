@@ -65,6 +65,8 @@ K_SEM_DEFINE(ieee802154_task_ready_sem, 0, 1);
 static volatile uint8_t tlx_rf_zigbee_tx_is_sending;
 extern bool tlksdk_thd_checkIsInsertTask1(void); /* todo: need to be changed */
 extern uint32_t tlksdk_thd_getInsertTask1PostTick(void);
+/* defined in tlx_bt_init.c: true = RF is in 802.15.4 mode */
+extern volatile bool tlx_rf_802154_mode;
 #endif /*CONFIG_IEEE802154_TLX_BLE_COEXIST*/
 
 #ifdef CONFIG_OPENTHREAD_FTD
@@ -104,6 +106,11 @@ static struct tlx_data data = {
 extern bool isThreadCommissioned;
 volatile bool isFirstCcaBeforeTx = true;
 volatile bool shouldPowerDownRFEarly;
+#endif
+
+#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION && \
+	!defined(CONFIG_IEEE802154_TLX_BLE_COEXIST) && defined(CONFIG_DYNAMIC_INTERRUPTS)
+#define TLX_STIMER_WFI_OPTIMIZATION 1
 #endif
 
 #ifdef CONFIG_OPENTHREAD_FTD
@@ -1014,7 +1021,12 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 	/* check if RF is already started */
 	if (!tlx->is_started) {
 		/* whether the Bluetooth stack task is IDLE:  0:  idle,  1:  busy */
-		if (!tlksdk_thd_checkIsInsertTask1()) {
+		/* Only wait for the insert time slot to release RF when RF is not already in
+		 * 802.15.4 mode (i.e. held by BLE). In post-join permanent mode (insert task
+		 * stopped) tlx_rf_802154_mode is always true, so skip this to avoid k_sem_take
+		 * blocking forever
+		 */
+		if (!tlksdk_thd_checkIsInsertTask1() && !tlx_rf_802154_mode) {
 			/* LOG_ERR("tlx ble busy"); */
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			/* LOG_ERR("tlx ieee802154 task ready sem"); */
@@ -1101,7 +1113,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 	/* check if RF is already stopped */
 	if (tlx->is_started) {
 #ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
-		if (!tlksdk_thd_checkIsInsertTask1()) {
+		if (!tlksdk_thd_checkIsInsertTask1() && !tlx_rf_802154_mode) {
 			/* LOG_ERR("tlx ble busy"); */
 			k_sem_take(&ieee802154_task_ready_sem, K_FOREVER);
 			/* LOG_ERR("tlx ieee802154 task ready sem"); */
@@ -1119,6 +1131,15 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 #endif
 		rf_set_tx_rx_off();
 #ifdef CONFIG_PM_DEVICE
+#ifdef CONFIG_IEEE802154_TLX_BLE_COEXIST
+		/*
+		 * Do not reset the radio in coexist mode: resetting the RF registers
+		 * restores the IRQ mask/status to their default values while IRQ_ZB_RT
+		 * must stay enabled for the BLE controller, which causes spurious RF
+		 * interrupt storms. The radio is fully re-initialized later by
+		 * tlx_init_802154_rf_hw()/tlksdk_init_ble_rf_hw().
+		 */
+#else
 		/* Reset Radio */
 		rf_radio_reset();
 #if CONFIG_SOC_RISCV_TELINK_TL321X || CONFIG_SOC_RISCV_TELINK_TL721X ||                            \
@@ -1127,6 +1148,7 @@ ALWAYS_INLINE static int tlx_stop_radio(struct tlx_data *tlx)
 		rf_baseband_reset();
 #endif
 		tlx_rf_zigbee_250K_mode = false;
+#endif
 #endif /* CONFIG_PM_DEVICE */
 		tlx->is_started = false;
 	}
@@ -1347,10 +1369,7 @@ static int tlx_set_txpower(const struct device *dev, int16_t dbm)
 	return 0;
 }
 
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION && \
-	!CONFIG_SOC_RISCV_TELINK_TL322X
-extern bool isThreadCommissioned;
-
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 __GENERIC_SECTION(.ram_code) void stimer_rf_handler(const void *param)
 {
 	(void)param;
@@ -1390,8 +1409,7 @@ static int tlx_stop(const struct device *dev)
 	return tlx_stop_radio(dev->data);
 }
 
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION && \
-	!CONFIG_SOC_RISCV_TELINK_TL322X
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 RAM_CODE_SECTION_IEEE802154
 static void tlx_wfi_direct(uint32_t time_ms)
 {
@@ -1697,7 +1715,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	if (tlx->event_handler) {
 		tlx->event_handler(dev, IEEE802154_EVENT_TX_STARTED, (void *)frag);
 	}
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 	if (isThreadCommissioned == true) {
 #if CONFIG_SOC_RISCV_TELINK_TL323X
 		tlx_wfi_direct(800);
@@ -1705,7 +1723,7 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 		tlx_wfi_direct(880);
 #endif
 	}
-#endif /* CONFIG_IEEE802154_TLX_OPTIMIZATION */
+#endif /* TLX_STIMER_WFI_OPTIMIZATION */
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TLX_TX_WAIT_TIME_MS)) != 0) {
 #if CONFIG_SOC_RISCV_TELINK_TL323X && CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 		rf_rx_performance_mode(RF_RX_LOW_POWER);
@@ -1744,9 +1762,9 @@ static int tlx_tx(const struct device *dev, enum ieee802154_tx_mode mode, struct
 	/* wait for ACK if requested */
 	if (!status && tlx->ack_handler_en) {
 		{
-#if defined CONFIG_IEEE802154_TLX_OPTIMIZATION && CONFIG_IEEE802154_TLX_OPTIMIZATION
+#ifdef TLX_STIMER_WFI_OPTIMIZATION
 #if CONFIG_SOC_RISCV_TELINK_TL721X
-			tlx_wfi_direct(300);
+		tlx_wfi_direct(300);
 #endif
 #endif
 			if (k_sem_take(&tlx->ack_wait, K_MSEC(TLX_ACK_WAIT_TIME_MS)) != 0) {

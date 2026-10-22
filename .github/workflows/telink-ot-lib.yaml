@@ -17,6 +17,8 @@ jobs:
     name: Telink openthread libraries builder
     env:
       ZEPHYR_COMPILER_VERSION: 0.17.0
+      ZEPHYR_TOOLCHAIN_VARIANT: "zephyr"
+      ZEPHYR_SDK_INSTALL_DIR: "~/zephyr_gcc/zephyr-sdk-${ZEPHYR_COMPILER_VERSION}"
       # ANDES_COMPILER_VERSION: 14.2.0
       BUILD_SOC: tl7218x
       SAMPLE_SRC_PATH: "samples/net/openthread/lib_builder"
