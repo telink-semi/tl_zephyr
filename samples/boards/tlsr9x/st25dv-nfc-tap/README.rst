@@ -4,11 +4,7 @@ Dynamic NFC/RFID tag IC with EEPROM and fast transfer mode capability demo
 The demo application shows functionality of dynamic *NFC/RFID*.
 These parts are ICs with 4-, 16-, or 64-Kbit *EEPROM* and have fast transfer mode capability.
 Supported ICs are: *ST25DV04KC*, *ST25DV16KC*, *ST25DV64KC*.
-Demo covers two possible ST25DV functionality modes:
-
-- *APPLICATION_TYPE_ST25DV_MAILBOX* (by default) - NFC data exchange using mailbox.
-- *APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD* - NFC static tag publish.
-- *APPLICATION_TYPE_ST25DV_STATIC_TAG_RM* - NFC static tag withdraw.
+Demo covers two possible ST25DV modes mailbox data exchange and NFC tag.
 
 Building and flashing (*tl7218x*)
 *********************************
@@ -18,20 +14,6 @@ Building and flashing (*tl7218x*)
 	rm -rf build_*
 	west build -b tl7218x -d build_nfc samples/boards/tlsr9x/st25dv-nfc-tap
 	west flash --erase -d build_nfc
-
-Above is building mailbox demo application.
-Static tag application can be built by specifying config option:
-
-.. code-block:: bash
-
-	west build -b tl7218x -d build_nfc samples/boards/tlsr9x/st25dv-nfc-tap -- -DCONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_ADD=y
-
-or
-
-.. code-block:: bash
-
-	west build -b tl7218x -d build_nfc samples/boards/tlsr9x/st25dv-nfc-tap -- -DCONFIG_APPLICATION_TYPE_ST25DV_STATIC_TAG_RM=y
-
 
 HW connection
 *************
@@ -77,19 +59,34 @@ After application startup console output is the next:
 .. code-block:: console
 
 	D: st25dv st25dv_init_workq
-	*** Booting Zephyr OS build tl_v1.4.0-v4.1.0-24-ga80f35269d47 ***
+	*** Booting Zephyr OS build tl_v1.4.0-v4.1.0-27-g3ca84e53afa5 ***
+	I: application started
 	D: st25dv st25dv_init
 	D: st25dv st25dv_probe_internal
 	I: st25dv chip id 51 rev 11
-	D: st25dv unlocked
+	D: st25dv already unlocked
 	D: st25dv st25dv_update_registers
 	D: st25dv gpo 1 mode already set
 	D: st25dv gpo 2 mode already set
 	D: st25dv mailbox mode already enabled
+	D: st25dv radio state already set
 	D: st25dv st25dv_reset
 	D: st25dv init ok
-	D: st25dv st25dv_set_callbacks
-	I: st25dv NFC mailbox data loopback...
+	D: st25dv st25dv_mode_set
+	D: st25dv st25dv_mode_set_internal
+	D: st25dv mode mailbox
+	D: st25dv st25dv_set_callback
+	D: st25dv st25dv_mode_get
+	D: st25dv st25dv_mode_get_internal
+	I: nfc device mode mailbox
+	I: nfc device mailbox data loopback...
+	the next one byte data is reserved for commands
+	0x00 - finish the application (no future commands possible)
+	0x01 - write tag eeprom
+	0x02 - erase tag eeprom
+	0x03 - switch to tag mode (no future commands possible)
+	0x04 - switch off (no future commands possible)
+	commands are not sent back
 
 
 On phone install `ST25 NFC Tap <https://play.google.com/store/apps/details?id=com.st.st25nfc>`_ application.
@@ -107,11 +104,11 @@ On phone install `ST25 NFC Tap <https://play.google.com/store/apps/details?id=co
 		D: st25dv data received
 		D: st25dv
 		D: 11 22                   |."
-		I: st25dv rx
+		I: nfc device rx
 		I: 11 22                   |."
 		D: st25dv st25dv_mailbox_send
 		D: st25dv mailbox send ok
-		I: st25dv rx data written back into mailbox
+		I: nfc device rx data written back into mailbox
 
 4. Get length of income data in mailbox (in *tag response* second byte is income data length minis one)
 
@@ -126,25 +123,129 @@ On phone install `ST25 NFC Tap <https://play.google.com/store/apps/details?id=co
 	.. code-block:: console
 
 		D: st25dv data sent
-		I: st25dv tx
+		I: nfc device tx
 
-NFC static tag demo
-*******************
+Specific mailbox commands
+*************************
 
-After application startup console output is the next:
+1. 0x00 - finish the application, no future commands possible so reset is required.
 
-.. code-block:: console
+	In console:
 
-	D: st25dv st25dv_init_workq
-	*** Booting Zephyr OS build tl_v1.4.0-v4.1.0-24-ga80f35269d47 ***
-	D: st25dv st25dv_type5_tag_add
-	D: st25dv st25dv_type5_tag_precondition
-	D: st25dv st25dv_probe_internal
-	I: st25dv chip id 51 rev 11
-	D: st25dv st25dv_get_mem_size
-	I: st25dv memory size 8192 bytes
-	D: st25dv tag wtite ok
+	.. code-block:: console
 
-Now approach android phone close to tag.
-When phone requested "Choose an application" select "Tags New tag collected".
-And you should see tag data: *Hello World!*
+		D: st25dv data received
+		D: st25dv
+		D: 00                      |.
+		I: nfc device rx
+		I: 00                      |.
+		I: application exit
+		I: 00                      |.
+		D: st25dv st25dv_deinit
+		D: st25dv st25dv_reset
+		D: st25dv deinit ok
+		I: application finished
+
+	Tag is no longer active.
+
+2. 0x01 - write tag to eeprom
+
+	In console:
+
+	.. code-block:: console
+
+		D: st25dv data received
+		D: st25dv
+		D: 01                      |.
+		I: nfc device rx
+		I: 01                      |.
+		I: nfc device write tag
+		I: 01                      |.
+		D: st25dv st25dv_tag_type5_add
+		D: st25dv st25dv_type5_tag_precondition
+		I: st25dv memory size 8192 bytes
+		I: st25dv tag size 25 bytes
+		D: st25dv st25dv_mode_get_internal
+		D: st25dv st25dv_mode_set_internal
+		D: st25dv mode tag
+		D: st25dv st25dv_mode_set_internal
+		D: st25dv mode mailbox
+		D: st25dv tag wtite ok
+		I: nfc device tag data set
+
+	Memory can be read by application to check the result.
+
+3. 0x02 - erase tag from eeprom
+
+	In console:
+
+	.. code-block:: console
+
+		D: st25dv data received
+		D: st25dv
+		D: 02                      |.
+		I: nfc device rx
+		I: 02                      |.
+		I: nfc device erase tag
+		I: 02                      |.
+		D: st25dv st25dv_tag_type5_rm
+		D: st25dv st25dv_type5_tag_precondition
+		I: st25dv memory size 8192 bytes
+		I: st25dv tag size 25 bytes
+		D: st25dv st25dv_mode_get_internal
+		D: st25dv st25dv_mode_set_internal
+		D: st25dv mode tag
+		D: st25dv st25dv_mode_set_internal
+		D: st25dv mode mailbox
+		D: st25dv tag erase ok
+		I: nfc device tag data erased
+
+	Memory can be read by application to check the result.
+
+4. 0x03 - switch to tag mode, no future commands possible so reset is required.
+
+	In console:
+
+	.. code-block:: console
+
+		D: st25dv data received
+		D: st25dv
+		D: 03                      |.
+		I: nfc device rx
+		I: 03                      |.
+		I: nfc device switch to tag mode
+		I: 03                      |.
+		D: st25dv st25dv_mode_set
+		D: st25dv st25dv_mode_set_internal
+		D: st25dv mode tag
+		D: st25dv st25dv_mode_get
+		D: st25dv st25dv_mode_get_internal
+		I: nfc device mode nfc tag
+
+	Now approach android phone close to tag.
+	When phone requested "Choose an application" select "Tags New tag collected".
+	And you should see tag data: *Hello World!*
+
+5. 0x04 - switch off, no future commands possible so reset is required.
+
+	In console:
+
+	.. code-block:: console
+
+		D: st25dv data received
+		D: st25dv
+		D: 04                      |.
+		I: nfc device rx
+		I: 04                      |.
+		I: nfc device switch off
+		I: 04                      |.
+		D: st25dv st25dv_mode_set
+		D: st25dv st25dv_mode_set_internal
+		D: st25dv mode off
+		D: st25dv st25dv_mode_get
+		D: st25dv st25dv_mode_get_internal
+		I: nfc device mode switched off
+		D: st25dv rf field falling
+		I: nfc device field off
+
+	Tag is no longer active.
