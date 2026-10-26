@@ -522,7 +522,6 @@ void gpio_tlx_irq_set(const struct device *dev, gpio_pin_t pin,
 	uint8_t irq_lvl = 0;
 	uint8_t irq_mask = 0;
 	uint8_t irq_num = GET_IRQ_NUM(dev);
-	uint8_t irq_prioriy = GET_IRQ_PRIORITY(dev);
 	volatile struct gpio_tlx_t *gpio = GET_GPIO(dev);
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X
@@ -612,9 +611,6 @@ void gpio_tlx_irq_set(const struct device *dev, gpio_pin_t pin,
 	gpio_tlx_irq_pin_wakeup_set(dev, pin, trigger_type);
 #endif /* CONFIG_PM_DEVICE */
 
-	/* Enable PLIC interrupt */
-	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
-	riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_prioriy);
 }
 
 /* Set pin's pull-up/down resistor */
@@ -882,6 +878,8 @@ static int gpio_tlx_pin_interrupt_configure(const struct device *dev,
 	// printk("gpio_tlx_pin_interrupt_configure(): pin=%d, mode=%d, trig=%d\n", pin, mode, trig);
 	const struct gpio_tlx_config *cfg = dev->config;
 	int ret_status = 0;
+	uint8_t irq_num = GET_IRQ_NUM(dev);
+	uint8_t irq_prioriy = GET_IRQ_PRIORITY(dev);
 	bool current_pin_value = ((GET_GPIO(dev)->input) >> pin) & 0x0001;
 
 	switch (mode) {
@@ -928,6 +926,10 @@ static int gpio_tlx_pin_interrupt_configure(const struct device *dev,
 			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin)) :
 				BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
 		}
+
+		/* Enable PLIC interrupt */
+		riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_prioriy);
+		riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 		break;
 
 	case GPIO_INT_MODE_LEVEL:
