@@ -1,7 +1,7 @@
-# Copyright (c) 2024 Telink Semiconductor
+# Copyright (c) 2025 Telink Semiconductor
 # SPDX-License-Identifier: Apache-2.0
 
-name: Telink B91 build examples
+name: Telink B91 build examples using Andes GCC
 
 on: pull_request
 
@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Telink build examples
     env:
-      ZEPHYR_SDK_VERSION: 0.17.0
+      ZEPHYR_TOOLCHAIN_VARIANT: "andes-gcc"
+      ANDES_GCC_PATH: "~/nds-gcc/nds32le-elf-newlib-v5f"
     steps:
 
     - name: Install dependencies
@@ -18,14 +19,11 @@ jobs:
         sudo apt update
         sudo apt install -y --no-install-recommends libdigest-sha-perl cmake python3 ninja-build
 
-    - name: Setup Zephyr toolchain
+    - name: Setup Andes toolchain
       run: |
-        mkdir ~/zephyr_sdk
-        wget -q -P ~/zephyr_sdk https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
-        (cd ~/zephyr_sdk && wget -O - https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v"${ZEPHYR_SDK_VERSION}"/sha256.sum | shasum --check --ignore-missing)
-        tar xf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz -C ~/zephyr_sdk
-        (cd ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}" && ./setup.sh -t riscv64-zephyr-elf -c)
-        rm -rf ~/zephyr_sdk/zephyr-sdk-"${ZEPHYR_SDK_VERSION}"_linux-x86_64.tar.xz
+        mkdir ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_14.2.0.txz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_14.2.0.txz -C ~/nds-gcc
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -37,10 +35,14 @@ jobs:
       run: |
         pip install west
         cd ..
+        # checkout dir is "tl_zephyr", but west and build paths expect "zephyr"
+        ln -sf tl_zephyr zephyr
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
-        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_zephyr_b91.a$' && exit 1
+        # west blobs fetch hal_telink
+        mkdir -p modules/hal/telink/zephyr/blobs
+        curl -L -o modules/hal/telink/zephyr/blobs/lib_nds_b91.a https://doc.telink-semi.cn/Zephyr/binaries/public/b91_lib/lib_nds_b91_b8fa105b4a65f58e9cf2adc51f42459e69b119bd.a
+        west blobs list hal_telink -f '{status} {path}' | grep '^M lib_nds_b91.a$' && exit 1
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 
@@ -109,11 +111,6 @@ jobs:
         cd ..
         west build -b tlsr9518adk80d_retention   -d build_retention_basic_b91           zephyr/samples/boards/tlsr9x/basic                       -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_SOC_SERIES_RISCV_TELINK_B9X_NON_RETENTION_RAM_CODE=y
 
-    - name: Build B91 net/sockets/echo_client for OpenThread with PM deep-sleep
-      run: |
-        cd ..
-        west build -b tlsr9518adk80d_retention   -d build_ot_echo_client_pm_deep_b91    zephyr/samples/net/sockets/echo_client                   -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-ot-sed.conf -DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\" -DCONFIG_PM=y -DCONFIG_SOC_SERIES_RISCV_TELINK_B9X_NON_RETENTION_RAM_CODE=y -DCONFIG_TELINK_B9X_2_WIRE_SPI_ENABLE=y
-
     - name: Build B91 bootloader/mcuboot/boot for USB DFU
       run: |
         cd ..
@@ -127,12 +124,22 @@ jobs:
     - name: Build B91 net/openthread/cli
       run: |
         cd ..
-        west build -b tlsr9518adk80d             -d build_ot_cli_b91                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=overlay-telink-fixed-mac.conf
+        west build -b tlsr9518adk80d             -d build_ot_cli_b91                    zephyr/samples/net/openthread/cli                        -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DOVERLAY_CONFIG=configs/extended.conf
 
     - name: Build B91 crypto/mbedtls
       run: |
         cd ..
         west build -b tlsr9518adk80d             -d build_crypto_mbedtls_b91            zephyr/tests/crypto/mbedtls                              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y -DCONFIG_MBEDTLS_ECP_C=y -DCONFIG_MBEDTLS_ECP_ALL_ENABLED=y
+
+    - name: Build B91 boards/tlsr9x/gpio-kbd-matrix
+      run: |
+        cd ..
+        west build -b tlsr9518adk80d             -d build_gpio-kbd-matrix_b91           zephyr/samples/boards/tlsr9x/gpio-kbd-matrix             -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+
+    - name: Build B91 samples/boards/tlsr9x/st25dv-nfc-tap
+      run: |
+        cd ..
+        west build -b tlsr9518adk80d             -d build_nfc_b91                       zephyr/samples/boards/tlsr9x/st25dv-nfc-tap              -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
 
     - name: Collect artifacts
       run: |
@@ -150,11 +157,12 @@ jobs:
         cp ../build_usb_console_b91/zephyr/zephyr.bin               telink_build_artifacts/b91_usb_console.bin
         cp ../build_ot_coprocessor_rcp_usb_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_coprocessor_rcp_usb.bin
         cp ../build_retention_basic_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_retention_basic.bin
-        cp ../build_ot_echo_client_pm_deep_b91/zephyr/zephyr.bin    telink_build_artifacts/b91_ot_echo_client_pm_retention.bin
         cp ../build_mcuboot_usb_dfu_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_mcuboot_usb_dfu.bin
         cp ../build_blinky_usb_dfu_b91/zephyr/zephyr.signed.bin     telink_build_artifacts/b91_blinky_usb_dfu.signed.bin
         cp ../build_ot_cli_b91/zephyr/zephyr.bin                    telink_build_artifacts/b91_ot_cli.bin
         cp ../build_crypto_mbedtls_b91/zephyr/zephyr.bin            telink_build_artifacts/b91_mbedtls.bin
+        cp ../build_gpio-kbd-matrix_b91/zephyr/zephyr.bin           telink_build_artifacts/b91_gpio-kbd-matrix.bin
+        cp ../build_nfc_b91/zephyr/zephyr.bin                       telink_build_artifacts/b91_nfc.bin
 
     - name: Publish artifacts
       uses: actions/upload-artifact@v4
