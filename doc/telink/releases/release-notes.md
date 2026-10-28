@@ -200,18 +200,24 @@ _TODO: run `build_and_update_notes.py` after CI builds to populate the sample su
 
 📈 **Resource Usage Details**
 
-| Sample                                 | RAMILM                     | ROM                       | RAM                         |
-| -------------------------------------- | -------------------------- | ------------------------- | --------------------------- |
-| **samples/basic/blinky**               | 23952 B (9.14% of 256 KB)  | 31366 B (2.99% of 1 MB)   | 1032 B (0.39% of 256 KB)    |
-| **samples/basic/button**               | 23952 B (9.14% of 256 KB)  | 32006 B (3.05% of 1 MB)   | 1048 B (0.40% of 256 KB)    |
-| **samples/basic/fade\_led**            | 26000 B (9.92% of 256 KB)  | 45818 B (4.37% of 1 MB)   | 2464 B (0.94% of 256 KB)    |
-| **samples/hello\_world**               | 23952 B (9.14% of 256 KB)  | 30842 B (2.94% of 1 MB)   | 1032 B (0.39% of 256 KB)    |
-| **samples/bluetooth/peripheral\_ht**   | 53792 B (20.52% of 256 KB) | 207712 B (19.81% of 1 MB) | 10188 B (3.89% of 256 KB)   |
-| **samples/net/openthread/cli**         | 57392 B (21.89% of 256 KB) | 398624 B (38.02% of 1 MB) | 47848 B (18.25% of 256 KB)  |
-| **tests/crypto/mbedtls**               | 29072 B (11.09% of 256 KB) | 68790 B (6.56% of 1 MB)   | 3112 B (1.19% of 256 KB)    |
-| **samples/drivers/adc/adc\_dt**        | 25344 B (9.67% of 256 KB)  | 41010 B (3.91% of 1 MB)   | 1660 B (0.63% of 256 KB)    |
-| **samples/drivers/watchdog**           | 23952 B (9.14% of 256 KB)  | 39718 B (3.79% of 1 MB)   | 1104 B (0.42% of 256 KB)    |
-| **samples/sensor/sht3xd**              | 23952 B (9.14% of 256 KB)  | 44442 B (4.24% of 1 MB)   | 1064 B (0.41% of 256 KB)    |
+| Sample                               | RAMILM                      | ROM                       | RAM                         |
+| ------------------------------------ | --------------------------- | ------------------------- | --------------------------- |
+| **bootloader/mcuboot/boot/zephyr**    | 101952 B (38.89% of 256 KB) | 63118 B (6.02% of 1 MB)   | 14356 B (5.48% of 256 KB)   |
+| **samples/basic/blinky**              | 23952 B (9.14% of 256 KB)   | 31366 B (2.99% of 1 MB)   | 1032 B (0.39% of 256 KB)    |
+| **samples/basic/blinky\_pwm**         | 23952 B (9.14% of 256 KB)   | 40698 B (3.88% of 1 MB)   | 1112 B (0.42% of 256 KB)    |
+| **samples/basic/button**              | 23952 B (9.14% of 256 KB)   | 32006 B (3.05% of 1 MB)   | 1048 B (0.40% of 256 KB)    |
+| **samples/basic/fade\_led**           | 26000 B (9.92% of 256 KB)   | 45818 B (4.37% of 1 MB)   | 2464 B (0.94% of 256 KB)    |
+| **samples/bluetooth/peripheral\_ht**  | 53792 B (20.52% of 256 KB)  | 207712 B (19.81% of 1 MB) | 10188 B (3.89% of 256 KB)   |
+| **samples/crypto/mbedtls**            | 29072 B (11.09% of 256 KB)  | 68790 B (6.56% of 1 MB)   | 3112 B (1.19% of 256 KB)    |
+| **samples/drivers/adc/adc\_dt**       | 25344 B (9.67% of 256 KB)   | 41010 B (3.91% of 1 MB)   | 1660 B (0.63% of 256 KB)    |
+| **samples/drivers/watchdog**          | 23952 B (9.14% of 256 KB)   | 39718 B (3.79% of 1 MB)   | 1104 B (0.42% of 256 KB)    |
+| **samples/hello\_world**              | 23952 B (9.14% of 256 KB)   | 30842 B (2.94% of 1 MB)   | 1032 B (0.39% of 256 KB)    |
+| **samples/net/openthread/cli**        | 57392 B (21.89% of 256 KB)  | 398624 B (38.02% of 1 MB) | 47848 B (18.25% of 256 KB)  |
+| **samples/net/openthread/coprocessor**| 57232 B (21.83% of 256 KB)  | 139902 B (13.34% of 1 MB) | 13056 B (4.98% of 256 KB)   |
+| **samples/net/sockets/echo\_client**  | 36444 B (13.90% of 256 KB)  | 262728 B (25.06% of 1 MB) | 36468 B (13.91% of 256 KB)  |
+| **samples/sensor/sht3xd**             | 23952 B (9.14% of 256 KB)   | 44442 B (4.24% of 1 MB)   | 1064 B (0.41% of 256 KB)    |
+| **tests/drivers/flash/common**        | 29072 B (11.09% of 256 KB)  | 54350 B (5.18% of 1 MB)   | 1928 B (0.74% of 256 KB)    |
+| **tests/drivers/hwinfo/api**          | 26240 B (10.01% of 256 KB)  | 49452 B (4.72% of 1 MB)   | 1336 B (0.51% of 256 KB)    |
 
 ***
 
