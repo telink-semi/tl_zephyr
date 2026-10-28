@@ -3,11 +3,13 @@
 
 name: Telink TL322X build examples using Andes GCC
 
-on: pull_request
+# suspend Andes build for TL322X since the mis-matches of toolchains and
+# compile options, and will be re-enabled after the toolchain issue is resolved
+# on: pull_request
 
 jobs:
   telink_build_examples:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: Telink build examples
     env:
       ZEPHYR_TOOLCHAIN_VARIANT: "andes-gcc"
@@ -35,9 +37,10 @@ jobs:
       run: |
         pip install west
         cd ..
+        # checkout dir is "tl_zephyr", but west and build paths expect "zephyr"
+        ln -sf tl_zephyr zephyr
         west init -l zephyr
         west update
-        west blobs fetch hal_telink
         west zephyr-export
         pip install -r zephyr/scripts/requirements.txt
 

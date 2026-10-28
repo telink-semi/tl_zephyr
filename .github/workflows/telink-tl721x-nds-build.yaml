@@ -3,7 +3,9 @@
 
 name: Telink TL721X build examples using Andes GCC
 
-on: pull_request
+# suspend Andes build for TL721X since the mis-matches of toolchains and
+# compile options, and will be re-enabled after the toolchain issue is resolved
+# on: pull_request
 
 jobs:
   telink_build_examples:
@@ -22,8 +24,8 @@ jobs:
     - name: Setup Andes toolchain
       run: |
         mkdir ~/nds-gcc
-        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f_14.2.0.txz
-        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f_14.2.0.txz -C ~/nds-gcc
+        wget -q -P ~/nds-gcc https://doc.telink-semi.cn/Zephyr/binaries/public/tools/nds32le-elf-newlib-v5f.tar.gz
+        tar xf ~/nds-gcc/nds32le-elf-newlib-v5f.tar.gz -C ~/nds-gcc
 
     - name: Checkout Zephyr
       uses: actions/checkout@v3
@@ -35,6 +37,8 @@ jobs:
       run: |
         pip install west
         cd ..
+        # checkout dir is "tl_zephyr", but west and build paths expect "zephyr"
+        ln -sf tl_zephyr zephyr
         west init -l zephyr
         west update
         west blobs fetch hal_telink
