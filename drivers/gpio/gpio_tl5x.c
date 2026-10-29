@@ -169,8 +169,8 @@ static void gpio_tl5x_irq_set(const struct device *dev, gpio_pin_t pin, uint8_t 
 
 	gpio_tl5x_irq_en_set(dev, pin);
 
-	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 	riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_priority);
+	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 }
 
 static void gpio_tl5x_up_down_res_set(volatile struct gpio_tl5x_t *gpio, gpio_pin_t pin,
@@ -395,15 +395,16 @@ static int gpio_tl5x_pin_interrupt_configure(const struct device *dev, gpio_pin_
 			ret_status = -ENOTSUP;
 		}
 
+		/* Enable interrupts only after pin_last_value has been successfully set */
+		if (ret_status == 0) {
+			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin))
+					  : BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
+		}
+
 		if (current_pin_value) {
 			gpio_tl5x_irq_set(dev, pin, INTR_FALLING_EDGE);
 		} else {
 			gpio_tl5x_irq_set(dev, pin, INTR_RISING_EDGE);
-		}
-
-		if (ret_status == 0) {
-			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin))
-					  : BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
 		}
 		break;
 
