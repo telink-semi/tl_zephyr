@@ -1,7 +1,7 @@
 identifier: tl3238x
 name: Telink TL3238X
 type: mcu
-arch: riscv32
+arch: riscv
 toolchain:
   - cross-compile
   - zephyr
