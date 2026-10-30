@@ -322,8 +322,8 @@ void gpio_tl521x_irq_set(const struct device *dev, gpio_pin_t pin, uint8_t trigg
 #endif /* CONFIG_PM_DEVICE */
 
 	/* Enable PLIC interrupt */
-	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 	riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_prioriy);
+	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 }
 
 /* Set pin's pull-up/down resistor */
@@ -588,6 +588,12 @@ static int gpio_tl521x_pin_interrupt_configure(const struct device *dev, gpio_pi
 			ret_status = -ENOTSUP;
 		}
 
+		/* Enable interrupts only after pin_last_value has been successfully set */
+		if (ret_status == 0) {
+			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin))
+					  : BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
+		}
+
 		/*
 		 * Select the falling edge/low level IRQ as
 		 * a wakeup source if the initial pin state is high.
@@ -597,11 +603,6 @@ static int gpio_tl521x_pin_interrupt_configure(const struct device *dev, gpio_pi
 			gpio_tl521x_irq_set(dev, pin, INTR_FALLING_EDGE);
 		} else {
 			gpio_tl521x_irq_set(dev, pin, INTR_RISING_EDGE);
-		}
-
-		if (ret_status == 0) {
-			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin))
-					  : BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
 		}
 		break;
 
@@ -669,12 +670,12 @@ static int gpio_tl521x_pm_action(const struct device *dev, enum pm_device_action
 			memcpy(gpio_irqs, &data->gpio_tl521x_retention.irq_regs,
 			       sizeof(data->gpio_tl521x_retention.irq_regs));
 
+			riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_priority);
 			if (cfg->pin_irq_state->irq_en_rising ||
 			    cfg->pin_irq_state->irq_en_falling ||
 			    cfg->pin_irq_state->irq_en_both) {
 				riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 			}
-			riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_priority);
 		}
 	} break;
 
