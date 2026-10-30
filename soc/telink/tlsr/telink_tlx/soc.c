@@ -289,8 +289,8 @@ void soc_early_init_hook(void)
 	rf_mode_init();
 	/* Reset Radio */
 	rf_radio_reset();
-	rf_reset_dma();
 	rf_baseband_reset();
+	rf_reset_dma();
 
 	rf_clr_irq_status(FLD_RF_IRQ_ALL);
 #endif /* CONFIG_SOC_RISCV_TELINK_TL323X && !CONFIG_PM && !CONFIG_MCUBOOT */
