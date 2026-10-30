@@ -924,13 +924,15 @@ ALWAYS_INLINE static int tlx_start_radio(struct tlx_data *tlx)
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 			ske_dig_en();
 #endif
-			/* full RF power-on reset: drop every register inherited from BLE */
-			rf_radio_reset();
-			rf_baseband_reset();
-			rf_reset_dma();
-
 			if (tlx->rf_mode_154 == false) {
-				tl_rf_change_to_inited();
+				if(tl_rf_is_inited()){
+					rf_baseband_reset();
+					rf_reset_dma();
+				}
+				else{
+					tl_rf_change_to_inited();
+				}
+
 				tlx->rf_mode_154 = true;
 			}
 #if CONFIG_SOC_RISCV_TELINK_TL322X
