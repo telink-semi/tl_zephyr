@@ -1,7 +1,7 @@
 identifier: tlsr9118bdk40d
 name: Telink TLSR9118BDK40D
 type: mcu
-arch: riscv32
+arch: riscv
 toolchain:
   - cross-compile
   - zephyr
