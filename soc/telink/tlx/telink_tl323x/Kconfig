@@ -147,7 +147,7 @@ endif # BOOTLOADER_MCUBOOT || MCUBOOT
 
 config SOC_PMOS_SWITCH_TIME_CTL
 	bool "Add pmos switch time"
-	default n
+	default y
 	help
 		This option can increase the PMOS switching time when the inductance value is below 6.8uH
 
