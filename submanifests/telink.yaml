@@ -34,3 +34,8 @@ manifest:
       url: https://github.com/telink-semi/tl_st25dv
       revision: 1b6e0c496b7a23392dcc48d8bce2d8955426dde5
       path: modules/telink/st25dv
+
+    - name: telink_m24sr
+      url: https://github.com/telink-semi/tl_m24sr
+      revision: main
+      path: modules/telink/m24sr
