@@ -38,93 +38,9 @@ entry:
 	.option pop
 
 	.org 0x20
-    .global start_suspend
-    .type start_suspend,@function
-
-start_suspend:
-    addi sp,sp,-16
-    sw   a0,0(sp)
-    sw   a1,4(sp)
-    lui a1,0x800
-    li  a0,0x81
-    sb  a0,111(a1)
-
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-
-    lw   a0,0(sp)
-    lw   a1,4(sp)
-    addi sp,sp,16
-    ret
-
-	.option push
-	.option norelax
-
+start:
 	.align 2
 
-start:
 	# /* not need to initialize global pointer, controlled by zephyr */
     # .option push
     # .option norelax
@@ -171,7 +87,12 @@ start:
 #     sb      t1, 0x1(t0)
 # FLASH_WAKEUP_END:
 # #endif
-
+    /* set flash command to 2-wires */
+    li   t0, 0x0F
+    ori  t0, t0, 0x02
+    li   t0, 0x0D
+    li   t2, 0xBB
+    sb   t2, 0(t0)
 	/* ic tag initialization */
 ZERO_TAG:
     lui    t0, 0
@@ -192,7 +113,7 @@ _SET_IC:
     la     t2, 0x80060c
     sb     t0, (t2)
 
-	addi   t0, t0, 1        /* t0 = t0 + 1*/
+	addi   t0, t0, 2        /* t0 = t0 + 1*/
 	la     t2, 0x80060d
     sb     t0, 0(t2)
 SET_IC_END:
@@ -213,5 +134,3 @@ COPY_RET_DATA_END:
 
 _START:
 	j      __start
-
-.option pop
