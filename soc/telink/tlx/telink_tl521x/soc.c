@@ -131,6 +131,11 @@ void soc_early_init_hook(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+	/* note: used to configure pmos switching time, adjusted by user. */
+#if CONFIG_SOC_PMOS_SWITCH_TIME_CTL
+	pm_set_peak_btr_current(PEAK_BTR_TRIM_004);
+#endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
+
 	/* Only need for lighting to switch from zigbee to matter */
 #if (!CONFIG_PM && !CONFIG_MCUBOOT)
 	/* Enable clock before operate rf register */
@@ -142,12 +147,6 @@ void soc_early_init_hook(void)
 
 	rf_clr_irq_status(FLD_RF_IRQ_ALL);
 #endif
-
-/* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore. */
-#if CONFIG_SOC_PMOS_SWITCH_TIME_CTL
-	/* change from 0x04 to 0x06 for the board changes. */
-	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
-#endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
 	gpio_shutdown(GPIO_ALL);
 
@@ -228,10 +227,9 @@ void soc_tlx_restore(void)
 	wd_32k_feed();
 	wd_32k_start();
 
-/* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
+	/* note: used to configure pmos switching time, adjusted by user. */
 #if CONFIG_SOC_PMOS_SWITCH_TIME_CTL
-	/* change from 0x04 to 0x06 for the board changes. */
-	analog_write_reg8(0x01, (analog_read_reg8(0x01) & 0xf8) | 0x06);
+	pm_set_peak_btr_current(PEAK_BTR_TRIM_004);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
 	gpio_shutdown(GPIO_ALL);
