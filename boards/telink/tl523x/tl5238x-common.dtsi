@@ -15,10 +15,10 @@
 	compatible = "telink,tl5238x";
 
 	aliases {
-		led0 = &led_white;
-		led1 = &led_green;
-		led2 = &led_red;
-		led3 = &led_blue;
+		led0 = &led_red;
+		led1 = &led_blue;
+		led2 = &led_white;
+		led3 = &led_green;
 		sw0 = &key_1;
 		sw1 = &key_2;
 		sw2 = &key_3;
@@ -34,23 +34,23 @@
 		compatible = "gpio-leds";
 
 		led_red: led_0 {
-			gpios = <&gpiod 0 GPIO_ACTIVE_HIGH>;
-			label = "LED Red";
-		};
-
-		led_blue: led_1 {
-			gpios = <&gpiod 1 GPIO_ACTIVE_HIGH>;
-			label = "LED Blue";
-		};
-
-		led_white: led_2 {
-			gpios = <&gpiod 2 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpiob 2 GPIO_ACTIVE_HIGH>;
 			label = "LED White";
 		};
 
-		led_green: led_3 {
-			gpios = <&gpiod 3 GPIO_ACTIVE_HIGH>;
+		led_blue: led_1 {
+			gpios = <&gpiob 3 GPIO_ACTIVE_HIGH>;
 			label = "LED Green";
+		};
+
+		led_white: led_2 {
+			gpios = <&gpiob 4 GPIO_ACTIVE_HIGH>;
+			label = "LED Red";
+		};
+
+		led_green: led_3 {
+			gpios = <&gpiob 5 GPIO_ACTIVE_HIGH>;
+			label = "LED Blue";
 		};
 	};
 
@@ -103,21 +103,14 @@
 		compatible = "gpio-keys";
 
 		col {
-			gpios = <&gpioc 6 GPIO_ACTIVE_HIGH>,
-				<&gpioc 7 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpioc 2 GPIO_ACTIVE_HIGH>,
+				<&gpioc 3 GPIO_ACTIVE_HIGH>;
 		};
 
 		row {
-			gpios = <&gpioc 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
-				<&gpioc 5 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpioc 0 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+				<&gpioc 1 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
 		};
-	};
-
-	st25dv_matter: st25dv {
-		compatible = "st25dv";
-		i2c-bus = <&i2c>;
-		isr-port = <&gpiod>;
-		isr-port-pin = <1>;
 	};
 
 	chosen {
@@ -134,7 +127,7 @@
 };
 
 &cpu0 {
-	clock-frequency = <24000000>;
+	clock-frequency = <48000000>;
 };
 
 &ram_ilm {

@@ -11,5 +11,5 @@ _ramcode_size_div_16_align_256_ = (( ((_ramcode_size_ & 0x7FFFFFFF) + 255) / 256
 /* _ramcode_size_div_16_align_256_ = ( (. - 0x80000000 + 255) / 256) * 16; */
 _ramcode_size_align_256_ = ( (.  - 0x80000000  + 255) / 256) * 256;
 _ictag_start_ = 0x80840000 + _ramcode_size_align_256_ ;
-_ictag_end_ = 0x80840000 + _ramcode_size_align_256_ + 0x100;
+_ictag_end_ = 0x80840000 + _ramcode_size_align_256_ + 0x200;
 . = _ramcode_size_align_256_  + 0x80000000 ;

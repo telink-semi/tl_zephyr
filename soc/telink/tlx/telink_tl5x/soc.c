@@ -13,9 +13,11 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/storage/flash_map.h>
+#include "plmt.h"
 
 #if DEBUG_GPIO_ENABLE
 #include "gpio_default.h"
+#include "cmpt.h"
 #endif
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
@@ -111,6 +113,7 @@ void soc_early_init_hook(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif
+	pm_update_status_info(1);
 
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
@@ -122,14 +125,28 @@ void soc_early_init_hook(void)
 	switch (cclk) {
 	case CLK_24MHZ:
 		/* fpga has no clk to set for now */
+	    XTAL_24M_SYSCLK_24M;
+		break;
+	case CLK_48MHZ:
+		DOUBLER_48M_SYSCLK_48M;
 		break;
 	default:
 		break;
 	}
 
+	/*
+	 * HAL clock_init() updates sys_clk.cclk only, but HCLK/PCLK/MSPI_CLK
+	 * follow the system clock in hardware. Keep the software view in sync,
+	 * otherwise drivers (e.g. UART baudrate divider) use a wrong PCLK.
+	 */
+	sys_clk.cclk = cclk / 1000000U;
+	sys_clk.hclk = cclk / 1000000U;
+	sys_clk.pclk = cclk / 1000000U;
+	sys_clk.mspi_clk = cclk / 1000000U;
+
 	/* Init Machine Timer source clock: 32 KHz RC */
-	/* clock_32k_init(CLK_32K_RC); */
-	/* clock_cal_32k_rc(); */
+	clock_cal_32k_rc();
+	mtime_clk_init(CLK_32K_RC);
 
 	/* Stop 32k watchdog */
 	wd_32k_stop();
@@ -141,14 +158,7 @@ void soc_early_init_hook(void)
 	/* (void)deepRetWakeUp; */
 	/* #endif */
 	wd_stop();
-	gpio_shutdown(GPIO_ALL);
-	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
-	gpio_function_en(GPIOB_ALL);
-	gpio_output_en(GPIOB_ALL);
-
-	gpio_function_en(GPIOC_ALL);
-	gpio_output_en(GPIOC_ALL);
 }
 
 /**
