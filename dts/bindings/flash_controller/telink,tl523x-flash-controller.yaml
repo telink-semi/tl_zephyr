@@ -1,0 +1,12 @@
+# Copyright (c) 2026, Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: Telink TL523X Flash Controller
+
+compatible: "telink,tl523x-flash-controller"
+
+include: flash-controller.yaml
+
+properties:
+  reg:
+    required: true

@@ -33,13 +33,21 @@
  * These registers' offset are defined in the RISCV PLIC specs, see:
  * https://github.com/riscv/riscv-plic-spec
  */
+#if defined(CONFIG_SOC_RISCV_TELINK_TL523X)
+#define CONTEXT_BASE 0x120
+#define CONTEXT_CLAIM 0x10
+#define CONTEXT_ENABLE_BASE 0x110
+#define CONTEXT_PENDING_BASE 0x100
+#else
 #define CONTEXT_BASE 0x200000
-#define CONTEXT_SIZE 0x1000
-#define CONTEXT_THRESHOLD 0x00
 #define CONTEXT_CLAIM 0x04
 #define CONTEXT_ENABLE_BASE 0x2000
-#define CONTEXT_ENABLE_SIZE 0x80
 #define CONTEXT_PENDING_BASE 0x1000
+#endif
+
+#define CONTEXT_SIZE 0x1000
+#define CONTEXT_THRESHOLD 0x00
+#define CONTEXT_ENABLE_SIZE 0x80
 
 /* PLIC registers are 32-bit memory-mapped */
 #define PLIC_REG_SIZE 32
