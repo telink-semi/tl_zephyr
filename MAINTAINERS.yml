@@ -5445,6 +5445,15 @@ West:
     - "platform: Telink"
     - "area: NFC"
 
+"West project: telink_m24sr":
+  status: maintained
+  maintainers:
+    - telink
+  files: []
+  labels:
+    - "platform: Telink"
+    - "area: NFC"
+
 "West project: tflite-micro":
   status: maintained
   maintainers:
