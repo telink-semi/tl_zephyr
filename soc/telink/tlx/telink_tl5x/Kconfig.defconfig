@@ -31,10 +31,10 @@ config XIP
 	default n
 
 config FLASH
-	default n
+	default y
 
 config FLASH_HAS_EXPLICIT_ERASE
-	default n
+	default y
 
 config STACK_SENTINEL
 	default y
