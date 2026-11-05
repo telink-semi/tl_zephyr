@@ -306,8 +306,8 @@ void gpio_b9x_irq_set(const struct device *dev, gpio_pin_t pin,
 #endif /* CONFIG_PM_DEVICE */
 
 	/* Enable PLIC interrupt */
-	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 	riscv_plic_set_priority(GET_LV2_IRQ_NUM(irq_num), irq_prioriy);
+	riscv_plic_irq_enable(GET_LV2_IRQ_NUM(irq_num));
 }
 
 /* Set pin's pull-up/down resistor */
@@ -587,6 +587,11 @@ static int gpio_b9x_pin_interrupt_configure(const struct device *dev,
 			ret_status = -ENOTSUP;
 		}
 
+		if (ret_status == 0) {
+			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin)) :
+				BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
+		}
+
 		/*
 		 * Select the falling edge/low level IRQ as
 		 * a wakeup source if the initial pin state is high.
@@ -598,10 +603,6 @@ static int gpio_b9x_pin_interrupt_configure(const struct device *dev,
 			gpio_b9x_irq_set(dev, pin, INTR_RISING_EDGE);
 		}
 
-		if (ret_status == 0) {
-			current_pin_value ? BM_SET(cfg->pin_irq_state->pin_last_value, BIT(pin)) :
-				BM_CLR(cfg->pin_irq_state->pin_last_value, BIT(pin));
-		}
 		break;
 
 	case GPIO_INT_MODE_LEVEL:
