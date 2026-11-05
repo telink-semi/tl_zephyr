@@ -160,6 +160,9 @@ unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 	pm_set_vdd_dcore(PM_VDD_DCORE_VOLTAGE_1V20);
 #endif
 
+	/* Init pull-up 1M for SWS Pin */
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
+
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
