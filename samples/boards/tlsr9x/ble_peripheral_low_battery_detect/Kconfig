@@ -1,0 +1,19 @@
+# Copyright (c) 2021 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Peripheral Low Battery Detect"
+
+config BATT_CHECK_ENABLE
+	bool "Enable the Battery Power Check"
+	default y
+	select PM
+
+config APP_BATT_CHECK_INTERVAL_MS
+	int "Battery check interval [ms]"
+	default 500
+
+config APP_BATT_ALARM_MV
+	int "Low battery alarm threshold [mV]"
+	default 2000
+
+source "Kconfig.zephyr"
