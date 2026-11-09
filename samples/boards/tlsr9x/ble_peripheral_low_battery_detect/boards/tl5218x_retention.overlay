@@ -1,0 +1,34 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Copyright (c) 2026 Telink Semiconductor (Shanghai) Co., Ltd.
+ */
+
+/ {
+	zephyr,user {
+		/* ADC VBAT input for the low battery detection */
+		io-channels = <&adc 0>;
+	};
+};
+
+&adc {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <24>;
+		zephyr,input-positive = <DT_ADC_VBAT>;
+	};
+};
+
+/* Disable peripherals not used by this sample (low battery power check) */
+&gspi { status = "disabled"; };
+&i2c { status = "disabled"; };
+&st25dv_matter { status = "disabled"; };
+&pwm0 { status = "disabled"; };
+&{/pwm_leds} { status = "disabled"; };
+&ieee802154 { status = "disabled"; };

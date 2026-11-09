@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Telink Semiconductor (Shanghai) Co., Ltd.
+
+mainmenu "Peripheral Low Battery Detect"
+
+config BATT_CHECK_ENABLE
+	bool "Enable the Battery Power Check"
+	default y
+	select PM
+
+config APP_BATT_CHECK_INTERVAL_MS
+	int "Battery check interval [ms]"
+	default 500
+
+config APP_BATT_ALARM_MV
+	int "Low battery alarm threshold [mV]"
+	default 2000
+
+config BATT_RAW_IS_MV
+	bool "Convert default adc codes"
+	default y if SOC_RISCV_TELINK_TL323X || SOC_RISCV_TELINK_TL521X
+	default n
+source "Kconfig.zephyr"
