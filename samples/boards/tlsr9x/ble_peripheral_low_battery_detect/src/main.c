@@ -1,7 +1,7 @@
 /* main.c - Application main entry point */
 
 /*
- * Copyright (c) 2019 Aaron Tsui <aaron.tsui@outlook.com>
+ * Copyright (c) 2026 Telink Semiconductor (Shanghai) Co., Ltd.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -84,7 +84,7 @@ int main(void)
 	adc_bat_detect_init();
 
 	extern int user_battery_power_check(uint16_t alarm_vol_mv);
-	user_battery_power_check(2000);
+	user_battery_power_check(CONFIG_APP_BATT_ALARM_MV);
 
 	err = bt_enable(NULL);
 	if (err) {
@@ -100,7 +100,7 @@ int main(void)
 	 * of starting delayed work so we do it here
 	 */
 	while (1) {
-		user_battery_power_check(2000);
+		user_battery_power_check(CONFIG_APP_BATT_ALARM_MV);
 		k_sleep(K_SECONDS(1));
 	}
 	return 0;

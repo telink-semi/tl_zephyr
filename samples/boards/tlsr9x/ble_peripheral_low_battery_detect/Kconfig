@@ -1,5 +1,4 @@
-# Copyright (c) 2021 Nordic Semiconductor ASA
-# SPDX-License-Identifier: Apache-2.0
+# Copyright (c) 2026 Telink Semiconductor (Shanghai) Co., Ltd.
 
 mainmenu "Peripheral Low Battery Detect"
 
@@ -16,4 +15,8 @@ config APP_BATT_ALARM_MV
 	int "Low battery alarm threshold [mV]"
 	default 2000
 
+config BATT_RAW_IS_MV
+	bool "Convert default adc codes"
+	default y if SOC_RISCV_TELINK_TL323X || SOC_RISCV_TELINK_TL521X
+	default n
 source "Kconfig.zephyr"

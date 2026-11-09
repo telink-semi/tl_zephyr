@@ -1,4 +1,4 @@
-/* low_battery_detetc.c - VBAT ADC initialization and low battery check */
+/* low_battery_detect.c - VBAT ADC initialization and low battery check */
 
 /*
  * Copyright (c) 2026 Telink Semiconductor (Shanghai) Co., Ltd.
@@ -50,19 +50,6 @@ static struct adc_sequence batt_seq = {
 	/* Buffer size in bytes, not number of samples */
 	.buffer_size = sizeof(batt_sample),
 };
-
-/*
- * The TL521X and TL323X ADC drivers perform the conversion internally and
- * report the measured voltage in mV directly in the sample buffer. All the
- * other Telink ADC drivers (B9x, TL321X, TL322X, TL721X) return raw codes
- * that need to be converted with adc_raw_to_millivolts_dt().
- */
-#if DT_NODE_HAS_COMPAT(DT_IO_CHANNELS_CTLR_BY_IDX(DT_PATH(zephyr_user), 0), telink_tl521x_adc) ||  \
-	DT_NODE_HAS_COMPAT(DT_IO_CHANNELS_CTLR_BY_IDX(DT_PATH(zephyr_user), 0), telink_tl323x_adc)
-#define BATT_RAW_IS_MV 1
-#else
-#define BATT_RAW_IS_MV 0
-#endif
 
 /*
  * Compile-time conversion of a devicetree GPIO spec to the SDK gpio_pin_e
@@ -183,12 +170,10 @@ int user_battery_power_check(uint16_t alarm_vol_mv)
 		return 1;
 	}
 
-#if BATT_RAW_IS_MV
 	/* The driver reports the measured voltage in mV directly */
 	batt_vol_mv = batt_sample;
-#else
-	batt_vol_mv = batt_sample;
 
+#if !CONFIG_BATT_RAW_IS_MV
 	ret = adc_raw_to_millivolts_dt(&batt_adc, &batt_vol_mv);
 	if (ret) {
 		printk("Voltage conversion failed (err %d)\n", ret);
