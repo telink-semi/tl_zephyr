@@ -23,7 +23,7 @@ static struct bt_le_cs_test_cb cs_test_callbacks;
 #endif
 
 #define CS_REASSEMBLY_BUF_COUNT 1
-#define CS_REASSEMBLY_BUF_SIZE  1500
+#define CS_REASSEMBLY_BUF_SIZE  4096
 
 struct cs_reassembly_buf {
 	uint8_t data[CS_REASSEMBLY_BUF_SIZE];

@@ -127,7 +127,7 @@
 };
 
 &cpu0 {
-	clock-frequency = <80000000>;
+	clock-frequency = <120000000>;
 };
 
 &ram_ilm {

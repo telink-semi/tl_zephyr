@@ -94,7 +94,7 @@ static struct bt_conn *connection;
 #define RAS_SUBEVENT_HEADER_LEN 8
 #define RAS_SEG_HEADER_LEN      1
 
-#define RAS_PROCEDURE_MAX_SIZE 1000
+#define RAS_PROCEDURE_MAX_SIZE 4096
 
 #define RAS_PROCEDURE_SLOTS 1
 
@@ -235,10 +235,10 @@ static uint16_t ras_build_subevent_data(uint8_t *buf, struct bt_conn_le_cs_subev
 }
 
 /* RAS data sending with work queue */
-#define MAX_RAS_DATA_SIZE  1000
+#define MAX_RAS_DATA_SIZE  4096
 #define RAS_CHUNK_BUF_SIZE 248
 
-static uint8_t ras_work_buf[MAX_RAS_DATA_SIZE];
+static const uint8_t *ras_work_data;
 static uint16_t ras_work_len;
 static const struct bt_gatt_attr *ras_work_attr;
 static struct bt_conn *ras_work_conn;
@@ -268,7 +268,7 @@ static void ras_send_work_handler(struct k_work *work)
 		int err;
 
 		ras_chunk_buf[0] = seg_hdr;
-		memcpy(&ras_chunk_buf[1], &ras_work_buf[offset], chunk_len);
+		memcpy(&ras_chunk_buf[1], &ras_work_data[offset], chunk_len);
 
 		err = bt_gatt_notify(ras_work_conn, ras_work_attr, ras_chunk_buf, 1 + chunk_len);
 		if (err) {
@@ -305,7 +305,7 @@ static void ras_notify_with_frag(struct bt_conn *conn, const struct bt_gatt_attr
 		len = MAX_RAS_DATA_SIZE;
 	}
 
-	memcpy(ras_work_buf, data, len);
+	ras_work_data = data;
 	ras_work_len = len;
 	ras_work_attr = attr;
 	ras_work_conn = bt_conn_ref(conn);
@@ -321,8 +321,6 @@ static void ras_notify_with_frag(struct bt_conn *conn, const struct bt_gatt_attr
 }
 
 /* CS subevent result */
-static uint8_t ras_subevent_buf[1000];
-
 static void subevent_result_cb(struct bt_conn *conn, struct bt_conn_le_cs_subevent_result *result)
 {
 	uint16_t proc_counter = result->header.procedure_counter;
@@ -361,26 +359,37 @@ static void subevent_result_cb(struct bt_conn *conn, struct bt_conn_le_cs_subeve
 	is_first = ras_first_subevent;
 	ras_first_subevent = false;
 
-	subevent_len = ras_build_subevent_data(ras_subevent_buf, result, is_first);
-
 	if (ras_current_slot >= 0) {
 		struct ras_procedure_slot *slot = &ras_proc_slots[ras_current_slot];
-		uint16_t new_len = slot->len + subevent_len;
+		uint16_t slot_off = slot->len;
+		uint16_t need = RAS_RANGING_HEADER_LEN + RAS_SUBEVENT_HEADER_LEN + 1;
 
-		if (new_len <= RAS_PROCEDURE_MAX_SIZE) {
-			memcpy(&slot->data[slot->len], ras_subevent_buf, subevent_len);
-			slot->len = new_len;
-		} else {
-			RAS_PRINTK("RAS: slot %d overflow, dropping subevent\n", ras_current_slot);
+		if (result->step_data_buf) {
+			need += result->step_data_buf->len;
 		}
-	}
 
-	if (ras_realtime_ccc & BT_GATT_CCC_NOTIFY) {
-		bool is_proc_last =
-			(result->header.procedure_done_status == BT_CONN_LE_CS_PROCEDURE_COMPLETE);
+		if (need > RAS_PROCEDURE_MAX_SIZE - slot_off) {
+			RAS_PRINTK("RAS: slot %d overflow, dropping subevent\n", ras_current_slot);
+		} else {
+			/* 直接构建到 slot 尾部，省掉中间缓冲区；
+			 * need 已按转换后长度上界预判过，不会写越界。
+			 */
+			subevent_len =
+				ras_build_subevent_data(&slot->data[slot_off], result, is_first);
+			slot->len = slot_off + subevent_len;
 
-		ras_notify_with_frag(conn, &ras_attrs[RAS_IDX_RT_DATA_VAL], ras_subevent_buf,
-				     subevent_len, is_first, is_proc_last);
+			if (ras_realtime_ccc & BT_GATT_CCC_NOTIFY) {
+				bool is_proc_last = (result->header.procedure_done_status ==
+						     BT_CONN_LE_CS_PROCEDURE_COMPLETE);
+
+				/* 直接发送 slot 内的数据：同一 procedure 内 slot 只追加，
+				 * 不会被下一条 subevent 覆盖。
+				 */
+				ras_notify_with_frag(conn, &ras_attrs[RAS_IDX_RT_DATA_VAL],
+						     &slot->data[slot_off], subevent_len, is_first,
+						     is_proc_last);
+			}
+		}
 	}
 
 	latest_procedure_counter = proc_counter;
