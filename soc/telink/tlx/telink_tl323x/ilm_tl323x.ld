@@ -6,6 +6,21 @@
 
 #include "telink_tlx_regions.ld"
 
+#if !CONFIG_IEEE802154_TLX_BLE_COEXIST
+/* Non-coexistence builds keep the previous split RAM layout, so
+ * retention_reset stays here to preserve the original link order.
+ */
+SECTION_DATA_PROLOGUE(retention_reset,,)
+{
+	. = ALIGN(4);
+	KEEP(*(.retention_reset.*))
+
+	PROVIDE (_RETENTION_RESET_VMA_END = .);
+	PROVIDE (_RETENTION_RESET_VMA_START = ADDR(retention_reset));
+	PROVIDE (_RETENTION_RESET_LMA_START = LOADADDR(retention_reset));
+} GROUP_DATA_LINK_IN(TELINK_RAM_REGION, ROMABLE_REGION)
+#endif /* !CONFIG_IEEE802154_TLX_BLE_COEXIST */
+
 SECTION_DATA_PROLOGUE(aes_data,,)
 {
 	. = ALIGN(4);

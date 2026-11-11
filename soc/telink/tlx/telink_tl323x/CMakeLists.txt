@@ -43,21 +43,32 @@ zephyr_compile_options_ifndef(CONFIG_RISCV_GP -mno-relax)
 zephyr_linker_sources(ROM_START SORT_KEY 0x0 init.ld)
 zephyr_linker_sources_ifdef(CONFIG_ANDES_CODENSE RODATA SORT_KEY 0x0 execit.ld)
 
-# retention_reset must stay at the start of the RAM region (0x68000):
-# the deep-sleep "boot from SRAM" path resumes at the fixed SRAM base.
+# With BLE/802.15.4 coexistence the application image uses one unified RAM
+# region, so retention_reset must stay at the start of it (0x68000): the
+# deep-sleep "boot from SRAM" path resumes at the fixed SRAM base.
 # Keep it as a separate snippet with the lowest sort key so that the relative
 # order of all other RAM sections is unchanged.
+# Without coexistence the previous split RAM layout is kept and
+# retention_reset stays inside ilm_tl323x.ld.
+if(CONFIG_IEEE802154_TLX_BLE_COEXIST AND NOT CONFIG_MCUBOOT)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 retention_reset_tl323x.ld)
+endif()
 
 if(CONFIG_TELINK_TLX_MATTER_RETENTION_LAYOUT)
 if(CONFIG_MCUBOOT)
-zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 mcu_boot_tlx.ld)
-else()
+zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 mcu_boot_tlx.ld)
+elseif(CONFIG_IEEE802154_TLX_BLE_COEXIST)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 matter_retention_tl323x.ld)
+else()
+zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x0 matter_retention_tl323x.ld)
 endif()
 endif()
 
+if(CONFIG_IEEE802154_TLX_BLE_COEXIST AND NOT CONFIG_MCUBOOT)
 zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x2 ilm_tl323x.ld)
+else()
+zephyr_linker_sources(RAM_SECTIONS SORT_KEY 0x1 ilm_tl323x.ld)
+endif()
 
 set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
 
