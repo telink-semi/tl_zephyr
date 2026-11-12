@@ -115,6 +115,7 @@ void soc_early_init_hook(void)
 #endif
 	pm_update_status_info(1);
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
@@ -185,6 +186,7 @@ void soc_tlx_restore(void)
 	gpio_shutdown(GPIO_ALL);
 #endif
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))

@@ -147,6 +147,7 @@ unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_B9X) || defined(CONFIG_IEEE802154))
@@ -219,6 +220,7 @@ void soc_b9x_restore(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_B9X) || defined(CONFIG_IEEE802154))
