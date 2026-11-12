@@ -142,8 +142,11 @@ void soc_early_init_hook(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
@@ -222,8 +225,11 @@ void soc_tlx_restore(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TLX))
