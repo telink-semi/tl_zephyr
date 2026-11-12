@@ -148,7 +148,9 @@ void soc_early_init_hook(void)
 	rf_clr_irq_status(FLD_RF_IRQ_ALL);
 #endif
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
@@ -232,7 +234,9 @@ void soc_tlx_restore(void)
 	pm_set_peak_btr_current(PEAK_BTR_TRIM_004);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 

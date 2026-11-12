@@ -142,7 +142,9 @@ void soc_early_init_hook(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
@@ -222,7 +224,9 @@ void soc_tlx_restore(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
