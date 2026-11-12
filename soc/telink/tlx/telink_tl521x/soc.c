@@ -148,8 +148,11 @@ void soc_early_init_hook(void)
 	rf_clr_irq_status(FLD_RF_IRQ_ALL);
 #endif
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TL521X))
@@ -232,8 +235,11 @@ void soc_tlx_restore(void)
 	pm_set_peak_btr_current(PEAK_BTR_TRIM_004);
 #endif /*CONFIG_SOC_PMOS_SWITCH_TIME_CTL*/
 
+#if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
+#endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
 	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TL521X))
