@@ -259,7 +259,7 @@ void soc_tlx_restore(void)
 
 	case CLK_72MHZ:
 		/* pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000); */
-		PLL_144M_CCLK_72M_HCLK_72M_PCLK_72M_MSPI_48M;
+		PLL_144M_CCLK_72M_HCLK_36M_PCLK_36M_MSPI_48M;
 		break;
 	case CLK_144MHZ:
 		/* pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000); */
