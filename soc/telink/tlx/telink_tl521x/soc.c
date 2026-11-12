@@ -239,8 +239,9 @@ void soc_tlx_restore(void)
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
-	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
-	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
+	/* The SWS pull configuration is retained across sleep; the boot-time
+	 * setting in soc_early_init_hook() is still in effect here.
+	 */
 
 #if (defined(CONFIG_BT_TLX) || defined(CONFIG_IEEE802154_TELINK_TL521X))
 	soc_load_rf_parameters_deep_retention();
@@ -258,7 +259,7 @@ void soc_tlx_restore(void)
 
 	case CLK_72MHZ:
 		/* pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000); */
-		PLL_144M_CCLK_72M_HCLK_72M_PCLK_72M_MSPI_48M;
+		PLL_144M_CCLK_72M_HCLK_36M_PCLK_36M_MSPI_48M;
 		break;
 	case CLK_144MHZ:
 		/* pm_set_dig_ldo(DIG_VOL_1V1_MODE, 1000); */
