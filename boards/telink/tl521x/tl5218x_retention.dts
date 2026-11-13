@@ -44,9 +44,9 @@
 };
 
 &ram_ilm_retention {
-	reg = <0x00060000 0x00020000>;
+	reg = <0x10000000 0x00020000>;
 };
 
 &ram_ilm_nonretention {
-	reg = <0x00080000 0x00020000>;
+	reg = <0x11000000 0x00020000>;
 };

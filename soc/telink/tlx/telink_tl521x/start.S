@@ -312,7 +312,11 @@ _IRAMCODE_INIT_BEGIN:
 #endif
 
 _RESTORE:
-	j      tl_context_restore
+	/* Jump through t0: the retention and non-retention RAM windows are
+	 * farther apart than the +/-1 MB reach of a direct JAL.
+	 */
+	la     t0, tl_context_restore
+	jr     t0
 
 #endif
 

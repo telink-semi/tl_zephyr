@@ -13,6 +13,11 @@ LOG_MODULE_REGISTER(ot_main, LOG_LEVEL_DBG);
 #include <zephyr/net/openthread.h>
 #include <openthread/thread.h>
 
+/* Consumed by the Telink 802.15.4 driver when
+ * CONFIG_IEEE802154_TL521X_OPTIMIZATION is enabled.
+ */
+volatile bool isThreadCommissioned;
+
 static void ot_show_ip6_addr(otInstance *inst)
 {
 	const otNetifAddress *ip6_addr = otIp6GetUnicastAddresses(inst);
@@ -33,6 +38,7 @@ static void ot_satate_changed(otChangedFlags flags,
 	if (flags & OT_CHANGED_THREAD_ROLE) {
 		switch (otThreadGetDeviceRole(ot_context->instance)) {
 		case OT_DEVICE_ROLE_CHILD:
+			isThreadCommissioned = true;
 			LOG_INF("OT child");
 			LOG_INF("OT Short address: %04x",
 				otLinkGetShortAddress(ot_context->instance));
@@ -57,9 +63,11 @@ static void ot_satate_changed(otChangedFlags flags,
 			ot_show_ip6_addr(ot_context->instance);
 			break;
 		case OT_DEVICE_ROLE_DISABLED:
+			isThreadCommissioned = false;
 			LOG_INF("OT disabled");
 			break;
 		case OT_DEVICE_ROLE_DETACHED:
+			isThreadCommissioned = false;
 			LOG_INF("OT detached");
 			break;
 		default:
