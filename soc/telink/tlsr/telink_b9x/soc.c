@@ -164,6 +164,9 @@ unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
 
+	/* SWS: 1M = low power, 10K = more robust; use 10K if SWire is unstable. */
+	gpio_set_up_down_res(GPIO_SWS, GPIO_PIN_PULLUP_1M);
+
 #if (defined(CONFIG_BT_B9X) || defined(CONFIG_IEEE802154))
 	soc_load_rf_parameters_normal();
 #endif
@@ -240,6 +243,10 @@ void soc_b9x_restore(void)
 #if CONFIG_PM
 	gpio_shutdown(GPIO_ALL);
 #endif /* CONFIG_PM */
+
+	/* The SWS pull configuration is retained across sleep; the boot-time
+	 * setting in soc_early_init_hook() is still in effect here.
+	 */
 
 #if (defined(CONFIG_BT_B9X) || defined(CONFIG_IEEE802154))
 	soc_load_rf_parameters_deep_retention();
