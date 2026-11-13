@@ -1,7 +1,7 @@
 identifier: tl5218x_retention
 name: Telink TL5218_RETENTION
 type: mcu
-arch: riscv32
+arch: riscv
 toolchain:
   - cross-compile
   - zephyr
