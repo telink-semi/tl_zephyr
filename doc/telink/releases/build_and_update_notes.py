@@ -128,8 +128,12 @@ class TelinkBuildManager:
         # (base_board, sample_short_path) pairs that have been functionally tested.
         # Combinations that build successfully but are not in this set are marked
         # as "Supported but Untested" (🟡). Build failures are marked "Untested" (·).
+        #
+        # NOTE: This set reflects the testing scope of the CURRENT release only.
+        # Previous releases may have tested more combinations; adjust accordingly
+        # when generating release notes for a new version.
         self.tested_samples: set[tuple[str, str]] = {
-            # TL521X: all samples are Supported and Tested
+            # TL521X: samples tested in this release (always-on, non-PM)
             ("tl5218x", "basic/blinky"),
             ("tl5218x", "basic/button"),
             ("tl5218x", "basic/fade_led"),
@@ -142,30 +146,10 @@ class TelinkBuildManager:
             ("tl5218x", "sensor/sht3xd"),
             ("tl5218x", "drivers/adc/adc_dt"),
             ("tl5218x", "net/sockets/echo_client"),
-            # TL323X: all samples are Supported and Tested
-            ("tl3238x", "basic/blinky"),
-            ("tl3238x", "basic/button"),
-            ("tl3238x", "basic/fade_led"),
-            ("tl3238x", "hello_world"),
-            ("tl3238x", "bluetooth/peripheral_ht"),
-            ("tl3238x", "net/openthread/cli"),
-            ("tl3238x", "crypto/mbedtls"),
-            ("tl3238x", "drivers/spi_flash"),
-            ("tl3238x", "drivers/watchdog"),
-            ("tl3238x", "sensor/sht3xd"),
-            ("tl3238x", "drivers/adc/adc_dt"),
-            ("tl3238x", "net/sockets/echo_client"),
-            ("tl3238x", "retention/basic"),
-            # TL721X: core + validated samples
-            ("tl7218x", "basic/blinky"),
-            ("tl7218x", "basic/button"),
-            ("tl7218x", "basic/fade_led"),
-            ("tl7218x", "hello_world"),
-            ("tl7218x", "bluetooth/peripheral_ht"),
-            ("tl7218x", "net/openthread/cli"),
-            ("tl7218x", "crypto/mbedtls"),
-            ("tl7218x", "drivers/watchdog"),
-            ("tl7218x", "net/sockets/echo_client"),
+            # TL323X, TL721X, TL322X: builds are included in the support matrix
+            # and resource usage tables, but are NOT marked as tested (✅) in
+            # this release. They will appear as 🟡 (Supported but Untested) if
+            # they compile successfully, or · (Untested) if the build fails.
         }
 
         # Sample name mapping
@@ -303,9 +287,25 @@ class TelinkBuildManager:
                 ("tl3238x", "hello_world", "samples/hello_world", []),
                 ("tl3238x", "button", "samples/basic/button", []),
                 ("tl3238x", "fade_led", "samples/basic/fade_led", []),
+                ("tl3238x", "blinky_pwm", "samples/basic/blinky_pwm", []),
                 ("tl3238x", "console", "samples/subsys/usb/console", []),
                 ("tl3238x", "peripheral_ht", "samples/bluetooth/peripheral_ht", []),
                 ("tl3238x", "cli", "samples/net/openthread/cli", []),
+                (
+                    "tl3238x",
+                    "coprocessor",
+                    "samples/net/openthread/coprocessor",
+                    ["-DOVERLAY_CONFIG=overlay-rcp.conf"],
+                ),
+                (
+                    "tl3238x",
+                    "echo_client",
+                    "samples/net/sockets/echo_client",
+                    [
+                        "-DOVERLAY_CONFIG=overlay-ot-sed.conf",
+                        "-DCONFIG_OPENTHREAD_NETWORKKEY=\"09:24:01:56:04:4a:45:0b:23:22:1e:0e:3b:0d:0e:61:2f:1b:2c:24\"",
+                    ],
+                ),
                 (
                     "tl3238x",
                     "mbedtls",
@@ -316,6 +316,19 @@ class TelinkBuildManager:
                 ("tl3238x", "watchdog", "samples/drivers/watchdog", []),
                 ("tl3238x", "sht3xd", "samples/sensor/sht3xd", []),
                 ("tl3238x", "adc_dt", "samples/drivers/adc/adc_dt", []),
+                ("tl3238x", "hwinfo", "tests/drivers/hwinfo/api", []),
+                ("tl3238x", "flash", "tests/drivers/flash/common", []),
+                (
+                    "tl3238x",
+                    "mcuboot",
+                    "../bootloader/mcuboot/boot/zephyr",
+                    [
+                        "-DCONFIG_COMPRESS_LZMA=y",
+                        "-DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000",
+                        "-DCONFIG_BOOT_UPGRADE_ONLY=y",
+                        "-DCONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE=y",
+                    ],
+                ),
                 ("tl3238x", "retention_basic", "samples/retention/basic", []),
                 (
                     "tl3238x_retention",
@@ -338,8 +351,15 @@ class TelinkBuildManager:
                 ("tl7218x", "hello_world", "samples/hello_world", []),
                 ("tl7218x", "button", "samples/basic/button", []),
                 ("tl7218x", "fade_led", "samples/basic/fade_led", []),
+                ("tl7218x", "blinky_pwm", "samples/basic/blinky_pwm", []),
                 ("tl7218x", "peripheral_ht", "samples/bluetooth/peripheral_ht", []),
                 ("tl7218x", "cli", "samples/net/openthread/cli", []),
+                (
+                    "tl7218x",
+                    "coprocessor",
+                    "samples/net/openthread/coprocessor",
+                    ["-DOVERLAY_CONFIG=overlay-rcp.conf"],
+                ),
                 (
                     "tl7218x",
                     "echo_server",
@@ -368,6 +388,19 @@ class TelinkBuildManager:
                 ("tl7218x", "watchdog", "samples/drivers/watchdog", []),
                 ("tl7218x", "sht3xd", "samples/sensor/sht3xd", []),
                 ("tl7218x", "adc_dt", "samples/drivers/adc/adc_dt", []),
+                ("tl7218x", "hwinfo", "tests/drivers/hwinfo/api", []),
+                ("tl7218x", "flash", "tests/drivers/flash/common", []),
+                (
+                    "tl7218x",
+                    "mcuboot",
+                    "../bootloader/mcuboot/boot/zephyr",
+                    [
+                        "-DCONFIG_COMPRESS_LZMA=y",
+                        "-DCONFIG_COMMON_LIBC_MALLOC_ARENA_SIZE=78000",
+                        "-DCONFIG_BOOT_UPGRADE_ONLY=y",
+                        "-DCONFIG_BOOT_IMG_HASH_DIRECTLY_ON_STORAGE=y",
+                    ],
+                ),
                 (
                     "tl7218x_retention",
                     "retention_echo_client",
@@ -712,23 +745,18 @@ class TelinkBuildManager:
         lines.append("")
         lines.append("#### Notes on Sample Support")
         lines.append("")
-        lines.append("- **Tested combinations (✅):** All TL521X and TL323X samples that build")
-        lines.append("  successfully have been")
+        lines.append("- **Tested combinations (✅):** TL521X samples that build successfully")
         lines.append(
-            "  functionally validated. On TL721X, the core bring-up samples (`blinky`, `button`,"
+            "  have been functionally validated in this release (always-on, non-PM mode)."
         )
-        lines.append(
-            "  `fade_led`, `hello_world`) plus BLE (`peripheral_ht`), Thread (`openthread/cli`),"
-        )
-        lines.append(
-            "  crypto (`mbedtls`), networking (`echo_client`), and driver (`watchdog`) samples"
-        )
-        lines.append("  have been functionally validated in this release.")
         lines.append(
             "- **Supported but untested (🟡):** All other build targets listed in the table"
         )
         lines.append(
-            "  compile successfully but have not been functionally validated. Use with caution."
+            "  (TL323X, TL721X, TL322X, and legacy platforms) compile successfully but have"
+        )
+        lines.append(
+            "  not been functionally validated in this release. Use with caution."
         )
         lines.append(
             "- **Untested (·):** Combinations marked · are not built in this release, either"
@@ -739,12 +767,8 @@ class TelinkBuildManager:
             "- **Legacy platforms (B91/B92/TL321X/TL322X/W91):** Samples marked 🟡 compile in"
         )
         lines.append(
-            "  CI but functional testing in this release focused on the new TL323X platform"
+            "  CI but functional testing in this release focused on the TL521X platform."
         )
-        lines.append(
-            "  and the TL721X hal_v2 migration. Refer to earlier release notes for validated"
-        )
-        lines.append("  sample sets on these platforms.")
         lines.append("")
         lines.append("---")
         lines.append("")

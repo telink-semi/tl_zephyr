@@ -174,8 +174,9 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 
 ## 📊 Resource Usage (Code Size)
 
-This section shows the RAM and ROM usage for Zephyr samples on the TL5218X
-platform (always-on, non-PM mode).
+This section shows the RAM and ROM usage for Zephyr samples on Telink platforms.
+This release focuses on the TL521X platform (always-on, non-PM mode); TL323X and
+TL721X samples are included as compile-verified reference data.
 
 **Build environment:**
 
@@ -194,6 +195,8 @@ platform (always-on, non-PM mode).
 | Board    | Chip Family |
 | -------- | ----------- |
 | tl5218x  | TL521X      |
+| tl3238x  | TL323X      |
+| tl7218x  | TL721X      |
 
 ***
 
@@ -203,32 +206,35 @@ platform (always-on, non-PM mode).
 > &nbsp;&nbsp; (builds successfully, not functionally validated)
 > &nbsp;&nbsp; · = Untested (not built or not applicable)
 
-| Sample                         | TL521X |
-| ------------------------------ | :----: |
-| **basic/blinky**               |   ✅    |
-| **basic/blinky\_pwm**          |   🟡    |
-| **basic/button**               |   ✅    |
-| **basic/fade\_led**            |   ✅    |
-| **hello\_world**               |   ✅    |
-| **bluetooth/peripheral\_ht**   |   ✅    |
-| **net/openthread/cli**         |   ✅    |
-| **net/openthread/coprocessor** |   🟡    |
-| **crypto/mbedtls**             |   ✅    |
-| **drivers/adc/adc\_dt**        |   ✅    |
-| **drivers/spi\_flash**         |   🟡    |
-| **drivers/watchdog**           |   ✅    |
-| **sensor/sht3xd**              |   ✅    |
-| **tests/drivers/flash/common** |   🟡    |
-| **tests/drivers/hwinfo/api**   |   🟡    |
-| **bootloader/mcuboot**         |   🟡    |
+| Sample                         | TL521X | TL323X | TL721X |
+| ------------------------------ | :----: | :----: | :----: |
+| **basic/blinky**               |   ✅    |   🟡    |   🟡    |
+| **basic/blinky\_pwm**          |   🟡    |   🟡    |   🟡    |
+| **basic/button**               |   ✅    |   🟡    |   🟡    |
+| **basic/fade\_led**            |   ✅    |   🟡    |   🟡    |
+| **hello\_world**               |   ✅    |   🟡    |   🟡    |
+| **bluetooth/peripheral\_ht**   |   ✅    |   🟡    |   🟡    |
+| **net/openthread/cli**         |   ✅    |   🟡    |   🟡    |
+| **net/openthread/coprocessor** |   🟡    |   🟡    |   🟡    |
+| **net/sockets/echo\_client**   |   ✅    |   🟡    |   🟡    |
+| **net/sockets/echo\_server**   |   ·    |   ·    |   🟡    |
+| **crypto/mbedtls**             |   ✅    |   🟡    |   🟡    |
+| **drivers/adc/adc\_dt**        |   ✅    |   🟡    |   🟡    |
+| **drivers/spi\_flash**         |   🟡    |   🟡    |   🟡    |
+| **drivers/watchdog**           |   ✅    |   🟡    |   🟡    |
+| **sensor/sht3xd**              |   ✅    |   🟡    |   🟡    |
+| **tests/drivers/flash/common** |   🟡    |   🟡    |   🟡    |
+| **tests/drivers/hwinfo/api**   |   🟡    |   🟡    |   🟡    |
+| **bootloader/mcuboot**         |   🟡    |   🟡    |   🟡    |
 
 > **Notes on Sample Support**
 >
-> - **Tested combinations (✅):** All samples listed as ✅ have been built and
->   functionally validated on TL521X.
-> - **Supported but untested (🟡):** some samples can compile successfully but
->   have not been functionally validated.
+> - **Tested combinations (✅):** TL521X samples listed as ✅ have been built and
+>   functionally validated in this release (always-on, non-PM mode).
+> - **Supported but untested (🟡):** TL323X and TL721X samples compile
+>   successfully but have not been functionally validated in this release.
 > - **Untested (·):** Combinations not listed are not built or not applicable.
+
 ***
 
 ### TL521X (tl5218x)
@@ -254,13 +260,69 @@ platform (always-on, non-PM mode).
 | **tests/drivers/hwinfo/api**         | 7866 B (6.00% of 128 KB)   | 52114 B (4.97% of 1 MB)   | 21568 B (16.46% of 128 KB)  |
 | **bootloader/mcuboot/boot/zephyr**   | 23522 B (17.95% of 128 KB) | 83473 B (7.96% of 1 MB)   | 92212 B (70.35% of 128 KB)  |
 
-> 📌 **Note:** `retention_echo_client` (PM mode) is excluded from this table as
-> this release focuses on always-on (non-PM) device support. Memory usage data
-> is extracted from the linker output (`Memory region` summary) of the build
-> logs. `RAM_ILM_N` (instruction RAM) and `RAM` (data RAM) are 128 KB each;
-> `ROM` is the application slot0 partition (1 MB). For a detailed RAM/ROM symbol
-> breakdown, run `west build -t ram_report` / `west build -t rom_report` in the
-> build directory.
+> 📌 **Note:** `RAM_ILM_N` (instruction RAM) and `RAM` (data RAM) are 128 KB
+> each; `ROM` is the application slot0 partition (1 MB). For a detailed RAM/ROM
+> symbol breakdown, run `west build -t ram_report` / `west build -t rom_report`.
+
+***
+
+### TL323X (tl3238x)
+
+📈 **Resource Usage Details**
+
+| Sample                               | RAM\_ILM\_N                 | ROM                       | RAM                        |
+| ------------------------------------ | --------------------------- | ------------------------- | -------------------------- |
+| **bootloader/mcuboot/boot/zephyr**   | 23690 B (36.15% of 64 KB)   | 73997 B (7.06% of 1 MB)   | 92292 B (93.88% of 96 KB)  |
+| **samples/basic/blinky**             | 9668 B (14.75% of 64 KB)    | 45564 B (4.35% of 1 MB)   | 19520 B (19.86% of 96 KB)  |
+| **samples/basic/blinky\_pwm**        | 9668 B (14.75% of 64 KB)    | 54892 B (5.23% of 1 MB)   | 19600 B (19.94% of 96 KB)  |
+| **samples/basic/button**             | 9668 B (14.75% of 64 KB)    | 46204 B (4.41% of 1 MB)   | 19536 B (19.87% of 96 KB)  |
+| **samples/basic/fade\_led**          | 9668 B (14.75% of 64 KB)    | 59552 B (5.68% of 1 MB)   | 23000 B (23.40% of 96 KB)  |
+| **samples/hello\_world**             | 9668 B (14.75% of 64 KB)    | 45088 B (4.30% of 1 MB)   | 19520 B (19.86% of 96 KB)  |
+| **samples/bluetooth/peripheral\_ht** | 20360 B (31.07% of 64 KB)   | 214368 B (20.44% of 1 MB) | 43280 B (44.03% of 96 KB)  |
+| **samples/net/openthread/cli**       | 14336 B (21.88% of 64 KB)   | 407988 B (38.91% of 1 MB) | 90528 B (92.09% of 96 KB)  |
+| **samples/net/openthread/coprocessor**| 14312 B (21.84% of 64 KB)  | 148620 B (14.17% of 1 MB) | 56432 B (57.41% of 96 KB)  |
+| **samples/net/sockets/echo\_client** | 22010 B (33.58% of 64 KB)   | 277200 B (26.44% of 1 MB) | 60732 B (61.78% of 96 KB)  |
+| **samples/crypto/mbedtls**           | 9668 B (14.75% of 64 KB)    | 148408 B (14.15% of 1 MB) | 27272 B (27.74% of 96 KB)  |
+| **samples/drivers/adc/adc\_dt**      | 9668 B (14.75% of 64 KB)    | 52020 B (4.96% of 1 MB)   | 20404 B (20.76% of 96 KB)  |
+| **samples/drivers/spi\_flash**       | 9912 B (15.12% of 64 KB)    | 53748 B (5.13% of 1 MB)   | 19668 B (20.01% of 96 KB)  |
+| **samples/drivers/watchdog**         | 9668 B (14.75% of 64 KB)    | 53912 B (5.14% of 1 MB)   | 19600 B (19.94% of 96 KB)  |
+| **samples/sensor/sht3xd**            | 9740 B (14.86% of 64 KB)    | 56048 B (5.35% of 1 MB)   | 19576 B (19.91% of 96 KB)  |
+| **tests/drivers/flash/common**       | 9668 B (14.75% of 64 KB)    | 69368 B (6.62% of 1 MB)   | 25536 B (25.98% of 96 KB)  |
+| **tests/drivers/hwinfo/api**         | 9920 B (15.14% of 64 KB)    | 64456 B (6.15% of 1 MB)   | 21872 B (22.25% of 96 KB)  |
+
+> 📌 **Note:** `RAM_ILM_N` (instruction RAM) is 64 KB; `RAM` (data RAM) is
+> 96 KB; `ROM` is the application slot0 partition (1 MB).
+
+***
+
+### TL721X (tl7218x)
+
+📈 **Resource Usage Details**
+
+| Sample                               | RAMILM                      | ROM                       | RAM                         |
+| ------------------------------------ | --------------------------- | ------------------------- | --------------------------- |
+| **bootloader/mcuboot/boot/zephyr**   | 101840 B (38.85% of 256 KB) | 62974 B (6.01% of 1 MB)   | 14356 B (5.48% of 256 KB)   |
+| **samples/basic/blinky**             | 23840 B (9.09% of 256 KB)   | 31238 B (2.98% of 1 MB)   | 1032 B (0.39% of 256 KB)    |
+| **samples/basic/blinky\_pwm**        | 23840 B (9.09% of 256 KB)   | 40570 B (3.87% of 1 MB)   | 1112 B (0.42% of 256 KB)    |
+| **samples/basic/button**             | 23840 B (9.09% of 256 KB)   | 31878 B (3.04% of 1 MB)   | 1048 B (0.40% of 256 KB)    |
+| **samples/basic/fade\_led**          | 25888 B (9.88% of 256 KB)   | 45690 B (4.36% of 1 MB)   | 2464 B (0.94% of 256 KB)    |
+| **samples/hello\_world**             | 23840 B (9.09% of 256 KB)   | 30710 B (2.93% of 1 MB)   | 1032 B (0.39% of 256 KB)    |
+| **samples/bluetooth/peripheral\_ht** | 53680 B (20.48% of 256 KB)  | 207580 B (19.80% of 1 MB) | 10188 B (3.89% of 256 KB)   |
+| **samples/net/openthread/cli**       | 57264 B (21.84% of 256 KB)  | 398484 B (38.00% of 1 MB) | 47848 B (18.25% of 256 KB)  |
+| **samples/net/openthread/coprocessor**| 57120 B (21.79% of 256 KB) | 139750 B (13.33% of 1 MB) | 13056 B (4.98% of 256 KB)   |
+| **samples/net/sockets/echo\_client** | 36316 B (13.85% of 256 KB)  | 262580 B (25.04% of 1 MB) | 36468 B (13.91% of 256 KB)  |
+| **samples/net/sockets/echo\_server** | 75020 B (28.62% of 256 KB)  | 426252 B (40.65% of 1 MB) | 52784 B (20.14% of 256 KB)  |
+| **samples/crypto/mbedtls**           | 28960 B (11.05% of 256 KB)  | 134126 B (12.79% of 1 MB) | 4464 B (1.70% of 256 KB)    |
+| **samples/drivers/adc/adc\_dt**      | 25216 B (9.62% of 256 KB)   | 40878 B (3.90% of 1 MB)   | 1660 B (0.63% of 256 KB)    |
+| **samples/drivers/spi\_flash**       | 24240 B (9.25% of 256 KB)   | 40846 B (3.90% of 1 MB)   | 1300 B (0.50% of 256 KB)    |
+| **samples/drivers/watchdog**         | 23840 B (9.09% of 256 KB)   | 39586 B (3.78% of 1 MB)   | 1104 B (0.42% of 256 KB)    |
+| **samples/sensor/sht3xd**            | 23840 B (9.09% of 256 KB)   | 44310 B (4.23% of 1 MB)   | 1064 B (0.41% of 256 KB)    |
+| **tests/drivers/flash/common**       | 28960 B (11.05% of 256 KB)  | 54214 B (5.17% of 1 MB)   | 1928 B (0.74% of 256 KB)    |
+| **tests/drivers/hwinfo/api**         | 26128 B (9.97% of 256 KB)   | 49320 B (4.70% of 1 MB)   | 1336 B (0.51% of 256 KB)    |
+
+> 📌 **Note:** `RAMILM` (instruction RAM) is 256 KB; `RAM` (data RAM) is
+> 256 KB; `ROM` is the application slot0 partition (1 MB). `echo_client`
+> retention build data is omitted as this release focuses on always-on mode.
 
 ***
 
@@ -271,6 +333,7 @@ platform (always-on, non-PM mode).
 - **Production Optimizations:** For production builds, disable debug logging and enable appropriate optimizations to reduce RAM/ROM usage
 - **Bluetooth & OpenThread:** For Bluetooth LE and OpenThread-specific resource usage, see the respective CI workflow files in `.github/workflows/`
 - **Build Config:** All builds use `-DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y` as in the CI pipelines
+- **TL323X/TL721X Data:** Resource usage for TL323X and TL721X is included as compile-verified reference data. These samples have not been functionally validated in this release.
 
 ***
 
