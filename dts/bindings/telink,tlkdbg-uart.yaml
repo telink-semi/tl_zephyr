@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Telink tlkdbg UART debug stream. The node only carries the pinmux for the
+  TX pin; the UART itself is driven directly by the tlkdbg component.
+
+compatible: "telink,tlkdbg-uart"
+
+include: [pinctrl-device.yaml]

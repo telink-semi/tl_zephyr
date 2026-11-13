@@ -1,0 +1,27 @@
+/*
+ * Copyright (c) 2026 Telink Semiconductor
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The console UART is handed over to tlkdbg: the Zephyr UART instance is
+ * disabled and the TX pin (PB2) is muxed by the tlkdbg component itself.
+ */
+
+/* pclk must be 48 MHz for an exact 3 Mbps UART clock:
+ * baud = pclk / ((div+1)*(bwpc+1)); with CCLK=48 the SoC selects pclk=12 MHz
+ * and 3 Mbps would come out as 2.4 Mbps. CCLK=96 gives HCLK=48/PCLK=48. */
+&cpu0 {
+	clock-frequency = <96000000>;
+};
+
+&uart0 {
+	status = "disabled";
+};
+
+/ {
+	tlkdbg_uart: tlkdbg-uart {
+		compatible = "telink,tlkdbg-uart";
+		status = "okay";
+		pinctrl-0 = <&uart0_tx_pb2_default>;
+		pinctrl-names = "default";
+	};
+};

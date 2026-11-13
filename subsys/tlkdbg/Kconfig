@@ -1,0 +1,110 @@
+# Copyright (c) 2026 Telink Semiconductor
+# SPDX-License-Identifier: Apache-2.0
+
+# tlkdbg VCD/LOG over a dedicated UART (usbtraceplus wire format).
+#
+# This component owns the UART it transmits on. It is mutually exclusive with
+# the Zephyr console/log subsystem because both would drive the same UART.
+
+menuconfig TLKDBG
+	bool "Telink tlkdbg VCD/LOG over UART"
+	default n
+	depends on SOC_SERIES_RISCV_TELINK_TL323X
+	depends on !UART_CONSOLE
+	depends on !LOG
+	help
+	  Structured VCD waveform + LOG stream in the usbtraceplus wire format,
+	  sent over a poll-driven UART with DMA. No UART/DMA interrupt is used.
+
+	  When enabled, the Zephyr console/log subsystem must be disabled: both
+	  would own the same UART.
+
+if TLKDBG
+
+config TLKDBG_VCD
+	bool "VCD channel"
+	default y
+
+config TLKDBG_LOG
+	bool "LOG channel"
+	default y
+
+config TLKDBG_UART_INSTANCE
+	int "UART instance used for the debug stream"
+	range 0 1
+	default 0
+	help
+	  UART0 is the board console by default; when TLKDBG is enabled the
+	  console is off and this component takes the UART over.
+
+config TLKDBG_UART_BAUD
+	int "UART baud rate"
+	default 3000000
+	help
+	  Must match the bridge. The HAL computes div/bwpc from pclk:
+	  baud = pclk / ((div+1)*(bwpc+1)) with bwpc >= 3, so baud <= pclk/8.
+
+	  On TL323x the board default CCLK=48 MHz selects pclk=12 MHz; 3 Mbps
+	  would then come out as 2.4 Mbps. Use CCLK=96 MHz (pclk=48 MHz) for an
+	  exact 3 Mbps or 6 Mbps.
+
+config TLKDBG_UART_DMA_CH
+	int "DMA channel used for UART TX"
+	range 0 7
+	default 7
+
+config TLKDBG_UART_RING_SIZE
+	int "TX ring buffer size in bytes (power of two)"
+	default 8192
+
+config TLKDBG_UART_DMA_MAX
+	int "Largest single DMA burst in bytes"
+	default 2048
+	help
+	  Large enough that a 1 ms poll cadence still sustains 6 Mbps. Keep
+	  RING_SIZE - DMA_MAX comfortably above the largest frame (256 B).
+
+config TLKDBG_UART_VCD_BATCH
+	int "VCD payload bytes batched into one frame"
+	default 240
+
+config TLKDBG_POLL_THREAD
+	bool "Run the UART poll loop in a dedicated thread"
+	default y
+
+config TLKDBG_POLL_PERIOD_US
+	int "Poll thread period in microseconds"
+	default 1000
+
+config TLKDBG_POLL_STACK_SIZE
+	int "Poll thread stack size"
+	default 1024
+
+config TLKDBG_LABEL_TABLE
+	bool "Build-time hash label table (type 4)"
+	default n
+	help
+	  Scan the application sources for LOG_STR_DATA(tag, "text", ...) at
+	  build time, generate tlkdbg_label_hashes.h and
+	  <build>/zephyr/zephyr.labels.json. The device then sends a 2-byte hash
+	  instead of the label string, and the host resolves it from the table.
+
+	  The application must include the generated header indirectly through
+	  tlkdbg_log.h; no manual include is needed.
+
+config TLKDBG_LABEL_ROOTS
+	string "Source roots scanned for LOG_STR_DATA (relative to the app dir)"
+	depends on TLKDBG_LABEL_TABLE
+	default "."
+
+config TLKDBG_PM
+	bool "Drain the UART before entering a PM state"
+	depends on PM
+	default y
+	help
+	  Register a PM notifier that emits the accounting record and drains the
+	  TX ring before suspend. The VCD/LOG tick is the 24 MHz stimer; state
+	  preserved across suspend-to-idle. A deep-retention wake restarts the
+	  application and therefore looks like a new device segment to the host.
+
+endif # TLKDBG
