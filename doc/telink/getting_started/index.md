@@ -1,6 +1,6 @@
 # Telink Zephyr SDK Getting Started Guide
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.4.1--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.4.1-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl__v1.6.0--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.6.0-v4.1.0)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](../../../LICENSE)
 
@@ -212,29 +212,31 @@ changes live on the `dev-tlk_v4.1` branch.
 ### Fetch the Telink HAL
 
 The Telink Hardware Abstraction Layer (HAL) provides the BLE protocol stack as
-a binary blob. The fetch method depends on the chip family.
+a binary blob. The `telink_ble_sdk` module is defined in the Telink `west.yml`
+manifest (in the `telink` group), so it is fetched automatically by
+`west update` — no manual step is required for the default setup.
 
-| HAL version | Supported chips                            | Fetch method                                                                                         |
+| HAL version | Supported chips                            | BLE SDK fetch method                                                                                |
 | ----------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| hal_v1      | TLSR9518ADK80D, TLSR9528A, TL321X, TLSR9118 | Run `west blobs fetch hal_telink`. Re-run whenever you switch branches or update the workspace.       |
-| hal_v2      | TL322X, TL323X, TL721X                      | `cd ~/zephyrproject/modules/hal/telink/hal_v2`, then `chmod +x fetch_sdk.sh`, then `./fetch_sdk.sh` |
+| hal_v1      | TLSR9518ADK80D, TLSR9528A, TLSR9118       | `west update` fetches `telink_ble_sdk`; then run `west blobs fetch hal_telink` for HAL v1 blobs.     |
+| hal_v2      | TL321X, TL322X, TL323X, TL521X, TL523X, TL721X | `west update` fetches `telink_ble_sdk` automatically.                                               |
 
-This guide uses the **TL323X**, so use **hal_v2**:
+This guide uses the **TL323X**, so the BLE SDK is already fetched by `west
+update`. No extra step is needed.
 
-```bash
-cd ~/zephyrproject/modules/hal/telink/hal_v2
-chmod +x fetch_sdk.sh
-./fetch_sdk.sh
-```
-
-> **Note**
-> `fetch_sdk.sh` uses a default repository (`telink-semi/tl_ble_sdk_zephyr`)
-> and the latest commit. To pin a specific repository/commit, pass them as
-> arguments:
+> **Note — Manual fetch (alternative)**
+>
+> If you need to fetch or pin a specific `telink_ble_sdk` commit different
+> from the one in `west.yml`, you can use `fetch_sdk.sh` as an alternative:
 >
 > ```bash
-> ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git de6f125c8ae6d29c4a640ab3526b40ff8c3f0a20
+> cd ~/zephyrproject/modules/hal/telink/hal_v2
+> chmod +x fetch_sdk.sh
+> ./fetch_sdk.sh https://github.com/telink-semi/tl_ble_sdk_zephyr.git 8c43a9d44b146ce58e23ffcb29a483aa06b29383
 > ```
+>
+> This writes to the same `modules/hal/telink_ble_sdk` path used by `west
+> update`, so the two methods are interchangeable.
 
 ### Switch branches or commits
 
