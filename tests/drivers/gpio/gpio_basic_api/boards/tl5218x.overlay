@@ -1,0 +1,67 @@
+/*
+ * Copyright (c) 2026 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * TL5218X (tl5218x) loopback wiring for the gpio_basic_api test.
+ *
+ * Pin assignment matches the tl5218x board devicetree
+ * (boards/telink/tl521x/tl5218x-common.dtsi):
+ *   - PA0 = led_white (LED White)
+ *   - PA2 = led_green (LED Green)
+ *
+ * Hardware setup
+ * ==============
+ * Short PA0 (LED White) to PA2 (LED Green) on the TL5218X EVK with a
+ * jumper wire. The test drives the output pin (PA0) and reads the edges
+ * on the input pin (PA2), so the two pads must be electrically connected.
+ * Open a serial console at 115200 8N1 to observe the ztest output.
+ *
+ * Build only (no hardware needed)
+ * ===============================
+ * From the west workspace topdir (e.g. ~/zephyrproject):
+ *
+ *   west build -b tl5218x zephyr/tests/drivers/gpio/gpio_basic_api
+ *
+ *   west twister -p tl5218x \
+ *     -T zephyr/tests/drivers/gpio/gpio_basic_api \
+ *     --build-only \
+ *     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+ *
+ * Run on hardware via twister (loopback fixture)
+ * ==============================================
+ * The "gpio_loopback" fixture marks that the PA0<->PA2 jumper is present.
+ * Twister also needs board flashing/runner configuration to actually run
+ * (e.g. --device-testing --hardware-map <path>).
+ *
+ *   west twister -p tl5218x \
+ *     -T zephyr/tests/drivers/gpio/gpio_basic_api \
+ *     --fixture gpio_loopback \
+ *     -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+ *
+ * Expected result / log characteristics
+ * =====================================
+ * The edge-triggered cases (rising, falling, both, to-active,
+ * to-inactive) pass. On the serial console the edge test looks like:
+ *
+ *   START - test_gpio_callback_variants
+ *   callback triggered: 1
+ *   ...
+ *   PASS - test_gpio_callback_variants
+ *
+ * "callback triggered: 1" is printed by the GPIO callback for each
+ * detected edge (GPIO_INT_EDGE_BOTH prints a second "callback
+ * triggered: 2"). A correct edge detection must NOT print
+ * "edge not trigger callback correctly".
+ *
+ * Level-triggered cases print "Mode ... not supported" and are skipped
+ * because the TL521X GPIO driver does not support level interrupts.
+ */
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioa 0 0>; /* PA0, LED White */
+		in-gpios = <&gpioa 2 0>;  /* PA2, LED Green */
+	};
+};

@@ -1,7 +1,7 @@
 identifier: tl3218x_ml3m
 name: Telink TL3218X_ML3M
 type: mcu
-arch: riscv32
+arch: riscv
 toolchain:
   - cross-compile
   - zephyr
