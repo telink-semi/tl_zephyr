@@ -40,6 +40,9 @@ static struct {
 
 #endif
 
+#if defined(CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION)
+__GENERIC_SECTION(.ram_code)
+#endif
 void pm_policy_state_lock_get(enum pm_state state, uint8_t substate_id)
 {
 #if DT_HAS_COMPAT_STATUS_OKAY(zephyr_power_state)
@@ -53,6 +56,9 @@ void pm_policy_state_lock_get(enum pm_state state, uint8_t substate_id)
 #endif
 }
 
+#if defined(CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION)
+__GENERIC_SECTION(.ram_code)
+#endif
 void pm_policy_state_lock_put(enum pm_state state, uint8_t substate_id)
 {
 #if DT_HAS_COMPAT_STATUS_OKAY(zephyr_power_state)

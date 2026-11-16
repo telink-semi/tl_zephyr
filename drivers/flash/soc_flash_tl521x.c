@@ -181,7 +181,6 @@ static int flash_tl521x_erase(const struct device *dev, off_t offset, size_t len
 		wdt_been_enabled = true;
 	}
 	flash_tl521x_unlock(offset);
-	wd_32k_feed();
 	if (offset % SECTOR_SIZE == 0 && len % SECTOR_SIZE == 0) {
 		/* erase directly , it will save some time for read */
 		size_t sec_cnt = len / SECTOR_SIZE;
@@ -224,7 +223,6 @@ static int flash_tl521x_write(const struct device *dev, off_t offset,
 		BM_CLR(reg_tmr_ctrl2, FLD_TMR_WD_EN);
 		wdt_been_enabled = true;
 	}
-	wd_32k_feed();
 	/* need to store data in intermediate RAM buffer in case from flash to flash write */
 	if (((uint32_t)data >= FLASH_ORIGIN) &&
 		((uint32_t)data < (FLASH_ORIGIN + FLASH_SIZE))) {
@@ -288,8 +286,6 @@ static int flash_tl521x_read(const struct device *dev, off_t offset,
 		BM_CLR(reg_tmr_ctrl2, FLD_TMR_WD_EN);
 		wdt_been_enabled = true;
 	}
-	wd_32k_feed();
-
 	/* read flash */
 	flash_read_page(CONFIG_FLASH_BASE_ADDRESS + offset, len, (unsigned char *)data);
 

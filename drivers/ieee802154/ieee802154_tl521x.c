@@ -980,7 +980,6 @@ __attribute__((noinline)) void tl521x_init_802154_rf_hw(void)
 
 ALWAYS_INLINE static int tl521x_start_radio(struct tl521x_data *tlx)
 {
-	wd_32k_feed();
 	tl521x_disable_pm(tlx);
 	/* check if RF is already started */
 	if (!tlx->is_started) {
@@ -1000,7 +999,6 @@ ALWAYS_INLINE static int tl521x_start_radio(struct tl521x_data *tlx)
 #else
 ALWAYS_INLINE static int tl521x_start_radio(struct tl521x_data *tlx)
 {
-	wd_32k_feed();
 	tl521x_disable_pm(tlx);
 	/* check if RF is already started */
 	if (!tlx->is_started) {

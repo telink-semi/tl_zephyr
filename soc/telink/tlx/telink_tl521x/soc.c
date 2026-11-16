@@ -131,6 +131,11 @@ void soc_early_init_hook(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
+#ifdef CONFIG_PM
+	/* Run the core at 48 MHz to reduce the active current. */
+	cclk = CLK_48MHZ;
+#endif /* CONFIG_PM */
+
 	/* Only need for lighting to switch from zigbee to matter */
 #if (!CONFIG_PM && !CONFIG_MCUBOOT)
 	/* Enable clock before operate rf register */
@@ -186,11 +191,10 @@ void soc_early_init_hook(void)
 
 	/* 32k watchdog is set by hardware ,init is 5s
 	 * to avoid lpd block mspi ,should open 32k wd.
+	 * Temporarily disabled for debugging: keep it stopped so a long
+	 * idle period does not trigger a reset.
 	 */
 	wd_32k_stop();
-	/*  in zephyr with BT, max sleep time is about 23s*/
-	wd_32k_set_interval_ms(30000);
-	wd_32k_start();
 
 	/* MCU deep retention wakeUp */
 	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup();
@@ -215,8 +219,13 @@ void sys_arch_reboot(int type)
 
 /**
  * @brief Restore SOC after deep-sleep.
+ *
+ * The restore path runs right after a retention wake with a cold instruction
+ * cache, so keep it in RAM instead of fetching it from flash.
  */
-
+#if CONFIG_PM
+__GENERIC_SECTION(.ram_code) __attribute__((noinline))
+#endif
 void soc_tlx_restore(void)
 {
 	unsigned int cclk = DT_PROP(DT_PATH(cpus, cpu_0), clock_frequency);
@@ -224,9 +233,16 @@ void soc_tlx_restore(void)
 	/* system init */
 	sys_init(POWER_MODE, VBAT_TYPE, INTERNAL_CAP_XTAL24M);
 
-	/*after exit from suspend or deep-retention ,start 32k wd before lpd*/
-	wd_32k_feed();
-	wd_32k_start();
+#ifdef CONFIG_PM
+	/* Keep the same 48 MHz core clock after a deep-sleep wake as at boot. */
+	cclk = CLK_48MHZ;
+#endif /* CONFIG_PM */
+
+	/*after exit from suspend or deep-retention ,start 32k wd before lpd
+	 * Temporarily disabled for debugging: keep it stopped here as well,
+	 * otherwise the watchdog is re-armed after every deep-sleep wake.
+	 */
+	wd_32k_stop();
 
 /* note: only the 3.3uH, need to set this value , user open by yourself. 6.8uH just ignore .*/
 #if CONFIG_SOC_PMOS_SWITCH_TIME_CTL
@@ -348,21 +364,3 @@ static int soc_tlx_check_flash(void)
 }
 
 SYS_INIT(soc_tlx_check_flash, POST_KERNEL, 0);
-
-#include <zephyr/kernel.h>
-
-struct k_timer wd_32k_timer;
-void wd_32k_timer_callback(struct k_timer *timer)
-{
-	wd_32k_feed();
-}
-
-static int soc_tlx_wd_32k_init(void)
-{
-	wd_32k_feed();
-	k_timer_init(&wd_32k_timer, wd_32k_timer_callback, NULL);
-	k_timer_start(&wd_32k_timer, K_MSEC(0), K_MSEC(3000));
-
-	return 0;
-}
-SYS_INIT(soc_tlx_wd_32k_init, POST_KERNEL, 2);

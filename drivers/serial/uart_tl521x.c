@@ -302,6 +302,9 @@ static int uart_tl521x_config_get(const struct device *dev, struct uart_config *
 #endif
 
 /* API implementation: driver initialization */
+#if CONFIG_PM
+__GENERIC_SECTION(.ram_code)
+#endif
 static int uart_tl521x_driver_init(const struct device *dev)
 {
 	int status = 0;

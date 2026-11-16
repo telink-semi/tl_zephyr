@@ -65,6 +65,9 @@ bool pm_suspend_devices(void)
 	return true;
 }
 
+#if defined(CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION)
+__GENERIC_SECTION(.ram_code)
+#endif
 void pm_resume_devices(void)
 {
 	for (int i = (num_susp - 1); i >= 0; i--) {

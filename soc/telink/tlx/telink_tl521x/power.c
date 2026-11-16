@@ -92,8 +92,14 @@ static volatile bool tlx_deep_sleep_retention_occurred;
 
 /**
  * @brief PM state set API implementation.
+ *
+ * Part of the deep-sleep wake chain, keep it in RAM together with
+ * soc_tlx_restore() and tl_deep_sleep() so the wake path never fetches
+ * instructions from flash with a cold cache.
  */
-
+#if CONFIG_PM
+__GENERIC_SECTION(.ram_code) __attribute__((noinline))
+#endif
 void pm_state_set(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(substate_id);
@@ -102,8 +108,9 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 	uint64_t current_time = get_mtime();
 	uint64_t wakeup_time = get_mtime_compare();
 
-	/* before go into deep , should feed 32k watchdog */
-	wd_32k_feed();
+	/* before go into deep , should feed 32k watchdog
+	 * Temporarily disabled for debugging: the 32k watchdog is kept stopped.
+	 */
 	if (wakeup_time <= current_time) {
 		LOG_DBG("Sleep Time = 0 or less\n");
 		return;
@@ -121,9 +128,10 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
 		}
-		/*after exit from suspend or deep-retention ,should feed 32k watdog quickly*/
-		wd_32k_feed();
-		wd_32k_start();
+		/*after exit from suspend or deep-retention ,should feed 32k watdog quickly
+		 * Temporarily disabled for debugging: the 32k watchdog is kept
+		 * stopped, so leave it alone here as well.
+		 */
 		break;
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
 	case PM_STATE_STANDBY:
@@ -151,6 +159,9 @@ void pm_state_set(enum pm_state state, uint8_t substate_id)
 /**
  * @brief PM state exit post operations API implementation.
  */
+#if CONFIG_PM
+__GENERIC_SECTION(.ram_code) __attribute__((noinline))
+#endif
 void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(state);
@@ -184,6 +195,7 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 /**
  * @brief Check if system has resumed from deep sleep retention.
  */
+__GENERIC_SECTION(.ram_code)
 bool pm_has_resumed_from_deep_sleep_retention(void)
 {
 	return tlx_resumed_from_deep_sleep_retention;
