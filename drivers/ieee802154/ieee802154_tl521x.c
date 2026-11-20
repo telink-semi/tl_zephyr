@@ -1639,7 +1639,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 	}
 #if defined CONFIG_IEEE802154_TL521X_OPTIMIZATION && CONFIG_IEEE802154_TL521X_OPTIMIZATION
 	if (isThreadCommissioned == true) {
-		tl521x_wfi_direct(800);
+		tl521x_wfi_direct(1200);
 	}
 #endif /* CONFIG_IEEE802154_TL521X_OPTIMIZATION */
 	if (k_sem_take(&tlx->tx_wait, K_MSEC(TL521X_TX_WAIT_TIME_MS)) != 0) {
