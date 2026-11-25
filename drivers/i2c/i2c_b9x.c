@@ -10,11 +10,12 @@
 #include "clock.h"
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(i2c_telink);
+LOG_MODULE_REGISTER(i2c_telink, CONFIG_I2C_LOG_LEVEL);
 
 #include <zephyr/drivers/i2c.h>
 #include "i2c-priv.h"
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/pm/device.h>
 
 /* I2C configuration structure */
 struct i2c_b9x_cfg {
@@ -24,14 +25,14 @@ struct i2c_b9x_cfg {
 
 /* I2C data structure */
 struct i2c_b9x_data {
-	struct k_sem mutex;
+	struct k_mutex mutex;
+	uint32_t dev_config;
 };
 
 /* API implementation: configure */
 static int i2c_b9x_configure(const struct device *dev, uint32_t dev_config)
 {
-	ARG_UNUSED(dev);
-
+	struct i2c_b9x_data *data = dev->data;
 	uint32_t i2c_speed = 0u;
 
 	/* check address size */
@@ -64,32 +65,31 @@ static int i2c_b9x_configure(const struct device *dev, uint32_t dev_config)
 		return -ENOTSUP;
 	}
 
-	/* init i2c */
+	k_mutex_lock(&data->mutex, K_FOREVER);
 	i2c_master_init();
 	i2c_set_master_clk((unsigned char)(sys_clk.pclk * 1000 * 1000 / (4 * i2c_speed)));
+	data->dev_config = dev_config;
+	k_mutex_unlock(&data->mutex);
 
 	return 0;
 }
 
 /* API implementation: transfer */
-static int i2c_b9x_transfer(const struct device *dev,
-			    struct i2c_msg *msgs,
-			    uint8_t num_msgs,
+static int i2c_b9x_transfer(const struct device *dev, struct i2c_msg *msgs, uint8_t num_msgs,
 			    uint16_t addr)
 {
 	int status = 0;
 	uint8_t send_stop = 0;
 	struct i2c_b9x_data *data = dev->data;
 
-	/* get the mutex */
-	k_sem_take(&data->mutex, K_FOREVER);
+	k_mutex_lock(&data->mutex, K_FOREVER);
 
 	/* loop through all messages */
 	for (int i = 0; i < num_msgs; i++) {
 		/* check addr size */
 		if (msgs[i].flags & I2C_MSG_ADDR_10_BITS) {
 			LOG_ERR("10-bits address is not supported");
-			k_sem_give(&data->mutex);
+			k_mutex_unlock(&data->mutex);
 			return -ENOTSUP;
 		}
 
@@ -105,15 +105,15 @@ static int i2c_b9x_transfer(const struct device *dev,
 		}
 
 		/* check status */
-		if (!status) {
-			LOG_ERR("Failed to transfer I2C messages\n");
-			k_sem_give(&data->mutex);
+		if (status != 1) {
+			LOG_DBG("Failed to transfer I2C messages\n");
+			k_mutex_unlock(&data->mutex);
 			return -EIO;
 		}
 	}
 
 	/* release the mutex */
-	k_sem_give(&data->mutex);
+	k_mutex_unlock(&data->mutex);
 
 	return 0;
 };
@@ -124,13 +124,12 @@ static int i2c_b9x_init(const struct device *dev)
 	int status = 0;
 	const struct i2c_b9x_cfg *cfg = dev->config;
 	struct i2c_b9x_data *data = dev->data;
-	uint32_t dev_config = (I2C_MODE_CONTROLLER | i2c_map_dt_bitrate(cfg->bitrate));
 
-	/* init mutex */
-	k_sem_init(&data->mutex, 1, 1);
+	data->dev_config = (I2C_MODE_CONTROLLER | i2c_map_dt_bitrate(cfg->bitrate));
+	k_mutex_init(&data->mutex);
 
 	/* config i2c on startup */
-	status = i2c_b9x_configure(dev, dev_config);
+	status = i2c_b9x_configure(dev, data->dev_config);
 	if (status != 0) {
 		LOG_ERR("Failed to configure I2C on init");
 		return status;
@@ -143,16 +142,73 @@ static int i2c_b9x_init(const struct device *dev)
 		return status;
 	}
 
-#ifdef CONFIG_PM
-	const pinctrl_soc_pin_t *i2cPinsMux = cfg->pcfg->states->pins;
+#ifdef CONFIG_PM_DEVICE
+	for (uint8_t i = 0; i < cfg->pcfg->state_cnt; ++i) {
+		if (cfg->pcfg->states[i].id == PINCTRL_STATE_DEFAULT) {
+			for (uint8_t j = 0; j < cfg->pcfg->states[i].pin_cnt; ++j) {
+				const pinctrl_soc_pin_t pin =
+					B9x_PINMUX_GET_PIN(cfg->pcfg->states[i].pins[j]);
 
-	/* Enable the input function of the SCL and SDA pins */
-	gpio_input_en(*i2cPinsMux++);
-	gpio_input_en(*i2cPinsMux);
+				gpio_input_en(pin);
+			}
+		}
+	}
 #endif
 
 	return 0;
 }
+
+#ifdef CONFIG_PM_DEVICE
+__GENERIC_SECTION(.ram_code)
+static int i2c_b9x_pm_action(const struct device *dev, enum pm_device_action action)
+{
+	const struct i2c_b9x_cfg *cfg = dev->config;
+	struct i2c_b9x_data *data = dev->data;
+
+	switch (action) {
+	case PM_DEVICE_ACTION_RESUME:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+		extern bool pm_has_resumed_from_deep_sleep_retention(void);
+
+		if (pm_has_resumed_from_deep_sleep_retention()) {
+			i2c_b9x_configure(dev, data->dev_config);
+			pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+		}
+		for (uint8_t i = 0; i < cfg->pcfg->state_cnt; ++i) {
+			if (cfg->pcfg->states[i].id == PINCTRL_STATE_DEFAULT) {
+				for (uint8_t j = 0; j < cfg->pcfg->states[i].pin_cnt; ++j) {
+					const pinctrl_soc_pin_t pin =
+						B9x_PINMUX_GET_PIN(cfg->pcfg->states[i].pins[j]);
+
+					gpio_input_en(pin);
+				}
+			}
+		}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
+		break;
+
+	case PM_DEVICE_ACTION_SUSPEND:
+#if CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION
+		for (uint8_t i = 0; i < cfg->pcfg->state_cnt; ++i) {
+			if (cfg->pcfg->states[i].id == PINCTRL_STATE_DEFAULT) {
+				for (uint8_t j = 0; j < cfg->pcfg->states[i].pin_cnt; ++j) {
+					const pinctrl_soc_pin_t pin =
+						B9x_PINMUX_GET_PIN(cfg->pcfg->states[i].pins[j]);
+
+					gpio_shutdown(pin);
+				}
+			}
+		}
+#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_B9X_RETENTION */
+		break;
+
+	default:
+		return -ENOTSUP;
+	}
+
+	return 0;
+}
+#endif /* CONFIG_PM_DEVICE */
 
 /* I2C driver APIs structure */
 static const struct i2c_driver_api i2c_b9x_api = {
@@ -160,27 +216,24 @@ static const struct i2c_driver_api i2c_b9x_api = {
 	.transfer = i2c_b9x_transfer,
 };
 
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
-	     "unsupported I2C instance");
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1, "unsupported I2C instance");
 
 /* I2C driver registration */
-#define I2C_b9x_INIT(inst)					      \
-								      \
-	PINCTRL_DT_INST_DEFINE(inst);				      \
-								      \
-	static struct i2c_b9x_data i2c_b9x_data_##inst;		      \
-								      \
-	static struct i2c_b9x_cfg i2c_b9x_cfg_##inst = {	      \
-		.bitrate = DT_INST_PROP(inst, clock_frequency),	      \
-		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),	      \
-	};							      \
-								      \
-	I2C_DEVICE_DT_INST_DEFINE(inst, i2c_b9x_init,		      \
-				  NULL,				      \
-				  &i2c_b9x_data_##inst,		      \
-				  &i2c_b9x_cfg_##inst,		      \
-				  POST_KERNEL,			      \
-				  CONFIG_I2C_INIT_PRIORITY,	      \
-				  &i2c_b9x_api);
+#define I2C_b9x_INIT(inst)                                                                         \
+                                                                                                   \
+	PM_DEVICE_DT_INST_DEFINE(inst, i2c_b9x_pm_action);                                         \
+                                                                                                   \
+	PINCTRL_DT_INST_DEFINE(inst);                                                              \
+                                                                                                   \
+	static struct i2c_b9x_data i2c_b9x_data_##inst;                                            \
+                                                                                                   \
+	static struct i2c_b9x_cfg i2c_b9x_cfg_##inst = {                                           \
+		.bitrate = DT_INST_PROP(inst, clock_frequency),                                    \
+		.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                      \
+	};                                                                                         \
+                                                                                                   \
+	I2C_DEVICE_DT_INST_DEFINE(inst, i2c_b9x_init, PM_DEVICE_DT_INST_GET(inst),                 \
+				  &i2c_b9x_data_##inst, &i2c_b9x_cfg_##inst, POST_KERNEL,          \
+				  CONFIG_I2C_INIT_PRIORITY, &i2c_b9x_api);
 
 DT_INST_FOREACH_STATUS_OKAY(I2C_b9x_INIT)
