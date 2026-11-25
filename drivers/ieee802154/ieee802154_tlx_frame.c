@@ -138,7 +138,8 @@ struct ieee802154_frame {
  * Check if FCF describes destination PANID
  * fcf should be valid and contains at lest 2 bytes
  */
-ALWAYS_INLINE static bool ieee802154_frame_has_dest_panid(const uint8_t fcf[2])
+ALWAYS_INLINE
+static bool ieee802154_frame_has_dest_panid(const uint8_t fcf[2])
 {
 	bool result = true;
 	const uint8_t frame_ver_t =
@@ -187,7 +188,8 @@ ALWAYS_INLINE static bool ieee802154_frame_has_dest_panid(const uint8_t fcf[2])
  * return PANID compression bit
  * frame should be valid
  */
-ALWAYS_INLINE static bool ieee802154_frame_panid_compression(const struct ieee802154_frame *frame)
+ALWAYS_INLINE
+static bool ieee802154_frame_panid_compression(const struct ieee802154_frame *frame)
 {
 	bool result = false;
 
@@ -225,8 +227,9 @@ ALWAYS_INLINE static bool ieee802154_frame_panid_compression(const struct ieee80
  * Parse IEEE802154 buffer
  * buf & frame should be valid
  */
-ALWAYS_INLINE static void tlx_ieee802154_frame_parse(const uint8_t *buf, size_t bul_len,
-						     struct ieee802154_frame *frame)
+ALWAYS_INLINE
+static void tlx_ieee802154_frame_parse(const uint8_t *buf, size_t bul_len,
+				       struct ieee802154_frame *frame)
 {
 	size_t pos = 0; /* current buffer position */
 
@@ -450,8 +453,9 @@ ALWAYS_INLINE static void tlx_ieee802154_frame_parse(const uint8_t *buf, size_t 
  * Create ACK buffer
  * frame & buf should be valid
  */
-ALWAYS_INLINE static bool tlx_ieee802154_frame_build(const struct ieee802154_frame *frame,
-						     uint8_t *buf, size_t bul_len, size_t *o_len)
+ALWAYS_INLINE
+static bool tlx_ieee802154_frame_build(const struct ieee802154_frame *frame, uint8_t *buf,
+				       size_t bul_len, size_t *o_len)
 {
 	bool result = false;
 
@@ -494,7 +498,6 @@ ALWAYS_INLINE static bool tlx_ieee802154_frame_build(const struct ieee802154_fra
 
 		if (frame->dst_addr != NULL) {
 			if (frame->dst_addr_ext) {
-
 				if (bul_len < *o_len + IEEE802154_FRAME_LENGTH_ADDR_EXT) {
 					break;
 				}
@@ -542,7 +545,6 @@ ALWAYS_INLINE static bool tlx_ieee802154_frame_build(const struct ieee802154_fra
 		}
 
 		if (frame->sec_header != NULL) {
-
 			if (bul_len < *o_len + frame->sec_header_len) {
 				break;
 			}
@@ -552,7 +554,6 @@ ALWAYS_INLINE static bool tlx_ieee802154_frame_build(const struct ieee802154_fra
 		}
 
 		if (frame->payload != NULL) {
-
 			if (bul_len < *o_len + frame->payload_len) {
 				break;
 			}
@@ -564,7 +565,6 @@ ALWAYS_INLINE static bool tlx_ieee802154_frame_build(const struct ieee802154_fra
 		}
 
 		if (frame->sec_header != NULL) {
-
 			if (bul_len < *o_len + THREAD_FRAME_SECCTRL_MIC_LENGTH) {
 				break;
 			}
@@ -577,14 +577,13 @@ ALWAYS_INLINE static bool tlx_ieee802154_frame_build(const struct ieee802154_fra
 	return result;
 }
 
-ALWAYS_INLINE static const uint8_t *tlx_ieee802154_get_data(const uint8_t *payload,
-							    size_t payload_len)
+ALWAYS_INLINE
+static const uint8_t *tlx_ieee802154_get_data(const uint8_t *payload, size_t payload_len)
 {
 	const uint8_t *result = NULL;
 	size_t pos = 0; /* current buffer position */
 
 	while (payload && payload_len >= pos + 1) {
-
 		uint8_t ie_type = ((payload[pos + 1] & IEEE802154_FRAME_IE_HEADER_TYPE_H_MASK)
 				   << IEEE802154_FRAME_IE_HEADER_TYPE_H_OFS) |
 				  ((payload[pos] & IEEE802154_FRAME_IE_HEADER_TYPE_L_MASK) >>
@@ -603,14 +602,13 @@ ALWAYS_INLINE static const uint8_t *tlx_ieee802154_get_data(const uint8_t *paylo
 	return result;
 }
 
-ALWAYS_INLINE static uint8_t *tlx_ieee802154_ie_csl_search(const uint8_t *payload,
-							   size_t payload_len)
+ALWAYS_INLINE
+static uint8_t *tlx_ieee802154_ie_csl_search(const uint8_t *payload, size_t payload_len)
 {
 	uint8_t *result = NULL;
 	size_t pos = 0; /* current buffer position */
 
 	while (payload && payload_len >= pos + 1) {
-
 		uint8_t ie_type = ((payload[pos + 1] & IEEE802154_FRAME_IE_HEADER_TYPE_H_MASK)
 				   << IEEE802154_FRAME_IE_HEADER_TYPE_H_OFS) |
 				  ((payload[pos] & IEEE802154_FRAME_IE_HEADER_TYPE_L_MASK) >>
@@ -634,8 +632,9 @@ ALWAYS_INLINE static uint8_t *tlx_ieee802154_ie_csl_search(const uint8_t *payloa
 	return result;
 }
 
-ALWAYS_INLINE static void tlx_ieee802154_ie_csl_commit_at(uint8_t *csl_pos, uint16_t aCslPeriod,
-							  uint16_t aCslPhase)
+ALWAYS_INLINE
+static void tlx_ieee802154_ie_csl_commit_at(uint8_t *csl_pos, uint16_t aCslPeriod,
+					    uint16_t aCslPhase)
 {
 	if (csl_pos) {
 		csl_pos[0] = aCslPhase & 0xff;
@@ -645,8 +644,9 @@ ALWAYS_INLINE static void tlx_ieee802154_ie_csl_commit_at(uint8_t *csl_pos, uint
 	}
 }
 
-ALWAYS_INLINE static bool tlx_ieee802154_ie_csl_commit(uint8_t *payload, size_t payload_len,
-						       uint16_t aCslPeriod, uint16_t aCslPhase)
+ALWAYS_INLINE
+static bool tlx_ieee802154_ie_csl_commit(uint8_t *payload, size_t payload_len, uint16_t aCslPeriod,
+					 uint16_t aCslPhase)
 {
 	bool result = false;
 	uint8_t *csl_data = tlx_ieee802154_ie_csl_search(payload, payload_len);
@@ -661,7 +661,6 @@ ALWAYS_INLINE static bool tlx_ieee802154_ie_csl_commit(uint8_t *payload, size_t 
 /*
  * Cryptography functionality
  */
-
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
@@ -670,10 +669,10 @@ ALWAYS_INLINE static bool tlx_ieee802154_ie_csl_commit(uint8_t *payload, size_t 
 #include <ske_portable.h>
 #endif
 
-ALWAYS_INLINE static void
-ieee802154_tlx_crypto_ecb(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
-			  const uint8_t inp[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
-			  uint8_t out[IEEE802154_CRYPTO_LENGTH_AES_BLOCK])
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_ecb(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
+				      const uint8_t inp[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
+				      uint8_t out[IEEE802154_CRYPTO_LENGTH_AES_BLOCK])
 {
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
 	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
@@ -699,17 +698,17 @@ struct ieee802154_crypto_ctx {
 	uint8_t tag_len;
 };
 
-ALWAYS_INLINE static void
-ieee802154_tlx_crypto_key(struct ieee802154_crypto_ctx *ctx,
-			  const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK])
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_key(struct ieee802154_crypto_ctx *ctx,
+				      const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK])
 {
 	ctx->key = key;
 }
 
-ALWAYS_INLINE static void
-ieee802154_tlx_crypto_nonce(struct ieee802154_crypto_ctx *ctx,
-			    const uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT],
-			    uint32_t frame_cnt, uint8_t sec_level)
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_nonce(struct ieee802154_crypto_ctx *ctx,
+					const uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT],
+					uint32_t frame_cnt, uint8_t sec_level)
 {
 	sys_memcpy_swap(ctx->nonce, ext_addr, IEEE802154_FRAME_LENGTH_ADDR_EXT);
 	ctx->nonce[IEEE802154_FRAME_LENGTH_ADDR_EXT] = frame_cnt >> 24;
@@ -719,9 +718,9 @@ ieee802154_tlx_crypto_nonce(struct ieee802154_crypto_ctx *ctx,
 	ctx->nonce[IEEE802154_FRAME_LENGTH_ADDR_EXT + 4] = sec_level;
 }
 
-ALWAYS_INLINE static void ieee802154_tlx_crypto_start(struct ieee802154_crypto_ctx *ctx,
-						      uint8_t open_len, uint8_t priv_len,
-						      uint8_t tag_len)
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_start(struct ieee802154_crypto_ctx *ctx, uint8_t open_len,
+					uint8_t priv_len, uint8_t tag_len)
 {
 	ctx->open_len = open_len;
 	ctx->priv_len = priv_len;
@@ -742,8 +741,8 @@ ALWAYS_INLINE static void ieee802154_tlx_crypto_start(struct ieee802154_crypto_c
 	memset(&ctx->ctr[sizeof(ctx->nonce) + 1], 0, sizeof(ctx->ctr) - sizeof(ctx->nonce) - 1);
 }
 
-ALWAYS_INLINE static void ieee802154_tlx_crypto_header(struct ieee802154_crypto_ctx *ctx,
-						       const uint8_t *open)
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_header(struct ieee802154_crypto_ctx *ctx, const uint8_t *open)
 {
 	for (uint8_t i = 0; i < ctx->open_len; i++) {
 		if (ctx->blk_len == sizeof(ctx->blk)) {
@@ -758,9 +757,9 @@ ALWAYS_INLINE static void ieee802154_tlx_crypto_header(struct ieee802154_crypto_
 	ctx->blk_len = 0;
 }
 
-ALWAYS_INLINE static void ieee802154_tlx_crypto_payload(struct ieee802154_crypto_ctx *ctx,
-							bool encrypt, uint8_t *plain,
-							uint8_t *cipher)
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_payload(struct ieee802154_crypto_ctx *ctx, bool encrypt,
+					  uint8_t *plain, uint8_t *cipher)
 {
 	if (!plain || !cipher) {
 		return;
@@ -798,8 +797,8 @@ ALWAYS_INLINE static void ieee802154_tlx_crypto_payload(struct ieee802154_crypto
 	memset(&ctx->ctr[sizeof(ctx->nonce) + 1], 0, sizeof(ctx->ctr) - sizeof(ctx->nonce) - 1);
 }
 
-ALWAYS_INLINE static void ieee802154_tlx_crypto_finish(struct ieee802154_crypto_ctx *ctx,
-						       uint8_t *tag)
+ALWAYS_INLINE
+static void ieee802154_tlx_crypto_finish(struct ieee802154_crypto_ctx *ctx, uint8_t *tag)
 {
 	ieee802154_tlx_crypto_ecb(ctx->key, ctx->ctr, ctx->ctr_pad);
 	for (uint8_t i = 0; i < ctx->tag_len; i++) {
@@ -807,8 +806,8 @@ ALWAYS_INLINE static void ieee802154_tlx_crypto_finish(struct ieee802154_crypto_
 	}
 }
 
-ALWAYS_INLINE static bool ieee802154_tlx_crypto_check(struct ieee802154_crypto_ctx *ctx,
-						      const uint8_t *tag)
+ALWAYS_INLINE
+static bool ieee802154_tlx_crypto_check(struct ieee802154_crypto_ctx *ctx, const uint8_t *tag)
 {
 	bool result = true;
 
@@ -822,18 +821,18 @@ ALWAYS_INLINE static bool ieee802154_tlx_crypto_check(struct ieee802154_crypto_c
 	return result;
 }
 
-ALWAYS_INLINE static bool
-ieee802154_tlx_crypto_encrypt(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
-			      const uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT],
-			      uint32_t frame_cnt, uint8_t frame_sec_level,
-			      const uint8_t *frame_open, uint8_t frame_open_len,
-			      const uint8_t *frame_plain, uint8_t frame_plain_len,
-			      uint8_t *frame_cipher, uint8_t *frame_mic, uint8_t frame_mic_len)
+ALWAYS_INLINE
+static bool ieee802154_tlx_crypto_encrypt(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
+					  const uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT],
+					  uint32_t frame_cnt, uint8_t frame_sec_level,
+					  const uint8_t *frame_open, uint8_t frame_open_len,
+					  const uint8_t *frame_plain, uint8_t frame_plain_len,
+					  uint8_t *frame_cipher, uint8_t *frame_mic,
+					  uint8_t frame_mic_len)
 {
 	bool result = false;
 
 	if (key && ext_addr && frame_open && frame_open_len && frame_mic && frame_mic_len) {
-
 		struct ieee802154_crypto_ctx ctx;
 
 		ieee802154_tlx_crypto_key(&ctx, key);
@@ -848,18 +847,18 @@ ieee802154_tlx_crypto_encrypt(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLO
 	return result;
 }
 
-ALWAYS_INLINE static bool
-ieee802154_tlx_crypto_decrypt(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
-			      const uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT],
-			      uint32_t frame_cnt, uint8_t frame_sec_level,
-			      const uint8_t *frame_open, uint8_t frame_open_len,
-			      const uint8_t *frame_cipher, uint8_t frame_cipher_len,
-			      const uint8_t *frame_mic, uint8_t frame_mic_len, uint8_t *frame_plain)
+ALWAYS_INLINE
+static bool ieee802154_tlx_crypto_decrypt(const uint8_t key[IEEE802154_CRYPTO_LENGTH_AES_BLOCK],
+					  const uint8_t ext_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT],
+					  uint32_t frame_cnt, uint8_t frame_sec_level,
+					  const uint8_t *frame_open, uint8_t frame_open_len,
+					  const uint8_t *frame_cipher, uint8_t frame_cipher_len,
+					  const uint8_t *frame_mic, uint8_t frame_mic_len,
+					  uint8_t *frame_plain)
 {
 	bool result = false;
 
 	if (key && ext_addr && frame_open && frame_open_len && frame_mic && frame_mic_len) {
-
 		struct ieee802154_crypto_ctx ctx;
 
 		ieee802154_tlx_crypto_key(&ctx, key);

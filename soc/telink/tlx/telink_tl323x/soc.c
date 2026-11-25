@@ -256,6 +256,10 @@ void soc_early_init_hook(void)
 	clock_32k_init(CLK_32K_RC);
 	clock_cal_32k_rc();
 
+	/* ske is not enabled by default */
+	extern void ske_dig_en(void);
+	ske_dig_en();
+
 	/* pke is not enabled by default on TL323X */
 	extern void pke_dig_en(void);
 	pke_dig_en();
@@ -350,6 +354,10 @@ void soc_tlx_restore(void)
 		PLL_192M_CCLK_96M_HCLK_48M_PCLK_48M_MSPI_48M;
 		break;
 	}
+
+	/* ske is not enabled by default */
+	extern void ske_dig_en(void);
+	ske_dig_en();
 
 	/* pke is not enabled by default on TL323X */
 	extern void pke_dig_en(void);

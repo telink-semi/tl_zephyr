@@ -183,6 +183,10 @@ void soc_early_init_hook(void)
 	clock_32k_init(CLK_32K_RC);
 	clock_cal_32k_rc();
 
+	/* ske is not enabled by default */
+	extern void ske_dig_en(void);
+	ske_dig_en();
+
 	extern void pke_dig_en(void);
 	pke_dig_en();
 
@@ -266,6 +270,10 @@ void soc_tlx_restore(void)
 		PLL_144M_CCLK_144M_HCLK_72M_PCLK_72M_MSPI_48M;
 		break;
 	}
+
+	/* ske is not enabled by default */
+	extern void ske_dig_en(void);
+	ske_dig_en();
 
 	/* pke enable */
 	extern void pke_dig_en(void);

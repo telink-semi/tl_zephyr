@@ -8,47 +8,47 @@
 #define ZEPHYR_DRIVERS_IEEE802154_IEEE802154_TLX_H_
 
 /* Timeouts */
-#define TLX_TX_WAIT_TIME_MS                 (10)
-#define TLX_ACK_WAIT_TIME_MS                (5)
+#define TLX_TX_WAIT_TIME_MS  (10)
+#define TLX_ACK_WAIT_TIME_MS (5)
 
 /* Received data parsing */
 #ifndef IEEE802154_FRAME_LENGTH_PANID
-#define IEEE802154_FRAME_LENGTH_PANID       (2)
+#define IEEE802154_FRAME_LENGTH_PANID (2)
 #endif
 #ifndef IEEE802154_FRAME_LENGTH_ADDR_SHORT
-#define IEEE802154_FRAME_LENGTH_ADDR_SHORT  (2)
+#define IEEE802154_FRAME_LENGTH_ADDR_SHORT (2)
 #endif
 #ifndef IEEE802154_FRAME_LENGTH_ADDR_EXT
-#define IEEE802154_FRAME_LENGTH_ADDR_EXT    (8)
+#define IEEE802154_FRAME_LENGTH_ADDR_EXT (8)
 #endif
-#define TLX_PAYLOAD_OFFSET                  (5)
-#define TLX_PAYLOAD_MIN                     (5)
-#define TLX_PAYLOAD_MAX                     (127)
-#define TLX_LENGTH_OFFSET                   (4)
-#define TLX_RSSI_OFFSET                     (11)
-#define TLX_BROADCAST_ADDRESS               ((uint8_t [2]) { 0xff, 0xff })
-#define TLX_FCS_LENGTH                      (2)
-#define TLX_CMD_ID_DATA_REQ                 (0x04)
+#define TLX_PAYLOAD_OFFSET    (5)
+#define TLX_PAYLOAD_MIN       (5)
+#define TLX_PAYLOAD_MAX       (127)
+#define TLX_LENGTH_OFFSET     (4)
+#define TLX_RSSI_OFFSET       (11)
+#define TLX_BROADCAST_ADDRESS ((uint8_t[2]){0xff, 0xff})
+#define TLX_FCS_LENGTH        (2)
+#define TLX_CMD_ID_DATA_REQ   (0x04)
 
 /* Generic */
-#define TLX_TRX_LENGTH                      (256)
-#define TLX_RSSI_TO_LQI_SCALE               (3)
-#define TLX_RSSI_TO_LQI_MIN                 (-87)
-#define TLX_CCA_TIME_MAX_US                 (200)
-#define TLX_LOGIC_CHANNEL_TO_PHYSICAL(p)    (((p) - 10) * 5)
-#define TLX_MAC_KEYS_ITEMS                  (3)
+#define TLX_TRX_LENGTH                   (256)
+#define TLX_RSSI_TO_LQI_SCALE            (3)
+#define TLX_RSSI_TO_LQI_MIN              (-87)
+#define TLX_CCA_TIME_MAX_US              (200)
+#define TLX_LOGIC_CHANNEL_TO_PHYSICAL(p) (((p) - 10) * 5)
+#define TLX_MAC_KEYS_ITEMS               (3)
 #ifndef IEEE802154_CRYPTO_LENGTH_AES_BLOCK
-#define IEEE802154_CRYPTO_LENGTH_AES_BLOCK  (16)
+#define IEEE802154_CRYPTO_LENGTH_AES_BLOCK (16)
 #endif
 
-#define ZB_RADIO_TIMESTAMP_GET(p)           (uint32_t)(    \
-	(p[rf_zigbee_dma_rx_offset_time_stamp(p)])           | \
-	(p[rf_zigbee_dma_rx_offset_time_stamp(p) + 1] << 8)  | \
-	(p[rf_zigbee_dma_rx_offset_time_stamp(p) + 2] << 16) | \
-	(p[rf_zigbee_dma_rx_offset_time_stamp(p) + 3] << 24))
+#define ZB_RADIO_TIMESTAMP_GET(p)                                                                  \
+	(uint32_t)((p[rf_zigbee_dma_rx_offset_time_stamp(p)]) |                                    \
+		   (p[rf_zigbee_dma_rx_offset_time_stamp(p) + 1] << 8) |                           \
+		   (p[rf_zigbee_dma_rx_offset_time_stamp(p) + 2] << 16) |                          \
+		   (p[rf_zigbee_dma_rx_offset_time_stamp(p) + 3] << 24))
 
-#define TLX_TX_PWR_NOT_SET                 INT16_MAX
-#define TLX_TX_CH_NOT_SET                  UINT16_MAX
+#define TLX_TX_PWR_NOT_SET INT16_MAX
+#define TLX_TX_CH_NOT_SET  UINT16_MAX
 
 #define IEEE802154_TLX_FLASH_MAC_OFFSET 0x1000
 
@@ -60,7 +60,7 @@ struct tlx_src_match_table {
 		bool valid;
 		bool ext;
 		uint8_t addr[MAX(IEEE802154_FRAME_LENGTH_ADDR_EXT,
-			IEEE802154_FRAME_LENGTH_ADDR_SHORT)];
+				 IEEE802154_FRAME_LENGTH_ADDR_SHORT)];
 	} item[2 * CONFIG_OPENTHREAD_MAX_CHILDREN];
 };
 #endif /* CONFIG_OPENTHREAD_FTD */
@@ -91,13 +91,8 @@ struct tlx_mac_keys {
 /* data structure */
 struct tlx_data {
 	uint8_t mac_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT];
-#if CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION
 	uint8_t *rx_buffer;
 	uint8_t *tx_buffer;
-#else
-	uint8_t rx_buffer[TLX_TRX_LENGTH] __aligned(4);
-	uint8_t tx_buffer[TLX_TRX_LENGTH] __aligned(4);
-#endif /* CONFIG_SOC_SERIES_RISCV_TELINK_TLX_RETENTION */
 	struct net_if *iface;
 	struct k_sem tx_wait;
 	struct k_sem ack_wait;
