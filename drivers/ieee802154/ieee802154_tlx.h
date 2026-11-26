@@ -99,6 +99,7 @@ struct tlx_data {
 	uint8_t filter_pan_id[IEEE802154_FRAME_LENGTH_PANID];
 	uint8_t filter_short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
 	uint8_t filter_ieee_addr[IEEE802154_FRAME_LENGTH_ADDR_EXT];
+	bool promiscuous;
 	volatile bool is_started;
 	volatile bool ack_handler_en;
 	volatile bool rf_mode_154;

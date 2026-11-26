@@ -582,9 +582,9 @@ ALWAYS_INLINE static void tl521x_handle_ack(const struct device *dev, const void
 			break;
 		}
 		tl521x_update_rssi_and_lqi(dev, ack_pkt);
-#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+#if defined(CONFIG_NET_PKT_TIMESTAMP)
 		net_pkt_set_timestamp_ns(ack_pkt, rx_time * NSEC_PER_USEC);
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#endif /* CONFIG_NET_PKT_TIMESTAMP */
 		net_pkt_cursor_init(ack_pkt);
 		if (ieee802154_handle_ack(tlx->iface, ack_pkt) != NET_OK) {
 			LOG_INF("ACK packet not handled - releasing.");
@@ -767,13 +767,13 @@ __GENERIC_SECTION(.ram_code) static void tl521x_rf_rx_isr(void)
 		goto error_exit;
 	}
 
-#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+#if defined(CONFIG_NET_PKT_TIMESTAMP)
 	uint32_t rx_time_radio = RADIO_CURRENT_TICK();
 	rx_time = k_ticks_to_us_near64(k_uptime_ticks());
 	rx_time_radio -= ZB_RADIO_TIMESTAMP_GET(tlx->rx_buffer);
 	rx_time_radio /= RADIO_TICK_1US;
 	rx_time -= rx_time_radio;
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#endif /* CONFIG_NET_PKT_TIMESTAMP */
 
 	if (IS_ENABLED(CONFIG_IEEE802154_L2_PKT_INCL_FCS)) {
 		/* keep FCS */
@@ -801,16 +801,22 @@ __GENERIC_SECTION(.ram_code) static void tl521x_rf_rx_isr(void)
 			tl521x_handle_ack(dev, payload, length, rx_time);
 			tlx->ack_handler_en = false;
 		}
-		goto exit;
+		/* In promiscuous mode the ACK frame is reported as a normal frame. */
+		if (!tlx->promiscuous) {
+			goto exit;
+		}
 	}
 
-	if (!tl521x_run_filter(dev, &frame)) {
+	bool for_me = tl521x_run_filter(dev, &frame);
+
+	if (!for_me && !tlx->promiscuous) {
 		LOG_DBG("Packet received is not addressed to me.");
 		reason = IEEE802154_RX_FAIL_ADDR_FILTERED;
 		goto error_exit;
 	}
 
-	if (frame.general.ack_req) {
+	/* A promiscuous receiver must not acknowledge frames of other devices. */
+	if (frame.general.ack_req && for_me) {
 		tl521x_build_ack(dev, &frame);
 		if (tl521x_send_ack(dev, &frame) == false) {
 			LOG_DBG("ACK send failed.");
@@ -834,9 +840,9 @@ __GENERIC_SECTION(.ram_code) static void tl521x_rf_rx_isr(void)
 
 	tl521x_update_rssi_and_lqi(dev, pkt);
 	net_pkt_set_ieee802154_ack_fpb(pkt, frame.general.fp_bit);
-#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+#if defined(CONFIG_NET_PKT_TIMESTAMP)
 	net_pkt_set_timestamp_ns(pkt, rx_time * NSEC_PER_USEC);
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#endif /* CONFIG_NET_PKT_TIMESTAMP */
 
 	if (net_recv_data(tlx->iface, pkt) < 0) {
 		LOG_ERR("RCV Packet dropped by NET stack.");
@@ -1156,12 +1162,13 @@ static void tl521x_iface_init(struct net_if *iface)
 static enum ieee802154_hw_caps tl521x_get_capabilities(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS | IEEE802154_HW_FILTER |
-				       IEEE802154_HW_TX_RX_ACK | IEEE802154_HW_ENERGY_SCAN;
+	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS | IEEE802154_HW_PROMISC |
+				       IEEE802154_HW_FILTER | IEEE802154_HW_TX_RX_ACK |
+				       IEEE802154_HW_ENERGY_SCAN;
 
-#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+#if defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#endif /* CONFIG_NET_PKT_TXTIME */
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 	caps |= IEEE802154_HW_RXTIME;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
@@ -1320,11 +1327,11 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 	struct tl521x_data *tlx = dev->data;
 
 	/* check for supported mode */
-#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+#if defined(CONFIG_NET_PKT_TXTIME)
 	if (mode != IEEE802154_TX_MODE_DIRECT && mode != IEEE802154_TX_MODE_TXTIME_CCA) {
 #else
 	if (mode != IEEE802154_TX_MODE_DIRECT) {
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#endif /* CONFIG_NET_PKT_TXTIME */
 		LOG_WRN("TX mode %d not supported", mode);
 		return -ENOTSUP;
 	}
@@ -1577,7 +1584,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 		/* start transmission */
 		rf_set_txmode();
 
-#if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
+#if defined(CONFIG_NET_PKT_TXTIME)
 		if (mode == IEEE802154_TX_MODE_TXTIME_CCA) {
 			k_sleep(K_TIMEOUT_ABS_TICKS(
 				k_ns_to_ticks_near64(net_pkt_timestamp_ns(pkt))));
@@ -1586,7 +1593,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 		}
 #else
 		delay_us(CONFIG_IEEE802154_TL521X_SET_TXRX_DELAY_US);
-#endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
+#endif /* CONFIG_NET_PKT_TXTIME */
 		rf_tx_pkt(tlx->tx_buffer);
 	}
 
@@ -1738,6 +1745,9 @@ static int tl521x_configure(const struct device *dev, enum ieee802154_config_typ
 	case IEEE802154_CONFIG_EVENT_HANDLER:
 		tlx->event_handler = config->event_handler;
 		break;
+	case IEEE802154_CONFIG_PROMISCUOUS:
+		tlx->promiscuous = config->promiscuous;
+		break;
 #if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	case IEEE802154_CONFIG_MAC_KEYS: {
 		uint32_t cnt = tlx->mac_keys->frame_cnt;
@@ -1758,6 +1768,11 @@ static int tl521x_configure(const struct device *dev, enum ieee802154_config_typ
 	} break;
 	case IEEE802154_CONFIG_FRAME_COUNTER:
 		tlx->mac_keys->frame_cnt = config->frame_counter;
+		break;
+	case IEEE802154_CONFIG_FRAME_COUNTER_IF_LARGER:
+		if (config->frame_counter > tlx->mac_keys->frame_cnt) {
+			tlx->mac_keys->frame_cnt = config->frame_counter;
+		}
 		break;
 	case IEEE802154_CONFIG_ENH_ACK_HEADER_IE: {
 		uint8_t short_addr[IEEE802154_FRAME_LENGTH_ADDR_SHORT];
