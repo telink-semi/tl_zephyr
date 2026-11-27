@@ -1,0 +1,34 @@
+/*
+ * Copyright (c) 2025 Telink Semiconductor
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * TL3238X (tl3238x) loopback wiring for the gpio_basic_api test.
+ *
+ * Pin assignment matches the tl3238x board devicetree
+ * (boards/telink/tl323x/tl3238x-common.dtsi):
+ *   - PC0 = led_white (LED White)
+ *   - PC1 = led_green (LED Green)
+ *
+ * Build:
+ *   west build -b tl3238x tests/drivers/gpio/gpio_basic_api
+ *
+ * Run (twister, requires a hardware loopback fixture):
+ *   west twister -p tl3238x -s tests/drivers/gpio/gpio_basic_api \
+ *     --fixture gpio_loopback -- -DCONFIG_COMPILER_WARNINGS_AS_ERRORS=y
+ *
+ * Before running, short PC0 (LED White) to PC1 (LED Green) on the EVK so
+ * the output pin can drive the input pin.
+ *
+ * Expected result: the edge-triggered interrupt cases (rising, falling,
+ * both, to-active, to-inactive) pass. Level-triggered cases are skipped
+ * because the TL323X GPIO driver does not support level interrupts.
+ */
+
+/ {
+	resources {
+		compatible = "test-gpio-basic-api";
+		out-gpios = <&gpioc 0 0>; /* PC0, LED White */
+		in-gpios = <&gpioc 1 0>;  /* PC1, LED Green */
+	};
+};

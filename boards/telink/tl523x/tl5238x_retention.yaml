@@ -1,7 +1,7 @@
 identifier: tl5238x_retention
 name: Telink TL5238_RETENTION
 type: mcu
-arch: riscv32
+arch: riscv
 toolchain:
   - cross-compile
   - zephyr

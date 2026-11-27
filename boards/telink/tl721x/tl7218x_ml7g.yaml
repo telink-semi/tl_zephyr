@@ -1,7 +1,7 @@
 identifier: tl7218x_ml7g
 name: Telink TL7218X_ML7G
 type: mcu
-arch: riscv32
+arch: riscv
 toolchain:
   - cross-compile
   - zephyr
