@@ -30,12 +30,16 @@ static void nfc_event_callback(void *ctx)
 
 		result = M24SR_ReadBinary(M24SR_I2C_ADDRESS, 0, sizeof(apdu_len),
 					  (uint8_t *)&apdu_len);
-		if (result != M24SR_STATUS_SUCCESS) {
+		if (result != M24SR_ACTION_COMPLETED) {
 			LOG_ERR("m24sr read apdu length failed %x", result);
 			break;
 		}
 		apdu_len = sys_be16_to_cpu(apdu_len);
-		if (!apdu_len || apdu_len > MAX_APDU_SIZE - sizeof(apdu_len)) {
+		if (!apdu_len) {
+			LOG_INF("m24sr data sent");
+			break;
+		}
+		if (apdu_len > MAX_APDU_SIZE - sizeof(apdu_len)) {
 			LOG_ERR("m24sr income apdu length failed %u", apdu_len);
 			break;
 		}
@@ -45,7 +49,7 @@ static void nfc_event_callback(void *ctx)
 		result = M24SR_ReadBinary(M24SR_I2C_ADDRESS, sizeof(apdu_len),
 					  sizeof(apdu_data) - sizeof(apdu_len),
 					  &apdu_data[sizeof(apdu_len)]);
-		if (result != M24SR_STATUS_SUCCESS) {
+		if (result != M24SR_ACTION_COMPLETED) {
 			LOG_ERR("m24sr read apdu data failed %x", result);
 			break;
 		}
@@ -56,7 +60,7 @@ static void nfc_event_callback(void *ctx)
 
 		result = M24SR_UpdateBinary(M24SR_I2C_ADDRESS, 0, sizeof(apdu_response),
 					    apdu_response);
-		if (result != M24SR_STATUS_SUCCESS) {
+		if (result != M24SR_ACTION_COMPLETED) {
 			LOG_ERR("m24sr write apdu data failed %x", result);
 			break;
 		}
@@ -71,12 +75,24 @@ int main(void)
 	do {
 		LOG_INF("m24sr test app...");
 		M24SR_Init(M24SR_I2C_ADDRESS, M24SR_GPO_INTERRUPT);
-		result = M24SR_ManageRFGPO(M24SR_I2C_ADDRESS, M24SR_GPO_INTERRUPT);
-		if (result != M24SR_STATUS_SUCCESS) {
+		result = M24SR_GetSession(M24SR_I2C_ADDRESS);
+		if (result != M24SR_ACTION_COMPLETED) {
+			LOG_ERR("m24sr get session failed %x", result);
+			break;
+		}
+		result = M24SR_ManageI2CGPO(M24SR_I2C_ADDRESS, M24SR_GPO_MODE_HIGH_IMPEDANCE);
+		if (result != M24SR_ACTION_COMPLETED) {
+			LOG_ERR("m24sr disabling i2c interrupts failed %x", result);
+			break;
+		}
+		result = M24SR_ManageRFGPO(M24SR_I2C_ADDRESS, M24SR_GPO_MODE_WIP);
+		if (result != M24SR_ACTION_COMPLETED) {
 			LOG_ERR("m24sr setup gpo failed %x", result);
 			break;
 		}
+		/* M24SR_Deselect(M24SR_I2C_ADDRESS); ??? */
 		M24SR_SetEventHandler(nfc_event_callback, NULL);
+		M24SR_RFConfig(1);
 		LOG_INF("m24sr nfc system ready. please scan the tag with your android phone...");
 		for (;;) {
 			k_sleep(K_FOREVER);

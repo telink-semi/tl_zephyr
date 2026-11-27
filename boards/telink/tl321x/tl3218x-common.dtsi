@@ -118,6 +118,15 @@
 		isr-port-pin = <1>;
 	};
 
+	m24sr_matter: m24sr {
+		compatible = "m24sr";
+		i2c-bus = <&i2c>;
+		dis-port = <&gpioc>;
+		dis-port-pin = <1>;
+		gpo-port = <&gpioc>;
+		gpo-port-pin = <0>;
+	};
+
 	chosen {
 		zephyr,console = &uart0;
 		zephyr,shell-uart = &uart0;

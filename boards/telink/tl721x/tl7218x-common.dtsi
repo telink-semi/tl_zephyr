@@ -123,8 +123,10 @@
 	m24sr_matter: m24sr {
 		compatible = "m24sr";
 		i2c-bus = <&i2c>;
-		isr-port = <&gpioe>;
-		isr-port-pin = <5>;
+		dis-port = <&gpioe>;
+		dis-port-pin = <4>;
+		gpo-port = <&gpioe>;
+		gpo-port-pin = <5>;
 	};
 
 	chosen {
