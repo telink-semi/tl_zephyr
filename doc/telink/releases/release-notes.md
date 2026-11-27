@@ -1,16 +1,16 @@
 # Telink Zephyr SDK Release Note
 
-[![Version](https://img.shields.io/badge/Version-tl_v1.5.1--alpha--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.5.1-alpha-v4.1.0)
+[![Version](https://img.shields.io/badge/Version-tl_v1.5.1--beta--v4.1.0-blue?style=flat-square)](https://github.com/telink-semi/tl_zephyr/releases/tag/tl_v1.5.1-beta-v4.1.0)
 [![License](https://img.shields.io/badge/License-Apache%202.0-red?style=flat-square)](../../../LICENSE)
 [![Zephyr](https://img.shields.io/badge/Zephyr-v4.1.0-green?style=flat-square)](https://github.com/zephyrproject-rtos/zephyr/releases/tag/v4.1.0)
 
 ***
 
-- **Release Type:** Alpha Release
-- **Tag Version:** tl\_v1.5.1-alpha-v4.1.0
+- **Release Type:** Pre-Release
+- **Tag Version:** tl\_v1.5.1-beta-v4.1.0
 
 <!-- - **Branch:** release-v1.5-v4.1-branch -->
-<!-- - **Target Commit:** de75d4c1ec8fcfbb968768d3d0a6a776e0f17fec -->
+<!-- - **Target Commit:** 5d72a63a9c13a09c06b4f7776a6563308b3149fa -->
 
 ***
 
@@ -20,7 +20,8 @@ This patch release is the follow-up to tl\_v1.5.0 and backports the Telink
 changes from `dev-tlk_v4.1` onto `release-v1.5-v4.1-branch`. It adds the TL323x
 unified 160 KB RAM layout for concurrent BLE + Thread builds, TL523X BLE
 support, BLE central role support, low-battery-detect demos, and a set of
-GPIO/SWS/SoC fixes, together with the BLE SDK v4.0.4.8 and hal_telink updates.
+GPIO/SWS/SoC fixes, together with the BLE SDK v4.0.4.8 update and the
+hal_telink multirole-defaults update.
 
 ### Based on Upstream Zephyr v4.1.0
 
@@ -43,6 +44,11 @@ This patch release backports the following changes on top of tl\_v1.5.0:
 - **TL523X BLE support:** Add TL523X BLE functions and the dedicated TL523X
   flash driver ([#892](https://github.com/telink-semi/tl_zephyr/pull/892)).
 - **BLE central role:** Add BLE central role support ([#893](https://github.com/telink-semi/tl_zephyr/pull/893)).
+- **BLE multirole connection defaults:** Bump `hal_telink` to `78c97208`,
+  which sets the `TL_BLE_CTRL_MASTER_MAX_NUM` and
+  `TL_BLE_CTRL_SLAVE_MAX_NUM` defaults so a multirole controller supports one
+  master and one slave connection out of the box
+  ([#905](https://github.com/telink-semi/tl_zephyr/pull/905)).
 - **Low-battery demos:** Add the BLE peripheral low-battery-detect samples
   ([#895](https://github.com/telink-semi/tl_zephyr/pull/895)).
 - **GPIO/SWS fixes:**
@@ -55,7 +61,7 @@ This patch release backports the following changes on top of tl\_v1.5.0:
 - **Peak BTR:** Update the TL521X/TL323X peak BTR configuration
   ([#891](https://github.com/telink-semi/tl_zephyr/pull/891)).
 - **Dependencies:** Update `telink_ble_sdk` to `a508cc0`
-  (`release/V4.0.4.8`) and `hal_telink` to `3cc9054`.
+  (`release/V4.0.4.8`) and `hal_telink` to `78c97208`.
 
 ***
 
@@ -76,8 +82,8 @@ This patch release backports the following changes on top of tl\_v1.5.0:
 
 | Property         | Value                            |
 | ---------------- | -------------------------------- |
-| **Tag Name**     | tl\_v1.5.1-alpha-v4.1.0          |
-| **Release Type** | Alpha Release                    |
+| **Tag Name**     | tl\_v1.5.1-beta-v4.1.0           |
+| **Release Type** | Pre-Release                      |
 
 ### Chip & Hardware Versions
 
@@ -93,7 +99,22 @@ This patch release backports the following changes on top of tl\_v1.5.0:
 | ------- | ---------------- |
 | TL323X  | C1T388A20\_V1\_2   |
 
-> **Note:** TL323X is validated in this patch release.
+> **Note:** See [Validated Scope](#-validated-scope) below for the validated
+> TL721X/TL323X configurations.
+
+***
+
+## ✅ Validated Scope
+
+- TL721X and TL323X are build-only validated for always-on (`CONFIG_PM=n`) and
+  low-power applications.
+- Functionally validated on the tl3238x (TL323X) target: the Matter single-mode
+  build and the Matter + BLE concurrent build with power management (PM)
+  enabled. These are the most thoroughly validated configurations in this
+  release.
+
+> **Note:** The `tl_v1.5.1-beta-v4.1.0` tag was cut before this notes update
+> landed; the notes describe that tag's content (commit `5d72a63a`).
 
 ***
 
@@ -105,14 +126,15 @@ This patch release backports the following changes on top of tl\_v1.5.0:
 | **Memory Layout**    | TL323x unified 160 KB RAM layout for concurrent BLE + Thread builds     |
 | **New Drivers**      | Reworked NFC ST25DV tag driver and new ST25DV tag sample                |
 | **New SoC Features** | TL523X BLE support and BLE central role support                         |
+| **BLE**              | Multirole connection defaults (one master + one slave)                  |
 | **Demos**            | BLE peripheral low-battery-detect samples                               |
 | **Networking**       | IEEE 802.15.4 ED scan, TL521X feature sync, RX parsing fix              |
 | **Flashing**         | Auto-detect SBOOT firmware for the MCUboot start offset                 |
 | **GPIO/SWS**         | GPIO interrupt and shutdown gating fixes                                |
 
 This patch release extends the tl\_v1.5.0 line with the TL323x unified RAM
-layout, TL523X/central BLE support, low-battery demo samples, and GPIO/SWS/SoC
-fixes backported from `dev-tlk_v4.1`.
+layout, TL523X/central BLE support, BLE multirole connection defaults,
+low-battery demo samples, and GPIO/SWS/SoC fixes backported from `dev-tlk_v4.1`.
 
 ***
 
@@ -121,6 +143,7 @@ fixes backported from `dev-tlk_v4.1`.
 - ✅ TL323x unified 160 KB RAM layout for BLE + Thread coexistence builds ([#900](https://github.com/telink-semi/tl_zephyr/pull/900));
 - ✅ TL523X BLE functions support ([#892](https://github.com/telink-semi/tl_zephyr/pull/892));
 - ✅ BLE central role support ([#893](https://github.com/telink-semi/tl_zephyr/pull/893));
+- ✅ BLE multirole connection defaults, one master and one slave connection out of the box ([#905](https://github.com/telink-semi/tl_zephyr/pull/905));
 - ✅ BLE peripheral low-battery-detect demos ([#895](https://github.com/telink-semi/tl_zephyr/pull/895));
 - ✅ BLE + Thread concurrent power management, including the new `samples/net/openthread/ot_ble_pm` sample ([#879](https://github.com/telink-semi/tl_zephyr/pull/879));
 - ✅ NFC ST25DV subsystem rework with the new `samples/boards/tlsr9x/st25dv-nfc-tap` sample;
@@ -175,7 +198,7 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 | Component                 | Repository                                                   | Commit                                                       | Notes                                                        |
 | ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | **Telink BLE SDK**        | [telink-semi/tl\_ble\_sdk\_zephyr](https://github.com/telink-semi/tl_ble_sdk_zephyr) | [`a508cc0`](https://github.com/telink-semi/tl_ble_sdk_zephyr/commit/a508cc070bee70d5596624377e0b078b29c29fc2) | Updated from `eb0d120` (`release/V4.0.4.8`); ships the tl323x multirole library with the PM symbols required by concurrent mode |
-| **Telink HAL Zephyr**     | [telink-semi/hal\_telink](https://github.com/telink-semi/hal_telink) | [`3cc9054`](https://github.com/telink-semi/hal_telink/commit/3cc9054edd5edcaa1a8b5870099af81433afaf58) | Updated from `81ded24`; adds peripheral\_ht and central support |
+| **Telink HAL Zephyr**     | [telink-semi/hal\_telink](https://github.com/telink-semi/hal_telink) | [`78c97208`](https://github.com/telink-semi/hal_telink/commit/78c97208022e655c8fc547aed7e19ce6f314b88c) | Updated from `81ded24`; adds peripheral\_ht and central support, plus the BLE multirole connection defaults |
 | **MCUBoot**               | [telink-semi/tl\_mcuboot](https://github.com/telink-semi/tl_mcuboot) | [`ce0da85`](https://github.com/telink-semi/tl_mcuboot/commit/ce0da85c39c749df49b0ec62b33d2ecdea24c927) | Unchanged since tl\_v1.4.1; bootloader required for OTA/DFU    |
 | **OpenThread Telink**     | [telink-semi/tl\_openthread](https://github.com/telink-semi/tl_openthread) | [`542aaab`](https://github.com/telink-semi/tl_openthread/commit/542aaab44e1308e1a8a24573dfbd413fade342ee) | Unchanged since tl\_v1.4.1; OpenThread source adapted for Telink |
 | **OpenThread Telink Lib** | [telink-semi/tl\_openthread\_libs](https://github.com/telink-semi/tl_openthread_libs) | [`bb57bac`](https://github.com/telink-semi/tl_openthread_libs/commit/bb57bac0857cdf4f408894ffdd9c8469d25c66cb) | Updated from `f69c186`; pre-built OpenThread library for Telink |
@@ -186,7 +209,7 @@ For the complete list, see the upstream [Zephyr v4.1.0 Release Notes — API Cha
 ### Dependency Changes Since tl\_v1.5.0
 
 - `telink_ble_sdk`: `eb0d120` → `a508cc0`
-- `hal_telink`: `81ded24` → `3cc9054`
+- `hal_telink`: `81ded24` → `78c97208`
 - `tl_mcuboot`, `tl_openthread`, `tl_openthread_libs`, `tl_xz`, `nfc_st25dv`, and `telink_st25dv` remain unchanged from tl\_v1.5.0.
 
 ***
