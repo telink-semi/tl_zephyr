@@ -660,8 +660,6 @@ static bool tl521x_ieee802154_ie_csl_commit(uint8_t *payload, size_t payload_len
 /*
  * Cryptography functionality
  */
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-
 #include <ske.h>
 #include <ske_portable.h>
 
@@ -865,4 +863,3 @@ static bool ieee802154_tl521x_crypto_decrypt(
 
 	return result;
 }
-#endif

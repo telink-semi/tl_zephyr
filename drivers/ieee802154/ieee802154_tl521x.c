@@ -74,12 +74,10 @@ extern uint32_t tlksdk_thd_getInsertTask1PostTick(void);
 static struct tl521x_src_match_table src_match_table;
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* TLX radio ACK table structure */
 static struct tl521x_enh_ack_table enh_ack_table;
 /* mac keys data */
 static struct tl521x_mac_keys mac_keys;
-#endif
 
 #if CONFIG_SOC_SERIES_RISCV_TELINK_TL521X_RETENTION
 __attribute__((section(".bss")))
@@ -98,11 +96,9 @@ static struct tl521x_data data = {
 #ifdef CONFIG_OPENTHREAD_FTD
 	.src_match_table = &src_match_table,
 #endif /* CONFIG_OPENTHREAD_FTD */
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	.enh_ack_table = &enh_ack_table,
 	/* mac keys data */
 	.mac_keys = &mac_keys,
-#endif
 };
 
 #if CONFIG_PM_DEVICE && CONFIG_IEEE802154_TL521X_OPTIMIZATION
@@ -224,7 +220,6 @@ ALWAYS_INLINE static bool tl521x_require_pending_bit(const struct ieee802154_fra
 }
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* clean radio search match table */
 ALWAYS_INLINE static void tl521x_enh_ack_table_clean(struct tl521x_enh_ack_table *table)
 {
@@ -355,7 +350,6 @@ ALWAYS_INLINE static void tl521x_mac_keys_frame_cnt_inc(struct tl521x_mac_keys *
 		}
 	}
 }
-#endif
 
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 ALWAYS_INLINE static uint16_t tl521x_get_csl_phase(struct tl521x_data *tlx)
@@ -537,9 +531,7 @@ ALWAYS_INLINE static void tl521x_update_rssi_and_lqi(const struct device *dev, s
 	int8_t rssi;
 	uint8_t lqi;
 
-	rssi = ((signed char)(tlx->rx_buffer[tlx->rx_buffer[TL521X_LENGTH_OFFSET] +
-					     TL521X_RSSI_OFFSET])) -
-	       110;
+	rssi = ZB_RADIO_PKT_RSSI_GET(tlx->rx_buffer) - 110;
 	lqi = tl521x_convert_rssi_to_lqi(rssi);
 
 	net_pkt_set_ieee802154_lqi(pkt, lqi);
@@ -623,7 +615,6 @@ ALWAYS_INLINE static void tl521x_build_ack(const struct device *dev, struct ieee
 	}
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	if (enh_ack) {
 		ack_se_bit = frame->general.se_bit ? true : false;
 		int idx = tl521x_enh_ack_table_search(tlx->enh_ack_table,
@@ -635,7 +626,6 @@ ALWAYS_INLINE static void tl521x_build_ack(const struct device *dev, struct ieee
 					    IEEE802154_FRAME_IE_HEADER_LENGTH;
 		}
 	}
-#endif
 
 	memset(frame, 0, sizeof(struct ieee802154_frame));
 	frame->general.valid = true;
@@ -664,7 +654,6 @@ ALWAYS_INLINE static bool tl521x_send_ack(const struct device *dev, struct ieee8
 	rf_clr_irq_mask(FLD_RF_IRQ_TX); /* clear TX interrupt mask bit */
 	uint32_t t0 = stimer_get_tick();
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	const uint8_t *key = NULL;
 	uint32_t frame_cnt = 0;
 	uint8_t sec_header[] = {
@@ -702,10 +691,8 @@ ALWAYS_INLINE static bool tl521x_send_ack(const struct device *dev, struct ieee8
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
 		}
 	}
-#endif
 
 	if (tl521x_ieee802154_frame_build(frame, ack_buf, sizeof(ack_buf), &ack_len)) {
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 		if (frame->general.se_bit) {
 			if (!ieee802154_tl521x_crypto_encrypt(
 				    key, tlx->filter_ieee_addr, frame_cnt,
@@ -717,7 +704,7 @@ ALWAYS_INLINE static bool tl521x_send_ack(const struct device *dev, struct ieee8
 				return false;
 			}
 		}
-#endif
+
 		tl521x_set_tx_payload(dev, ack_buf, ack_len);
 		uint32_t t1 = (stimer_get_tick() - t0) / SYSTEM_TIMER_TICK_1US;
 
@@ -782,7 +769,8 @@ __GENERIC_SECTION(.ram_code) static void tl521x_rf_rx_isr(void)
 	}
 
 	tl521x_ieee802154_frame_parse(payload, length, &frame);
-	if (frame.general.valid == false) {
+	if ((frame.general.valid == false) || (frame.sn == NULL) ||
+	    (frame.general.ver > IEEE802154_FRAME_FCF_VER_2015)) {
 		LOG_ERR("Invalid frame\n");
 		reason = IEEE802154_RX_FAIL_NOT_RECEIVED;
 		goto error_exit;
@@ -1131,10 +1119,10 @@ static int tl521x_init(const struct device *dev)
 	tlx->src_match_table->enabled = true;
 #endif /* CONFIG_OPENTHREAD_FTD */
 	tlx->event_handler = NULL;
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
+
 	tl521x_enh_ack_table_clean(tlx->enh_ack_table);
 	tl521x_mac_keys_data_clean(tlx->mac_keys);
-#endif
+
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 	k_work_init_delayable(&tlx->csl_rx_work, tl521x_csl_rx_work);
 	tlx->csl_rx_duration_us = 0;
@@ -1164,7 +1152,7 @@ static enum ieee802154_hw_caps tl521x_get_capabilities(const struct device *dev)
 	ARG_UNUSED(dev);
 	enum ieee802154_hw_caps caps = IEEE802154_HW_FCS | IEEE802154_HW_PROMISC |
 				       IEEE802154_HW_FILTER | IEEE802154_HW_TX_RX_ACK |
-				       IEEE802154_HW_ENERGY_SCAN;
+				       IEEE802154_HW_ENERGY_SCAN | IEEE802154_HW_TX_SEC;
 
 #if defined(CONFIG_NET_PKT_TXTIME)
 	caps |= IEEE802154_HW_TXTIME;
@@ -1172,9 +1160,7 @@ static enum ieee802154_hw_caps tl521x_get_capabilities(const struct device *dev)
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 	caps |= IEEE802154_HW_RXTIME;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-	caps |= IEEE802154_HW_TX_SEC;
-#endif
+
 	return caps;
 }
 
@@ -1345,7 +1331,6 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 	irq_unlock(r);
 #endif /* CONFIG_IEEE802154_TL521X_BLE_COEXIST */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	struct ieee802154_frame frame;
 	uint8_t key_id = 0;
 
@@ -1356,21 +1341,19 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 		uint8_t *ie_csl_pos = NULL;
 #endif /* CONFIG_OPENTHREAD_CSL_RECEIVER */
-		if (net_pkt_ieee802154_mac_hdr_rdy(pkt)) {
+		if (net_pkt_ieee802154_frame_secured(pkt)) {
 			if (frame.payload_ie &&
 			    tl521x_ieee802154_ie_csl_search(frame.payload, frame.payload_len)) {
 				enc_rounds = 2;
 			} else {
-				LOG_WRN("The packet is encrypted and sent directly\n");
+				LOG_WRN("frame already secured, send directly");
 				break;
 			}
 		}
 
-		net_pkt_set_ieee802154_frame_secured(pkt, false);
-		net_pkt_set_ieee802154_mac_hdr_rdy(pkt, false);
-
 		if (!frame.general.valid) {
 			LOG_WRN("invalid frame\n");
+			status = -EINVAL;
 			break;
 		}
 
@@ -1385,13 +1368,12 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 			break;
 		}
 
-		net_pkt_set_ieee802154_frame_secured(pkt, true);
-
 		const uint8_t *src_addr =
 			frame.src_addr_ext ? frame.src_addr : tlx->filter_ieee_addr;
 
 		if (!src_addr) {
 			LOG_WRN("no extended source address");
+			status = -EINVAL;
 			break;
 		}
 
@@ -1419,6 +1401,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 		if (!key) {
 			key_id = 0;
 			LOG_WRN("security key not found");
+			status = -EINVAL;
 			break;
 		}
 
@@ -1461,6 +1444,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 				} else {
 					key_id = 0;
 					LOG_WRN("invalid payload length MIC");
+					status = -EINVAL;
 					break;
 				}
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
@@ -1471,6 +1455,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 					} else {
 						key_id = 0;
 						LOG_WRN("failed to insert CSL IE");
+						status = -EINVAL;
 						break;
 					}
 				}
@@ -1489,6 +1474,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 					} else {
 						key_id = 0;
 						LOG_WRN("invalid payload length IE");
+						status = -EINVAL;
 						break;
 					}
 				}
@@ -1507,6 +1493,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 					} else {
 						key_id = 0;
 						LOG_WRN("invalid payload length CID");
+						status = -EINVAL;
 						break;
 					}
 				}
@@ -1532,6 +1519,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 						    private_data, tag_data, tag_len)) {
 						key_id = 0;
 						LOG_WRN("encrypt failed %u", sec_level);
+						status = -EINVAL;
 						break;
 					}
 				}
@@ -1540,10 +1528,14 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 		default:
 			key_id = 0;
 			LOG_WRN("unsupported security level %u", sec_level);
+			status = -EINVAL;
 			break;
 		}
+
+		if (status == 0) {
+			net_pkt_set_ieee802154_frame_secured(pkt, true);
+		}
 	} while (0);
-#endif
 
 #ifdef CONFIG_IEEE802154_TL521X_BLE_COEXIST
 	/* lock interrupts */
@@ -1568,7 +1560,7 @@ static int tl521x_tx(const struct device *dev, enum ieee802154_tx_mode mode, str
 #ifdef CONFIG_IEEE802154_TL521X_BLE_COEXIST
 		status || rf_zigbee_tx_is_stopped
 #else
-		0
+		status
 #endif /* CONFIG_IEEE802154_TL521X_BLE_COEXIST */
 	) {
 		/* skip 802.15.4 RF TX operation */
@@ -1748,7 +1740,6 @@ static int tl521x_configure(const struct device *dev, enum ieee802154_config_typ
 	case IEEE802154_CONFIG_PROMISCUOUS:
 		tlx->promiscuous = config->promiscuous;
 		break;
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	case IEEE802154_CONFIG_MAC_KEYS: {
 		uint32_t cnt = tlx->mac_keys->frame_cnt;
 
@@ -1793,7 +1784,6 @@ static int tl521x_configure(const struct device *dev, enum ieee802154_config_typ
 			tl521x_enh_ack_table_remove(tlx->enh_ack_table, short_addr, ext_addr);
 		}
 	} break;
-#endif
 	default:
 		LOG_WRN("Unhandled cfg %d", type);
 		result = -ENOTSUP;

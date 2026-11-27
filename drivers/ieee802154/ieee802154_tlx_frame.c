@@ -661,8 +661,6 @@ static bool tlx_ieee802154_ie_csl_commit(uint8_t *payload, size_t payload_len, u
 /*
  * Cryptography functionality
  */
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
-
 #if CONFIG_SOC_RISCV_TELINK_TL721X || CONFIG_SOC_RISCV_TELINK_TL321X ||                            \
 	CONFIG_SOC_RISCV_TELINK_TL322X || CONFIG_SOC_RISCV_TELINK_TL323X
 #include <ske.h>
@@ -871,4 +869,3 @@ static bool ieee802154_tlx_crypto_decrypt(const uint8_t key[IEEE802154_CRYPTO_LE
 
 	return result;
 }
-#endif

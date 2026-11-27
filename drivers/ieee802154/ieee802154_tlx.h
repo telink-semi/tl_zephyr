@@ -24,8 +24,6 @@
 #define TLX_PAYLOAD_OFFSET    (5)
 #define TLX_PAYLOAD_MIN       (5)
 #define TLX_PAYLOAD_MAX       (127)
-#define TLX_LENGTH_OFFSET     (4)
-#define TLX_RSSI_OFFSET       (11)
 #define TLX_BROADCAST_ADDRESS ((uint8_t[2]){0xff, 0xff})
 #define TLX_FCS_LENGTH        (2)
 #define TLX_CMD_ID_DATA_REQ   (0x04)
@@ -47,6 +45,8 @@
 		   (p[rf_zigbee_dma_rx_offset_time_stamp(p) + 2] << 16) |                          \
 		   (p[rf_zigbee_dma_rx_offset_time_stamp(p) + 3] << 24))
 
+#define ZB_RADIO_PKT_RSSI_GET(p) (int8_t)(p[rf_zigbee_dma_rx_offset_rssi(p)])
+
 #define TLX_TX_PWR_NOT_SET INT16_MAX
 #define TLX_TX_CH_NOT_SET  UINT16_MAX
 
@@ -65,7 +65,6 @@ struct tlx_src_match_table {
 };
 #endif /* CONFIG_OPENTHREAD_FTD */
 
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 /* radio ACK table type */
 struct tlx_enh_ack_table {
 	struct {
@@ -86,7 +85,6 @@ struct tlx_mac_keys {
 	} item[TLX_MAC_KEYS_ITEMS];
 	uint32_t frame_cnt;
 };
-#endif
 
 /* data structure */
 struct tlx_data {
@@ -119,10 +117,8 @@ struct tlx_data {
 	energy_scan_done_cb_t ed_done_cb;
 	const struct device *ed_dev;
 	int16_t ed_rssi;
-#if !defined(CONFIG_OPENTHREAD_THREAD_VERSION_1_1)
 	struct tlx_enh_ack_table *enh_ack_table;
 	struct tlx_mac_keys *mac_keys;
-#endif
 #ifdef CONFIG_OPENTHREAD_CSL_RECEIVER
 	uint32_t csl_period;
 	int64_t csl_sample_time_us;
