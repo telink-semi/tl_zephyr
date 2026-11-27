@@ -9,6 +9,7 @@
 #include <bootutil/bootutil_log.h>
 #include <zephyr/sys/crc.h>
 
+#include "efuse.h"
 #include "gpio.h"
 #include <zephyr/dt-bindings/pinctrl/tl521x-pinctrl.h>
 
@@ -66,12 +67,10 @@ static bool telink_tlx_mcu_boot_startup(void)
 	}
 
 	if (show_chip_id) {
-		/* TL521X prebuilt library exports efuse_read(), not efuse_get_ieee_addr(). */
-		extern drv_api_status_e efuse_read(unsigned char addr, unsigned char *buff, unsigned short len);
 		uint8_t chip_id[21] = { 0 };
 		uint8_t ieee_addr[8] = { 0 };
 
-		if (efuse_read(213, ieee_addr, (unsigned short) sizeof(ieee_addr)) == DRV_API_SUCCESS) {
+		if (efuse_get_ieee_addr(ieee_addr) == DRV_API_SUCCESS) {
 
 			memcpy(chip_id + 2, ieee_addr, 8);
 			uint16_t chip_id_crc = crc16_itu_t(0, chip_id + 2, 16);
