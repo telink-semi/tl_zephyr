@@ -12,13 +12,16 @@
 	 */
 	pad-mul-sel = <1>;
 
-	/* UART0: TX(PB5), RX(PE1), RTS(PE2), CTS(PE3) */
+	/* UART0: TX(PB5), RX(PB6, default), RTS(PE2), CTS(PE3) */
 
 	uart0_tx_pb5_default: uart0_tx_pb5_default {
 		pinmux = <TL521X_PINMUX_SET(TL521X_PORT_B, TL521X_PIN_5, TL521X_FUNC_UART0_TX)>;
 	};
 	uart0_rx_pb0_default: uart0_rx_pb0_default {
 		pinmux = <TL521X_PINMUX_SET(TL521X_PORT_B, TL521X_PIN_0, TL521X_FUNC_UART0_RTX_IO)>;
+	};
+	uart0_rx_pb6_default: uart0_rx_pb6_default {
+		pinmux = <TL521X_PINMUX_SET(TL521X_PORT_B, TL521X_PIN_6, TL521X_FUNC_UART0_RTX_IO)>;
 	};
 	uart0_rts_pe2_default: uart0_rts_pe2_default {
 		pinmux = <TL521X_PINMUX_SET(TL521X_PORT_E, TL521X_PIN_2, TL521X_FUNC_UART0_RTS)>;
